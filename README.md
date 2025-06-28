@@ -2,42 +2,51 @@
 
 Learn Rust through practical, real-world exercises that you can actually use at work.
 
-This is the official course repository for **Corrode**, a Rust consultancy focused on teaching developers practical skills for production applications.
+This is the official course repository for **corrode**, a friendly, professional Rust consultancy. 
+The goal is to go from zero to building real applications in Rust as quickly as possible while having fun!
 
 ## What Makes This Course Different
 
-Unlike other Rust learning resources, this course is designed for **working developers** who want to build real applications:
+Unlike other Rust learning resources, this course is **designed for the working developer** who wants to build real applications:
 
-- **🎯 Work-Ready Skills**: Every exercise teaches patterns you'll use in production code
-- **📈 Incremental Learning**: One concept per exercise, building systematically 
+- **🎯 Work-Ready Skills**: Every exercise teaches patterns you'll use need for using Rust productively 
+- **📈 Incremental Learning**: One concept per exercise, systematically writing more and more complex code 
 - **🔗 Connected Concepts**: Exercises build on each other to reinforce learning
-- **⚡ Quick Wins**: 5-10 minutes per exercise to maintain momentum
-- **🛠️ Practical Examples**: User management, HTTP handling, config parsing, data processing
+- **⚡ Quick Wins**: short exercises to maintain momentum
+- **🛠️ Practical Examples**: User management, HTTP handling, config parsing, data processing: everything you typically do in your day job. (No inverse binary trees.)
 
 **Compared to other resources:**
-- **vs Rustlings**: Less theoretical, more practical workplace patterns
-- **vs Rust Playground**: Structured progression with real-world context
-- **vs Other Exercise Collections**: Focus on production-ready patterns, not toy problems
+- **vs Rustlings**: Less theoretical, more practical workplace patterns, real-world context
+- **vs Exercism**: Focus on production-ready applications, not just toy problems
+- **vs The Rust Book**: More hands-on exercises, less theory, and more focus, more interactive learning
+- **vs Rust by Example**: Less focus on going through the entire standard library, more focus on building real applications 
+- **vs Other Exercise Collections**: cut straight to the chase with practical exercises
 
 ## Getting Started
 
 ### Prerequisites
-- Basic programming experience (JavaScript, Python, or similar)
+
 - No prior Rust knowledge required
+- Must have programming experience in Python, JavaScript, Go, or similar languages 
+- Familiarity with basic programming concepts (variables, functions, loops, conditionals)
 
 ### Two Ways to Practice
 
 #### Option 1: Rust Playground (Recommended for Beginners)
+
 1. Open [play.rust-lang.org](https://play.rust-lang.org/)
 2. Copy an exercise from `exercises/beginner/`
 3. Implement the functions to make tests pass
 4. Run tests with the "Test" button
 
 #### Option 2: Local Development
+
+Use your own development environment for a more realistic experience:
+
 1. [Install Rust](https://rustup.rs/)
 2. Clone this repository
 3. Navigate to an exercise: `cd exercises/beginner`
-4. Run tests: `cargo test --bin 00_string_formatting`
+4. Run tests: `cargo test --bin 00_hello_rust`
 
 ## Exercise Progression
 
@@ -45,7 +54,7 @@ Unlike other Rust learning resources, this course is designed for **working deve
 
 The exercises follow a carefully designed progression:
 
-1. **00_string_formatting** - String creation and formatting
+1. **00_hello_rust** - String creation and formatting
 2. **01_integer_handling** - Arithmetic and number operations  
 3. **02_enums_and_matching** - Pattern matching with HTTP status codes
 4. **03_vectors_basics** - Growable arrays and basic operations
@@ -64,27 +73,35 @@ The exercises follow a carefully designed progression:
 Each exercise includes:
 - Clear learning objectives
 - Real-world context
-- Comprehensive tests
+- Unit tests
 - Hints without hand-holding
 
 ## Learning Philosophy
 
 ### One Concept Per Exercise
-Each exercise focuses on a single Rust concept to avoid cognitive overload. You'll master each building block before moving to the next.
+
+Each exercise focuses on a single Rust concept to avoid cognitive overload.
+You'll master each building block before moving to the next.
 
 ### Progressive Complexity
-Early exercises establish fundamentals. Later exercises combine multiple concepts to build realistic applications.
+
+Early exercises establish fundamentals. Later exercises combine multiple
+concepts to build realistic applications.
 
 ### Real-World Context
+
 Every exercise solves problems you'll encounter in production:
-- User authentication systems
-- Configuration management
-- Data processing pipelines
-- HTTP API development
+
 - Error handling patterns
+- Data processing pipelines
+- Configuration management
+- HTTP API development
+- ...
 
 ### Practical Over Theoretical
-We skip academic examples in favor of patterns you'll use at work. Learn Rust by building things that matter.
+
+We skip academic examples in favor of patterns you'll use at work.
+Rust has a [famously steep learning curve](https://corrode.dev/blog/flattening-rusts-learning-curve/), so let's focus on skills that will help you be productive quickly.
 
 ## Tips for Success
 
@@ -93,19 +110,23 @@ We skip academic examples in favor of patterns you'll use at work. Learn Rust by
 3. **Don't skip exercises** - each builds on the previous
 4. **Experiment beyond the requirements** once tests pass
 5. **Focus on understanding** over speed
+6. **This is not a challenge**. Take your time!
+7. **Ask for help** if you're stuck, we got your back! 
 
-## Getting Help
+## Helpful Resources 
 
-- **Rust Documentation**: [doc.rust-lang.org](https://doc.rust-lang.org/)
-- **The Rust Book**: [doc.rust-lang.org/book/](https://doc.rust-lang.org/book/)
+- **Rust Documentation**: [doc.rust-lang.org](https://doc.rust-lang.org/stable/std/index.html): use this as your primary reference. It's excellently written and contains everything you'll need.
+- **The Rust Book**: [doc.rust-lang.org/book/](https://doc.rust-lang.org/book/): the official Rust book, great for understanding concepts in depth.
 - **Rust by Example**: [doc.rust-lang.org/rust-by-example/](https://doc.rust-lang.org/rust-by-example/)
 
-## About Corrode
+## About corrode
 
-Corrode is a Rust consultancy that helps teams adopt Rust for production applications. We focus on practical training and real-world implementation patterns.
+corrode is a Rust consultancy that helps teams adopt Rust for production applications.
+We focus on practical training and real-world implementation patterns.
+If you would like an in-person workshop, a remote training session, or a code review of your Rust code, please reach out to us.
 
 Learn more at [corrode.dev](https://corrode.dev)
 
 ---
 
-**Ready to start?** Open `exercises/beginner/00_string_formatting.rs` and begin your Rust journey!
+**Ready to start?** Open `exercises/beginner/00_hello_rust.rs` and begin your Rust journey! Good luck, and have fun!
