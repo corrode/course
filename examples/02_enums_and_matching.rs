@@ -6,7 +6,7 @@
 //! with a web request.
 //!
 //! The famous "404 Not Found" gets its name from room 404 at CERN where
-//! the original web servers lived. Today, you'll master Rust's `match` 
+//! the original web servers lived. Today, you'll master Rust's `match`
 //! expressions - think of them as switch statements that actually work properly!
 //!
 //! Ready to handle the web like a pro? Let's match some patterns! 🌐
@@ -39,14 +39,14 @@ fn should_retry(status: HttpStatus) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_status_codes() {
         assert_eq!(status_code(HttpStatus::Ok), 200);
         assert_eq!(status_code(HttpStatus::NotFound), 404);
         assert_eq!(status_code(HttpStatus::InternalServerError), 500);
     }
-    
+
     #[test]
     fn test_retry_logic() {
         assert_eq!(should_retry(HttpStatus::InternalServerError), true);
