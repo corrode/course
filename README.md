@@ -46,7 +46,7 @@ Use your own development environment for a more realistic experience:
 1. [Install Rust](https://rustup.rs/)
 2. Clone this repository
 3. Navigate to an exercise: `cd exercises/beginner`
-4. Run tests: `cargo test --bin 00_hello_rust`
+4. Run tests: `cargo test --example 00_hello_rust`
 
 ## Exercise Progression
 
