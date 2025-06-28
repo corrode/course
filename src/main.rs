@@ -14,7 +14,8 @@ const SERVER_URL: &str = "http://localhost:3000";
 const TOKEN_FILE: &str = ".corrode/token";
 
 #[derive(Parser)]
-#[command(name = "cargo-course")]
+#[command(name = "cargo")]
+#[command(bin_name = "cargo")]
 #[command(about = "Submit Rust exercises to corrode course server")]
 struct Cli {
     #[command(subcommand)]
@@ -23,15 +24,27 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Submit Rust exercises to corrode course server
+    Course(CourseArgs),
+}
+
+#[derive(Parser)]
+struct CourseArgs {
+    #[command(subcommand)]
+    command: CourseCommands,
+}
+
+#[derive(Subcommand)]
+enum CourseCommands {
     /// Initialize the course repository and register participant
     Init,
     /// Submit an exercise solution
     Submit {
         /// Path to the exercise file (e.g., examples/01_strings.rs)
         file: String,
-        /// Run fmt and clippy for a perfect submission
+        /// Run fmt and clippy for a pedantic submission to earn a star
         #[arg(long)]
-        perfect: bool,
+        pedantic: bool,
     },
     /// Show progress and available exercises
     Status,
@@ -42,9 +55,11 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Init => handle_init().await,
-        Commands::Submit { file, perfect } => handle_submit(&file, perfect).await,
-        Commands::Status => handle_status().await,
+        Commands::Course(args) => match args.command {
+            CourseCommands::Init => handle_init().await,
+            CourseCommands::Submit { file, pedantic } => handle_submit(&file, pedantic).await,
+            CourseCommands::Status => handle_status().await,
+        },
     }
 }
 
@@ -71,23 +86,15 @@ async fn handle_init() -> Result<()> {
 
     println!("✅ Registered successfully! Token: {token}");
     
-    // Detect how the binary was called to give appropriate instructions
-    let binary_name = get_binary_name();
-    match binary_name.as_str() {
-        "cargo-course" => {
-            println!("💡 Tip: Install with `cargo install --path .` to use `cargo course submit <file>`");
-            println!("For now, you can submit exercises with: {binary_name} submit <file>");
-        }
-        _ => {
-            println!("You can now submit exercises with: {binary_name} submit <file>");
-        }
-    }
+    // Give instructions on how to use the CLI
+    println!("💡 Submit exercises with: cargo course submit <file>");
+    println!("💡 For pedantic submissions (earn stars): cargo course submit <file> --pedantic");
 
     Ok(())
 }
 
 /// Submit an exercise solution to the server.
-async fn handle_submit(file: &str, perfect: bool) -> Result<()> {
+async fn handle_submit(file: &str, pedantic: bool) -> Result<()> {
     // 1. Read source code from file
     let source_code = fs::read_to_string(file)
         .map_err(|_| anyhow!("Failed to read file: {file}"))?;
@@ -98,8 +105,8 @@ async fn handle_submit(file: &str, perfect: bool) -> Result<()> {
     // 3. Run tests
     let (tests_passed, test_output) = run_cargo_test(&exercise_name).await?;
 
-    // 4. If perfect flag, also run fmt + clippy
-    let (fmt_passed, clippy_passed) = if perfect {
+    // 4. If pedantic flag, also run fmt + clippy
+    let (fmt_passed, clippy_passed) = if pedantic {
         (run_cargo_fmt().await?, run_cargo_clippy().await?)
     } else {
         (false, false)
@@ -121,10 +128,13 @@ async fn handle_submit(file: &str, perfect: bool) -> Result<()> {
 
     // 7. Show result
     if tests_passed {
-        if perfect && fmt_passed && clippy_passed {
-            println!("⭐ Exercise {exercise_name} perfected!");
+        if pedantic && fmt_passed && clippy_passed {
+            println!("⭐ Exercise {exercise_name} perfected! You earned a star!");
         } else {
             println!("✅ Exercise {exercise_name} completed!");
+            if !pedantic {
+                println!("💡 Try submitting with --pedantic to earn a star and perfect your code!");
+            }
         }
     } else {
         println!("❌ Tests failed for {exercise_name}");

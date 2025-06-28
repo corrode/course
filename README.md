@@ -38,63 +38,66 @@ The repository includes a CLI tool for submitting exercises and tracking your pr
 - Submit completed exercises
 - Track your progress and completion status
 - Run tests automatically and provide feedback
-- Support "perfect" submissions with formatting and linting
+- Support pedantic submissions with formatting and linting to earn ⭐ stars
 
 ### CLI Installation
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/corrode/course.git
 cd course
 
 # Install the CLI tool
 cargo install --path .
 
 # Initialize and register
-cargo-course init
+cargo course init
 
 # Submit an exercise
-cargo-course submit examples/00_hello_rust.rs
+cargo course submit examples/00_hello_rust.rs
 
-# Submit with perfect formatting/linting
-cargo-course submit examples/00_hello_rust.rs --perfect
+# Submit with pedantic formatting/linting to earn stars
+cargo course submit examples/00_hello_rust.rs --pedantic
 
 # Check your progress
-cargo-course status
+cargo course status
 ```
 
 **Important Notes**:
 - The CLI currently requires a running course server at `localhost:3000`. For standalone practice, use the manual testing approach below.
-- After installation, use `cargo-course` (not `cargo course`) to run commands. This is the standard behavior for cargo extension tools.
+- After completing an exercise, you can submit again with `--pedantic` to earn a ⭐ star by passing additional formatting and linting checks!
 
 ### Three Ways to Practice
 
-#### Option 1: Rust Playground (Recommended for Beginners)
+#### Option 1: Local Development with CLI Tool (Recommended)
 
-1. Open [play.rust-lang.org](https://play.rust-lang.org/)
-2. Copy an exercise from `exercises/beginner/`
-3. Implement the functions to make tests pass
-4. Run tests with the "Test" button
-
-#### Option 2: Local Development with CLI Tool (Recommended)
-
-Use the corrode course CLI for the full experience including progress tracking:
+Use the corrode course CLI for the full experience including progress tracking and star earning:
 
 1. [Install Rust](https://rustup.rs/)
-2. Clone this repository
+2. Clone this repository: `git clone https://github.com/corrode/course.git`
 3. Install the CLI tool: `cargo install --path .`
-4. Initialize your progress: `cargo-course init`
-5. Submit exercises: `cargo-course submit examples/00_hello_rust.rs`
-6. Check your progress: `cargo-course status`
+4. Initialize your progress: `cargo course init`
+5. Submit exercises: `cargo course submit examples/00_hello_rust.rs`
+6. Earn stars with pedantic submissions: `cargo course submit examples/00_hello_rust.rs --pedantic`
+7. Check your progress: `cargo course status`
 
-#### Option 3: Manual Testing
+#### Option 2: Manual Testing
 
 For basic testing without progress tracking:
 
 1. [Install Rust](https://rustup.rs/)
-2. Clone this repository  
-3. Navigate to an exercise: `cd exercises/beginner`
+2. Clone this repository: `git clone https://github.com/corrode/course.git`
+3. Navigate to an exercise: `cd course`
 4. Run tests: `cargo test --example 00_hello_rust`
+
+#### Option 3: Rust Playground (Beginners)
+
+For trying exercises without installing anything:
+
+1. Open [play.rust-lang.org](https://play.rust-lang.org/)
+2. Copy an exercise from `examples/`
+3. Implement the functions to make tests pass
+4. Run tests with the "Test" button
 
 ## Exercise Progression
 
