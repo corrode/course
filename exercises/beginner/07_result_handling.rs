@@ -1,7 +1,15 @@
 //! # Result<T, E> - Error Handling
 //!
-//! Result<T, E> represents operations that can succeed or fail.
-//! Forces you to handle errors explicitly.
+//! "There are only two hard things in Computer Science: cache invalidation
+//! and naming things" - Phil Karlton. Well, we'd like to add a third:
+//! error handling! But Rust makes it much easier than most languages.
+//!
+//! Many languages use exceptions that can pop up anywhere and crash your
+//! program unexpectedly. Rust uses Result<T, E> to make errors visible
+//! in the type system. You can't ignore an error - you must handle it!
+//!
+//! This approach was inspired by functional languages like Haskell and ML.
+//! Ready to become an error-handling ninja? ⚔️
 
 /// Parses a string into a port number (1-65535).
 /// Returns Ok(port) if valid, Err(message) if invalid.

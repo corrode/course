@@ -1,7 +1,16 @@
 //! # Ownership Basics
 //!
-//! Rust's ownership system prevents memory bugs at compile time.
-//! Unlike garbage collection, you control when memory is freed.
+//! Welcome to Rust's superpower! Ownership is what makes Rust special.
+//! While other languages either make you manage memory manually (hello,
+//! segfaults!) or use garbage collection (goodbye, predictable performance!),
+//! Rust found a third way.
+//!
+//! The ownership system was inspired by ideas from academia, particularly
+//! linear types and affine types. But don't worry about the theory -
+//! you'll build intuition through practice! Think of it as Rust being
+//! a very organized friend who always knows who's borrowing what.
+//!
+//! Once you master ownership, you'll wonder how you ever lived without it! 🦀
 
 /// Takes ownership of a String and modifies it.
 /// When you pass a String to this function, ownership transfers.

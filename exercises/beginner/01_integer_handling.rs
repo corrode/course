@@ -1,7 +1,14 @@
 //! # Integer Operations
 //!
-//! Learn basic arithmetic, parsing, and number formatting.
-//! Essential for handling user input, calculations, and data processing.
+//! Numbers are everywhere in programming! From calculating your grocery bill
+//! to powering the algorithms that sent humans to the moon (thanks, Margaret Hamilton!),
+//! integer arithmetic is fundamental to computer science.
+//!
+//! Fun fact: The first computer bug was literally a bug - Grace Hopper found
+//! a moth stuck in a Harvard Mark II computer in 1947. But today, we'll focus
+//! on avoiding logical bugs in our number handling code.
+//!
+//! You've got this! Let's crunch some numbers! 🔢
 
 /// Calculates the total price including tax.
 /// Tax rate is given as a percentage (e.g., 8.5 for 8.5% tax).

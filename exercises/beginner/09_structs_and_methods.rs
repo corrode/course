@@ -1,7 +1,16 @@
 //! # User Account Management
 //!
-//! Structs model real-world entities. Methods implement business logic.
-//! This pattern is fundamental for any application with user accounts.
+//! Structs and methods are how we model the real world in code! This concept
+//! dates back to Simula in the 1960s, which introduced object-oriented programming.
+//! Ole-Johan Dahl and Kristen Nygaard wanted to simulate real-world systems,
+//! so they created ways to bundle data with behavior.
+//!
+//! Rust's structs are like simplified classes - they group related data together
+//! and let you define methods that operate on that data. No inheritance complexity,
+//! just clean, simple composition. It's object-oriented programming without
+//! the sharp edges!
+//!
+//! Time to build your user management empire! 👥
 
 #[derive(Debug, PartialEq)]
 struct User {

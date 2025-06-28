@@ -1,7 +1,15 @@
 //! # HashMap Basics
 //!
-//! HashMaps store key-value pairs for fast lookups.
-//! Essential for caching, configuration, and associative data.
+//! Hash tables are one of the most important data structures ever invented!
+//! They were first described by Hans Peter Luhn at IBM in the 1950s, and today
+//! they power everything from database indexes to the caching that makes
+//! your web browsing fast.
+//!
+//! The "hash" in HashMap comes from hash functions - mathematical operations
+//! that turn any data into a fixed-size number. It's like having a super-fast
+//! librarian who can instantly tell you exactly which shelf any book is on!
+//!
+//! Ready to become a key-value wizard? Let's hash it out! 🗝️
 
 use std::collections::HashMap;
 

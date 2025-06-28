@@ -1,7 +1,15 @@
 //! # HTTP Status Handling
 //!
-//! Pattern matching with `match` handles different cases exhaustively.
-//! This is essential for error handling and API responses.
+//! Welcome to the world of web development! HTTP status codes were invented
+//! by Tim Berners-Lee when he created the World Wide Web at CERN in 1989.
+//! These three-digit codes help computers (and humans) understand what happened
+//! with a web request.
+//!
+//! The famous "404 Not Found" gets its name from room 404 at CERN where
+//! the original web servers lived. Today, you'll master Rust's `match` 
+//! expressions - think of them as switch statements that actually work properly!
+//!
+//! Ready to handle the web like a pro? Let's match some patterns! 🌐
 
 #[derive(Debug, PartialEq)]
 enum HttpStatus {

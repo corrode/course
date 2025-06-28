@@ -1,7 +1,17 @@
 //! # Word Counter - Combining Concepts
 //!
-//! This exercise combines strings, vectors, hashmaps, and iteration.
-//! A classic example that reinforces multiple Rust concepts together.
+//! Congratulations! You've learned so many Rust concepts, and now it's time
+//! to put them all together! Word counting might seem simple, but it's actually
+//! the foundation of some amazing technologies.
+//!
+//! Google's PageRank algorithm (which made Google successful) started with
+//! counting and analyzing word relationships. MapReduce, the technology that
+//! powers big data processing, often uses word counting as its "Hello, World!"
+//! example. And now it's your privilege to build the best word counter in the
+//! world.
+//!
+//! You're building something that connects to the biggest ideas in computer science.
+//! How cool is that? Let's count our way to greatness!
 
 use std::collections::HashMap;
 
@@ -9,7 +19,7 @@ use std::collections::HashMap;
 /// Words are separated by spaces and should be case-insensitive.
 fn count_words(text: &str) -> HashMap<String, usize> {
     // 1. Split text by whitespace
-    // 2. Convert each word to lowercase  
+    // 2. Convert each word to lowercase
     // 3. Count occurrences in a HashMap
     unimplemented!()
 }
@@ -37,7 +47,7 @@ fn text_stats(text: &str) -> (usize, usize, f64) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_word_counting() {
         let text = "hello world hello rust world";
@@ -46,14 +56,14 @@ mod tests {
         assert_eq!(counts.get("world"), Some(&2));
         assert_eq!(counts.get("rust"), Some(&1));
     }
-    
+
     #[test]
     fn test_case_insensitive() {
         let text = "Hello HELLO hello";
         let counts = count_words(text);
         assert_eq!(counts.get("hello"), Some(&3));
     }
-    
+
     #[test]
     fn test_most_common() {
         let text = "apple banana apple cherry apple";
@@ -61,7 +71,7 @@ mod tests {
         assert_eq!(word, "apple");
         assert_eq!(count, 3);
     }
-    
+
     #[test]
     fn test_frequent_words() {
         let text = "one two two three three three";
@@ -70,7 +80,7 @@ mod tests {
         assert!(frequent.contains(&"three".to_string()));
         assert!(!frequent.contains(&"one".to_string()));
     }
-    
+
     #[test]
     fn test_text_statistics() {
         let text = "hello world rust";
