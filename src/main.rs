@@ -239,7 +239,21 @@ async fn register_with_server(name: &Name) -> Result<String> {
             name: name.clone(),
         })
         .send()
-        .await?;
+        .await
+        .map_err(|e| {
+            if e.is_connect() {
+                anyhow!(
+                    "❌ Cannot connect to the corrode course server at {SERVER_URL}\n\n\
+                     This usually means:\n\
+                     • The course server is not running\n\
+                     • You're working offline\n\n\
+                     💡 For offline practice, use manual testing instead:\n\
+                     cargo test --example 00_hello_rust"
+                )
+            } else {
+                anyhow!("Network error: {e}")
+            }
+        })?;
 
     if !response.status().is_success() {
         return Err(anyhow!("Registration failed: {}", response.status()));
@@ -256,7 +270,18 @@ async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
         .post(&format!("{SERVER_URL}/api/submit"))
         .json(&submission)
         .send()
-        .await?;
+        .await
+        .map_err(|e| {
+            if e.is_connect() {
+                anyhow!(
+                    "❌ Cannot connect to the corrode course server at {SERVER_URL}\n\n\
+                     💡 Your solution was tested locally but couldn't be submitted.\n\
+                     For offline practice, continue using: cargo test --example <exercise_name>"
+                )
+            } else {
+                anyhow!("Network error: {e}")
+            }
+        })?;
 
     if !response.status().is_success() {
         return Err(anyhow!("Submission failed: {}", response.status()));
@@ -271,7 +296,18 @@ async fn fetch_progress(token: &Token) -> Result<ProgressResponse> {
     let response = client
         .get(&format!("{SERVER_URL}/api/status/{}", token.as_str()))
         .send()
-        .await?;
+        .await
+        .map_err(|e| {
+            if e.is_connect() {
+                anyhow!(
+                    "❌ Cannot connect to the corrode course server at {SERVER_URL}\n\n\
+                     💡 Server is not available to show your progress.\n\
+                     Continue practicing with: cargo test --example <exercise_name>"
+                )
+            } else {
+                anyhow!("Network error: {e}")
+            }
+        })?;
 
     if !response.status().is_success() {
         return Err(anyhow!("Failed to fetch progress: {}", response.status()));
