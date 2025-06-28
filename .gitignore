@@ -1,2 +1,17 @@
-/target
+# corrode course CLI token storage
+.corrode/
+
+# Rust build artifacts
+/target/
 exercises/*/target
+Cargo.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
