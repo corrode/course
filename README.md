@@ -30,7 +30,44 @@ Unlike other Rust learning resources, this course is **designed for the working 
 - Must have programming experience in Python, JavaScript, Go, or similar languages 
 - Familiarity with basic programming concepts (variables, functions, loops, conditionals)
 
-### Two Ways to Practice
+## corrode Course CLI
+
+The repository includes a CLI tool for submitting exercises and tracking your progress. The CLI connects to a course server to:
+
+- Register your participation
+- Submit completed exercises
+- Track your progress and completion status
+- Run tests automatically and provide feedback
+- Support "perfect" submissions with formatting and linting
+
+### CLI Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd course
+
+# Install the CLI tool
+cargo install --path .
+
+# Initialize and register
+cargo-course init
+
+# Submit an exercise
+cargo-course submit examples/00_hello_rust.rs
+
+# Submit with perfect formatting/linting
+cargo-course submit examples/00_hello_rust.rs --perfect
+
+# Check your progress
+cargo-course status
+```
+
+**Important Notes**:
+- The CLI currently requires a running course server at `localhost:3000`. For standalone practice, use the manual testing approach below.
+- After installation, use `cargo-course` (not `cargo course`) to run commands. This is the standard behavior for cargo extension tools.
+
+### Three Ways to Practice
 
 #### Option 1: Rust Playground (Recommended for Beginners)
 
@@ -39,12 +76,23 @@ Unlike other Rust learning resources, this course is **designed for the working 
 3. Implement the functions to make tests pass
 4. Run tests with the "Test" button
 
-#### Option 2: Local Development
+#### Option 2: Local Development with CLI Tool (Recommended)
 
-Use your own development environment for a more realistic experience:
+Use the corrode course CLI for the full experience including progress tracking:
 
 1. [Install Rust](https://rustup.rs/)
 2. Clone this repository
+3. Install the CLI tool: `cargo install --path .`
+4. Initialize your progress: `cargo-course init`
+5. Submit exercises: `cargo-course submit examples/00_hello_rust.rs`
+6. Check your progress: `cargo-course status`
+
+#### Option 3: Manual Testing
+
+For basic testing without progress tracking:
+
+1. [Install Rust](https://rustup.rs/)
+2. Clone this repository  
 3. Navigate to an exercise: `cd exercises/beginner`
 4. Run tests: `cargo test --example 00_hello_rust`
 
