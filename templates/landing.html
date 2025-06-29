@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to corrode Course{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>corrode Course</h1>
+        <p>Learn Rust through practical, real-world exercises</p>
+    </div>
+
+    <div class="card" style="max-width: 500px; margin: 0 auto;">
+        <h2 style="margin-bottom: 1.5rem; text-align: center;">Get Started</h2>
+        
+        <form action="/register" method="post">
+            <div class="form-group">
+                <label for="name">What should we call you?</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    class="form-control" 
+                    placeholder="Enter your name" 
+                    required 
+                    maxlength="100"
+                >
+            </div>
+            
+            <button type="submit" class="btn" style="width: 100%;">
+                🚀 Start Learning Rust
+            </button>
+        </form>
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center;">
+            <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                Already have a token? Access your 
+                <a href="#" style="color: var(--accent-primary);">dashboard</a>
+            </p>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem; color: var(--text-muted);">
+        <p>Built with ❤️ by <a href="https://corrode.dev" style="color: var(--accent-primary);">corrode</a></p>
+    </div>
+</div>
+{% endblock %}

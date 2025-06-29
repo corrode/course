@@ -1,6 +1,14 @@
 # corrode course CLI token storage
 .corrode/
 
+# Environment variables (contains secrets)
+.env
+
+# SQLite database
+playground.db
+playground.db-wal
+playground.db-shm
+
 # Rust build artifacts
 /target/
 exercises/*/target

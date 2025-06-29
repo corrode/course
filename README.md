@@ -64,7 +64,7 @@ cargo course status
 ```
 
 **Important Notes**:
-- The CLI currently requires a running course server at `localhost:3000`. For standalone practice, use the manual testing approach below.
+- The CLI requires a running course server. See the server setup section below, or use manual testing for offline practice.
 - After completing an exercise, you can submit again with `--pedantic` to earn a ⭐ star by passing additional formatting and linting checks!
 
 ### Three Ways to Practice
@@ -98,6 +98,46 @@ For trying exercises without installing anything:
 2. Copy an exercise from `examples/`
 3. Implement the functions to make tests pass
 4. Run tests with the "Test" button
+
+## Server Setup (For Instructors)
+
+The course includes a built-in server for progress tracking and administration:
+
+### Quick Start
+
+```bash
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your admin token
+
+# Start the server
+cargo run --bin server
+
+# Server will be available at:
+# - http://localhost:3000 (landing page)
+# - http://localhost:3000/admin?token=<your_token> (admin dashboard)
+```
+
+### Environment Configuration
+
+Edit `.env` with your settings:
+
+```env
+# Required: Secret token for admin access
+CORRODE_ADMIN_TOKEN=your_secret_admin_token_here
+
+# Optional: Database location (defaults to ./playground.db)
+DATABASE_URL=sqlite:./playground.db
+
+# Optional: Server port (defaults to 3000)
+PORT=3000
+```
+
+### Admin Features
+
+- **Progress Dashboard**: View all participants and their completion status
+- **Recent Submissions**: See latest submissions with expandable source code
+- **Individual Progress**: Direct links to participant dashboards
 
 ## Exercise Progression
 
