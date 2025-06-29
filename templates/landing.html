@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to corrode Course{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>corrode Course</h1>
+        <p>Master Rust through practical, real-world exercises</p>
+    </div>
+
+    <!-- Main registration form - shown by default -->
+    <div id="registration-section" class="card" style="max-width: 500px; margin: 0 auto;">
+        <form action="/register" method="post" id="registration-form">
+            <div class="form-group">
+                <label for="name">Your Name</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    class="form-control" 
+                    placeholder="Enter your name to get started" 
+                    required 
+                    maxlength="100"
+                >
+            </div>
+            
+            <button type="submit" class="btn" style="width: 100%; font-size: 1.1rem; padding: 18px;">
+                Start Learning Rust
+            </button>
+        </form>
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border); text-align: center;">
+            <p style="color: var(--color-text-muted); font-size: 0.875rem; margin-bottom: 0.75rem;">
+                Already have a token?
+            </p>
+            <div class="form-group">
+                <input 
+                    type="text" 
+                    id="existing-token" 
+                    class="form-control" 
+                    placeholder="Enter your token (e.g., 01ARZ3NDEKTS...)" 
+                    style="font-family: 'SF Mono', Monaco, monospace; font-size: 0.9rem;"
+                >
+            </div>
+            <button type="button" onclick="loadDashboard()" class="btn btn-secondary" style="width: 100%;">
+                Go to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Dashboard preview - shown when token exists -->
+    <div id="dashboard-preview" class="card" style="max-width: 500px; margin: 0 auto; display: none;">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <h2 style="color: var(--color-text); margin-bottom: 0.5rem;">Welcome back!</h2>
+            <p style="color: var(--color-text-muted); font-size: 0.9rem;">Ready to continue your Rust journey?</p>
+        </div>
+        
+        <button type="button" onclick="goToDashboard()" class="btn" style="width: 100%; font-size: 1.1rem; padding: 18px;">
+            Continue Learning
+        </button>
+        
+        <div style="margin-top: 1rem; text-align: center;">
+            <button type="button" onclick="startFresh()" class="btn btn-secondary" style="font-size: 0.9rem;">
+                Start with New Name
+            </button>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem; color: var(--color-text-muted);">
+        <p>Built with ❤️ by <a href="https://corrode.dev" style="color: var(--color-primary);">corrode</a></p>
+    </div>
+</div>
+
+<script>
+// Check for existing token on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const existingToken = localStorage.getItem('corrode-token');
+    if (existingToken) {
+        document.getElementById('registration-section').style.display = 'none';
+        document.getElementById('dashboard-preview').style.display = 'block';
+    }
+});
+
+// Handle registration form submission
+document.getElementById('registration-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(formData)
+        });
+        
+        if (response.redirected) {
+            // Extract token from redirect URL
+            const redirectUrl = response.url;
+            const tokenMatch = redirectUrl.match(/\/dashboard\/([^\/?]+)/);
+            if (tokenMatch) {
+                const token = tokenMatch[1];
+                localStorage.setItem('corrode-token', token);
+                window.location.href = redirectUrl;
+            }
+        }
+    } catch (error) {
+        console.error('Registration failed:', error);
+        // Fallback to regular form submission
+        e.target.submit();
+    }
+});
+
+// Load dashboard with existing token
+function loadDashboard() {
+    const token = document.getElementById('existing-token').value.trim();
+    if (token) {
+        localStorage.setItem('corrode-token', token);
+        window.location.href = `/dashboard/${token}`;
+    }
+}
+
+// Go to dashboard with stored token
+function goToDashboard() {
+    const token = localStorage.getItem('corrode-token');
+    if (token) {
+        window.location.href = `/dashboard/${token}`;
+    }
+}
+
+// Start fresh registration
+function startFresh() {
+    localStorage.removeItem('corrode-token');
+    document.getElementById('registration-section').style.display = 'block';
+    document.getElementById('dashboard-preview').style.display = 'none';
+    document.getElementById('name').focus();
+}
+</script>
+{% endblock %}

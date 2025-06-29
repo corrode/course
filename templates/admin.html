@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - corrode Course{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="nav">
+        <a href="/" class="nav-brand">corrode Course</a>
+        <div class="nav-links">
+            <span class="nav-link">🔐 Admin Dashboard</span>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>Course Administration</h1>
+        <p>Monitor participant progress and recent submissions</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <span class="stat-number">{% set total_participants = 0 %}{% for p in participants %}{% set total_participants = total_participants + 1 %}{% endfor %}{{ total_participants }}</span>
+            <span class="stat-label">Total Participants</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{% set total_completions = 0 %}{% for p in participants %}{% set total_completions = total_completions + p.completed_count %}{% endfor %}{{ total_completions }}</span>
+            <span class="stat-label">Total Completions</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{% set perfected_count = 0 %}{% for sub in recent_submissions %}{% if sub.perfected %}{% set perfected_count = perfected_count + 1 %}{% endif %}{% endfor %}{{ perfected_count }}</span>
+            <span class="stat-label">Recent Perfected</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom: 1.5rem;">Participants</h2>
+        
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Progress</th>
+                    <th>Last Activity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for participant in participants %}
+                <tr>
+                    <td style="font-weight: 500; color: var(--text-primary);">{{ participant.name }}</td>
+                    <td>
+                        <span style="color: var(--color-success);">{{ participant.completed_count }}</span>
+                        <span style="color: var(--color-text-muted);">/{{ participant.total_exercises }}</span>
+                        {% if participant.completed_count == participant.total_exercises %}
+                            <span style="color: var(--color-warning); margin-left: 0.5rem;">🎉 Complete!</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if participant.last_activity.is_some() %}
+                            Recent activity
+                        {% else %}
+                            <span style="color: var(--color-text-muted);">No submissions</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/dashboard/{{ participant.id }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;">
+                            View Dashboard
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom: 1.5rem;">Recent Submissions</h2>
+        
+        <div style="display: grid; gap: 1rem;">
+            {% for submission in recent_submissions %}
+            <div class="exercise-item">
+                <span class="exercise-status">
+                    {% if submission.perfected %}
+                        <div class="icon-star">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
+                            </svg>
+                        </div>
+                    {% else %}
+                        {% if submission.tests_passed %}
+                            <div class="icon-check">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="white"/>
+                                </svg>
+                            </div>
+                        {% else %}
+                            <div style="width: 24px; height: 24px; background-color: var(--color-error); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px;">
+                                    <path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </span>
+                <div style="flex-grow: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <div>
+                            <span style="font-weight: 500; color: var(--color-text);">{{ submission.participant_name }}</span>
+                            <span style="color: var(--color-text-muted);"> • </span>
+                            <span style="color: var(--color-primary); font-family: 'SF Mono', Monaco, monospace;">{{ submission.exercise_name }}</span>
+                        </div>
+                        <div style="font-size: 0.875rem; color: var(--color-text-muted);">
+                            {{ submission.submitted_at }}
+                        </div>
+                    </div>
+                    
+                    <details style="margin-top: 0.5rem;">
+                        <summary style="cursor: pointer; color: var(--color-text-muted); font-size: 0.875rem;">
+                            View Source Code
+                        </summary>
+                        <div class="code-block" style="margin-top: 0.5rem; font-size: 0.75rem;">
+                            <pre style="white-space: pre-wrap; margin: 0;">{{ submission.source_code }}</pre>
+                        </div>
+                    </details>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem; color: var(--color-text-muted);">
+        <p>🎓 Helping developers master Rust, one exercise at a time</p>
+    </div>
+</div>
+{% endblock %}

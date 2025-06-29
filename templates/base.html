@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}corrode Course{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            /* Default theme (dark-twir) */
+            --color-background: #2a2a2a;
+            --color-surface: #353535;
+            --color-primary: #d2991d;
+            --color-primary-muted: #9a7015;
+            --color-text: #f0f0f0;
+            --color-text-muted: #aeaeae;
+            --color-border: #353535;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+        }
+
+        /* Light themes */
+        html[data-theme="light-docs-rs"] {
+            --color-background: #ffffff;
+            --color-surface: #f5f5f5;
+            --color-primary: #000000;
+            --color-primary-muted: #333333;
+            --color-text: #000000;
+            --color-text-muted: #505050;
+            --color-border: #e0e0e0;
+        }
+
+        html[data-theme="light-hacker-news"] {
+            --color-background: #f6f6ef;
+            --color-surface: #ffffff;
+            --color-primary: #ff6600;
+            --color-primary-muted: #cc5200;
+            --color-text: #333333;
+            --color-text-muted: #828282;
+            --color-border: #e0e0e0;
+        }
+
+        /* Dark themes */
+        html[data-theme="dark-twir"] {
+            --color-background: #2a2a2a;
+            --color-surface: #353535;
+            --color-primary: #d2991d;
+            --color-primary-muted: #9a7015;
+            --color-text: #f0f0f0;
+            --color-text-muted: #aeaeae;
+            --color-border: #353535;
+        }
+
+        html[data-theme="dark-nord"] {
+            --color-background: #2e3440;
+            --color-surface: #3b4252;
+            --color-primary: #88c0d0;
+            --color-primary-muted: #81a1c1;
+            --color-text: #eceff4;
+            --color-text-muted: #d8dee9;
+            --color-border: #4c566a;
+        }
+
+        html[data-theme="dark-solarized"] {
+            --color-background: #002b36;
+            --color-surface: #073642;
+            --color-primary: #b58900;
+            --color-primary-muted: #839496;
+            --color-text: #839496;
+            --color-text-muted: #586e75;
+            --color-border: #073642;
+        }
+
+        /* Prevent transitions during load */
+        .preload * {
+            transition: none !important;
+            animation-duration: 0.001s !important;
+        }
+
+        /* Normal transitions after load */
+        * {
+            transition: background-color 0.1s ease, color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1024px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            font-family: "Bebas Neue", sans-serif;
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--color-text-muted);
+            font-weight: 500;
+        }
+
+        .card {
+            background-color: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 16px 24px;
+            background-color: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            color: var(--color-text);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .form-control::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 16px 24px;
+            background-color: var(--color-primary);
+            color: var(--color-background);
+            text-decoration: none;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--color-primary-muted);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--color-surface);
+            color: var(--color-text);
+            border: 2px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--color-primary);
+        }
+
+        .exercise-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .exercise-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .exercise-item:hover {
+            border-color: var(--color-primary);
+        }
+
+        .exercise-status {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+
+        .exercise-name {
+            font-weight: 500;
+            color: var(--color-text);
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+        }
+
+        .status-completed {
+            color: var(--color-success);
+        }
+
+        .status-perfected {
+            color: var(--color-warning);
+        }
+
+        .status-pending {
+            color: var(--color-text-muted);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1rem;
+            background-color: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .admin-table th {
+            background-color: var(--color-surface);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .admin-table td {
+            color: var(--color-text-muted);
+        }
+
+        .code-block {
+            background-color: var(--color-background);
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            color: var(--color-text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--color-text);
+        }
+
+        /* Theme switcher styles */
+        .theme-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background-color: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .theme-switcher select {
+            background-color: var(--color-surface);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .theme-switcher select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        /* SVG Icons */
+        .icon-check {
+            width: 24px;
+            height: 24px;
+            background-color: var(--color-success);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-star {
+            width: 24px;
+            height: 24px;
+            background-color: var(--color-warning);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-pending {
+            width: 24px;
+            height: 24px;
+            background-color: var(--color-text-muted);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-check svg, .icon-star svg, .icon-pending svg {
+            width: 14px;
+            height: 14px;
+            fill: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 16px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-table {
+                font-size: 0.875rem;
+            }
+
+            .theme-switcher {
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body class="preload">
+    <!-- Theme switcher -->
+    <div class="theme-switcher">
+        <select id="theme-select" onchange="setTheme(this.value)">
+            <optgroup label="Light Themes">
+                <option value="light-hacker-news">Hacker News</option>
+                <option value="light-docs-rs">Docs.rs</option>
+            </optgroup>
+            <optgroup label="Dark Themes">
+                <option value="dark-twir">This Week in Rust</option>
+                <option value="dark-nord">Nord</option>
+                <option value="dark-solarized">Solarized Dark</option>
+            </optgroup>
+        </select>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <script>
+        // Remove preload class after page is fully loaded to prevent flicker
+        window.addEventListener("load", () => {
+            document.body.classList.remove("preload");
+        });
+
+        // Theme switching function
+        function setTheme(theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+            localStorage.setItem("theme", theme);
+        }
+
+        // Initialize theme
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedTheme = localStorage.getItem("theme") || "dark-twir";
+            setTheme(savedTheme);
+            document.getElementById("theme-select").value = savedTheme;
+        });
+    </script>
+</body>
+</html>

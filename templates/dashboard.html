@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}{{ participant_name }}'s Progress - corrode Course{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="nav">
+        <a href="/" class="nav-brand">corrode Course</a>
+        <div class="nav-links">
+            <span class="nav-link">Welcome, {{ participant_name }}!</span>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>Your Progress</h1>
+        <p>Track your journey through the Rust course exercises</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <span class="stat-number">{% set completed_count = 0 %}{% for ex in exercises %}{% if ex.completed %}{% set completed_count = completed_count + 1 %}{% endif %}{% endfor %}{{ completed_count }}</span>
+            <span class="stat-label">Completed</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{% set perfected_count = 0 %}{% for ex in exercises %}{% if ex.perfected %}{% set perfected_count = perfected_count + 1 %}{% endif %}{% endfor %}{{ perfected_count }}</span>
+            <span class="stat-label">Perfected</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{% set total_count = 0 %}{% for ex in exercises %}{% set total_count = total_count + 1 %}{% endfor %}{{ total_count }}</span>
+            <span class="stat-label">Total Exercises</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom: 1.5rem;">Exercise Progress</h2>
+        
+        <div class="exercise-list">
+            {% for exercise in exercises %}
+            <div class="exercise-item">
+                <span class="exercise-status">
+                    {% if exercise.perfected %}
+                        <div class="icon-star">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
+                            </svg>
+                        </div>
+                    {% else %}
+                        {% if exercise.completed %}
+                            <div class="icon-check">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="white"/>
+                                </svg>
+                            </div>
+                        {% else %}
+                            <div class="icon-pending">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/>
+                                    <path d="M12 6V12L16 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </span>
+                <div>
+                    <div class="exercise-name">{{ exercise.name }}</div>
+                    {% if exercise.perfected %}
+                        <div style="font-size: 0.875rem; color: var(--color-warning);">Perfected with pedantic checks</div>
+                    {% else %}
+                        {% if exercise.completed %}
+                            <div style="font-size: 0.875rem; color: var(--color-success);">Tests passing</div>
+                        {% else %}
+                            <div style="font-size: 0.875rem; color: var(--color-text-muted);">Not attempted</div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 1rem;">CLI Commands</h3>
+        <div class="code-block">
+# Submit an exercise<br>
+cargo course submit examples/{{ exercises[0].name }}.rs<br><br>
+
+# Submit with pedantic checks to earn ⭐<br>
+cargo course submit examples/{{ exercises[0].name }}.rs --pedantic<br><br>
+
+# Check your progress<br>
+cargo course status
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem; color: var(--color-text-muted);">
+        <p>Keep going! Every exercise brings you closer to Rust mastery</p>
+    </div>
+</div>
+{% endblock %}
