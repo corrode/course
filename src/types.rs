@@ -23,14 +23,14 @@ use std::str::FromStr;
 ///
 /// ```
 /// use cargo_course::types::Name;
-/// 
+///
 /// let name = Name::try_from("Alice".to_string()).unwrap();
 /// assert_eq!(name.as_str(), "Alice");
-/// 
+///
 /// // Whitespace is trimmed
 /// let name = Name::try_from("  Bob  ".to_string()).unwrap();
 /// assert_eq!(name.as_str(), "Bob");
-/// 
+///
 /// // Empty names are rejected
 /// assert!(Name::try_from("".to_string()).is_err());
 /// ```
@@ -43,7 +43,7 @@ impl Name {
     /// This limit helps prevent abuse and ensures names fit comfortably
     /// in database columns and UI displays.
     pub const MAX_LENGTH: usize = 100;
-    
+
     /// Returns the validated name as a string slice.
     ///
     /// The returned string is guaranteed to be non-empty and no longer
@@ -59,15 +59,18 @@ impl TryFrom<String> for Name {
 
     fn try_from(value: String) -> Result<Self> {
         let trimmed = value.trim();
-        
+
         if trimmed.is_empty() {
             return Err(anyhow!("Name cannot be empty"));
         }
-        
+
         if trimmed.len() > Self::MAX_LENGTH {
-            return Err(anyhow!("Name too long (max {} characters)", Self::MAX_LENGTH));
+            return Err(anyhow!(
+                "Name too long (max {} characters)",
+                Self::MAX_LENGTH
+            ));
         }
-        
+
         Ok(Self(trimmed.to_string()))
     }
 }
@@ -116,7 +119,7 @@ impl Token {
     pub fn new(ulid: String) -> Self {
         Self(ulid)
     }
-    
+
     /// Returns the token as a string slice.
     ///
     /// This is primarily used for serialization and API requests.
@@ -148,7 +151,7 @@ impl fmt::Display for Token {
 ///
 /// This is sent by the CLI during the `cargo course init` flow
 /// when a participant enters their name.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct RegistrationRequest {
     /// The participant's chosen name (already validated)
     pub name: Name,
@@ -158,7 +161,7 @@ pub struct RegistrationRequest {
 ///
 /// The server generates a unique ULID token that the CLI
 /// stores locally for subsequent requests.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct RegistrationResponse {
     /// The generated ULID token for this participant
     pub ulid: String,
@@ -168,7 +171,7 @@ pub struct RegistrationResponse {
 ///
 /// This contains the participant's code and the results of local
 /// testing and linting checks performed by the CLI.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct SubmissionRequest {
     /// The participant's ULID token for identification
     pub ulid: String,
@@ -188,7 +191,7 @@ pub struct SubmissionRequest {
 ///
 /// This represents a participant's progress on one exercise,
 /// including whether they've completed it and achieved perfection.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ExerciseStatus {
     /// The exercise name (e.g., "01_strings")
     pub name: String,
@@ -202,7 +205,7 @@ pub struct ExerciseStatus {
 ///
 /// This is returned by the status API endpoint and contains
 /// information about all exercises in the course.
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ProgressResponse {
     /// Status for each exercise in the course
     pub exercises: Vec<ExerciseStatus>,

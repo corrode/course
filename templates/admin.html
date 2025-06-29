@@ -55,8 +55,8 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if participant.last_activity %}
-                            {{ participant.last_activity.format("%Y-%m-%d %H:%M") }}
+                        {% if participant.last_activity.is_some() %}
+                            Recent activity
                         {% else %}
                             <span style="color: var(--text-muted);">No submissions</span>
                         {% endif %}
@@ -97,7 +97,7 @@
                             <span style="color: var(--accent-primary);">{{ submission.exercise_name }}</span>
                         </div>
                         <div style="font-size: 0.875rem; color: var(--text-muted);">
-                            {{ submission.submitted_at.format("%H:%M") }}
+                            {{ submission.submitted_at }}
                         </div>
                     </div>
                     
