@@ -80,16 +80,14 @@
 
     <div class="card">
         <h3 style="margin-bottom: 1rem;">CLI Commands</h3>
-        <div class="code-block">
-# Submit an exercise<br>
-cargo course submit examples/{{ exercises[0].name }}.rs<br><br>
+        <pre><code class="language-bash"># Submit an exercise
+cargo course submit examples/{{ exercises[0].name }}.rs
 
-# Submit with pedantic checks to earn ⭐<br>
-cargo course submit examples/{{ exercises[0].name }}.rs --pedantic<br><br>
+# Submit with pedantic checks to earn a star
+cargo course submit examples/{{ exercises[0].name }}.rs --pedantic
 
-# Check your progress<br>
-cargo course status
-        </div>
+# Check your progress
+cargo course status</code></pre>
     </div>
 
     <div style="text-align: center; margin-top: 3rem; color: var(--color-text-muted);">
