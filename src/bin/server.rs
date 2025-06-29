@@ -166,7 +166,7 @@ async fn main() -> Result<()> {
         .route("/", get(landing_page))
         .route("/register", post(web_register))
         .route("/dashboard/{ulid}", get(participant_dashboard))
-        // .route("/admin", get(admin_dashboard))  // Disabled due to template issues
+        .route("/admin", get(admin_dashboard))
         .nest("/api", api_routes)
         .nest_service("/static", ServeDir::new("static"))
         .with_state(app_state);

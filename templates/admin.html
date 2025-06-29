@@ -27,7 +27,7 @@
         </div>
         <div class="stat-card">
             <span class="stat-number">{% set perfected_count = 0 %}{% for sub in recent_submissions %}{% if sub.perfected %}{% set perfected_count = perfected_count + 1 %}{% endif %}{% endfor %}{{ perfected_count }}</span>
-            <span class="stat-label">Recent ⭐ Perfected</span>
+            <span class="stat-label">Recent Perfected</span>
         </div>
     </div>
 
@@ -48,17 +48,17 @@
                 <tr>
                     <td style="font-weight: 500; color: var(--text-primary);">{{ participant.name }}</td>
                     <td>
-                        <span style="color: var(--success);">{{ participant.completed_count }}</span>
-                        <span style="color: var(--text-muted);">/{{ participant.total_exercises }}</span>
+                        <span style="color: var(--color-success);">{{ participant.completed_count }}</span>
+                        <span style="color: var(--color-text-muted);">/{{ participant.total_exercises }}</span>
                         {% if participant.completed_count == participant.total_exercises %}
-                            <span style="color: var(--warning); margin-left: 0.5rem;">🎉 Complete!</span>
+                            <span style="color: var(--color-warning); margin-left: 0.5rem;">🎉 Complete!</span>
                         {% endif %}
                     </td>
                     <td>
                         {% if participant.last_activity.is_some() %}
                             Recent activity
                         {% else %}
-                            <span style="color: var(--text-muted);">No submissions</span>
+                            <span style="color: var(--color-text-muted);">No submissions</span>
                         {% endif %}
                     </td>
                     <td>
@@ -80,29 +80,41 @@
             <div class="exercise-item">
                 <span class="exercise-status">
                     {% if submission.perfected %}
-                        <span class="status-perfected">⭐</span>
+                        <div class="icon-star">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
+                            </svg>
+                        </div>
                     {% else %}
                         {% if submission.tests_passed %}
-                            <span class="status-completed">✅</span>
+                            <div class="icon-check">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="white"/>
+                                </svg>
+                            </div>
                         {% else %}
-                            <span style="color: #ef4444;">❌</span>
+                            <div style="width: 24px; height: 24px; background-color: var(--color-error); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px;">
+                                    <path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
                         {% endif %}
                     {% endif %}
                 </span>
                 <div style="flex-grow: 1;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <div>
-                            <span style="font-weight: 500; color: var(--text-primary);">{{ submission.participant_name }}</span>
-                            <span style="color: var(--text-muted);"> • </span>
-                            <span style="color: var(--accent-primary);">{{ submission.exercise_name }}</span>
+                            <span style="font-weight: 500; color: var(--color-text);">{{ submission.participant_name }}</span>
+                            <span style="color: var(--color-text-muted);"> • </span>
+                            <span style="color: var(--color-primary); font-family: 'SF Mono', Monaco, monospace;">{{ submission.exercise_name }}</span>
                         </div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">
+                        <div style="font-size: 0.875rem; color: var(--color-text-muted);">
                             {{ submission.submitted_at }}
                         </div>
                     </div>
                     
                     <details style="margin-top: 0.5rem;">
-                        <summary style="cursor: pointer; color: var(--text-secondary); font-size: 0.875rem;">
+                        <summary style="cursor: pointer; color: var(--color-text-muted); font-size: 0.875rem;">
                             View Source Code
                         </summary>
                         <div class="code-block" style="margin-top: 0.5rem; font-size: 0.75rem;">
@@ -115,7 +127,7 @@
         </div>
     </div>
 
-    <div style="text-align: center; margin-top: 3rem; color: var(--text-muted);">
+    <div style="text-align: center; margin-top: 3rem; color: var(--color-text-muted);">
         <p>🎓 Helping developers master Rust, one exercise at a time</p>
     </div>
 </div>

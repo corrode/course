@@ -23,7 +23,7 @@
         </div>
         <div class="stat-card">
             <span class="stat-number">{% set perfected_count = 0 %}{% for ex in exercises %}{% if ex.perfected %}{% set perfected_count = perfected_count + 1 %}{% endif %}{% endfor %}{{ perfected_count }}</span>
-            <span class="stat-label">⭐ Perfected</span>
+            <span class="stat-label">Perfected</span>
         </div>
         <div class="stat-card">
             <span class="stat-number">{% set total_count = 0 %}{% for ex in exercises %}{% set total_count = total_count + 1 %}{% endfor %}{{ total_count }}</span>
@@ -39,24 +39,37 @@
             <div class="exercise-item">
                 <span class="exercise-status">
                     {% if exercise.perfected %}
-                        <span class="status-perfected">⭐</span>
+                        <div class="icon-star">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
+                            </svg>
+                        </div>
                     {% else %}
                         {% if exercise.completed %}
-                            <span class="status-completed">✅</span>
+                            <div class="icon-check">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="white"/>
+                                </svg>
+                            </div>
                         {% else %}
-                            <span class="status-pending">⏳</span>
+                            <div class="icon-pending">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/>
+                                    <path d="M12 6V12L16 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
                         {% endif %}
                     {% endif %}
                 </span>
                 <div>
                     <div class="exercise-name">{{ exercise.name }}</div>
                     {% if exercise.perfected %}
-                        <div style="font-size: 0.875rem; color: var(--warning);">Perfected with pedantic checks</div>
+                        <div style="font-size: 0.875rem; color: var(--color-warning);">Perfected with pedantic checks</div>
                     {% else %}
                         {% if exercise.completed %}
-                            <div style="font-size: 0.875rem; color: var(--success);">Tests passing</div>
+                            <div style="font-size: 0.875rem; color: var(--color-success);">Tests passing</div>
                         {% else %}
-                            <div style="font-size: 0.875rem; color: var(--text-muted);">Not attempted</div>
+                            <div style="font-size: 0.875rem; color: var(--color-text-muted);">Not attempted</div>
                         {% endif %}
                     {% endif %}
                 </div>
@@ -79,8 +92,8 @@ cargo course status
         </div>
     </div>
 
-    <div style="text-align: center; margin-top: 3rem; color: var(--text-muted);">
-        <p>Keep going! Every exercise brings you closer to Rust mastery 🦀</p>
+    <div style="text-align: center; margin-top: 3rem; color: var(--color-text-muted);">
+        <p>Keep going! Every exercise brings you closer to Rust mastery</p>
     </div>
 </div>
 {% endblock %}
