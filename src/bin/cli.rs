@@ -36,7 +36,11 @@ struct CourseArgs {
 #[derive(Subcommand)]
 enum CourseCommands {
     /// Initialize the course repository and register participant
-    Init,
+    Init {
+        /// Use an existing token instead of registering a new participant
+        #[arg(short, long)]
+        token: Option<String>,
+    },
     /// Submit an exercise solution
     Submit {
         /// Path to the exercise file (e.g., examples/01_strings.rs)
@@ -57,7 +61,7 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Commands::Course(args) => match args.command {
-            CourseCommands::Init => handle_init().await,
+            CourseCommands::Init { token } => handle_init(token).await,
             CourseCommands::Submit { file, pedantic } => handle_submit(&file, pedantic).await,
             CourseCommands::Status => handle_status().await,
             CourseCommands::Open => handle_open().await,
@@ -82,10 +86,22 @@ async fn handle_open() -> Result<()> {
 }
 
 /// Initialize the course repository and register participant if needed.
-async fn handle_init() -> Result<()> {
+async fn handle_init(token_arg: Option<String>) -> Result<()> {
+    // If a token was provided as argument, use it
+    if let Some(token_str) = token_arg {
+        let token = Token::from_str(&token_str)?;
+        save_token(&token)?;
+        println!("✅ Token saved successfully: {token}");
+        println!("💡 Submit exercises with: cargo course submit <file>");
+        println!("💡 For pedantic submissions (earn stars): cargo course submit <file> --pedantic");
+        println!("💡 Open dashboard with: cargo course open");
+        return Ok(());
+    }
+
     // Check for existing token
     if let Ok(existing_token) = read_token() {
         println!("✅ You're already registered with token: {existing_token}");
+        println!("💡 Use --token <TOKEN> to replace with a different token");
         return Ok(());
     }
 
