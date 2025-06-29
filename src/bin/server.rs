@@ -7,7 +7,7 @@ use axum::{
 };
 use dotenvy::dotenv;
 use serde::{Deserialize, Serialize};
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool, Row};
+use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, SqlitePool, Row, Sqlite};
 use std::env;
 use tower_http::services::ServeDir;
 use ulid::Ulid;
@@ -109,36 +109,63 @@ async fn main() -> Result<()> {
 
     let admin_token =
         env::var("CORRODE_ADMIN_TOKEN").expect("CORRODE_ADMIN_TOKEN must be set in .env file");
-    let database_url =
-        env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:./playground.db".to_string());
+    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
+        // Create the database in the current working directory
+        let current_dir = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+        let db_path = current_dir.join("playground.db");
+        println!("📁 Database will be created at: {}", db_path.display());
+        format!("sqlite:{}", db_path.display())
+    });
     let port: u16 = env::var("PORT")
         .unwrap_or_else(|_| "3000".to_string())
         .parse()
         .expect("PORT must be a valid number");
 
     // Set up database
+    println!("🔍 Checking if database exists: {}", database_url);
+    if !Sqlite::database_exists(&database_url).await.unwrap_or(false) {
+        println!("📦 Creating database {}", database_url);
+        match Sqlite::create_database(&database_url).await {
+            Ok(_) => println!("✅ Database created successfully"),
+            Err(error) => panic!("❌ Error creating database: {}", error),
+        }
+    } else {
+        println!("✅ Database already exists");
+    }
+
+    println!("🔌 Connecting to database...");
     let pool = SqlitePoolOptions::new()
         .max_connections(20)
         .connect(&database_url)
-        .await?;
+        .await
+        .map_err(|e| {
+            eprintln!("❌ Failed to connect to database: {}", e);
+            eprintln!("   Database URL: {}", database_url);
+            e
+        })?;
+    
+    println!("✅ Database connection established");
 
     // Run migrations
-    sqlx::migrate!("./migrations").run(&pool).await?;
+    let migrations = std::path::Path::new("./migrations");
+    let migrator = sqlx::migrate::Migrator::new(migrations).await?;
+    migrator.run(&pool).await?;
+    println!("✅ Database migrations completed");
 
-    let app_state = AppState { pool, admin_token };
+    let app_state = AppState { pool, admin_token: admin_token.clone() };
 
     // Build API routes
     let api_routes = Router::new()
         .route("/register", post(api_register))
         .route("/submit", post(api_submit))
-        .route("/status/:ulid", get(api_status))
+        .route("/status/{ulid}", get(api_status))
         .with_state(app_state.clone());
 
     // Build main routes
     let app = Router::new()
         .route("/", get(landing_page))
         .route("/register", post(web_register))
-        .route("/dashboard/:ulid", get(participant_dashboard))
+        .route("/dashboard/{ulid}", get(participant_dashboard))
         // .route("/admin", get(admin_dashboard))  // Disabled due to template issues
         .nest("/api", api_routes)
         .nest_service("/static", ServeDir::new("static"))
@@ -146,7 +173,8 @@ async fn main() -> Result<()> {
 
     let listener = tokio::net::TcpListener::bind(&format!("0.0.0.0:{port}")).await?;
     println!("🚀 Server running on http://localhost:{port}");
-    println!("📊 Admin dashboard: http://localhost:{port}/admin?token=<your_token>");
+    println!("📊 Admin dashboard: http://localhost:{port}/admin?token={admin_token}");
+    println!("🗃️  Database: {}", database_url);
 
     axum::serve(listener, app).await?;
     Ok(())
