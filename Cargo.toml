@@ -45,6 +45,7 @@ sqlx = { version = "0.8", features = [
 askama = { version = "0.13" }
 dotenvy = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
+open = "5.3.2"
 
 [lints.clippy]
 all = "warn"

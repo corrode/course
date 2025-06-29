@@ -47,6 +47,8 @@ enum CourseCommands {
     },
     /// Show progress and available exercises
     Status,
+    /// Open the course dashboard in the browser
+    Open,
 }
 
 #[tokio::main]
@@ -58,8 +60,25 @@ async fn main() -> Result<()> {
             CourseCommands::Init => handle_init().await,
             CourseCommands::Submit { file, pedantic } => handle_submit(&file, pedantic).await,
             CourseCommands::Status => handle_status().await,
+            CourseCommands::Open => handle_open().await,
         },
     }
+}
+
+async fn handle_open() -> Result<()> {
+    // Read token from file
+    let token = read_token()?;
+
+    // Construct the dashboard URL
+    let url = format!("{SERVER_URL}/dashboard/{}", token.as_str());
+
+    // Open the URL in the default browser
+    if open::that(&url).is_err() {
+        return Err(anyhow!("Failed to open browser. Please visit: {url}"));
+    }
+
+    println!("🌐 Opening course dashboard: {url}");
+    Ok(())
 }
 
 /// Initialize the course repository and register participant if needed.
@@ -74,17 +93,17 @@ async fn handle_init() -> Result<()> {
     println!("🚀 Welcome to the corrode Rust Course!");
     print!("How should I call you? ");
     io::stdout().flush()?;
-    
+
     let mut input = String::new();
     io::stdin().read_line(&mut input)?;
-    
+
     let name = Name::try_from(input)?;
     let token_str = register_with_server(&name).await?;
     let token = Token::new(token_str);
     save_token(&token)?;
 
     println!("✅ Registered successfully! Token: {token}");
-    
+
     // Give instructions on how to use the CLI
     println!("💡 Submit exercises with: cargo course submit <file>");
     println!("💡 For pedantic submissions (earn stars): cargo course submit <file> --pedantic");
@@ -95,8 +114,8 @@ async fn handle_init() -> Result<()> {
 /// Submit an exercise solution to the server.
 async fn handle_submit(file: &str, pedantic: bool) -> Result<()> {
     // 1. Read source code from file
-    let source_code = fs::read_to_string(file)
-        .map_err(|_| anyhow!("Failed to read file: {file}"))?;
+    let source_code =
+        fs::read_to_string(file).map_err(|_| anyhow!("Failed to read file: {file}"))?;
 
     // 2. Extract exercise name from filename
     let exercise_name = extract_exercise_name(file)?;
@@ -171,7 +190,7 @@ async fn handle_status() -> Result<()> {
 }
 
 /// Extract exercise name from file path.
-/// 
+///
 /// Examples:
 /// - `examples/01_strings.rs` → `01_strings`
 /// - `01_strings.rs` → `01_strings`
@@ -182,7 +201,7 @@ fn extract_exercise_name(file_path: &str) -> Result<String> {
         .ok_or_else(|| anyhow!("Invalid file path"))?
         .to_str()
         .ok_or_else(|| anyhow!("Invalid filename"))?;
-    
+
     // Remove .rs extension
     if let Some(name) = filename.strip_suffix(".rs") {
         Ok(name.to_string())
@@ -196,19 +215,17 @@ async fn run_cargo_test(exercise_name: &str) -> Result<(bool, String)> {
     let output = Command::new("cargo")
         .args(["test", "--example", exercise_name])
         .output()?;
-    
+
     let success = output.status.success();
     let stderr = String::from_utf8_lossy(&output.stderr);
-    
+
     Ok((success, stderr.to_string()))
 }
 
 /// Run cargo fmt --check and return success status.
 async fn run_cargo_fmt() -> Result<bool> {
-    let output = Command::new("cargo")
-        .args(["fmt", "--check"])
-        .output()?;
-    
+    let output = Command::new("cargo").args(["fmt", "--check"]).output()?;
+
     Ok(output.status.success())
 }
 
@@ -217,19 +234,16 @@ async fn run_cargo_clippy() -> Result<bool> {
     let output = Command::new("cargo")
         .args(["clippy", "--", "-D", "warnings"])
         .output()?;
-    
+
     Ok(output.status.success())
 }
-
 
 /// Register a new participant with the server.
 async fn register_with_server(name: &Name) -> Result<String> {
     let client = reqwest::Client::new();
     let response = client
         .post(&format!("{SERVER_URL}/api/register"))
-        .json(&RegistrationRequest {
-            name: name.clone(),
-        })
+        .json(&RegistrationRequest { name: name.clone() })
         .send()
         .await
         .map_err(|e| {
@@ -322,7 +336,7 @@ fn save_token(token: &Token) -> Result<()> {
     if let Some(parent) = Path::new(TOKEN_FILE).parent() {
         fs::create_dir_all(parent)?;
     }
-    
+
     fs::write(TOKEN_FILE, token.as_str())?;
     Ok(())
 }
