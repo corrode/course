@@ -32,6 +32,33 @@
     </div>
 
     <div class="card">
+        <details style="margin-bottom: 1.5rem;">
+            <summary style="cursor: pointer; font-size: 1.1rem; font-weight: 600; color: var(--color-text); padding: 0.75rem 0; border-bottom: 1px solid var(--color-border);">
+                💡 Getting Started - Click to expand
+            </summary>
+            <div style="padding-top: 1.5rem;">
+                <p style="color: var(--color-text-muted); margin-bottom: 1rem;">
+                    Follow these steps to get started with submitting exercises:
+                </p>
+                <div class="code-container">
+                    <pre><code class="language-bash"># Clone the repository
+git clone https://github.com/corrode/course.git
+cd course
+
+# Install the CLI tool
+cargo install --path .
+
+# Submit an exercise
+cargo course submit examples/{{ exercises[0].name }}.rs
+
+# Check your progress
+cargo course status</code></pre>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <div class="card">
         <h2 style="margin-bottom: 1.5rem;">Exercise Progress</h2>
         
         <div class="exercise-list">
@@ -78,32 +105,6 @@
         </div>
     </div>
 
-    <div class="card">
-        <h3 style="margin-bottom: 1rem;">Getting Started</h3>
-        <div class="code-block">
-# Clone the repository<br>
-git clone https://github.com/corrode/course.git<br>
-cd course<br><br>
-
-# Install the CLI tool<br>
-cargo install --path .<br><br>
-
-# Submit an exercise<br>
-cargo course submit examples/{{ exercises[0].name }}.rs<br><br>
-
-# Submit with pedantic checks to earn ⭐<br>
-cargo course submit examples/{{ exercises[0].name }}.rs --pedantic<br><br>
-
-# Submit all passing exercises at once<br>
-cargo course submit --all<br><br>
-
-# Check your progress<br>
-cargo course status<br><br>
-
-# Open this dashboard<br>
-cargo course open
-        </div>
-    </div>
 
     <div style="text-align: center; margin-top: 3rem; color: var(--color-text-muted);">
         <p>Keep going! Every exercise brings you closer to Rust mastery</p>
