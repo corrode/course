@@ -44,10 +44,13 @@ enum CourseCommands {
     /// Submit an exercise solution
     Submit {
         /// Path to the exercise file (e.g., examples/01_strings.rs)
-        file: String,
+        file: Option<String>,
         /// Run fmt and clippy for a pedantic submission to earn a star
         #[arg(long)]
         pedantic: bool,
+        /// Submit all exercises that pass tests
+        #[arg(long)]
+        all: bool,
     },
     /// Show progress and available exercises
     Status,
@@ -62,7 +65,7 @@ async fn main() -> Result<()> {
     match cli.command {
         Commands::Course(args) => match args.command {
             CourseCommands::Init { token } => handle_init(token).await,
-            CourseCommands::Submit { file, pedantic } => handle_submit(&file, pedantic).await,
+            CourseCommands::Submit { file, pedantic, all } => handle_submit(file.as_deref(), pedantic, all).await,
             CourseCommands::Status => handle_status().await,
             CourseCommands::Open => handle_open().await,
         },
@@ -128,7 +131,12 @@ async fn handle_init(token_arg: Option<String>) -> Result<()> {
 }
 
 /// Submit an exercise solution to the server.
-async fn handle_submit(file: &str, pedantic: bool) -> Result<()> {
+async fn handle_submit(file: Option<&str>, pedantic: bool, all: bool) -> Result<()> {
+    if all {
+        return handle_submit_all(pedantic).await;
+    }
+    
+    let file = file.ok_or_else(|| anyhow!("File path is required when not using --all"))?;
     // 1. Read source code from file
     let source_code =
         fs::read_to_string(file).map_err(|_| anyhow!("Failed to read file: {file}"))?;
@@ -179,6 +187,145 @@ async fn handle_submit(file: &str, pedantic: bool) -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Submit all exercises that pass tests.
+async fn handle_submit_all(pedantic: bool) -> Result<()> {
+    println!("🔍 Scanning for exercises...");
+    
+    // Read token from file
+    let token = read_token()?;
+    
+    // Get list of all exercise files
+    let exercise_files = find_exercise_files()?;
+    if exercise_files.is_empty() {
+        println!("❌ No exercise files found in examples/ directory");
+        return Ok(());
+    }
+    
+    println!("📋 Found {} exercise files", exercise_files.len());
+    
+    let mut successful_submissions = 0;
+    let mut failed_exercises = Vec::new();
+    
+    for file_path in &exercise_files {
+        let exercise_name = match extract_exercise_name(file_path) {
+            Ok(name) => name,
+            Err(_) => {
+                println!("⚠️  Skipping {}: invalid filename format", file_path);
+                continue;
+            }
+        };
+        
+        print!("🧪 Testing {exercise_name}... ");
+        std::io::stdout().flush().unwrap();
+        
+        // Run tests for this exercise
+        let (tests_passed, test_output) = match run_cargo_test(&exercise_name).await {
+            Ok(result) => result,
+            Err(_) => {
+                println!("❌ Error running tests");
+                failed_exercises.push(exercise_name);
+                continue;
+            }
+        };
+        
+        if !tests_passed {
+            println!("❌ Tests failed");
+            failed_exercises.push(exercise_name);
+            continue;
+        }
+        
+        // Tests passed, now read source code and submit
+        let source_code = match fs::read_to_string(file_path) {
+            Ok(content) => content,
+            Err(_) => {
+                println!("❌ Failed to read file");
+                failed_exercises.push(exercise_name);
+                continue;
+            }
+        };
+        
+        // If pedantic flag, also run fmt + clippy
+        let (fmt_passed, clippy_passed) = if pedantic {
+            match (run_cargo_fmt().await, run_cargo_clippy().await) {
+                (Ok(fmt), Ok(clippy)) => (fmt, clippy),
+                _ => {
+                    println!("❌ Error running pedantic checks");
+                    failed_exercises.push(exercise_name);
+                    continue;
+                }
+            }
+        } else {
+            (false, false)
+        };
+        
+        // Submit to server
+        let submission_result = submit_to_server(SubmissionRequest {
+            ulid: token.as_str().to_string(),
+            exercise_name: exercise_name.clone(),
+            source_code,
+            tests_passed,
+            clippy_passed,
+            fmt_passed,
+        }).await;
+        
+        match submission_result {
+            Ok(_) => {
+                if pedantic && fmt_passed && clippy_passed {
+                    println!("⭐ Perfected!");
+                } else {
+                    println!("✅ Submitted!");
+                }
+                successful_submissions += 1;
+            }
+            Err(_) => {
+                println!("❌ Upload failed");
+                failed_exercises.push(exercise_name);
+            }
+        }
+    }
+    
+    // Summary
+    println!("\n📊 Submission Summary:");
+    println!("✅ Successfully submitted: {successful_submissions}");
+    if !failed_exercises.is_empty() {
+        println!("❌ Failed exercises: {}", failed_exercises.len());
+        println!("   {}", failed_exercises.join(", "));
+    }
+    
+    if successful_submissions > 0 {
+        println!("\n🎉 Use 'cargo course status' to see your updated progress!");
+    }
+    
+    Ok(())
+}
+
+/// Find all exercise files in the examples directory.
+fn find_exercise_files() -> Result<Vec<String>> {
+    let examples_dir = Path::new("examples");
+    if !examples_dir.exists() {
+        return Err(anyhow!("examples/ directory not found"));
+    }
+    
+    let mut exercise_files = Vec::new();
+    
+    for entry in fs::read_dir(examples_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
+            if file_name.ends_with(".rs") && !file_name.starts_with("_") {
+                if let Some(path_str) = path.to_str() {
+                    exercise_files.push(path_str.to_string());
+                }
+            }
+        }
+    }
+    
+    // Sort files for consistent ordering
+    exercise_files.sort();
+    Ok(exercise_files)
 }
 
 /// Show participant progress and available exercises.
