@@ -592,11 +592,18 @@
         .brand-logo {
             height: 78px;
             margin-bottom: 1.5rem;
-            filter: brightness(0) saturate(100%) invert(100%);
         }
 
-        html[data-theme^="light"] .brand-logo {
-            filter: brightness(0) saturate(100%) invert(0%);
+        :root {
+            --logo-filter: invert(100%);
+        }
+
+        html[data-theme^="light"] {
+            --logo-filter: invert(0%);
+        }
+
+        .brand-logo {
+            filter: var(--logo-filter);
         }
 
         @media (max-width: 768px) {
@@ -633,11 +640,15 @@
             <optgroup label="Light Themes">
                 <option value="light-hacker-news">Hacker News</option>
                 <option value="light-docs-rs">Docs.rs</option>
+                <option value="light-github">GitHub</option>
+                <option value="light-rust">Rust</option>
             </optgroup>
             <optgroup label="Dark Themes">
                 <option value="dark-twir">This Week in Rust</option>
                 <option value="dark-nord">Nord</option>
                 <option value="dark-solarized">Solarized Dark</option>
+                <option value="dark-dracula">Dracula</option>
+                <option value="dark-catppuccin">Catppuccin</option>
             </optgroup>
         </select>
     </div>

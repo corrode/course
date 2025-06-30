@@ -5,14 +5,16 @@
 {% block content %}
 <div class="container">
     <div class="nav">
-        <a href="/" class="nav-brand">corrode Rust Course</a>
+        <a href="/" class="nav-brand">
+            <img src="/static/assets/corrode-logo.svg" alt="corrode" class="brand-logo" style="filter: var(--logo-filter);" />
+        </a>
         <div class="nav-links">
             <span class="nav-link">Welcome, {{ participant_name }}!</span>
         </div>
     </div>
 
     <div class="header">
-        <h1>Your Progress</h1>
+        <h1>Your Course Progress</h1>
         <p>Track your journey through the Rust course exercises</p>
     </div>
 
