@@ -124,11 +124,11 @@
                                 </svg>
                                 Copy
                             </div>
-                            <div class="copy-btn" onclick="copyCodeToPastebin(this.nextElementSibling.querySelector('code'), this, '{{ submission.exercise_name }} by {{ submission.participant_name }}')" title="Copy to pastebin" style="right: 70px;">
+                            <div class="copy-btn" onclick="openCodeInPlayground(this.nextElementSibling.querySelector('code'), this, '{{ submission.exercise_name }} by {{ submission.participant_name }}')" title="Open in Rust Playground" style="right: 70px;">
                                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
                                 </svg>
-                                Share
+                                Play
                             </div>
                             <pre><code class="language-rust">{{ submission.source_code }}</code></pre>
                         </div>
