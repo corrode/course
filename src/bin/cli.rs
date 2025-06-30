@@ -61,6 +61,8 @@ enum CourseCommands {
     Status,
     /// Open the course dashboard in the browser
     Open,
+    /// Print the current token to stdout
+    Token,
 }
 
 #[tokio::main]
@@ -73,7 +75,20 @@ async fn main() -> Result<()> {
             CourseCommands::Submit { file, pedantic, all } => handle_submit(file.as_deref(), pedantic, all).await,
             CourseCommands::Status => handle_status().await,
             CourseCommands::Open => handle_open().await,
+            CourseCommands::Token => handle_token().await,
         },
+    }
+}
+
+async fn handle_token() -> Result<()> {
+    match read_token() {
+        Ok(token) => {
+            println!("{}", token.as_str());
+            Ok(())
+        }
+        Err(_) => {
+            Err(anyhow!("No token found. Run 'cargo course init' to register."))
+        }
     }
 }
 
