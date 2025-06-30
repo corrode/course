@@ -117,8 +117,20 @@
                         <summary style="cursor: pointer; color: var(--color-text-muted); font-size: 0.875rem;">
                             View Source Code
                         </summary>
-                        <div class="code-block" style="margin-top: 0.5rem; font-size: 0.75rem;">
-                            <pre style="white-space: pre-wrap; margin: 0;">{{ submission.source_code }}</pre>
+                        <div class="code-container" style="margin-top: 0.5rem;">
+                            <div class="copy-btn" onclick="copyCodeFromElement(this.nextElementSibling.nextElementSibling.querySelector('code'))" title="Copy to clipboard">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
+                                </svg>
+                                Copy
+                            </div>
+                            <div class="copy-btn" onclick="copyCodeToPastebin(this.nextElementSibling.querySelector('code'), this, '{{ submission.exercise_name }} by {{ submission.participant_name }}')" title="Copy to pastebin" style="right: 70px;">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Share
+                            </div>
+                            <pre><code class="language-rust">{{ submission.source_code }}</code></pre>
                         </div>
                     </details>
                 </div>

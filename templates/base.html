@@ -6,6 +6,11 @@
     <title>{% block title %}corrode Course{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet" />
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <style>
         :root {
             /* Default theme (dark-twir) */
@@ -331,33 +336,6 @@
             color: var(--color-text);
         }
 
-        /* Theme switcher styles */
-        .theme-switcher {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background-color: var(--color-surface);
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            padding: 8px;
-        }
-
-        .theme-switcher select {
-            background-color: var(--color-surface);
-            color: var(--color-text);
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .theme-switcher select:focus {
-            outline: none;
-            border-color: var(--color-primary);
-        }
-
         /* SVG Icons */
         .icon-check {
             width: 24px;
@@ -395,6 +373,151 @@
             fill: white;
         }
 
+        /* Prism.js syntax highlighting integration */
+        pre[class*="language-"] {
+            background: var(--color-background) !important;
+            border: 2px solid var(--color-border) !important;
+            border-radius: 8px !important;
+            padding: 1rem !important;
+            margin: 0.5rem 0 !important;
+            overflow-x: auto !important;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace !important;
+            font-size: 0.875rem !important;
+            line-height: 1.5 !important;
+        }
+
+        code[class*="language-"] {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace !important;
+            font-size: 0.875rem !important;
+        }
+
+        /* Theme-aware syntax highlighting colors */
+        html[data-theme^="dark"] .token.comment,
+        html[data-theme^="dark"] .token.prolog,
+        html[data-theme^="dark"] .token.doctype,
+        html[data-theme^="dark"] .token.cdata {
+            color: #6b7280;
+        }
+
+        html[data-theme^="dark"] .token.punctuation {
+            color: var(--color-text);
+        }
+
+        html[data-theme^="dark"] .token.keyword {
+            color: #8b5cf6;
+        }
+
+        html[data-theme^="dark"] .token.string {
+            color: #10b981;
+        }
+
+        html[data-theme^="dark"] .token.number {
+            color: #f59e0b;
+        }
+
+        html[data-theme^="dark"] .token.function {
+            color: #3b82f6;
+        }
+
+        html[data-theme^="light"] .token.comment,
+        html[data-theme^="light"] .token.prolog,
+        html[data-theme^="light"] .token.doctype,
+        html[data-theme^="light"] .token.cdata {
+            color: #6b7280;
+        }
+
+        html[data-theme^="light"] .token.keyword {
+            color: #7c3aed;
+        }
+
+        html[data-theme^="light"] .token.string {
+            color: #059669;
+        }
+
+        html[data-theme^="light"] .token.number {
+            color: #d97706;
+        }
+
+        html[data-theme^="light"] .token.function {
+            color: #2563eb;
+        }
+
+        /* Copy button styling */
+        .code-container {
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 6px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        }
+
+        .copy-btn:hover {
+            opacity: 1;
+            border-color: var(--color-primary);
+            color: var(--color-text);
+        }
+
+        .copy-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .copy-btn.copied {
+            color: var(--color-success);
+            border-color: var(--color-success);
+        }
+
+        /* Theme switcher styles */
+        .theme-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background-color: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-switcher label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text);
+        }
+
+        .theme-switcher select {
+            background-color: var(--color-surface);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .theme-switcher select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 40px 16px;
@@ -415,6 +538,8 @@
             .theme-switcher {
                 top: 10px;
                 right: 10px;
+                flex-direction: column;
+                gap: 4px;
             }
         }
     </style>
@@ -422,6 +547,7 @@
 <body class="preload">
     <!-- Theme switcher -->
     <div class="theme-switcher">
+        <label for="theme-select">Theme:</label>
         <select id="theme-select" onchange="setTheme(this.value)">
             <optgroup label="Light Themes">
                 <option value="light-hacker-news">Hacker News</option>
@@ -455,6 +581,101 @@
             setTheme(savedTheme);
             document.getElementById("theme-select").value = savedTheme;
         });
+
+        // Copy to clipboard functionality
+        async function copyToClipboard(text, button) {
+            try {
+                await navigator.clipboard.writeText(text);
+                
+                // Update button state
+                const originalContent = button.innerHTML;
+                button.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
+                    </svg>
+                    Copied!
+                `;
+                button.classList.add('copied');
+                
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalContent;
+                    button.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+        }
+
+        // Copy code from DOM element
+        function copyCodeFromElement(codeElement) {
+            const text = codeElement.textContent;
+            const button = codeElement.closest('.code-container').querySelector('.copy-btn');
+            copyToClipboard(text, button);
+        }
+
+        // Copy code to pastebin from DOM element
+        function copyCodeToPastebin(codeElement, button, title = 'Rust Code') {
+            const text = codeElement.textContent;
+            copyToPastebin(text, button, title);
+        }
+
+        // Copy to pastebin using paste.ee API
+        async function copyToPastebin(text, button, title = 'Rust Code') {
+            try {
+                const response = await fetch('https://api.paste.ee/v1/pastes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        description: title,
+                        sections: [{
+                            name: title,
+                            syntax: 'rust',
+                            contents: text
+                        }]
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const url = `https://paste.ee/p/${data.id}`;
+                    
+                    // Copy URL to clipboard
+                    await navigator.clipboard.writeText(url);
+                    
+                    // Update button state
+                    const originalContent = button.innerHTML;
+                    button.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        URL Copied!
+                    `;
+                    button.classList.add('copied');
+                    
+                    // Reset after 3 seconds
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                        button.classList.remove('copied');
+                    }, 3000);
+                } else {
+                    throw new Error('Pastebin service unavailable');
+                }
+            } catch (err) {
+                console.error('Failed to create pastebin: ', err);
+                // Fallback to regular copy
+                copyToClipboard(text, button);
+            }
+        }
     </script>
 </body>
 </html>
