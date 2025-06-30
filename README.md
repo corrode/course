@@ -67,6 +67,12 @@ cargo course status
 - The CLI requires a running course server. See the server setup section below, or use manual testing for offline practice.
 - After completing an exercise, you can submit again with `--pedantic` to earn a ⭐ star by passing additional formatting and linting checks!
 
+### Learning Resources (To Help You Get Started)
+
+- **Rust Documentation**: [doc.rust-lang.org](https://doc.rust-lang.org/stable/std/index.html)
+- **The Rust Book**: [doc.rust-lang.org/book/](https://doc
+- **Cheat Sheets**: [List on Notion](https://corrode.notion.site/Cheat-Sheets-4b176fe935fe495bb254d255e1c16fe7)
+
 ### Three Ways to Practice
 
 #### Option 1: Local Development with CLI Tool (Recommended)
