@@ -9,8 +9,13 @@ use std::path::Path;
 use std::process::Command;
 use std::str::FromStr;
 
-const SERVER_URL: &str = "http://course-6xdi.onrender.com";
+const DEFAULT_SERVER_URL: &str = "https://course.corrode.dev";
 const TOKEN_FILE: &str = ".corrode/token";
+
+/// Get the server URL from environment variable or use default
+fn get_server_url() -> String {
+    env::var("CORRODE_SERVER_URL").unwrap_or_else(|_| DEFAULT_SERVER_URL.to_string())
+}
 
 #[derive(Parser)]
 #[command(name = "cargo")]
@@ -77,7 +82,7 @@ async fn handle_open() -> Result<()> {
     let token = read_token()?;
 
     // Construct the dashboard URL
-    let url = format!("{SERVER_URL}/dashboard/{}", token.as_str());
+    let url = format!("{}/dashboard/{}", get_server_url(), token.as_str());
 
     // Open the URL in the default browser
     if open::that(&url).is_err() {
@@ -443,19 +448,19 @@ async fn run_cargo_clippy() -> Result<bool> {
 async fn register_with_server(name: &Name) -> Result<String> {
     let client = reqwest::Client::new();
     let response = client
-        .post(&format!("{SERVER_URL}/api/register"))
+        .post(&format!("{}/api/register", get_server_url()))
         .json(&RegistrationRequest { name: name.clone() })
         .send()
         .await
         .map_err(|e| {
             if e.is_connect() {
                 anyhow!(
-                    "❌ Cannot connect to the corrode course server at {SERVER_URL}\n\n\
+                    "❌ Cannot connect to the corrode course server at {}\n\n\
                      This usually means:\n\
                      • The course server is not running\n\
                      • You're working offline\n\n\
                      💡 For offline practice, use manual testing instead:\n\
-                     cargo test --example 00_hello_rust"
+                     cargo test --example 00_hello_rust", get_server_url()
                 )
             } else {
                 anyhow!("Network error: {e}")
@@ -474,16 +479,16 @@ async fn register_with_server(name: &Name) -> Result<String> {
 async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
     let client = reqwest::Client::new();
     let response = client
-        .post(&format!("{SERVER_URL}/api/submit"))
+        .post(&format!("{}/api/submit", get_server_url()))
         .json(&submission)
         .send()
         .await
         .map_err(|e| {
             if e.is_connect() {
                 anyhow!(
-                    "❌ Cannot connect to the corrode course server at {SERVER_URL}\n\n\
+                    "❌ Cannot connect to the corrode course server at {}\n\n\
                      💡 Your solution was tested locally but couldn't be submitted.\n\
-                     For offline practice, continue using: cargo test --example <exercise_name>"
+                     For offline practice, continue using: cargo test --example <exercise_name>", get_server_url()
                 )
             } else {
                 anyhow!("Network error: {e}")
@@ -501,15 +506,15 @@ async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
 async fn fetch_progress(token: &Token) -> Result<ProgressResponse> {
     let client = reqwest::Client::new();
     let response = client
-        .get(&format!("{SERVER_URL}/api/status/{}", token.as_str()))
+        .get(&format!("{}/api/status/{}", get_server_url(), token.as_str()))
         .send()
         .await
         .map_err(|e| {
             if e.is_connect() {
                 anyhow!(
-                    "❌ Cannot connect to the corrode course server at {SERVER_URL}\n\n\
+                    "❌ Cannot connect to the corrode course server at {}\n\n\
                      💡 Server is not available to show your progress.\n\
-                     Continue practicing with: cargo test --example <exercise_name>"
+                     Continue practicing with: cargo test --example <exercise_name>", get_server_url()
                 )
             } else {
                 anyhow!("Network error: {e}")
