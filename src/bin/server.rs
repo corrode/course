@@ -6,6 +6,7 @@ use axum::{
     debug_handler, extract::{Path as AxumPath, Query, State}, http::StatusCode, response::{Html, IntoResponse, Json}, routing::{get, post}, Router
 };
 use dotenvy::dotenv;
+use log::{info, warn, error};
 use serde::{Deserialize, Serialize};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, SqlitePool, Row, Sqlite};
 use std::env;
@@ -104,8 +105,17 @@ struct WebRegistrationForm {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Initialize logging with info level by default
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info");
+    }
+    env_logger::init();
+    
     // Load environment variables
     dotenv().ok();
+    
+    println!("🚀 Starting corrode course server...");
+    info!("Starting corrode course server...");
 
     let admin_token =
         env::var("CORRODE_ADMIN_TOKEN").expect("CORRODE_ADMIN_TOKEN must be set in .env file");
@@ -123,17 +133,27 @@ async fn main() -> Result<()> {
 
     // Set up database
     println!("🔍 Checking if database exists: {}", database_url);
+    info!("Checking if database exists: {}", database_url);
     if !Sqlite::database_exists(&database_url).await.unwrap_or(false) {
         println!("📦 Creating database {}", database_url);
+        info!("Creating database {}", database_url);
         match Sqlite::create_database(&database_url).await {
-            Ok(_) => println!("✅ Database created successfully"),
-            Err(error) => panic!("❌ Error creating database: {}", error),
+            Ok(_) => {
+                println!("✅ Database created successfully");
+                info!("Database created successfully");
+            }
+            Err(error) => {
+                error!("Error creating database: {}", error);
+                panic!("❌ Error creating database: {}", error);
+            }
         }
     } else {
         println!("✅ Database already exists");
+        info!("Database already exists");
     }
 
     println!("🔌 Connecting to database...");
+    info!("Connecting to database...");
     let pool = SqlitePoolOptions::new()
         .max_connections(20)
         .connect(&database_url)
@@ -141,16 +161,20 @@ async fn main() -> Result<()> {
         .map_err(|e| {
             eprintln!("❌ Failed to connect to database: {}", e);
             eprintln!("   Database URL: {}", database_url);
+            error!("Failed to connect to database: {}", e);
+            error!("Database URL: {}", database_url);
             e
         })?;
     
     println!("✅ Database connection established");
+    info!("Database connection established");
 
     // Run migrations
     let migrations = std::path::Path::new("./migrations");
     let migrator = sqlx::migrate::Migrator::new(migrations).await?;
     migrator.run(&pool).await?;
     println!("✅ Database migrations completed");
+    info!("Database migrations completed");
 
     let app_state = AppState { pool, admin_token: admin_token.clone() };
 
@@ -175,6 +199,9 @@ async fn main() -> Result<()> {
     println!("🚀 Server running on http://localhost:{port}");
     println!("📊 Admin dashboard: http://localhost:{port}/admin?token={admin_token}");
     println!("🗃️  Database: {}", database_url);
+    info!("Server running on http://localhost:{port}");
+    info!("Admin dashboard: http://localhost:{port}/admin?token={admin_token}");
+    info!("Database: {}", database_url);
 
     axum::serve(listener, app).await?;
     Ok(())
@@ -343,6 +370,8 @@ async fn api_register(
     Json(request): Json<RegistrationRequest>,
 ) -> Result<Json<RegistrationResponse>, StatusCode> {
     let ulid = Ulid::new().to_string();
+    
+    info!("New participant registration: name='{}', ulid='{}'", request.name.as_str(), ulid);
 
     match sqlx::query("INSERT INTO participants (id, name) VALUES (?, ?)")
         .bind(&ulid)
@@ -350,8 +379,14 @@ async fn api_register(
         .execute(&state.pool)
         .await
     {
-        Ok(_) => Ok(Json(RegistrationResponse { ulid })),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Ok(_) => {
+            info!("Participant registered successfully: {}", ulid);
+            Ok(Json(RegistrationResponse { ulid }))
+        },
+        Err(e) => {
+            error!("Failed to register participant: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
     }
 }
 
@@ -361,6 +396,29 @@ async fn api_submit(
     State(state): State<AppState>,
     Json(request): Json<SubmissionRequest>,
 ) -> Result<StatusCode, StatusCode> {
+    info!("Submission attempt: participant_id='{}', exercise='{}'", request.ulid, request.exercise_name);
+    
+    // First, check if the participant exists
+    let participant_exists = sqlx::query("SELECT 1 FROM participants WHERE id = ?")
+        .bind(&request.ulid)
+        .fetch_optional(&state.pool)
+        .await;
+        
+    match participant_exists {
+        Ok(Some(_)) => {
+            // Participant exists, proceed with submission
+            info!("Valid participant found for submission: {}", request.ulid);
+        },
+        Ok(None) => {
+            warn!("Submission attempt with invalid participant ID: {}", request.ulid);
+            return Err(StatusCode::UNAUTHORIZED);
+        },
+        Err(e) => {
+            error!("Database error while checking participant: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    }
+    
     // Upsert submission (replace if exists)
     match sqlx::query(
         r#"
@@ -385,8 +443,15 @@ async fn api_submit(
     .execute(&state.pool)
     .await 
     {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Ok(_) => {
+            info!("Submission successful: participant='{}', exercise='{}', tests_passed={}", 
+                  request.ulid, request.exercise_name, request.tests_passed);
+            Ok(StatusCode::OK)
+        },
+        Err(e) => {
+            error!("Failed to save submission: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
     }
 }
 
@@ -396,8 +461,15 @@ async fn api_status(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
 ) -> Result<Json<ProgressResponse>, StatusCode> {
+    info!("Status request for participant: {}", ulid);
+    
     match get_exercise_progress(&state.pool, &ulid).await {
         Ok(exercises) => {
+            let completed_count = exercises.iter().filter(|e| e.completed).count();
+            let perfected_count = exercises.iter().filter(|e| e.perfected).count();
+            info!("Status response: participant='{}', completed={}, perfected={}", 
+                  ulid, completed_count, perfected_count);
+            
             let exercise_statuses = exercises
                 .into_iter()
                 .map(|e| ExerciseStatus {
@@ -411,7 +483,10 @@ async fn api_status(
                 exercises: exercise_statuses,
             }))
         }
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) => {
+            error!("Failed to get exercise progress for {}: {}", ulid, e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
     }
 }
 

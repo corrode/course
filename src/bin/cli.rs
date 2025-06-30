@@ -496,7 +496,18 @@ async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
         })?;
 
     if !response.status().is_success() {
-        return Err(anyhow!("Submission failed: {}", response.status()));
+        let error_msg = match response.status() {
+            reqwest::StatusCode::UNAUTHORIZED => {
+                "Invalid token. Please run 'cargo course init' to register or check your token.".to_string()
+            }
+            reqwest::StatusCode::BAD_REQUEST => {
+                "Invalid submission data. Please check your exercise file and try again.".to_string()
+            }
+            status => {
+                format!("Submission failed: {}", status)
+            }
+        };
+        return Err(anyhow!(error_msg));
     }
 
     Ok(())
