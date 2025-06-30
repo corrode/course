@@ -60,6 +60,15 @@ struct DashboardTemplate {
 struct AdminTemplate {
     participants: Vec<ParticipantSummary>,
     recent_submissions: Vec<SubmissionSummary>,
+    stats: AdminStats,
+}
+
+/// Admin dashboard statistics
+#[derive(Serialize)]
+struct AdminStats {
+    total_participants: i64,
+    total_submissions: i64,
+    total_perfected: i64,
 }
 
 /// Exercise progress for dashboard display
@@ -352,9 +361,16 @@ async fn admin_dashboard(
         });
     }
 
+    // Get admin statistics with proper SQL queries
+    let stats = match get_admin_stats(&state.pool).await {
+        Ok(stats) => stats,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get admin statistics").into_response(),
+    };
+
     let template = AdminTemplate {
         participants,
         recent_submissions,
+        stats,
     };
 
     match template.render() {
@@ -488,6 +504,35 @@ async fn api_status(
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
     }
+}
+
+/// Get admin statistics
+async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
+    // Get total participants
+    let total_participants: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM participants")
+        .fetch_one(pool)
+        .await?;
+
+    // Get total submissions across all participants
+    let total_submissions: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM submissions WHERE tests_passed = 1"
+    )
+    .fetch_one(pool)
+    .await?;
+
+    // Get total perfected submissions (successful + fmt + clippy)
+    let total_perfected: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM submissions WHERE tests_passed = 1 AND fmt_passed = 1 AND clippy_passed = 1"
+    )
+    .fetch_one(pool)
+    .await?;
+
+
+    Ok(AdminStats {
+        total_participants,
+        total_submissions,
+        total_perfected,
+    })
 }
 
 /// Get exercise progress for a participant
