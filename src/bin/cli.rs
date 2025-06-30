@@ -204,84 +204,42 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
     }
     
     println!("📋 Found {} exercise files", exercise_files.len());
+    println!("🚀 Testing exercises in parallel...");
     
+    // Process exercises in parallel using bounded concurrency
+    let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(4)); // Limit to 4 concurrent operations
+    let token = std::sync::Arc::new(token);
+    
+    let tasks: Vec<_> = exercise_files
+        .into_iter()
+        .map(|file_path| {
+            let semaphore = semaphore.clone();
+            let token = token.clone();
+            tokio::spawn(async move {
+                let _permit = semaphore.acquire().await.unwrap();
+                process_single_exercise(file_path, pedantic, &token).await
+            })
+        })
+        .collect();
+    
+    // Wait for all tasks to complete and collect results
     let mut successful_submissions = 0;
     let mut failed_exercises = Vec::new();
     
-    for file_path in &exercise_files {
-        let exercise_name = match extract_exercise_name(file_path) {
-            Ok(name) => name,
-            Err(_) => {
-                println!("⚠️  Skipping {}: invalid filename format", file_path);
-                continue;
-            }
-        };
-        
-        print!("🧪 Testing {exercise_name}... ");
-        std::io::stdout().flush().unwrap();
-        
-        // Run tests for this exercise
-        let (tests_passed, test_output) = match run_cargo_test(&exercise_name).await {
-            Ok(result) => result,
-            Err(_) => {
-                println!("❌ Error running tests");
-                failed_exercises.push(exercise_name);
-                continue;
-            }
-        };
-        
-        if !tests_passed {
-            println!("❌ Tests failed");
-            failed_exercises.push(exercise_name);
-            continue;
-        }
-        
-        // Tests passed, now read source code and submit
-        let source_code = match fs::read_to_string(file_path) {
-            Ok(content) => content,
-            Err(_) => {
-                println!("❌ Failed to read file");
-                failed_exercises.push(exercise_name);
-                continue;
-            }
-        };
-        
-        // If pedantic flag, also run fmt + clippy
-        let (fmt_passed, clippy_passed) = if pedantic {
-            match (run_cargo_fmt().await, run_cargo_clippy().await) {
-                (Ok(fmt), Ok(clippy)) => (fmt, clippy),
-                _ => {
-                    println!("❌ Error running pedantic checks");
+    for task in tasks {
+        match task.await {
+            Ok(result) => match result {
+                Ok(exercise_name) => {
+                    successful_submissions += 1;
+                    println!("✅ {exercise_name} submitted successfully");
+                }
+                Err(exercise_name) => {
                     failed_exercises.push(exercise_name);
-                    continue;
                 }
-            }
-        } else {
-            (false, false)
-        };
-        
-        // Submit to server
-        let submission_result = submit_to_server(SubmissionRequest {
-            ulid: token.as_str().to_string(),
-            exercise_name: exercise_name.clone(),
-            source_code,
-            tests_passed,
-            clippy_passed,
-            fmt_passed,
-        }).await;
-        
-        match submission_result {
-            Ok(_) => {
-                if pedantic && fmt_passed && clippy_passed {
-                    println!("⭐ Perfected!");
-                } else {
-                    println!("✅ Submitted!");
-                }
-                successful_submissions += 1;
-            }
+            },
             Err(_) => {
-                println!("❌ Upload failed");
-                failed_exercises.push(exercise_name);
+                // Task panicked - this shouldn't happen in normal operation
+                failed_exercises.push("unknown".to_string());
             }
         }
     }
@@ -299,6 +257,86 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
     }
     
     Ok(())
+}
+
+/// Process a single exercise: test, validate, and submit if successful.
+/// Returns Ok(exercise_name) on success, Err(exercise_name) on failure.
+async fn process_single_exercise(
+    file_path: String,
+    pedantic: bool,
+    token: &Token,
+) -> Result<String, String> {
+    let exercise_name = match extract_exercise_name(&file_path) {
+        Ok(name) => name,
+        Err(_) => {
+            println!("⚠️  Skipping {}: invalid filename format", file_path);
+            return Err(file_path);
+        }
+    };
+    
+    print!("🧪 Testing {exercise_name}... ");
+    std::io::stdout().flush().unwrap();
+    
+    // Run tests for this exercise
+    let (tests_passed, _test_output) = match run_cargo_test(&exercise_name).await {
+        Ok(result) => result,
+        Err(_) => {
+            println!("❌ Error running tests");
+            return Err(exercise_name);
+        }
+    };
+    
+    if !tests_passed {
+        println!("❌ Tests failed");
+        return Err(exercise_name);
+    }
+    
+    // Tests passed, now read source code
+    let source_code = match fs::read_to_string(&file_path) {
+        Ok(content) => content,
+        Err(_) => {
+            println!("❌ Failed to read file");
+            return Err(exercise_name);
+        }
+    };
+    
+    // If pedantic flag, also run fmt + clippy (these are global checks)
+    let (fmt_passed, clippy_passed) = if pedantic {
+        match (run_cargo_fmt().await, run_cargo_clippy().await) {
+            (Ok(fmt), Ok(clippy)) => (fmt, clippy),
+            _ => {
+                println!("❌ Error running pedantic checks");
+                return Err(exercise_name);
+            }
+        }
+    } else {
+        (false, false)
+    };
+    
+    // Submit to server
+    let submission_result = submit_to_server(SubmissionRequest {
+        ulid: token.as_str().to_string(),
+        exercise_name: exercise_name.clone(),
+        source_code,
+        tests_passed,
+        clippy_passed,
+        fmt_passed,
+    }).await;
+    
+    match submission_result {
+        Ok(_) => {
+            if pedantic && fmt_passed && clippy_passed {
+                print!("⭐ Perfected! ");
+            } else {
+                print!("✅ Submitted! ");
+            }
+            Ok(exercise_name)
+        }
+        Err(_) => {
+            println!("❌ Upload failed");
+            Err(exercise_name)
+        }
+    }
 }
 
 /// Find all exercise files in the examples directory.
