@@ -46,7 +46,6 @@ fn get_env_var<T>(env: &HashMap<String, String>, key: &str) -> Option<T>
 where
     T: std::str::FromStr,
 {
-    // Use .get() then .parse()
     unimplemented!()
 }
 

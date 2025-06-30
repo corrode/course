@@ -34,7 +34,7 @@
     <div class="card">
         <details style="margin-bottom: 1.5rem;">
             <summary style="cursor: pointer; font-size: 1.1rem; font-weight: 600; color: var(--color-text); padding: 0.75rem 0; border-bottom: 1px solid var(--color-border);">
-                💡 Getting Started - Click to expand
+                Getting Started - Click to expand
             </summary>
             <div style="padding-top: 1.5rem;">
                 <p style="color: var(--color-text-muted); margin-bottom: 1rem;">
@@ -63,43 +63,55 @@ cargo course status</code></pre>
         
         <div class="exercise-list">
             {% for exercise in exercises %}
-            <div class="exercise-item">
-                <span class="exercise-status">
-                    {% if exercise.perfected %}
-                        <div class="icon-star">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
-                            </svg>
+            <div class="exercise-item" style="display: block; padding: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 1rem; border-radius: 3px; transition: border-color 0.2s ease;">
+                <details>
+                    <summary style="cursor: pointer; list-style: none; padding: 0;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 1rem; flex-grow: 1;">
+                                <span class="exercise-status">
+                                    {% if exercise.perfected %}
+                                        <div class="icon-star">
+                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
+                                            </svg>
+                                        </div>
+                                    {% else %}
+                                        {% if exercise.completed %}
+                                            <div class="icon-check">
+                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="white"/>
+                                                </svg>
+                                            </div>
+                                        {% else %}
+                                            <div class="icon-pending">
+                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/>
+                                                    <path d="M12 6V12L16 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                </span>
+                                
+                                <div style="font-weight: 600; color: var(--color-text); font-size: 1.1rem;">{{ exercise.title }}</div>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div style="font-family: 'SF Mono', Monaco, monospace; font-size: 0.9rem; color: var(--color-text-muted);">{{ exercise.name }}.rs</div>
+                                    <span style="background-color: rgba(16, 185, 129, 0.8); color: white; font-size: 0.75rem; font-weight: 500; padding: 0.25rem 0.5rem; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.05em;">beginner</span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--color-text-muted);">Click to expand</div>
+                            </div>
                         </div>
-                    {% else %}
-                        {% if exercise.completed %}
-                            <div class="icon-check">
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="white"/>
-                                </svg>
-                            </div>
-                        {% else %}
-                            <div class="icon-pending">
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/>
-                                    <path d="M12 6V12L16 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                        {% endif %}
-                    {% endif %}
-                </span>
-                <div>
-                    <div class="exercise-name">{{ exercise.name }}</div>
-                    {% if exercise.perfected %}
-                        <div style="font-size: 0.875rem; color: var(--color-warning);">Perfected with pedantic checks</div>
-                    {% else %}
-                        {% if exercise.completed %}
-                            <div style="font-size: 0.875rem; color: var(--color-success);">Tests passing</div>
-                        {% else %}
-                            <div style="font-size: 0.875rem; color: var(--color-text-muted);">Not attempted</div>
-                        {% endif %}
-                    {% endif %}
-                </div>
+                    </summary>
+                    
+                    <div style="margin-top: 1rem; padding: 1rem; background-color: var(--color-background); border: 1px solid var(--color-border); border-radius: 3px;">
+                        <p style="color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.5; margin: 0;">
+                            {{ exercise.description }}
+                        </p>
+                    </div>
+                </details>
             </div>
             {% endfor %}
         </div>

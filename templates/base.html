@@ -96,6 +96,58 @@
             --color-input-border: #094855;
         }
 
+        html[data-theme="dark-dracula"] {
+            --color-background: #282a36;
+            --color-surface: #44475a;
+            --color-primary: #ff79c6;
+            --color-primary-muted: #bd93f9;
+            --color-primary-rgb: 255, 121, 198;
+            --color-text: #f8f8f2;
+            --color-text-muted: #6272a4;
+            --color-border: #44475a;
+            --color-input-bg: #1e1f29;
+            --color-input-border: #44475a;
+        }
+
+        html[data-theme="dark-catppuccin"] {
+            --color-background: #1e1e2e;
+            --color-surface: #313244;
+            --color-primary: #cba6f7;
+            --color-primary-muted: #a6adc8;
+            --color-primary-rgb: 203, 166, 247;
+            --color-text: #cdd6f4;
+            --color-text-muted: #6c7086;
+            --color-border: #313244;
+            --color-input-bg: #11111b;
+            --color-input-border: #313244;
+        }
+
+        html[data-theme="light-github"] {
+            --color-background: #ffffff;
+            --color-surface: #f6f8fa;
+            --color-primary: #0969da;
+            --color-primary-muted: #0550ae;
+            --color-primary-rgb: 9, 105, 218;
+            --color-text: #24292f;
+            --color-text-muted: #656d76;
+            --color-border: #d1d9e0;
+            --color-input-bg: #ffffff;
+            --color-input-border: #d1d9e0;
+        }
+
+        html[data-theme="light-rust"] {
+            --color-background: #ffffff;
+            --color-surface: #fafafa;
+            --color-primary: #ce422b;
+            --color-primary-muted: #a33820;
+            --color-primary-rgb: 206, 66, 43;
+            --color-text: #333333;
+            --color-text-muted: #737373;
+            --color-border: #e6e6e6;
+            --color-input-bg: #ffffff;
+            --color-input-border: #d4d4d4;
+        }
+
         /* Prevent transitions during load */
         .preload * {
             transition: none !important;
@@ -227,12 +279,13 @@
             padding: 1rem;
             background-color: var(--color-surface);
             border: 2px solid var(--color-border);
-            border-radius: 8px;
+            border-radius: 3px;
             transition: all 0.2s ease;
         }
 
         .exercise-item:hover {
             border-color: var(--color-primary);
+            background-color: rgba(var(--color-primary-rgb), 0.05);
         }
 
         .exercise-status {

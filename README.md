@@ -141,7 +141,7 @@ PORT=3000
 
 ## Exercise Progression
 
-### Beginner Track (14 exercises)
+### Beginner Track (15 exercises)
 
 The exercises follow a carefully designed progression:
 
@@ -156,10 +156,10 @@ The exercises follow a carefully designed progression:
 9. **08_ownership_basics** - Memory safety and borrowing
 10. **09_structs_and_methods** - User account management
 11. **10_iterator_patterns** - Data transformation with functional patterns
-12. **11_word_counter** - **Combining concepts** (strings + vectors + hashmaps)
-13. **12_env_parser** - **Practical parsing** (environment files)
-14. **13_csv_parser** - **Complex parsing** (challenging final exercise)
-15. **14_password_validator** - **Open-ended project** (be creative!)
+12. **11_password_validator** - **Open-ended project** (be creative!)
+13. **12_word_counter** - **Combining concepts** (strings + vectors + hashmaps)
+14. **13_env_parser** - **Practical parsing** (environment files)
+15. **14_csv_parser** - **Complex parsing** (challenging final exercise)
 
 Each exercise includes:
 - Clear learning objectives
@@ -220,4 +220,4 @@ Learn more at [corrode.dev](https://corrode.dev)
 
 ---
 
-**Ready to start?** Open `exercises/beginner/00_hello_rust.rs` and begin your Rust journey! Good luck, and have fun!
+**Ready to start?** Open `examples/00_hello_rust.rs` and begin your Rust journey! Good luck, and have fun!

@@ -86,6 +86,8 @@ struct ExerciseProgress {
     name: String,
     completed: bool,
     perfected: bool,
+    title: String,
+    description: String,
 }
 
 /// Participant summary for admin view
@@ -576,24 +578,26 @@ async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
 
 /// Get exercise progress for a participant
 async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Result<Vec<ExerciseProgress>> {
-    // Hard-coded exercise list for now - TODO: scan examples/ directory
-    let all_exercises = vec![
-        "00_hello_rust",
-        "01_integer_handling",
-        "02_enums_and_matching",
-        "03_vectors_basics",
-        "04_hashmaps",
-        "05_tuples",
-        "06_option_handling",
-        "07_result_handling",
-        "08_ownership_basics",
-        "09_structs_and_methods",
-        "10_iterator_patterns",
-        "11_word_counter",
-        "12_env_parser",
-        "13_csv_parser",
-        "14_password_validator",
-    ];
+    // Scan the examples directory for exercise files
+    let examples_dir = std::path::Path::new("examples");
+    if !examples_dir.exists() {
+        return Err(anyhow::anyhow!("Examples directory not found"));
+    }
+
+    let mut exercise_files = Vec::new();
+    for entry in std::fs::read_dir(examples_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
+            if file_name.ends_with(".rs") && !file_name.starts_with("_") {
+                exercise_files.push(file_name.to_string());
+            }
+        }
+    }
+    
+    // Sort files for consistent ordering
+    exercise_files.sort();
 
     // Get completed submissions
     let submissions: Vec<DbSubmission> =
@@ -603,7 +607,13 @@ async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Resul
             .await?;
 
     let mut exercises = Vec::new();
-    for exercise_name in all_exercises {
+    for file_name in exercise_files {
+        let exercise_name = file_name.strip_suffix(".rs").unwrap_or(&file_name);
+        
+        // Parse the exercise documentation
+        let (title, description) = parse_exercise_docs(&format!("examples/{}", file_name))
+            .unwrap_or_else(|_| (exercise_name.to_string(), String::new()));
+        
         let submission = submissions
             .iter()
             .find(|s| s.exercise_name == exercise_name);
@@ -612,8 +622,59 @@ async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Resul
             name: exercise_name.to_string(),
             completed: submission.is_some(),
             perfected: submission.map_or(false, |s| s.fmt_passed && s.clippy_passed),
+            title,
+            description,
         });
     }
 
     Ok(exercises)
+}
+
+/// Parse exercise documentation from Rust file doc comments
+fn parse_exercise_docs(file_path: &str) -> Result<(String, String)> {
+    let content = std::fs::read_to_string(file_path)?;
+    let lines: Vec<&str> = content.lines().collect();
+    
+    let mut title = String::new();
+    let mut description_lines = Vec::new();
+    let mut in_doc_comment = false;
+    let mut found_title = false;
+    
+    for line in lines {
+        let trimmed = line.trim();
+        
+        if trimmed.starts_with("//!") {
+            in_doc_comment = true;
+            let doc_content = trimmed.strip_prefix("//!").unwrap_or("").trim();
+            
+            if !found_title && doc_content.starts_with("# ") {
+                // Extract title from # heading
+                title = doc_content.strip_prefix("# ").unwrap_or(doc_content).to_string();
+                found_title = true;
+            } else if found_title && !doc_content.is_empty() {
+                // Collect description lines after title
+                description_lines.push(doc_content.to_string());
+            }
+        } else if in_doc_comment && !trimmed.starts_with("//") {
+            // End of doc comment block
+            break;
+        }
+    }
+    
+    // Join description lines and clean up
+    let description = description_lines
+        .join(" ")
+        .trim()
+        .to_string();
+    
+    // Fallback title if none found
+    if title.is_empty() {
+        title = file_path.strip_prefix("examples/")
+            .unwrap_or(file_path)
+            .strip_suffix(".rs")
+            .unwrap_or(file_path)
+            .to_string();
+    }
+    
+    Ok((title, description))
 }
