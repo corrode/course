@@ -9,7 +9,7 @@ use std::path::Path;
 use std::process::Command;
 use std::str::FromStr;
 
-const SERVER_URL: &str = "http://localhost:3000";
+const SERVER_URL: &str = "http://course-6xdi.onrender.com";
 const TOKEN_FILE: &str = ".corrode/token";
 
 #[derive(Parser)]
