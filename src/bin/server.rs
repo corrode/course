@@ -59,6 +59,18 @@ struct DashboardTemplate {
 struct AdminTemplate {
     participants: Vec<ParticipantSummary>,
     recent_submissions: Vec<SubmissionSummary>,
+    admin_token: String,
+    stats: AdminStats,
+}
+
+/// Admin dashboard statistics
+#[derive(Serialize)]
+struct AdminStats {
+    total_participants: i64,
+    total_submissions: i64,
+    completion_rate: f64,
+    perfection_rate: f64,
+    active_participants: i64,
 }
 
 /// Exercise progress for dashboard display
@@ -167,6 +179,7 @@ async fn main() -> Result<()> {
         .route("/register", post(web_register))
         .route("/dashboard/{ulid}", get(participant_dashboard))
         .route("/admin", get(admin_dashboard))
+        .route("/admin/remove/{participant_id}", post(admin_remove_participant))
         .nest("/api", api_routes)
         .nest_service("/static", ServeDir::new("static"))
         .with_state(app_state);
@@ -252,6 +265,52 @@ async fn admin_dashboard(
         return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
     }
 
+    // Calculate dashboard statistics
+    let stats_result = sqlx::query(
+        r#"
+        SELECT 
+            (SELECT COUNT(*) FROM participants) as total_participants,
+            (SELECT COUNT(*) FROM submissions) as total_submissions,
+            (SELECT COUNT(DISTINCT participant_id) FROM submissions WHERE tests_passed = 1) as active_participants,
+            (SELECT COUNT(*) FROM submissions WHERE tests_passed = 1) as completed_submissions,
+            (SELECT COUNT(*) FROM submissions WHERE tests_passed = 1 AND clippy_passed = 1 AND fmt_passed = 1) as perfected_submissions
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let (total_participants, total_submissions, active_participants, completed_submissions, perfected_submissions) = match stats_result {
+        Ok(row) => (
+            row.get::<i64, _>("total_participants"),
+            row.get::<i64, _>("total_submissions"),
+            row.get::<i64, _>("active_participants"),
+            row.get::<i64, _>("completed_submissions"),
+            row.get::<i64, _>("perfected_submissions"),
+        ),
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch statistics").into_response(),
+    };
+
+    // Calculate percentages
+    let completion_rate = if total_submissions > 0 {
+        (completed_submissions as f64 / total_submissions as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    let perfection_rate = if completed_submissions > 0 {
+        (perfected_submissions as f64 / completed_submissions as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    let stats = AdminStats {
+        total_participants,
+        total_submissions,
+        completion_rate,
+        perfection_rate,
+        active_participants,
+    };
+
     // Get participant summaries
     let participant_rows_result = sqlx::query(
         r#"
@@ -328,12 +387,68 @@ async fn admin_dashboard(
     let template = AdminTemplate {
         participants,
         recent_submissions,
+        admin_token: query.token.clone(),
+        stats,
     };
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to render template").into_response(),
     }
+}
+
+/// Admin handler to remove a participant and all their submissions
+async fn admin_remove_participant(
+    AxumPath(participant_id): AxumPath<String>,
+    Query(query): Query<AdminQuery>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    // Verify admin token
+    if query.token != state.admin_token {
+        return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
+    }
+
+    // Start a transaction to ensure data consistency
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response(),
+    };
+
+    // Delete all submissions for this participant
+    if let Err(_) = sqlx::query("DELETE FROM submissions WHERE participant_id = ?")
+        .bind(&participant_id)
+        .execute(&mut *tx)
+        .await
+    {
+        let _ = tx.rollback().await;
+        return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete submissions").into_response();
+    }
+
+    // Delete the participant
+    match sqlx::query("DELETE FROM participants WHERE id = ?")
+        .bind(&participant_id)
+        .execute(&mut *tx)
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                let _ = tx.rollback().await;
+                return (StatusCode::NOT_FOUND, "Participant not found").into_response();
+            }
+        },
+        Err(_) => {
+            let _ = tx.rollback().await;
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete participant").into_response();
+        }
+    }
+
+    // Commit the transaction
+    if let Err(_) = tx.commit().await {
+        return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to commit changes").into_response();
+    }
+
+    // Redirect back to admin dashboard
+    axum::response::Redirect::to(&format!("/admin?token={}", query.token)).into_response()
 }
 
 /// API registration endpoint

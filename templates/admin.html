@@ -18,16 +18,24 @@
 
     <div class="stats">
         <div class="stat-card">
-            <span class="stat-number">{% set total_participants = 0 %}{% for p in participants %}{% set total_participants = total_participants + 1 %}{% endfor %}{{ total_participants }}</span>
+            <span class="stat-number">{{ stats.total_participants }}</span>
             <span class="stat-label">Total Participants</span>
         </div>
         <div class="stat-card">
-            <span class="stat-number">{% set total_completions = 0 %}{% for p in participants %}{% set total_completions = total_completions + p.completed_count %}{% endfor %}{{ total_completions }}</span>
-            <span class="stat-label">Total Completions</span>
+            <span class="stat-number">{{ stats.active_participants }}</span>
+            <span class="stat-label">Active Participants</span>
         </div>
         <div class="stat-card">
-            <span class="stat-number">{% set perfected_count = 0 %}{% for sub in recent_submissions %}{% if sub.perfected %}{% set perfected_count = perfected_count + 1 %}{% endif %}{% endfor %}{{ perfected_count }}</span>
-            <span class="stat-label">Recent Perfected</span>
+            <span class="stat-number">{{ stats.total_submissions }}</span>
+            <span class="stat-label">Total Submissions</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.completion_rate | round(1) }}%</span>
+            <span class="stat-label">Completion Rate</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.perfection_rate | round(1) }}%</span>
+            <span class="stat-label">Perfection Rate</span>
         </div>
     </div>
 
@@ -62,9 +70,19 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="/dashboard/{{ participant.id }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;">
-                            View Dashboard
-                        </a>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="/dashboard/{{ participant.id }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;">
+                                View Dashboard
+                            </a>
+                            <form method="post" action="/admin/remove/{{ participant.id }}?token={{ admin_token }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove {{ participant.name }}? This will delete all their submissions and cannot be undone.')">
+                                <button type="submit" class="btn" style="font-size: 0.75rem; padding: 0.375rem 0.75rem; background-color: var(--color-error); border-color: var(--color-error);">
+                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 12px; height: 12px; fill: white; margin-right: 4px;">
+                                        <path d="M3 6H5H21M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19ZM10 11V17M14 11V17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Remove
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -117,7 +135,19 @@
                         <summary style="cursor: pointer; color: var(--color-text-muted); font-size: 0.875rem;">
                             View Source Code
                         </summary>
-                        <div style="margin-top: 0.5rem;">
+                        <div class="code-container" style="margin-top: 0.5rem;">
+                            <div class="copy-btn" onclick="copyCodeFromElement(this.nextElementSibling.nextElementSibling.querySelector('code'))" title="Copy to clipboard">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
+                                </svg>
+                                Copy
+                            </div>
+                            <div class="copy-btn" onclick="copyCodeToPastebin(this.nextElementSibling.querySelector('code'), this, '{{ submission.exercise_name }} by {{ submission.participant_name }}')" title="Copy to pastebin" style="right: 70px;">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Share
+                            </div>
                             <pre><code class="language-rust">{{ submission.source_code }}</code></pre>
                         </div>
                     </details>
