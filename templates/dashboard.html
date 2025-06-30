@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}{{ participant_name }}'s Progress - corrode Course{% endblock %}
+{% block title %}{{ participant_name }}'s Progress - corrode Rust Course{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="nav">
-        <a href="/" class="nav-brand">corrode Course</a>
+        <a href="/" class="nav-brand">corrode Rust Course</a>
         <div class="nav-links">
             <span class="nav-link">Welcome, {{ participant_name }}!</span>
         </div>
@@ -18,16 +18,16 @@
 
     <div class="stats">
         <div class="stat-card">
-            <span class="stat-number">{% set completed_count = 0 %}{% for ex in exercises %}{% if ex.completed %}{% set completed_count = completed_count + 1 %}{% endif %}{% endfor %}{{ completed_count }}</span>
+            <span class="stat-number">{{ stats.completed_count }}</span>
             <span class="stat-label">Completed</span>
         </div>
         <div class="stat-card">
-            <span class="stat-number">{% set perfected_count = 0 %}{% for ex in exercises %}{% if ex.perfected %}{% set perfected_count = perfected_count + 1 %}{% endif %}{% endfor %}{{ perfected_count }}</span>
+            <span class="stat-number">{{ stats.perfected_count }}</span>
             <span class="stat-label">Perfected</span>
         </div>
         <div class="stat-card">
-            <span class="stat-number">{% set total_count = 0 %}{% for ex in exercises %}{% set total_count = total_count + 1 %}{% endfor %}{{ total_count }}</span>
-            <span class="stat-label">Total Exercises</span>
+            <span class="stat-number">{{ stats.total_submissions }}</span>
+            <span class="stat-label">Total Submissions</span>
         </div>
     </div>
 

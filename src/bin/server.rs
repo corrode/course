@@ -52,6 +52,15 @@ struct LandingTemplate;
 struct DashboardTemplate {
     participant_name: String,
     exercises: Vec<ExerciseProgress>,
+    stats: UserStats,
+}
+
+/// User dashboard statistics
+#[derive(Serialize)]
+struct UserStats {
+    completed_count: i64,
+    perfected_count: i64,
+    total_submissions: i64,
 }
 
 /// Template for admin dashboard
@@ -123,7 +132,6 @@ async fn main() -> Result<()> {
     // Load environment variables
     dotenv().ok();
     
-    println!("🚀 Starting corrode course server...");
     info!("Starting corrode course server...");
 
     let admin_token =
@@ -132,7 +140,7 @@ async fn main() -> Result<()> {
         // Create the database in the current working directory
         let current_dir = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
         let db_path = current_dir.join("playground.db");
-        println!("📁 Database will be created at: {}", db_path.display());
+        info!("📁 Database will be created at: {}", db_path.display());
         format!("sqlite:{}", db_path.display())
     });
     let port: u16 = env::var("PORT")
@@ -141,10 +149,8 @@ async fn main() -> Result<()> {
         .expect("PORT must be a valid number");
 
     // Set up database
-    println!("🔍 Checking if database exists: {}", database_url);
     info!("Checking if database exists: {}", database_url);
     if !Sqlite::database_exists(&database_url).await.unwrap_or(false) {
-        println!("📦 Creating database {}", database_url);
         info!("Creating database {}", database_url);
         match Sqlite::create_database(&database_url).await {
             Ok(_) => {
@@ -157,11 +163,9 @@ async fn main() -> Result<()> {
             }
         }
     } else {
-        println!("✅ Database already exists");
         info!("Database already exists");
     }
 
-    println!("🔌 Connecting to database...");
     info!("Connecting to database...");
     let pool = SqlitePoolOptions::new()
         .max_connections(20)
@@ -175,14 +179,12 @@ async fn main() -> Result<()> {
             e
         })?;
     
-    println!("✅ Database connection established");
     info!("Database connection established");
 
     // Run migrations
     let migrations = std::path::Path::new("./migrations");
     let migrator = sqlx::migrate::Migrator::new(migrations).await?;
     migrator.run(&pool).await?;
-    println!("✅ Database migrations completed");
     info!("Database migrations completed");
 
     let app_state = AppState { pool, admin_token: admin_token.clone() };
@@ -205,12 +207,9 @@ async fn main() -> Result<()> {
         .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind(&format!("0.0.0.0:{port}")).await?;
-    println!("🚀 Server running on http://localhost:{port}");
-    println!("📊 Admin dashboard: http://localhost:{port}/admin?token={admin_token}");
-    println!("🗃️  Database: {}", database_url);
-    info!("Server running on http://localhost:{port}");
-    info!("Admin dashboard: http://localhost:{port}/admin?token={admin_token}");
-    info!("Database: {}", database_url);
+    info!("🚀 Server running on http://localhost:{port}");
+    info!("📊 Admin dashboard: http://localhost:{port}/admin?token={admin_token}");
+    info!("🗃️  Database: {database_url}");
 
     axum::serve(listener, app).await?;
     Ok(())
@@ -267,9 +266,16 @@ async fn participant_dashboard(
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get exercise progress").into_response(),
     };
 
+    // Get user statistics
+    let stats = match get_user_stats(&state.pool, &ulid).await {
+        Ok(stats) => stats,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get user statistics").into_response(),
+    };
+
     let template = DashboardTemplate {
         participant_name: participant.name,
         exercises,
+        stats,
     };
 
     match template.render() {
@@ -504,6 +510,39 @@ async fn api_status(
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
     }
+}
+
+/// Get user statistics for a specific participant
+async fn get_user_stats(pool: &SqlitePool, participant_id: &str) -> Result<UserStats> {
+    // Get completed submissions count
+    let completed_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM submissions WHERE participant_id = ? AND tests_passed = 1"
+    )
+    .bind(participant_id)
+    .fetch_one(pool)
+    .await?;
+
+    // Get perfected submissions count  
+    let perfected_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM submissions WHERE participant_id = ? AND tests_passed = 1 AND fmt_passed = 1 AND clippy_passed = 1"
+    )
+    .bind(participant_id)
+    .fetch_one(pool)
+    .await?;
+
+    // Get total submissions count (including failed ones)
+    let total_submissions: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM submissions WHERE participant_id = ?"
+    )
+    .bind(participant_id)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(UserStats {
+        completed_count,
+        perfected_count,
+        total_submissions,
+    })
 }
 
 /// Get admin statistics
