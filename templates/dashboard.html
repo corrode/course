@@ -79,16 +79,29 @@
     </div>
 
     <div class="card">
-        <h3 style="margin-bottom: 1rem;">CLI Commands</h3>
+        <h3 style="margin-bottom: 1rem;">Getting Started</h3>
         <div class="code-block">
+# Clone the repository<br>
+git clone https://github.com/corrode/course.git<br>
+cd course<br><br>
+
+# Install the CLI tool<br>
+cargo install --path .<br><br>
+
 # Submit an exercise<br>
 cargo course submit examples/{{ exercises[0].name }}.rs<br><br>
 
 # Submit with pedantic checks to earn ⭐<br>
 cargo course submit examples/{{ exercises[0].name }}.rs --pedantic<br><br>
 
+# Submit all passing exercises at once<br>
+cargo course submit --all<br><br>
+
 # Check your progress<br>
-cargo course status
+cargo course status<br><br>
+
+# Open this dashboard<br>
+cargo course open
         </div>
     </div>
 
