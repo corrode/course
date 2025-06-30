@@ -18,9 +18,12 @@
             --color-surface: #353535;
             --color-primary: #d2991d;
             --color-primary-muted: #9a7015;
+            --color-primary-rgb: 210, 153, 29;
             --color-text: #f0f0f0;
             --color-text-muted: #aeaeae;
             --color-border: #353535;
+            --color-input-bg: #1f1f1f;
+            --color-input-border: #4a4a4a;
             --color-success: #10b981;
             --color-warning: #f59e0b;
             --color-error: #ef4444;
@@ -32,9 +35,12 @@
             --color-surface: #f5f5f5;
             --color-primary: #000000;
             --color-primary-muted: #333333;
+            --color-primary-rgb: 0, 0, 0;
             --color-text: #000000;
             --color-text-muted: #505050;
             --color-border: #e0e0e0;
+            --color-input-bg: #ffffff;
+            --color-input-border: #d1d5db;
         }
 
         html[data-theme="light-hacker-news"] {
@@ -42,9 +48,12 @@
             --color-surface: #ffffff;
             --color-primary: #ff6600;
             --color-primary-muted: #cc5200;
+            --color-primary-rgb: 255, 102, 0;
             --color-text: #333333;
             --color-text-muted: #828282;
             --color-border: #e0e0e0;
+            --color-input-bg: #ffffff;
+            --color-input-border: #d1d5db;
         }
 
         /* Dark themes */
@@ -53,9 +62,12 @@
             --color-surface: #353535;
             --color-primary: #d2991d;
             --color-primary-muted: #9a7015;
+            --color-primary-rgb: 210, 153, 29;
             --color-text: #f0f0f0;
             --color-text-muted: #aeaeae;
             --color-border: #353535;
+            --color-input-bg: #1f1f1f;
+            --color-input-border: #4a4a4a;
         }
 
         html[data-theme="dark-nord"] {
@@ -63,9 +75,12 @@
             --color-surface: #3b4252;
             --color-primary: #88c0d0;
             --color-primary-muted: #81a1c1;
+            --color-primary-rgb: 136, 192, 208;
             --color-text: #eceff4;
             --color-text-muted: #d8dee9;
             --color-border: #4c566a;
+            --color-input-bg: #242933;
+            --color-input-border: #4c566a;
         }
 
         html[data-theme="dark-solarized"] {
@@ -73,9 +88,12 @@
             --color-surface: #073642;
             --color-primary: #b58900;
             --color-primary-muted: #839496;
+            --color-primary-rgb: 181, 137, 0;
             --color-text: #839496;
             --color-text-muted: #586e75;
             --color-border: #073642;
+            --color-input-bg: #001e27;
+            --color-input-border: #094855;
         }
 
         /* Prevent transitions during load */
@@ -153,17 +171,18 @@
         .form-control {
             width: 100%;
             padding: 16px 24px;
-            background-color: var(--color-surface);
-            border: 2px solid var(--color-border);
+            background-color: var(--color-input-bg);
+            border: 2px solid var(--color-input-border);
             border-radius: 8px;
             color: var(--color-text);
             font-size: 1rem;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .form-control:focus {
             outline: none;
             border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
         }
 
         .form-control::placeholder {
@@ -516,6 +535,17 @@
         .theme-switcher select:focus {
             outline: none;
             border-color: var(--color-primary);
+        }
+
+        /* Brand logo styles */
+        .brand-logo {
+            height: 60px;
+            margin-bottom: 1.5rem;
+            filter: brightness(0) saturate(100%) invert(77%) sepia(32%) saturate(1678%) hue-rotate(18deg) brightness(96%) contrast(91%);
+        }
+
+        html[data-theme^="light"] .brand-logo {
+            filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);
         }
 
         @media (max-width: 768px) {
