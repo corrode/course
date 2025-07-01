@@ -1,5 +1,7 @@
 # Rust Workshop Exercises - Corrode
 
+![Screenshot of the course page](/static/assets/screenshot.jpg)
+
 Learn Rust through practical, real-world exercises that you can actually use at work.
 
 This is the official course repository for **corrode**, a friendly, professional Rust consultancy. 
