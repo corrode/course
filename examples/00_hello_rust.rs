@@ -12,15 +12,13 @@
 /// Formats a user's display name for the UI.
 /// Returns "Welcome, {name}!" for user-facing messages.
 fn format_welcome_message(name: &str) -> String {
-    // Use format! macro to create the welcome message
-    format!("Welcome, {}!", name)
+    todo!()
 }
 
-/// Returns the application version string.
+/// Returns the application version string, e.g. "1.0.0".
 /// String literals have type &str and live for the entire program.
 fn get_app_version() -> &'static str {
-    // Return a static string literal representing the version
-    "1.0.0"
+    todo!()
 }
 
 #[cfg(test)]

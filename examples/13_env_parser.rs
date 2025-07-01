@@ -30,14 +30,14 @@ fn parse_env_line(line: &str) -> Result<(String, String), ParseError> {
     // 2. Split on '=' (use .split_once())
     // 3. Validate key and value are not empty
     // 4. Trim whitespace from both parts
-    unimplemented!()
+    todo!()
 }
 
 /// Parses a complete .env file content.
 /// Ignores empty lines and lines starting with '#'.
 /// Returns HashMap of all valid key-value pairs.
 fn parse_env_file(content: &str) -> Result<HashMap<String, String>, ParseError> {
-    unimplemented!()
+    todo!()
 }
 
 /// Gets an environment variable with type conversion.
@@ -46,13 +46,13 @@ fn get_env_var<T>(env: &HashMap<String, String>, key: &str) -> Option<T>
 where
     T: std::str::FromStr,
 {
-    unimplemented!()
+    todo!()
 }
 
 /// Validates required environment variables are present.
 /// Returns Ok(()) if all required keys exist, Err with missing key otherwise.
 fn validate_required_vars(env: &HashMap<String, String>, required: &[&str]) -> Result<(), String> {
-    unimplemented!()
+    todo!()
 }
 
 #[cfg(test)]

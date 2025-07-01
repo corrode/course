@@ -16,27 +16,27 @@ use std::collections::HashMap;
 /// Creates a configuration map with default settings.
 /// Returns a HashMap with "host" -> "localhost" and "port" -> "8080".
 fn create_default_config() -> HashMap<String, String> {
-    unimplemented!()
+    todo!()
 }
 
 /// Gets a configuration value by key.
 /// Returns the value if found, "default" if not found.
 fn get_config_value(config: &HashMap<String, String>, key: &str) -> String {
     // Use .get() method and .unwrap_or() for default
-    unimplemented!()
+    todo!()
 }
 
 /// Updates a configuration value.
 /// Inserts or updates the key-value pair.
 fn set_config_value(config: &mut HashMap<String, String>, key: &str, value: &str) {
     // Use .insert() method
-    unimplemented!()
+    todo!()
 }
 
 /// Counts how many times each word appears.
 /// Returns a HashMap mapping words to their counts.
 fn count_words(words: &[&str]) -> HashMap<String, usize> {
-    unimplemented!()
+    todo!()
 }
 
 #[cfg(test)]

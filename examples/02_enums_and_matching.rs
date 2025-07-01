@@ -26,14 +26,14 @@ fn status_code(status: HttpStatus) -> u16 {
     // Match each status to its code:
     // Ok: 200, NotFound: 404, Unauthorized: 401
     // InternalServerError: 500, BadRequest: 400
-    unimplemented!()
+    todo!()
 }
 
 /// Determines if the request should be retried.
 /// Only retry on server errors, not client errors.
 fn should_retry(status: HttpStatus) -> bool {
     // Only InternalServerError should trigger a retry
-    unimplemented!()
+    todo!()
 }
 
 #[cfg(test)]

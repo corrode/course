@@ -14,26 +14,26 @@
 /// Filters active users from a user list.
 /// Use .into_iter().filter().collect() to find users starting with 'A'
 fn filter_active_users(usernames: Vec<&str>) -> Vec<&str> {
-    unimplemented!()
+    todo!()
 }
 
 /// Normalizes email addresses to lowercase.
 /// Use .into_iter().map().collect() with .to_lowercase()
 fn normalize_emails(emails: Vec<String>) -> Vec<String> {
-    unimplemented!()
+    todo!()
 }
 
 /// Calculates total revenue from sales data.
 /// Use .iter().sum() to add up all values.
 fn calculate_total_revenue() -> i32 {
     let sales = vec![1200, 850, 2300, 950, 1800, 3200, 1100, 2800];
-    unimplemented!()
+    todo!()
 }
 
 /// Finds all files with ".rs" extension.
 /// Use .iter().filter().cloned().collect() pattern.
 fn find_rust_files(files: &[&str]) -> Vec<&str> {
-    unimplemented!()
+    todo!()
 }
 
 #[cfg(test)]

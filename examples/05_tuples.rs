@@ -15,26 +15,26 @@
 /// Useful for functions that need to return multiple values.
 fn get_user_info() -> (String, u32) {
     // Return ("Alice", 25)
-    unimplemented!()
+    todo!()
 }
 
 /// Calculates both area and perimeter of a rectangle.
 /// Returns (area, perimeter) as a tuple.
 fn rectangle_measurements(width: u32, height: u32) -> (u32, u32) {
-    unimplemented!()
+    todo!()
 }
 
 /// Extracts the first and last names from a full name tuple.
 /// Takes a tuple (first_name, last_name) and returns just the first name.
 fn get_first_name(full_name: (String, String)) -> String {
     // Use tuple destructuring: let (first, _last) = full_name;
-    unimplemented!()
+    todo!()
 }
 
 /// Swaps two values using tuple destructuring.
 /// Returns (second, first) - the values swapped.
 fn swap_values(pair: (i32, i32)) -> (i32, i32) {
-    unimplemented!()
+    todo!()
 }
 
 #[cfg(test)]

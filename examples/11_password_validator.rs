@@ -76,7 +76,7 @@ fn validate_password(password: &str) -> PasswordStrength {
     // - Use .contains() to check for substrings
     // - Build your feedback Vec with helpful messages
 
-    unimplemented!()
+    todo!()
 }
 
 /// Generates a random secure password.
@@ -87,14 +87,14 @@ fn generate_secure_password(length: usize) -> String {
     // - Define character sets (uppercase, lowercase, numbers, symbols)
     // - Use rand crate (you'll need to add it to Cargo.toml)
     // - Ensure the generated password passes your validator
-    unimplemented!()
+    todo!()
 }
 
 /// Suggests improvements for a weak password.
 /// Takes the PasswordStrength result and provides specific suggestions.
 fn suggest_improvements(strength: &PasswordStrength) -> Vec<String> {
     // Challenge: Analyze the feedback and provide actionable suggestions
-    unimplemented!()
+    todo!()
 }
 
 #[cfg(test)]

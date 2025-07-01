@@ -16,25 +16,25 @@
 /// Returns a vector containing all the items.
 fn create_shopping_list(items: &[&str]) -> Vec<String> {
     // Convert &str items to owned Strings and collect into Vec
-    unimplemented!()
+    todo!()
 }
 
 /// Adds an item to the shopping list.
 /// Modifies the list in place.
 fn add_item(list: &mut Vec<String>, item: &str) {
     // Use .push() to add item (convert to String first)
-    unimplemented!()
+    todo!()
 }
 
 /// Gets the number of items in the list.
 fn count_items(list: &Vec<String>) -> usize {
-    unimplemented!()
+    todo!()
 }
 
 /// Checks if the list contains a specific item.
 fn contains_item(list: &Vec<String>, item: &str) -> bool {
     // Use .contains() method
-    unimplemented!()
+    todo!()
 }
 
 #[cfg(test)]

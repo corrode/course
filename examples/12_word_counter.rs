@@ -21,27 +21,27 @@ fn count_words(text: &str) -> HashMap<String, usize> {
     // 1. Split text by whitespace
     // 2. Convert each word to lowercase
     // 3. Count occurrences in a HashMap
-    unimplemented!()
+    todo!()
 }
 
 /// Finds the most common word in the text.
 /// Returns the word and its count, or None if text is empty.
 fn most_common_word(text: &str) -> Option<(String, usize)> {
     // Use count_words() then find the max by count
-    unimplemented!()
+    todo!()
 }
 
 /// Filters words by minimum length.
 /// Returns only words that appear at least min_count times.
 fn frequent_words(text: &str, min_count: usize) -> Vec<String> {
     // Use count_words() then filter and collect
-    unimplemented!()
+    todo!()
 }
 
 /// Calculates basic text statistics.
 /// Returns (total_words, unique_words, average_word_length).
 fn text_stats(text: &str) -> (usize, usize, f64) {
-    unimplemented!()
+    todo!()
 }
 
 #[cfg(test)]

@@ -16,21 +16,21 @@
 /// When you pass a String to this function, ownership transfers.
 fn take_ownership(s: String) -> String {
     // Add " - owned by Rust!" to the end and return
-    unimplemented!()
+    todo!()
 }
 
 /// Borrows a string reference without taking ownership.
 /// The original string remains valid after this function returns.
 fn borrow_string(s: &str) -> usize {
     // Return the length using .len()
-    unimplemented!()
+    todo!()
 }
 
 /// Takes a mutable reference to modify the string in place.
 /// The &mut allows us to change the string's contents.
 fn mutate_string(s: &mut String) {
     // Add " - now with 100% more crab!" using .push_str()
-    unimplemented!()
+    todo!()
 }
 
 #[cfg(test)]
