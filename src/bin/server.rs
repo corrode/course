@@ -88,6 +88,18 @@ struct ExerciseProgress {
     perfected: bool,
     title: String,
     description: String,
+    submissions: Vec<ExerciseSubmission>,
+}
+
+/// Individual submission for an exercise
+#[derive(Serialize, Clone)]
+struct ExerciseSubmission {
+    id: String,
+    source_code: String,
+    tests_passed: bool,
+    clippy_passed: bool,
+    fmt_passed: bool,
+    submitted_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// Participant summary for admin view
@@ -505,18 +517,11 @@ async fn api_submit(
         }
     }
     
-    // Upsert submission (replace if exists)
+    // Insert new submission (allow multiple submissions per exercise)
     match sqlx::query(
         r#"
         INSERT INTO submissions (id, participant_id, exercise_name, source_code, tests_passed, clippy_passed, fmt_passed)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(participant_id, exercise_name) DO UPDATE SET
-            id = excluded.id,
-            source_code = excluded.source_code,
-            tests_passed = excluded.tests_passed,
-            clippy_passed = excluded.clippy_passed,
-            fmt_passed = excluded.fmt_passed,
-            submitted_at = CURRENT_TIMESTAMP
         "#
     )
     .bind(Ulid::new().to_string())
@@ -661,9 +666,9 @@ async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Resul
     // Sort files for consistent ordering
     exercise_files.sort();
 
-    // Get completed submissions
-    let submissions: Vec<DbSubmission> =
-        sqlx::query_as("SELECT * FROM submissions WHERE participant_id = ? AND tests_passed = 1")
+    // Get all submissions (both successful and failed)
+    let all_submissions: Vec<DbSubmission> =
+        sqlx::query_as("SELECT * FROM submissions WHERE participant_id = ? ORDER BY exercise_name, submitted_at DESC")
             .bind(ulid)
             .fetch_all(pool)
             .await?;
@@ -676,16 +681,31 @@ async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Resul
         let (title, description) = parse_exercise_docs(&format!("examples/{}", file_name))
             .unwrap_or_else(|_| (exercise_name.to_string(), String::new()));
         
-        let submission = submissions
+        // Get all submissions for this exercise
+        let exercise_submissions: Vec<ExerciseSubmission> = all_submissions
             .iter()
-            .find(|s| s.exercise_name == exercise_name);
+            .filter(|s| s.exercise_name == exercise_name)
+            .map(|s| ExerciseSubmission {
+                id: s.id.clone(),
+                source_code: s.source_code.clone(),
+                tests_passed: s.tests_passed,
+                clippy_passed: s.clippy_passed,
+                fmt_passed: s.fmt_passed,
+                submitted_at: s.submitted_at,
+            })
+            .collect();
+
+        // Determine exercise status based on submissions
+        let completed = exercise_submissions.iter().any(|s| s.tests_passed);
+        let perfected = exercise_submissions.iter().any(|s| s.tests_passed && s.fmt_passed && s.clippy_passed);
 
         exercises.push(ExerciseProgress {
             name: exercise_name.to_string(),
-            completed: submission.is_some(),
-            perfected: submission.map_or(false, |s| s.fmt_passed && s.clippy_passed),
+            completed,
+            perfected,
             title,
             description,
+            submissions: exercise_submissions,
         });
     }
 

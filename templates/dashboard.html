@@ -108,10 +108,87 @@ cargo course status</code></pre>
                         </div>
                     </summary>
                     
-                    <div style="margin-top: 1rem; padding: 1rem; background-color: var(--color-background); border: 1px solid var(--color-border); border-radius: 3px;">
-                        <p style="color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.5; margin: 0;">
-                            {{ exercise.description }}
-                        </p>
+                    <div style="margin-top: 1rem;">
+                        {% if !exercise.description.is_empty() %}
+                        <div style="padding: 1rem; background-color: var(--color-background); border: 1px solid var(--color-border); border-radius: 3px; margin-bottom: 1rem;">
+                            <p style="color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.5; margin: 0;">
+                                {{ exercise.description }}
+                            </p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if !exercise.submissions.is_empty() %}
+                        <div style="margin-top: 1rem;">
+                            <h4 style="color: var(--color-text); margin-bottom: 0.75rem; font-size: 0.9rem;">
+                                Your Submissions ({{ exercise.submissions.len() }})
+                            </h4>
+                            
+                            <div style="display: grid; gap: 0.75rem;">
+                                {% for submission in exercise.submissions %}
+                                <div style="border: 1px solid var(--color-border); border-radius: 3px; padding: 0.75rem; background-color: var(--color-surface);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            {% if submission.tests_passed %}
+                                                {% if submission.fmt_passed && submission.clippy_passed %}
+                                                    <div class="icon-star" style="width: 16px; height: 16px;">
+                                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
+                                                        </svg>
+                                                    </div>
+                                                    <span style="color: var(--color-warning); font-size: 0.875rem; font-weight: 500;">Perfected</span>
+                                                {% else %}
+                                                    <div class="icon-check" style="width: 16px; height: 16px;">
+                                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="white"/>
+                                                        </svg>
+                                                    </div>
+                                                    <span style="color: var(--color-success); font-size: 0.875rem; font-weight: 500;">Passed</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <div style="width: 16px; height: 16px; background-color: var(--color-error); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
+                                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 10px; height: 10px;">
+                                                        <path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span style="color: var(--color-error); font-size: 0.875rem; font-weight: 500;">Failed</span>
+                                            {% endif %}
+                                        </div>
+                                        <div style="font-size: 0.75rem; color: var(--color-text-muted);">
+                                            {{ submission.submitted_at }}
+                                        </div>
+                                    </div>
+                                    
+                                    <details style="margin-top: 0.5rem;">
+                                        <summary style="cursor: pointer; color: var(--color-text-muted); font-size: 0.75rem; padding: 0.25rem 0;">
+                                            View Source Code
+                                        </summary>
+                                        <div class="code-container" style="margin-top: 0.5rem;">
+                                            <div class="copy-btn" onclick="copyCodeFromElement(this.nextElementSibling.nextElementSibling.querySelector('code'))" title="Copy to clipboard">
+                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
+                                                </svg>
+                                                Copy
+                                            </div>
+                                            <div class="copy-btn" onclick="openCodeInPlayground(this.nextElementSibling.querySelector('code'), this, '{{ exercise.name }} - {{ submission.submitted_at }}')" title="Open in Rust Playground" style="right: 70px;">
+                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+                                                </svg>
+                                                Play
+                                            </div>
+                                            <pre><code class="language-rust">{{ submission.source_code }}</code></pre>
+                                        </div>
+                                    </details>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div style="margin-top: 1rem; padding: 1rem; background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 3px; text-align: center;">
+                            <p style="color: var(--color-text-muted); font-size: 0.875rem; margin: 0;">
+                                No submissions yet. Submit your solution to see it here!
+                            </p>
+                        </div>
+                        {% endif %}
                     </div>
                 </details>
             </div>
