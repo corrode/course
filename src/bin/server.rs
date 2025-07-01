@@ -127,7 +127,9 @@ struct WebRegistrationForm {
 async fn main() -> Result<()> {
     // Initialize logging with info level by default
     if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "info");
+        unsafe {
+            env::set_var("RUST_LOG", "info");
+        }
     }
     env_logger::init();
     

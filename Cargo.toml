@@ -1,7 +1,7 @@
 [package]
 name = "cargo-course"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [[bin]]
 name = "cargo-course"
@@ -10,14 +10,6 @@ path = "src/bin/cli.rs"
 [[bin]]
 name = "server"
 path = "src/bin/server.rs"
-
-[[bin]]
-name = "test_server"
-path = "src/bin/test_server.rs"
-
-[[bin]]
-name = "minimal_server"
-path = "src/bin/minimal_server.rs"
 
 [dependencies]
 # Shared dependencies
