@@ -9,60 +9,72 @@
 //! like building a pipeline, and Rust will optimize the whole thing into
 //! very fast code. It's like having a factory assembly line for your data!
 //!
-//! Let's iterate over some data and transform it into something useful! 
+//! Let's iterate over some data and transform it into something useful!
 
-/// Filters active users from a user list.
-/// Use .into_iter().filter().collect() to find users starting with 'A'
-fn filter_active_users(usernames: Vec<&str>) -> Vec<&str> {
+/// Returns all users whose usernames start with 'a'.
+/// See: <https://doc.rust-lang.org/std/iter/trait.IntoIterator.html#tymethod.into_iter>
+/// See: <https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.filter>
+/// See: <https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.collect>
+fn select_usernames_starting_with_a(usernames: Vec<&str>) -> Vec<&str> {
     todo!()
 }
 
 /// Normalizes email addresses to lowercase.
-/// Use .into_iter().map().collect() with .to_lowercase()
+/// See: <https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map>
+/// See: <https://doc.rust-lang.org/std/string/struct.String.html#method.to_lowercase>
 fn normalize_emails(emails: Vec<String>) -> Vec<String> {
     todo!()
 }
 
 /// Calculates total revenue from sales data.
-/// Use .iter().sum() to add up all values.
+/// See: <https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.iter>
+/// See: <https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.sum>
+/// See: <https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.fold>
 fn calculate_total_revenue() -> i32 {
     let sales = vec![1200, 850, 2300, 950, 1800, 3200, 1100, 2800];
     todo!()
 }
 
 /// Finds all files with ".rs" extension.
-/// Use .iter().filter().cloned().collect() pattern.
-fn find_rust_files(files: &[&str]) -> Vec<&str> {
+/// See: <https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.cloned>
+/// See: <https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.collect>
+fn find_rust_files<'file>(files: &[&'file str]) -> Vec<&'file str> {
     todo!()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_active_users() {
         let users = vec!["alice", "admin", "bob", "anonymous", "charlie"];
-        let active = filter_active_users(users);
+        let active = select_usernames_starting_with_a(users);
         assert_eq!(active, vec!["alice", "admin", "anonymous"]);
     }
-    
+
     #[test]
     fn test_email_normalization() {
         let emails = vec!["Alice@EXAMPLE.COM".to_string(), "BOB@test.ORG".to_string()];
         let normalized = normalize_emails(emails);
         assert_eq!(normalized, vec!["alice@example.com", "bob@test.org"]);
     }
-    
-    #[test] 
+
+    #[test]
     fn test_revenue_calculation() {
         let total = calculate_total_revenue();
         assert_eq!(total, 14200); // Sum of all sales
     }
-    
+
     #[test]
     fn test_rust_files() {
-        let files = &["main.rs", "README.md", "lib.rs", "package.json", "config.rs"];
+        let files = &[
+            "main.rs",
+            "README.md",
+            "lib.rs",
+            "package.json",
+            "config.rs",
+        ];
         let rust_files = find_rust_files(files);
         assert_eq!(rust_files, vec!["main.rs", "lib.rs", "config.rs"]);
     }

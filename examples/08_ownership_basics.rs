@@ -22,21 +22,21 @@ fn take_ownership(s: String) -> String {
 /// Borrows a string reference without taking ownership.
 /// The original string remains valid after this function returns.
 fn borrow_string(s: &str) -> usize {
-    // Return the length using .len()
+    // Return the length of the string
     todo!()
 }
 
 /// Takes a mutable reference to modify the string in place.
 /// The &mut allows us to change the string's contents.
 fn mutate_string(s: &mut String) {
-    // Add " - now with 100% more crab!" using .push_str()
+    // Append " - now with 100% more crab!" to the string
     todo!()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_ownership() {
         let s = String::from("Rust");
@@ -44,7 +44,7 @@ mod tests {
         // Note: s is no longer valid here! It was moved.
         assert_eq!(result, "Rust - owned by Rust!");
     }
-    
+
     #[test]
     fn test_borrowing() {
         let s = "The Matrix has you";
@@ -53,7 +53,7 @@ mod tests {
         assert_eq!(len, 18);
         assert_eq!(s, "The Matrix has you"); // Still here!
     }
-    
+
     #[test]
     fn test_mutable_borrow() {
         let mut s = String::from("Ferris");

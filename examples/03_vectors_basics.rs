@@ -22,7 +22,6 @@ fn create_shopping_list(items: &[&str]) -> Vec<String> {
 /// Adds an item to the shopping list.
 /// Modifies the list in place.
 fn add_item(list: &mut Vec<String>, item: &str) {
-    // Use .push() to add item (convert to String first)
     todo!()
 }
 
@@ -33,7 +32,6 @@ fn count_items(list: &Vec<String>) -> usize {
 
 /// Checks if the list contains a specific item.
 fn contains_item(list: &Vec<String>, item: &str) -> bool {
-    // Use .contains() method
     todo!()
 }
 

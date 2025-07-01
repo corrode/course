@@ -22,14 +22,12 @@ fn create_default_config() -> HashMap<String, String> {
 /// Gets a configuration value by key.
 /// Returns the value if found, "default" if not found.
 fn get_config_value(config: &HashMap<String, String>, key: &str) -> String {
-    // Use .get() method and .unwrap_or() for default
     todo!()
 }
 
 /// Updates a configuration value.
 /// Inserts or updates the key-value pair.
 fn set_config_value(config: &mut HashMap<String, String>, key: &str, value: &str) {
-    // Use .insert() method
     todo!()
 }
 
@@ -42,30 +40,30 @@ fn count_words(words: &[&str]) -> HashMap<String, usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_default_config() {
         let config = create_default_config();
         assert_eq!(config.get("host"), Some(&"localhost".to_string()));
         assert_eq!(config.get("port"), Some(&"8080".to_string()));
     }
-    
+
     #[test]
     fn test_get_config() {
         let mut config = HashMap::new();
         config.insert("timeout".to_string(), "30".to_string());
-        
+
         assert_eq!(get_config_value(&config, "timeout"), "30");
         assert_eq!(get_config_value(&config, "missing"), "default");
     }
-    
+
     #[test]
     fn test_set_config() {
         let mut config = HashMap::new();
         set_config_value(&mut config, "debug", "true");
         assert_eq!(config.get("debug"), Some(&"true".to_string()));
     }
-    
+
     #[test]
     fn test_word_counting() {
         let words = ["hello", "world", "hello", "rust"];

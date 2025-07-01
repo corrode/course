@@ -13,16 +13,17 @@
 
 /// Finds a user by ID in the database.
 /// Returns Some(username) if found, None if not found.
+///
+/// See: https://doc.rust-lang.org/std/primitive.slice.html#method.iter
+/// See: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find
+/// See: https://doc.rust-lang.org/std/option/enum.Option.html#method.map
 fn find_user_by_id(users: &[(u32, &str)], id: u32) -> Option<&str> {
-    // Use .iter().find() to search for matching ID
-    // Then .map() to extract just the username
     todo!()
 }
 
 /// Gets the first item from a list.
 /// Returns Some(item) if list has items, None if empty.
 fn get_first_item(items: &[String]) -> Option<&String> {
-    // Use .first() method
     todo!()
 }
 
@@ -34,8 +35,9 @@ fn get_setting_or_default(setting: Option<u32>, default: u32) -> u32 {
 
 /// Safely gets the length of an optional string.
 /// Returns the length if Some, 0 if None.
+/// See: https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or
+/// See: https://doc.rust-lang.org/std/keyword.match.html
 fn optional_string_length(maybe_string: Option<&str>) -> usize {
-    // Use .map_or() or match
     todo!()
 }
 

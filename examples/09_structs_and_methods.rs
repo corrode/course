@@ -9,8 +9,6 @@
 //! and let you define methods that operate on that data. No inheritance complexity,
 //! just clean, simple composition. It's object-oriented programming without
 //! the sharp edges!
-//!
-//! Time to build your user management empire! 👥
 
 #[derive(Debug, PartialEq)]
 struct User {
