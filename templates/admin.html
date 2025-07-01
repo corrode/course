@@ -87,11 +87,22 @@
     </div>
 
     <div class="card">
-        <h2 style="margin-bottom: 1.5rem;">Recent Submissions</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0;">Recent Submissions</h2>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="exercise-filter" style="font-size: 0.875rem; color: var(--color-text-muted);">Filter by exercise:</label>
+                <select id="exercise-filter" onchange="filterSubmissions()" style="background-color: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 4px; padding: 0.25rem 0.5rem; font-size: 0.875rem; cursor: pointer; transition: border-color 0.2s ease;">
+                    <option value="">All exercises</option>
+                    {% for exercise in exercises %}
+                    <option value="{{ exercise }}">{{ exercise }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
         
-        <div style="display: grid; gap: 1rem;">
+        <div style="display: grid; gap: 1rem;" id="submissions-container">
             {% for submission in recent_submissions %}
-            <div class="exercise-item" onclick="toggleSubmissionDetails(this)" style="cursor: pointer;">
+            <div class="exercise-item" onclick="toggleSubmissionDetails(this)" style="cursor: pointer;" data-exercise="{{ submission.exercise_name }}">
                 <span class="exercise-status">
                     {% if submission.perfected %}
                         <div class="icon-star">
@@ -207,6 +218,21 @@ function toggleSubmissionDetails(element) {
         detailsDiv.style.display = 'block';
         element.querySelector('[data-hint]') && (element.querySelector('[data-hint]').textContent = 'Click to hide source');
     }
+}
+
+function filterSubmissions() {
+    const filter = document.getElementById('exercise-filter').value;
+    const submissions = document.querySelectorAll('#submissions-container .exercise-item');
+    
+    submissions.forEach(submission => {
+        const exerciseName = submission.getAttribute('data-exercise');
+        
+        if (filter === '' || exerciseName === filter) {
+            submission.style.display = 'flex';
+        } else {
+            submission.style.display = 'none';
+        }
+    });
 }
 </script>
 {% endblock %}

@@ -70,6 +70,7 @@ struct AdminTemplate {
     participants: Vec<ParticipantSummary>,
     recent_submissions: Vec<SubmissionSummary>,
     stats: AdminStats,
+    exercises: Vec<String>,
 }
 
 /// Admin dashboard statistics
@@ -390,10 +391,21 @@ async fn admin_dashboard(
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get admin statistics").into_response(),
     };
 
+    // Get unique exercises from submissions
+    let exercise_rows_result = sqlx::query("SELECT DISTINCT exercise_name FROM submissions ORDER BY exercise_name")
+        .fetch_all(&state.pool)
+        .await;
+
+    let exercises = match exercise_rows_result {
+        Ok(rows) => rows.iter().map(|row| row.get::<String, _>("exercise_name")).collect(),
+        Err(_) => Vec::new(), // Return empty list if query fails
+    };
+
     let template = AdminTemplate {
         participants,
         recent_submissions,
         stats,
+        exercises,
     };
 
     match template.render() {
