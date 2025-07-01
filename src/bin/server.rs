@@ -8,6 +8,7 @@ use axum::{
 use dotenvy::dotenv;
 use log::{info, warn, error};
 use serde::{Deserialize, Serialize};
+use sha2::{Sha256, Digest};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, SqlitePool, Row, Sqlite};
 use std::env;
 use tower_http::services::ServeDir;
@@ -529,11 +530,39 @@ async fn api_submit(
         }
     }
     
-    // Insert new submission (allow multiple submissions per exercise)
+    // Calculate content hash for deduplication
+    let content_hash = calculate_submission_hash(&request.ulid, &request.exercise_name, &request.source_code);
+    
+    // Check if identical submission already exists
+    let existing_submission = sqlx::query(
+        "SELECT id FROM submissions WHERE participant_id = ? AND exercise_name = ? AND content_hash = ?"
+    )
+    .bind(&request.ulid)
+    .bind(&request.exercise_name)
+    .bind(&content_hash)
+    .fetch_optional(&state.pool)
+    .await;
+    
+    match existing_submission {
+        Ok(Some(_)) => {
+            info!("Duplicate submission detected for participant='{}', exercise='{}' - skipping", 
+                  request.ulid, request.exercise_name);
+            return Ok(StatusCode::OK); // Return success but don't store duplicate
+        },
+        Ok(None) => {
+            // No duplicate found, proceed with insertion
+        },
+        Err(e) => {
+            error!("Database error while checking for duplicate submission: {}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    // Insert new submission with hash
     match sqlx::query(
         r#"
-        INSERT INTO submissions (id, participant_id, exercise_name, source_code, tests_passed, clippy_passed, fmt_passed)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO submissions (id, participant_id, exercise_name, source_code, tests_passed, clippy_passed, fmt_passed, content_hash)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         "#
     )
     .bind(Ulid::new().to_string())
@@ -543,6 +572,7 @@ async fn api_submit(
     .bind(request.tests_passed)
     .bind(request.clippy_passed)
     .bind(request.fmt_passed)
+    .bind(&content_hash)
     .execute(&state.pool)
     .await 
     {
@@ -771,4 +801,15 @@ fn parse_exercise_docs(file_path: &str) -> Result<(String, String)> {
     }
     
     Ok((title, description))
+}
+
+/// Calculate a hash for submission content to detect duplicates
+fn calculate_submission_hash(participant_id: &str, exercise_name: &str, source_code: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(participant_id.as_bytes());
+    hasher.update(b":");
+    hasher.update(exercise_name.as_bytes());
+    hasher.update(b":");
+    hasher.update(source_code.as_bytes());
+    format!("{:x}", hasher.finalize())
 }
