@@ -71,9 +71,14 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="/dashboard/{{ participant.id }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;">
-                            View Dashboard
-                        </a>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="/dashboard/{{ participant.id }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.375rem 0.75rem;">
+                                View Dashboard
+                            </a>
+                            <button onclick="removeParticipant('{{ participant.id }}', '{{ participant.name }}')" class="btn" style="font-size: 0.75rem; padding: 0.375rem 0.75rem; background-color: var(--color-error); border: none;">
+                                Remove
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -152,4 +157,41 @@
         <p>Enabling everyone to build reliable and efficient software</p>
     </div>
 </div>
+
+<script>
+async function removeParticipant(participantId, participantName) {
+    if (!confirm(`Are you sure you want to remove participant "${participantName}"? This will delete all their submissions and progress permanently.`)) {
+        return;
+    }
+    
+    try {
+        // Get the admin token from the current URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        if (!token) {
+            alert('Admin token not found in URL');
+            return;
+        }
+        
+        const response = await fetch(`/admin/remove-participant/${participantId}?token=${encodeURIComponent(token)}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (response.ok) {
+            // Reload the page to reflect changes
+            window.location.reload();
+        } else {
+            const error = await response.text();
+            alert(`Failed to remove participant: ${error}`);
+        }
+    } catch (error) {
+        console.error('Error removing participant:', error);
+        alert('Failed to remove participant. Please try again.');
+    }
+}
+</script>
 {% endblock %}

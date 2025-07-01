@@ -3,7 +3,7 @@ use cargo_course::types::*;
 use anyhow::Result;
 use askama::Template;
 use axum::{
-    debug_handler, extract::{Path as AxumPath, Query, State}, http::StatusCode, response::{Html, IntoResponse, Json}, routing::{get, post}, Router
+    debug_handler, extract::{Path as AxumPath, Query, State}, http::StatusCode, response::{Html, IntoResponse, Json}, routing::{delete, get, post}, Router
 };
 use dotenvy::dotenv;
 use log::{info, warn, error};
@@ -206,6 +206,7 @@ async fn main() -> Result<()> {
         .route("/register", post(web_register))
         .route("/dashboard/{ulid}", get(participant_dashboard))
         .route("/admin", get(admin_dashboard))
+        .route("/admin/remove-participant/{ulid}", delete(admin_remove_participant))
         .nest("/api", api_routes)
         .nest_service("/static", ServeDir::new("static"))
         .with_state(app_state);
@@ -387,6 +388,65 @@ async fn admin_dashboard(
         Ok(html) => Html(html).into_response(),
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to render template").into_response(),
     }
+}
+
+/// Admin participant removal endpoint
+async fn admin_remove_participant(
+    AxumPath(participant_id): AxumPath<String>,
+    Query(query): Query<AdminQuery>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    // Verify admin token
+    if query.token != state.admin_token {
+        return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
+    }
+
+    info!("Admin removing participant: {}", participant_id);
+
+    // Start a transaction to ensure atomicity
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(err) => {
+            error!("Failed to start transaction: {}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    // First, delete all submissions for this participant
+    if let Err(err) = sqlx::query("DELETE FROM submissions WHERE participant_id = ?")
+        .bind(&participant_id)
+        .execute(&mut *tx)
+        .await
+    {
+        error!("Failed to delete submissions for participant {}: {}", participant_id, err);
+        return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete submissions").into_response();
+    }
+
+    // Then, delete the participant
+    match sqlx::query("DELETE FROM participants WHERE id = ?")
+        .bind(&participant_id)
+        .execute(&mut *tx)
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                return (StatusCode::NOT_FOUND, "Participant not found").into_response();
+            }
+        }
+        Err(err) => {
+            error!("Failed to delete participant {}: {}", participant_id, err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete participant").into_response();
+        }
+    }
+
+    // Commit the transaction
+    if let Err(err) = tx.commit().await {
+        error!("Failed to commit transaction: {}", err);
+        return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+    }
+
+    info!("Successfully removed participant: {}", participant_id);
+    (StatusCode::OK, "Participant removed successfully").into_response()
 }
 
 /// API registration endpoint
