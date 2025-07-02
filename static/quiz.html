@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>corrode Rust Workshop Quiz</title>
+    <script src="https://cdn.jsdelivr.net/npm/quizdown@latest/public/build/quizdown.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            quizdown.init();
+        });
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--color-background, #ffffff);
+            color: var(--color-text, #333333);
+        }
+        h1 {
+            color: #ce422b;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .intro {
+            background-color: var(--color-surface, #f5f5f5);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid var(--color-border, #e0e0e0);
+        }
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.8em;
+            color: var(--color-text-muted, #666);
+        }
+        footer a {
+            color: var(--color-primary, #ce422b);
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Dark theme support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-background: #2a2a2a;
+                --color-surface: #353535;
+                --color-text: #f0f0f0;
+                --color-text-muted: #aeaeae;
+                --color-border: #353535;
+                --color-primary: #d2991d;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Rust Fundamentals Quiz</h1>
+    
+    <div class="intro">
+        <p>This quiz covers the fundamental concepts we've discussed in our Rust workshop. Use it to test your understanding of key Rust principles before we move on to more advanced topics.</p>
+        <p>Select the correct answer for each question. You'll receive immediate feedback after answering each question.</p>
+    </div>
+
+    <div class="quizdown">
+    ---
+    primaryColor: steelblue
+    shuffleQuestions: false
+    shuffleAnswers: true
+    enableRetry: false
+    ---
+
+    ### What happens when you pass a String to a function in Rust?
+
+    > Hint: Think about ownership rules!
+
+    1. [ ] The String is copied, and both caller and function have ownership
+       > No, Rust avoids implicit copying of heap data for performance reasons.
+    1. [x] The String's ownership moves to the function, and it's no longer valid in the caller
+       > Correct! By default, passing a String transfers ownership to the function.
+    1. [ ] The function borrows the String, and ownership remains with the caller
+       > No, this would require using references (like &String).
+    1. [ ] The function automatically gets a reference to the String
+       > No, references must be explicitly declared with &.
+
+    ### Which of these correctly creates a mutable variable in Rust?
+
+    1. [ ] `const x = 5;`
+       > No, const creates immutable constants, not variables.
+    1. [ ] `let x = 5;`
+       > No, this creates an immutable variable.
+    1. [x] `let mut x = 5;`
+       > Correct! The mut keyword makes a variable mutable.
+    1. [ ] `var x = 5;`
+       > No, the var keyword doesn't exist in Rust.
+
+    ### What is the main purpose of the `Option<T>` type in Rust?
+
+    > Hint: Think about what other languages use null for.
+
+    1. [ ] To handle errors during program execution
+       > No, that's what Result<T, E> is for.
+    1. [x] To represent a value that might be absent or null
+       > Correct! Option<T> represents either Some(value) or None.
+    1. [ ] To create optional function parameters
+       > No, Rust doesn't have optional parameters like other languages.
+    1. [ ] To convert between different numeric types
+       > No, type conversion is done with methods like as or from().
+
+    ### How do you borrow a value immutably in Rust?
+
+    1. [ ] `&mut value`
+       > No, this creates a mutable reference.
+    1. [x] `&value`
+       > Correct! The & operator creates an immutable reference.
+    1. [ ] `*value`
+       > No, this dereferences a reference.
+    1. [ ] `value.borrow()`
+       > No, this is only used with special types like RefCell.
+
+    ### Which statement about Rust's ownership is correct?
+
+    > Hint: This is related to memory management.
+
+    1. [ ] A value can have multiple owners at the same time
+       > No, Rust enforces single ownership.
+    1. [x] When an owner goes out of scope, the value is dropped
+       > Correct! This is how Rust manages memory without a garbage collector.
+    1. [ ] Ownership can be shared by using `SharedPtr`
+       > No, SharedPtr is a C++ concept. Rust uses Rc or Arc.
+    1. [ ] Primitive types need manual memory management
+       > No, primitive types are automatically copied, not moved.
+
+    ### What is the difference between `String` and `&str` in Rust?
+
+    1. [ ] `String` is mutable, while `&str` is always immutable
+       > Not exactly. A String can be mutable, but that's not the primary difference.
+    1. [x] `String` is heap-allocated and owned, while `&str` is a borrowed string slice
+       > Correct! String is owned while &str is borrowed.
+    1. [ ] `String` is for ASCII only, while `&str` supports Unicode
+       > No, both String and &str support UTF-8 encoded Unicode.
+    1. [ ] `String` is a compile-time construct, while `&str` is runtime-only
+       > No, both can exist at runtime.
+
+    ### What does the `#[derive(Debug)]` attribute do?
+
+    > Hint: Think about common traits in Rust.
+
+    1. [ ] It makes the program print debugging information at runtime
+       > No, it doesn't automatically print anything.
+    1. [x] It automatically implements the Debug trait for a type
+       > Correct! This enables printing with {:?} format specifier.
+    1. [ ] It enables advanced compiler warnings for the marked type
+       > No, this is not related to compiler warnings.
+    1. [ ] It adds a debugger breakpoint at the definition
+       > No, breakpoints are set in the debugger, not in the code.
+
+    ### In Rust, what does the `?` operator do when used with a `Result<T, E>`?
+
+    > Hint: It simplifies a common pattern when handling Results.
+
+    1. [ ] It checks if the value is null
+       > No, Rust doesn't have null values.
+    1. [x] It unwraps the Ok value or propagates the Err value to the calling function
+       > Correct! This is equivalent to a match expression that returns early on Err.
+    1. [ ] It converts the Result to an Option
+       > No, although Result has methods to convert to Option.
+    1. [ ] It throws an exception if the Result is an Err
+       > No, Rust doesn't have exceptions.
+
+    ### Which of the following is a way to create an empty vector in Rust?
+
+    1. [x] `let v = vec![];`
+       > Correct! This uses the vec! macro to create an empty vector.
+    1. [ ] `let v = Vector::new();`
+       > No, the type is Vec, not Vector.
+    1. [ ] `let v = new Vec<i32>();`
+       > No, Rust doesn't use new keyword like this.
+    1. [ ] `let v = [];`
+       > No, this syntax is for arrays, not vectors.
+
+    ### What happens if you try to access a HashMap key that doesn't exist?
+
+    > Hint: Rust avoids runtime panics when possible.
+
+    1. [ ] The program crashes with a "key not found" error
+       > No, HashMap's get method doesn't panic.
+    1. [ ] A default value is returned based on the value type
+       > No, although entry() API can help insert defaults.
+    1. [x] The `get` method returns `None`
+       > Correct! This makes it safe to access potentially missing keys.
+    1. [ ] A new entry with a default value is automatically created
+       > No, you need to use entry() API for this behavior.
+
+    ### What is the correct way to create a new String from a string literal?
+
+    1. [x] `let s = "hello".to_owned();`
+       > Correct! This creates an owned String from a &str.
+    1. [ ] `let s = new String("hello");`
+       > No, Rust doesn't use the new keyword this way.
+    1. [ ] `let s = String("hello");`
+       > No, String isn't callable like a function.
+    1. [ ] `let s = "hello".to_String();`
+       > No, the method is to_string() or to_owned(), not to_String().
+
+    ### Which of these statements about Rust enums is correct?
+
+    > Hint: Rust enums are much more powerful than in many other languages.
+
+    1. [ ] Rust enums can only contain numeric values
+       > No, Rust enums are not limited to numeric values.
+    1. [x] Rust enums can contain data of different types in each variant
+       > Correct! This makes them suitable for representing complex alternatives.
+    1. [ ] Rust enums must implement the Enum trait
+       > No, there's no Enum trait in Rust.
+    1. [ ] Rust enums can only be compared using the == operator
+       > No, you typically use pattern matching with enums.
+
+    ### What is the lifetime annotation in the following function declaring?
+    ```rust
+    fn longest<'a>(x: &'a str, y: &'a str) -> &'a str
+    ```
+
+    > Hint: Lifetimes are about ensuring references remain valid.
+
+    1. [ ] Both input parameters must live at least as long as the function call
+       > No, that's a given for any function parameter.
+    1. [ ] The return value won't live any longer than the shortest-lived of the two parameters
+       > This is almost right, but not exactly the meaning.
+    1. [x] The return value will live at least as long as the shortest-lived of the two parameters
+       > Correct! The returned reference is valid as long as both inputs are valid.
+    1. [ ] The parameters x and y must have the same lifetime
+       > This is a consequence, but not what 'a directly specifies.
+
+    ### In Rust, what does the `clone()` method typically do?
+
+    1. [ ] It creates a new object with a shallow copy of the data
+       > No, Rust's clone() typically performs a deep copy.
+    1. [ ] It creates a reference to the original object
+       > No, clone() creates a new value, not a reference.
+    1. [x] It creates a deep copy of the object's data
+       > Correct! For most types, clone() creates an independent copy.
+    1. [ ] It moves the object to a new memory location
+       > No, that's not what clone() does.
+
+    ### What is the primary purpose of the `match` expression in Rust?
+
+    > Hint: It's one of Rust's most powerful control flow constructs.
+
+    1. [x] To pattern match values against a series of patterns
+       > Correct! match is an exhaustive pattern matching construct.
+    1. [ ] To find and replace substrings in text
+       > No, that would be done with string methods.
+    1. [ ] To check if a value matches a specific type
+       > No, type checking is done differently in Rust.
+    1. [ ] To match regular expressions against strings
+       > No, Rust uses external crates for regex matching.
+
+    ### When is the `drop` method of a value called in Rust?
+
+    > Hint: This is related to Rust's deterministic memory management.
+
+    1. [ ] When the value is explicitly set to null
+       > No, Rust doesn't have null values.
+    1. [x] When the value goes out of scope
+       > Correct! This is how Rust's RAII pattern works.
+    1. [ ] When the `Drop::drop` method is manually called
+       > No, Drop::drop should never be called directly.
+    1. [ ] Only when using the `drop()` function
+       > No, the drop() function is just one way to force early dropping.
+
+    ### What does the `'static` lifetime signify in Rust?
+
+    1. [x] The value will exist for the duration of the entire program
+       > Correct! 'static means the value lives for the whole program duration.
+    1. [ ] The variable cannot be modified after initialization
+       > No, 'static doesn't imply immutability.
+    1. [ ] The memory is allocated on the stack rather than the heap
+       > No, 'static doesn't determine stack vs heap allocation.
+    1. [ ] The variable has a fixed, known size at compile time
+       > No, that's what Sized trait is for.
+
+    ### What is a trait in Rust?
+
+    > Hint: Think about how other languages implement interfaces.
+
+    1. [ ] A compile-time attribute that affects code generation
+       > No, that would be more like a macro or an attribute.
+    1. [x] A collection of methods that types can implement
+       > Correct! Traits define shared behavior between types.
+    1. [ ] A special type of enum with inheritance
+       > No, Rust doesn't have inheritance.
+    1. [ ] A marker for memory-managed types
+       > No, traits aren't specifically about memory management.
+
+    ### How do you make a variable in Rust that is accessible from any module?
+
+    1. [ ] Declare it with the `global` keyword
+       > No, Rust doesn't have a global keyword.
+    1. [x] Use the `pub` keyword
+       > Correct! pub makes items public across module boundaries.
+    1. [ ] Use the `extern` keyword
+       > No, extern is for external functions/crates.
+    1. [ ] Static variables are automatically accessible everywhere
+       > No, static items still need pub to be accessible outside their module.
+
+    ### Which of these is NOT a valid way to create a Rust reference?
+
+    > Hint: Remember that * is a dereference operator.
+
+    1. [ ] `let r = &x;`
+       > This is valid - creates an immutable reference.
+    1. [ ] `let r = &mut x;`
+       > This is valid - creates a mutable reference.
+    1. [x] `let r = *x;`
+       > Correct! This dereferences x, it doesn't create a reference.
+    1. [ ] `let r = x.as_ref();`
+       > This is valid - converts to a reference using the AsRef trait.
+    </div>
+
+    <footer>
+        <p>Rust Workshop | Created with <a href="https://github.com/bonartm/quizdown-js" target="_blank">quizdown-js</a></p>
+    </footer>
+</body>
+</html>

@@ -91,6 +91,7 @@ struct ExerciseProgress {
     title: String,
     description: String,
     submissions: Vec<ExerciseSubmission>,
+    is_quiz: bool,
 }
 
 /// Individual submission for an exercise
@@ -737,9 +738,22 @@ async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Resul
             })
             .collect();
 
+        // Check if this is a quiz exercise
+        let is_quiz = exercise_name.contains("quiz");
+        
         // Determine exercise status based on submissions
-        let completed = exercise_submissions.iter().any(|s| s.tests_passed);
-        let perfected = exercise_submissions.iter().any(|s| s.tests_passed && s.fmt_passed && s.clippy_passed);
+        let completed = if is_quiz {
+            // For quiz exercises, consider them completed if they've been accessed
+            // (We could track this differently if needed)
+            false // For now, quizzes are never marked as "completed" 
+        } else {
+            exercise_submissions.iter().any(|s| s.tests_passed)
+        };
+        let perfected = if is_quiz {
+            false // Quizzes don't have "perfected" status
+        } else {
+            exercise_submissions.iter().any(|s| s.tests_passed && s.fmt_passed && s.clippy_passed)
+        };
 
         exercises.push(ExerciseProgress {
             name: exercise_name.to_string(),
@@ -748,6 +762,7 @@ async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Resul
             title,
             description,
             submissions: exercise_submissions,
+            is_quiz,
         });
     }
 
