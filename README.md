@@ -12,7 +12,9 @@ The goal is to go from zero to building real applications in Rust as quickly as 
 Unlike other Rust learning resources, this course is **designed for the working developer** who wants to build real applications:
 
 - **🎯 Work-Ready Skills**: Every exercise teaches patterns you'll use need for using Rust productively 
-- **📈 Incremental Learning**: One concept per exercise, systematically writing more and more complex code 
+- **👷‍♀️ Project-Based**: Learn by working through tiny, useful projects
+- **📈 Incremental Learning**: One concept per exercise, systematically writing more and more complex code
+- **🧪 Learn from first principles**: Teaches you how to navigate the documentation to stop guessing and start learning
 - **🔗 Connected Concepts**: Exercises build on each other to reinforce learning
 - **⚡ Quick Wins**: short exercises to maintain momentum
 - **🛠️ Practical Examples**: User management, HTTP handling, config parsing, data processing: everything you typically do in your day job. (No inverse binary trees.)
