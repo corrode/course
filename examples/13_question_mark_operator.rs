@@ -42,9 +42,7 @@ mod tests {
     #[test]
     fn test_file_reading() {
         fs::write("test.txt", "line 1\nline 2").unwrap();
-        // TODO: How can you fix the error in `assert_eq`?
-        // "binary operation `==` cannot be applied to type `Result<usize, std::io::Error>`"
-        assert_eq!(count_file_lines("test.txt"), Ok(2));
+        assert_eq!(count_file_lines("test.txt").unwrap(), 2);
         assert!(count_file_lines("missing.txt").is_err());
         fs::remove_file("test.txt").ok();
     }
@@ -52,7 +50,7 @@ mod tests {
     #[test]
     fn test_combined_errors() {
         fs::write("numbers.txt", "5\n10\n15").unwrap();
-        assert_eq!(sum_numbers_in_file("numbers.txt"), Ok(30));
+        assert_eq!(sum_numbers_in_file("numbers.txt").unwrap(), 30);
 
         fs::write("bad.txt", "5\nabc\n15").unwrap();
         assert!(sum_numbers_in_file("bad.txt").is_err()); // Parse error

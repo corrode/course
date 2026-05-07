@@ -12,7 +12,9 @@ The goal is to go from zero to building real applications in Rust as quickly as 
 Unlike other Rust learning resources, this course is **designed for the working developer** who wants to build real applications:
 
 - **🎯 Work-Ready Skills**: Every exercise teaches patterns you'll use need for using Rust productively 
-- **📈 Incremental Learning**: One concept per exercise, systematically writing more and more complex code 
+- **👷‍♀️ Project-Based**: Learn by working through tiny, useful projects
+- **📈 Incremental Learning**: One concept per exercise, systematically writing more and more complex code
+- **🧪 Learn from first principles**: Teaches you how to navigate the documentation to stop guessing and start learning
 - **🔗 Connected Concepts**: Exercises build on each other to reinforce learning
 - **⚡ Quick Wins**: short exercises to maintain momentum
 - **🛠️ Practical Examples**: User management, HTTP handling, config parsing, data processing: everything you typically do in your day job. (No inverse binary trees.)
@@ -91,6 +93,7 @@ For basic testing without progress tracking:
 2. Clone this repository: `git clone https://github.com/corrode/course.git`
 3. Navigate to an exercise: `cd course`
 4. Run tests: `cargo test --example 00_hello_rust`
+5. Run bonus exercises: `cargo test --example 00_hello_rust --features bonus`
 
 #### Option 3: Rust Playground (Beginners)
 
@@ -143,31 +146,75 @@ PORT=3000
 
 ## Exercise Progression
 
-### Beginner Track (15 exercises)
+### Beginner Track (19 exercises)
 
-The exercises follow a carefully designed progression:
+The exercises follow a carefully designed progression from basic concepts to advanced projects:
 
-1. **00_hello_rust** - String creation and formatting
-2. **01_integer_handling** - Arithmetic and number operations  
-3. **02_enums_and_matching** - Pattern matching with HTTP status codes
-4. **03_vectors_basics** - Growable arrays and basic operations
-5. **04_hashmaps** - Key-value storage for configuration and caching
-6. **05_tuples** - Multiple return values and destructuring
-7. **06_option_handling** - Safe handling of missing values
-8. **07_result_handling** - Error handling and validation
-9. **08_ownership_basics** - Memory safety and borrowing
-10. **09_structs_and_methods** - User account management
-11. **10_iterator_patterns** - Data transformation with functional patterns
-12. **11_password_validator** - **Open-ended project** (be creative!)
-13. **12_word_counter** - **Combining concepts** (strings + vectors + hashmaps)
-14. **13_env_parser** - **Practical parsing** (environment files)
-15. **14_csv_parser** - **Complex parsing** (challenging final exercise)
+#### Foundation (0-4): Data Types and Basics
+0. **00_hello_rust** - Welcome to Rust! String basics and your first program
+1. **01_basic_types** - Core data types: integers, floats, booleans, and chars  
+2. **02_numbers_and_math** - Mathematical operations and type conversions
+3. **03_strings_and_text** - Text processing, validation, and manipulation
+4. **04_collections_basics** - Working with Vec<T> for data storage
+
+#### Core Concepts (5-9): Rust's Type System  
+5. **05_tuples_and_structs** - Multiple return values and destructuring
+6. **06_option_and_some_none** - Safe handling of missing values with Option<T>
+7. **07_result_and_error_handling** - Error handling and validation with Result<T, E>
+8. **08_ownership_and_borrowing** - Memory safety and Rust's ownership system
+9. **09_structs_and_methods** - User account management with custom types
+
+#### Advanced Patterns (10-12): Real Programming
+10. **10_enums_and_matching** - Pattern matching and algebraic data types
+11. **11_iterators_and_loops** - Data transformation with functional patterns
+12. **12_password_validator** - **Open-ended project** (be creative!)
+
+#### Integration (13-18): Putting It All Together
+13. **13_question_mark_operator** - **Error handling patterns** (? operator)
+14. **14_word_counter** - **Combining concepts** (strings + vectors + hashmaps)
+15. **15_modules** - **Code organization** (mod system and visibility)
+16. **16_quiz** - **Knowledge check** (interactive fundamentals quiz)
+17. **17_env_parser** - **Practical parsing** (environment files)
+18. **18_csv_parser** - **Complex parsing** (challenging final exercise)
 
 Each exercise includes:
 - Clear learning objectives
 - Real-world context
 - Unit tests
 - Hints without hand-holding
+- **Bonus challenges** for curious learners (see below)
+
+### Bonus Exercises: Go Deeper!
+
+Most exercises include **bonus challenges** that let curious learners explore advanced concepts without blocking normal progress. Bonus exercises are:
+
+- **Optional**: Skip them entirely if you prefer to focus on the main progression
+- **Advanced**: Cover more complex patterns and real-world scenarios  
+- **Practical**: Demonstrate techniques used in production systems
+- **Feature-gated**: Disabled by default to avoid overwhelming beginners
+
+#### Running Bonus Exercises
+
+```bash
+# Run normal tests (basic exercises only)
+cargo test --example 01_basic_types
+
+# Run bonus exercises too
+cargo test --example 01_basic_types --features bonus
+
+# Submit with CLI (normal exercises)
+cargo course submit examples/01_basic_types.rs
+
+# Submit bonus exercises with CLI
+cargo course submit examples/01_basic_types.rs --features bonus
+```
+
+#### Why Bonus Exercises?
+
+- **Flatter Learning Curve**: Beginners aren't overwhelmed with too many concepts at once
+- **Advanced Practice**: Experienced developers can dive deeper without being bored
+- **Real-World Relevance**: Bonus exercises often mirror complex patterns from production systems
+- **Self-Paced Learning**: Learn at your own speed and according to your curiosity level
 
 ## Learning Philosophy
 

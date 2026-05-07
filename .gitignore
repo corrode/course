@@ -20,6 +20,9 @@ Cargo.lock
 *.swp
 *.swo
 
+# Local planning / scratch notes
+TODO/
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -70,4 +70,68 @@ mod tests {
         assert_eq!(validate_email("user@example.com"), Ok("user@example.com"));
         assert!(validate_email("invalid-email").is_err());
     }
+
+    // Bonus exercises - run with: cargo test --example 07_result_and_error_handling --features bonus
+    #[cfg(feature = "bonus")]
+    mod bonus {
+        use super::*;
+
+        /// BONUS: Chain multiple fallible operations
+        /// Database systems often chain operations that can fail!
+        fn process_user_data(raw_data: &str) -> Result<u32, &'static str> {
+            todo!()
+        }
+
+        /// BONUS: Implement a custom error type for better error handling
+        /// Production systems need structured error reporting!
+        #[derive(Debug, PartialEq)]
+        enum ConfigError {
+            MissingFile,
+            InvalidFormat,
+            PermissionDenied,
+        }
+
+        fn advanced_config_reader(filename: &str) -> Result<String, ConfigError> {
+            todo!()
+        }
+
+        /// BONUS: Recover from errors with fallback values
+        /// Resilient systems need graceful degradation!
+        fn get_setting_with_fallback(key: &str) -> u32 {
+            todo!()
+        }
+
+        /// BONUS: Transform errors from one type to another
+        /// API layers often need to convert internal errors!
+        fn transform_error(input: &str) -> Result<i32, String> {
+            todo!()
+        }
+
+        #[test]
+        fn test_processing_chain() {
+            // Should parse "123" and double it
+            assert_eq!(process_user_data("123"), Ok(246));
+            assert!(process_user_data("invalid").is_err());
+        }
+
+        #[test]
+        fn test_custom_errors() {
+            assert_eq!(advanced_config_reader("config.toml"), Ok("config data".to_string()));
+            assert_eq!(advanced_config_reader(""), Err(ConfigError::MissingFile));
+            assert_eq!(advanced_config_reader("invalid.json"), Err(ConfigError::InvalidFormat));
+        }
+
+        #[test]
+        fn test_fallback_recovery() {
+            // Should return default values when settings don't exist
+            assert_eq!(get_setting_with_fallback("port"), 8080);
+            assert_eq!(get_setting_with_fallback("timeout"), 30);
+        }
+
+        #[test]
+        fn test_error_transformation() {
+            assert_eq!(transform_error("42"), Ok(42));
+            assert_eq!(transform_error("invalid"), Err("Parse error: invalid input".to_string()));
+        }
+    }
 }

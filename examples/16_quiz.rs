@@ -5,7 +5,7 @@
 //! and other fundamental Rust principles.
 //!
 //! Click the link below to take the quiz in a new tab. The quiz includes
-//! 20 questions with immediate feedback and explanations.
+//! 20 questions covering the fundamentals you've learned so far.
 
 // This is a special quiz "exercise" - no actual Rust code is needed here.
 // The quiz is an interactive HTML page that tests fundamental Rust concepts.

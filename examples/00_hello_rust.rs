@@ -1,23 +1,56 @@
 //! # Hello Rust!
 //!
-//! Welcome to the Rust programming language!
+//! Welcome to the Rust programming language! 🦀
 //!
-//! This is our first Rust exercise. As is common for new programming languages,
-//! we will start with a simple "Hello, World!" program. This tradition goes
-//! back all the way to the 1970s with Brian Kernighan's C programming tutorial
-//! and we will follow that tradition.
+//! You've just entered a world where memory safety meets performance, where
+//! the compiler is your friend (even when it seems grumpy), and where
+//! "fighting the borrow checker" becomes a badge of honor.
 //!
-//! Have fun! And now, without further ado, let's get started with Rust!
+//! This tradition of starting with "Hello, World!" goes back to Brian Kernighan's
+//! C programming tutorial from the 1970s. But here's the thing: Rust makes sure
+//! your "Hello, World!" won't accidentally corrupt memory or crash at runtime!
+//!
+//! Ready to make friends with the compiler? Let's go! 🚀
+//!
+//! Oh by the way, each lesson contains bonus exercises for curious learners.
+//! These are optional and can be skipped if you're short on time.
+//! You can run the bonus tests in this lesson with:
+//!
+//! ```sh
+//! cargo test --example 00_hello_rust --features bonus
+//! ```
 
-/// Formats a user's display name for the UI.
-/// Returns "Welcome, {name}!" for user-facing messages.
-fn format_welcome_message(name: &str) -> String {
+/// Return a simple greeting message.
+/// Your first step into the Rust universe!
+/// Expected output: "Hello, Rust!"
+fn say_hello() -> &'static str {
     todo!()
 }
 
-/// Returns the application version string, e.g. "1.0.0".
-/// String literals have type &str and live for the entire program.
-fn get_app_version() -> &'static str {
+/// Create a personalized welcome message for a new user.
+/// Expected output: "Welcome to Rust, Alice!" if name is "Alice"
+fn welcome_user(name: &str) -> String {
+    todo!()
+}
+
+/// BONUS: Create a formatted greeting with emoji
+///
+/// Rust is totally okay with emojis! They are just Unicode characters and all strings
+/// in Rust are UTF-8 encoded (which is a way to represent Unicode characters).
+///
+/// Expected output: "{emoji} Hello there, {name}! {emoji}" (e.g., "🦀 Hello there, Rust! 🦀")
+fn fancy_greeting(name: &str, emoji: &str) -> String {
+    todo!()
+}
+
+/// BONUS: Generate a greeting in different languages
+/// Internationalization is crucial for global apps!
+/// Expected outputs:
+/// "english" -> "Hello!"
+/// "spanish" -> "¡Hola!"
+/// "french" -> "Bonjour!"
+/// others -> "Hello!
+fn multilingual_hello(language: &str) -> &'static str {
     todo!()
 }
 
@@ -26,13 +59,33 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_welcome_message() {
-        assert_eq!(format_welcome_message("Alice"), "Welcome, Alice!");
-        assert_eq!(format_welcome_message("Bob"), "Welcome, Bob!");
+    fn test_basic_greeting() {
+        assert_eq!(say_hello(), "Hello, Rust!");
     }
 
     #[test]
-    fn test_app_version() {
-        assert_eq!(get_app_version(), "1.0.0");
+    fn test_personalized_welcome() {
+        assert_eq!(welcome_user("Alice"), "Welcome to Rust, Alice!");
+        assert_eq!(welcome_user("Bob"), "Welcome to Rust, Bob!");
+        assert_eq!(welcome_user(""), "Welcome to Rust, !");
+    }
+}
+
+#[cfg(all(test, feature = "bonus"))]
+mod bonus {
+    use super::*;
+
+    #[test]
+    fn test_fancy_greeting() {
+        assert_eq!(fancy_greeting("Rust", "🦀"), "🦀 Hello there, Rust! 🦀");
+        assert_eq!(fancy_greeting("World", "🌍"), "🌍 Hello there, World! 🌍");
+    }
+
+    #[test]
+    fn test_multilingual() {
+        assert_eq!(multilingual_hello("english"), "Hello!");
+        assert_eq!(multilingual_hello("spanish"), "¡Hola!");
+        assert_eq!(multilingual_hello("french"), "Bonjour!");
+        assert_eq!(multilingual_hello("unknown"), "Hello!"); // fallback
     }
 }

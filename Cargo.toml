@@ -11,7 +11,7 @@ path = "src/bin/cli.rs"
 name = "server"
 path = "src/bin/server.rs"
 
-[package.metadata.exercises.12_question_mark_operator]
+[package.metadata.exercises.13_question_mark_operator]
 difficulty = "beginner"
 tags = ["question-mark", "result", "error-handling"]
 
@@ -55,3 +55,6 @@ cargo = "warn"
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
+
+[features]
+bonus = []

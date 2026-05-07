@@ -23,6 +23,7 @@ struct AppState {
 
 /// Database model for participants
 #[derive(sqlx::FromRow)]
+#[allow(dead_code)]
 struct DbParticipant {
     id: String,
     name: String,
@@ -31,6 +32,7 @@ struct DbParticipant {
 
 /// Database model for submissions
 #[derive(sqlx::FromRow)]
+#[allow(dead_code)]
 struct DbSubmission {
     id: String,
     participant_id: String,

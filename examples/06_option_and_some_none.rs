@@ -17,7 +17,7 @@
 /// See: https://doc.rust-lang.org/std/primitive.slice.html#method.iter
 /// See: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find
 /// See: https://doc.rust-lang.org/std/option/enum.Option.html#method.map
-fn find_user_by_id(users: &[(u32, &str)], id: u32) -> Option<&str> {
+fn find_user_by_id<'a>(users: &'a [(u32, &'a str)], id: u32) -> Option<&'a str> {
     todo!()
 }
 
@@ -71,5 +71,69 @@ mod tests {
     fn test_optional_length() {
         assert_eq!(optional_string_length(Some("hello")), 5);
         assert_eq!(optional_string_length(None), 0);
+    }
+
+    // Bonus exercises - run with: cargo test --example 06_option_and_some_none --features bonus
+    #[cfg(feature = "bonus")]
+    mod bonus {
+        use super::*;
+
+        /// BONUS: Chain multiple optional operations together
+        /// Data pipeline systems often chain transformations like this!
+        fn chain_operations(value: Option<i32>) -> Option<i32> {
+            todo!()
+        }
+
+        /// BONUS: Find the maximum value in a list of optional numbers
+        /// Analytics systems need to handle missing data gracefully!
+        fn max_of_options(numbers: &[Option<i32>]) -> Option<i32> {
+            todo!()
+        }
+
+        /// BONUS: Parse and validate an optional configuration string
+        /// Configuration systems need robust parsing with defaults!
+        fn parse_port_config(config: Option<&str>) -> Option<u16> {
+            todo!()
+        }
+
+        /// BONUS: Flatten nested options
+        /// Network programming often has nested optional results!
+        fn flatten_option(nested: Option<Option<String>>) -> Option<String> {
+            todo!()
+        }
+
+        #[test]
+        fn test_chaining() {
+            // Should: multiply by 2, add 10, then return if even
+            assert_eq!(chain_operations(Some(5)), Some(20)); // 5*2+10=20 (even)
+            assert_eq!(chain_operations(Some(4)), None); // 4*2+10=18 (even, but let's say we want odd results)
+            assert_eq!(chain_operations(None), None);
+        }
+
+        #[test]
+        fn test_max_options() {
+            let numbers = [Some(5), None, Some(10), Some(2)];
+            assert_eq!(max_of_options(&numbers), Some(10));
+
+            let all_none = [None, None, None];
+            assert_eq!(max_of_options(&all_none), None);
+        }
+
+        #[test]
+        fn test_port_parsing() {
+            assert_eq!(parse_port_config(Some("8080")), Some(8080));
+            assert_eq!(parse_port_config(Some("invalid")), None);
+            assert_eq!(parse_port_config(None), None);
+        }
+
+        #[test]
+        fn test_flattening() {
+            assert_eq!(
+                flatten_option(Some(Some("hello".to_string()))),
+                Some("hello".to_string())
+            );
+            assert_eq!(flatten_option(Some(None)), None);
+            assert_eq!(flatten_option(None), None);
+        }
     }
 }
