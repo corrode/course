@@ -151,7 +151,7 @@ The exercises follow a carefully designed progression:
 
 1. **00_hello_rust** - String creation and formatting
 2. **01_integer_handling** - Arithmetic and number operations  
-3. **02_strings_and_chars** - `&str`, `String`, `char`, and `Vec<char>` warm-up
+3. **02_strings_and_chars** - `&str`, `String`, and `char` warm-up
 4. **03_enums_and_matching** - Pattern matching with HTTP status codes
 5. **04_vectors_basics** - Growable arrays and basic operations
 6. **05_hashmaps** - Key-value storage for configuration and caching
