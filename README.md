@@ -145,7 +145,7 @@ PORT=3000
 
 ## Exercise Progression
 
-### Beginner Track (15 exercises)
+### Beginner Track (19 exercises)
 
 The exercises follow a carefully designed progression:
 
@@ -160,10 +160,14 @@ The exercises follow a carefully designed progression:
 9. **08_ownership_basics** - Memory safety and borrowing
 10. **09_structs_and_methods** - User account management
 11. **10_iterator_patterns** - Data transformation with functional patterns
-12. **11_password_validator** - **Open-ended project** (be creative!)
-13. **12_word_counter** - **Combining concepts** (strings + vectors + hashmaps)
-14. **13_env_parser** - **Practical parsing** (environment files)
-15. **14_csv_parser** - **Complex parsing** (challenging final exercise)
+12. **11_strings_and_chars** - `&str`, `String`, `char`, and `Vec<char>` warm-up
+13. **12_password_validator** - **Open-ended project** (be creative!)
+14. **13_question_mark_operator** - Elegant error propagation with `?`
+15. **14_modules** - Organising code with `mod` and visibility
+16. **15_word_counter** - **Combining concepts** (strings + vectors + hashmaps)
+17. **16_env_parser** - **Practical parsing** (environment files)
+18. **17_csv_parser** - **Complex parsing** (challenging final exercise)
+19. **18_rust_fundamentals_quiz** - Final review of the concepts you've learned
 
 Each exercise includes:
 - Clear learning objectives
