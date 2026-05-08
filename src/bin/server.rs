@@ -1,3 +1,4 @@
+use cargo_course::exercises::{self, Exercise};
 use cargo_course::types::*;
 
 use anyhow::Result;
@@ -11,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, SqlitePool, Row, Sqlite};
 use std::env;
+use std::sync::Arc;
 use tower_http::services::ServeDir;
 use ulid::Ulid;
 
@@ -19,6 +21,7 @@ use ulid::Ulid;
 struct AppState {
     pool: SqlitePool,
     admin_token: String,
+    exercises: Arc<Vec<Exercise>>,
 }
 
 /// Database model for participants
@@ -206,7 +209,15 @@ async fn main() -> Result<()> {
     migrator.run(&pool).await?;
     info!("Database migrations completed");
 
-    let app_state = AppState { pool, admin_token: admin_token.clone() };
+    // Scan exercises once at startup.
+    let exercises = exercises::load(std::path::Path::new("examples"))
+        .map_err(|e| {
+            error!("Failed to scan exercises: {e:#}");
+            e
+        })?;
+    info!("Loaded {} exercises", exercises.len());
+
+    let app_state = AppState { pool, admin_token: admin_token.clone(), exercises };
 
     // Build API routes
     let api_routes = Router::new()
@@ -281,7 +292,7 @@ async fn participant_dashboard(
     };
 
     // Get exercise progress
-    let exercises = match get_exercise_progress(&state.pool, &ulid).await {
+    let exercises = match get_exercise_progress(&state.pool, &ulid, &state.exercises).await {
         Ok(exercises) => exercises,
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get exercise progress").into_response(),
     };
@@ -597,7 +608,7 @@ async fn api_status(
 ) -> Result<Json<ProgressResponse>, StatusCode> {
     info!("Status request for participant: {}", ulid);
     
-    match get_exercise_progress(&state.pool, &ulid).await {
+    match get_exercise_progress(&state.pool, &ulid, &state.exercises).await {
         Ok(exercises) => {
             let completed_count = exercises.iter().filter(|e| e.completed).count();
             let perfected_count = exercises.iter().filter(|e| e.perfected).count();
@@ -687,47 +698,24 @@ async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
 }
 
 /// Get exercise progress for a participant
-async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Result<Vec<ExerciseProgress>> {
-    // Scan the examples directory for exercise files
-    let examples_dir = std::path::Path::new("examples");
-    if !examples_dir.exists() {
-        return Err(anyhow::anyhow!("Examples directory not found"));
-    }
-
-    let mut exercise_files = Vec::new();
-    for entry in std::fs::read_dir(examples_dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        
-        if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-            if file_name.ends_with(".rs") && !file_name.starts_with("_") {
-                exercise_files.push(file_name.to_string());
-            }
-        }
-    }
-    
-    // Sort files for consistent ordering
-    exercise_files.sort();
-
+async fn get_exercise_progress<'a>(
+    pool: &'a SqlitePool,
+    ulid: &'a str,
+    catalog: &'a [Exercise],
+) -> Result<Vec<ExerciseProgress>> {
     // Get all submissions (both successful and failed)
-    let all_submissions: Vec<DbSubmission> =
-        sqlx::query_as("SELECT * FROM submissions WHERE participant_id = ? ORDER BY exercise_name, submitted_at DESC")
-            .bind(ulid)
-            .fetch_all(pool)
-            .await?;
+    let all_submissions: Vec<DbSubmission> = sqlx::query_as(
+        "SELECT * FROM submissions WHERE participant_id = ? ORDER BY exercise_name, submitted_at DESC",
+    )
+    .bind(ulid)
+    .fetch_all(pool)
+    .await?;
 
-    let mut exercises = Vec::new();
-    for file_name in exercise_files {
-        let exercise_name = file_name.strip_suffix(".rs").unwrap_or(&file_name);
-        
-        // Parse the exercise documentation
-        let (title, description) = parse_exercise_docs(&format!("examples/{}", file_name))
-            .unwrap_or_else(|_| (exercise_name.to_string(), String::new()));
-        
-        // Get all submissions for this exercise
+    let mut exercises = Vec::with_capacity(catalog.len());
+    for ex in catalog {
         let exercise_submissions: Vec<ExerciseSubmission> = all_submissions
             .iter()
-            .filter(|s| s.exercise_name == exercise_name)
+            .filter(|s| s.exercise_name == ex.file_stem)
             .map(|s| ExerciseSubmission {
                 id: s.id.clone(),
                 source_code: s.source_code.clone(),
@@ -738,29 +726,19 @@ async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Resul
             })
             .collect();
 
-        // Check if this is a quiz exercise
-        let is_quiz = exercise_name.contains("quiz");
-        
-        // Determine exercise status based on submissions
-        let completed = if is_quiz {
-            // For quiz exercises, consider them completed if they've been accessed
-            // (We could track this differently if needed)
-            false // For now, quizzes are never marked as "completed" 
-        } else {
-            exercise_submissions.iter().any(|s| s.tests_passed)
-        };
-        let perfected = if is_quiz {
-            false // Quizzes don't have "perfected" status
-        } else {
-            exercise_submissions.iter().any(|s| s.tests_passed && s.fmt_passed && s.clippy_passed)
-        };
+        let is_quiz = ex.is_quiz();
+        let completed = !is_quiz && exercise_submissions.iter().any(|s| s.tests_passed);
+        let perfected = !is_quiz
+            && exercise_submissions
+                .iter()
+                .any(|s| s.tests_passed && s.fmt_passed && s.clippy_passed);
 
         exercises.push(ExerciseProgress {
-            name: exercise_name.to_string(),
+            name: ex.file_stem.clone(),
             completed,
             perfected,
-            title,
-            description,
+            title: ex.title.clone(),
+            description: String::new(),
             submissions: exercise_submissions,
             is_quiz,
         });
@@ -769,54 +747,7 @@ async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Resul
     Ok(exercises)
 }
 
-/// Parse exercise documentation from Rust file doc comments
-fn parse_exercise_docs(file_path: &str) -> Result<(String, String)> {
-    let content = std::fs::read_to_string(file_path)?;
-    let lines: Vec<&str> = content.lines().collect();
-    
-    let mut title = String::new();
-    let mut description_lines = Vec::new();
-    let mut in_doc_comment = false;
-    let mut found_title = false;
-    
-    for line in lines {
-        let trimmed = line.trim();
-        
-        if trimmed.starts_with("//!") {
-            in_doc_comment = true;
-            let doc_content = trimmed.strip_prefix("//!").unwrap_or("").trim();
-            
-            if !found_title && doc_content.starts_with("# ") {
-                // Extract title from # heading
-                title = doc_content.strip_prefix("# ").unwrap_or(doc_content).to_string();
-                found_title = true;
-            } else if found_title && !doc_content.is_empty() {
-                // Collect description lines after title
-                description_lines.push(doc_content.to_string());
-            }
-        } else if in_doc_comment && !trimmed.starts_with("//") {
-            // End of doc comment block
-            break;
-        }
-    }
-    
-    // Join description lines and clean up
-    let description = description_lines
-        .join(" ")
-        .trim()
-        .to_string();
-    
-    // Fallback title if none found
-    if title.is_empty() {
-        title = file_path.strip_prefix("examples/")
-            .unwrap_or(file_path)
-            .strip_suffix(".rs")
-            .unwrap_or(file_path)
-            .to_string();
-    }
-    
-    Ok((title, description))
-}
+
 
 /// Calculate a hash for submission content to detect duplicates
 fn calculate_submission_hash(participant_id: &str, exercise_name: &str, source_code: &str) -> String {
