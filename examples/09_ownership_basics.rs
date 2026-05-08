@@ -11,7 +11,7 @@
 //! enforced at compile time, so there's no garbage collector at runtime.
 //!
 //! The ownership system was inspired by ideas from academia, particularly
-//! linear and affine types. You don't need to know the theory — you'll build
+//! linear and affine types. You don't need to know the theory; you'll build
 //! intuition by writing code.
 
 /// Takes ownership of a String and modifies it.

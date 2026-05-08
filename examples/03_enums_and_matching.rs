@@ -7,7 +7,7 @@
 //! Fun fact: the famous "404 Not Found" is sometimes said to be named after
 //! room 404 at CERN, though that story is more legend than fact.
 //!
-//! In this exercise you'll use Rust's `match` expression — think of it as a
+//! In this exercise you'll use Rust's `match` expression. Think of it as a
 //! `switch` statement that the compiler forces you to handle exhaustively.
 
 #[derive(Debug, PartialEq)]

@@ -7,7 +7,7 @@
 //! Password security combines computer science, psychology, and cryptography
 //! in interesting ways. The first computer password was created in 1961 at
 //! MIT for their Compatible Time-Sharing System. "password123" and "qwerty"
-//! are still among the most common passwords worldwide — please don't use
+//! are still among the most common passwords worldwide. Please don't use
 //! them.
 //!
 //! This is your chance to combine everything you've learned. It's also fine
@@ -19,18 +19,18 @@
 //! everything top to bottom in one go it's easy to get stuck. A reasonable
 //! order:
 //!
-//! 1. `PasswordReport::is_strong` — start tiny. It's a one-line comparison
+//! 1. `PasswordReport::is_strong`. Start tiny: it's a one-line comparison
 //!    and gives you a feel for the data.
-//! 2. `PasswordValidator::validate`, base requirements only — just the
+//! 2. `PasswordValidator::validate`, base requirements only. Just the
 //!    length / uppercase / lowercase / digit / special-char checks. Get the
 //!    `test_weak_passwords`, `test_medium_passwords`, `test_strong_passwords`,
 //!    and `test_feedback_quality` tests passing first.
-//! 3. `PasswordGenerator::generate_secure_password` — only after step 2. A
+//! 3. `PasswordGenerator::generate_secure_password`. Only after step 2. A
 //!    simple stdlib-only approach: cycle through your character set based on
 //!    a changing seed (e.g. system time nanoseconds), or pick a deterministic
 //!    sample for now and worry about true randomness later. The point of this
 //!    exercise is the validation logic, not cryptographic randomness.
-//! 4. `PasswordAdvisor::suggest_improvements` — turn the report's feedback
+//! 4. `PasswordAdvisor::suggest_improvements`. Turn the report's feedback
 //!    into actionable suggestions.
 //! 5. Optional advanced features: common-password lists, repeated characters,
 //!    keyboard patterns. Save these for last.

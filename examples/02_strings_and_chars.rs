@@ -2,14 +2,14 @@
 //!
 //! Now that you've handled numbers, let's meet Rust's text types. In many
 //! languages "a string is a string", but Rust splits the job across a few
-//! cooperating types — and that split is exactly what makes Rust strings
+//! cooperating types, and that split is exactly what makes Rust strings
 //! fast *and* safe.
 //!
 //! The cast you'll meet today:
 //!
-//! - `char`     — a single Unicode scalar value (always 4 bytes).
-//! - `&str`     — a borrowed view into some UTF-8 text. Cheap to pass around.
-//! - `String`   — an owned, growable UTF-8 buffer. You own the memory.
+//! - `char`     : a single Unicode scalar value (always 4 bytes).
+//! - `&str`     : a borrowed view into some UTF-8 text. Cheap to pass around.
+//! - `String`   : an owned, growable UTF-8 buffer. You own the memory.
 //!
 //! There's a recurring pattern here that you'll see again and again in
 //! later exercises:
@@ -22,7 +22,7 @@
 //! when the caller needs to keep the result.
 //!
 //! These exercises are deliberately tiny. Solve them with the standard
-//! library only — no external crates needed.
+//! library only. No external crates needed.
 
 /// Returns the first character of `text`, or `None` if the string is empty.
 ///

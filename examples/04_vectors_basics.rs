@@ -1,7 +1,7 @@
 //! # Vector Basics
 //!
 //! Arrays and lists have been fundamental to computing since the beginning.
-//! John von Neumann — one of the pioneers of computer science — designed the
+//! John von Neumann, one of the pioneers of computer science, designed the
 //! stored-program concept that makes modern computers possible, and arrays
 //! were central to his vision.
 //!
