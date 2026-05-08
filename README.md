@@ -1,233 +1,154 @@
-# Rust Workshop Exercises - Corrode
+# Rust Workshop Exercises
 
 ![Screenshot of the course page](/static/assets/screenshot.jpg)
 
-Learn Rust through practical, real-world exercises that you can actually use at work.
+A hands-on Rust course for working developers. You write small programs,
+the compiler keeps you honest, and over a couple of dozen exercises you
+end up comfortable with the parts of Rust you'll actually use day to day.
 
-This is the official course repository for **corrode**, a friendly, professional Rust consultancy. 
-The goal is to go from zero to building real applications in Rust as quickly as possible while having fun!
+This is the official course repository for [corrode](https://corrode.dev),
+a Rust consultancy that helps teams adopt Rust for production.
 
-## What Makes This Course Different
+## Who this is for
 
-Unlike other Rust learning resources, this course is **designed for the working developer** who wants to build real applications:
+You should be comfortable with at least one mainstream language (Python,
+JavaScript, Go, Java, C#, Ruby, etc.) and the usual programming basics:
+variables, functions, loops, conditionals.
 
-- **🎯 Work-Ready Skills**: Every exercise teaches patterns you'll use need for using Rust productively 
-- **👷‍♀️ Project-Based**: Learn by working through tiny, useful projects
-- **📈 Incremental Learning**: One concept per exercise, systematically writing more and more complex code
-- **🧪 Learn from first principles**: Teaches you how to navigate the documentation to stop guessing and start learning
-- **🔗 Connected Concepts**: Exercises build on each other to reinforce learning
-- **⚡ Quick Wins**: short exercises to maintain momentum
-- **🛠️ Practical Examples**: User management, HTTP handling, config parsing, data processing: everything you typically do in your day job. (No inverse binary trees.)
+No prior Rust knowledge is assumed.
 
-**Compared to other resources:**
-- **vs Rustlings**: Less theoretical, more practical workplace patterns, real-world context
-- **vs Exercism**: Focus on production-ready applications, not just toy problems
-- **vs The Rust Book**: More hands-on exercises, less theory, and more focus, more interactive learning
-- **vs Rust by Example**: Less focus on going through the entire standard library, more focus on building real applications 
-- **vs Other Exercise Collections**: cut straight to the chase with practical exercises
+## How to use it
 
-## Getting Started
-
-### Prerequisites
-
-- No prior Rust knowledge required
-- Must have programming experience in Python, JavaScript, Go, or similar languages 
-- Familiarity with basic programming concepts (variables, functions, loops, conditionals)
-
-## corrode Course CLI
-
-The repository includes a CLI tool for submitting exercises and tracking your progress. The CLI connects to a course server to:
-
-- Register your participation
-- Submit completed exercises
-- Track your progress and completion status
-- Run tests automatically and provide feedback
-- Support pedantic submissions with formatting and linting to earn ⭐ stars
-
-### CLI Installation
+You'll need [Rust](https://rustup.rs/) installed.
 
 ```bash
-# Clone the repository
 git clone https://github.com/corrode/course.git
 cd course
-
-# Install the CLI tool
-cargo install --path .
-
-# Initialize and register
-cargo course init
-
-# Submit an exercise
-cargo course submit examples/00_hello_rust.rs
-
-# Submit with pedantic formatting/linting to earn stars
-cargo course submit examples/00_hello_rust.rs --pedantic
-
-# Check your progress
-cargo course status
 ```
 
-**Important Notes**:
-- The CLI requires a running course server. See the server setup section below, or use manual testing for offline practice.
-- After completing an exercise, you can submit again with `--pedantic` to earn a ⭐ star by passing additional formatting and linting checks!
-
-### Three Ways to Practice
-
-#### Option 1: Local Development with CLI Tool (Recommended)
-
-Use the corrode course CLI for the full experience including progress tracking and star earning:
-
-1. [Install Rust](https://rustup.rs/)
-2. Clone this repository: `git clone https://github.com/corrode/course.git`
-3. Install the CLI tool: `cargo install --path .`
-4. Initialize your progress: `cargo course init`
-5. Submit exercises: `cargo course submit examples/00_hello_rust.rs`
-6. Earn stars with pedantic submissions: `cargo course submit examples/00_hello_rust.rs --pedantic`
-7. Check your progress: `cargo course status`
-
-#### Option 2: Manual Testing
-
-For basic testing without progress tracking:
-
-1. [Install Rust](https://rustup.rs/)
-2. Clone this repository: `git clone https://github.com/corrode/course.git`
-3. Navigate to an exercise: `cd course`
-4. Run tests: `cargo test --example 00_hello_rust`
-
-#### Option 3: Rust Playground (Beginners)
-
-For trying exercises without installing anything:
-
-1. Open [play.rust-lang.org](https://play.rust-lang.org/)
-2. Copy an exercise from `examples/`
-3. Implement the functions to make tests pass
-4. Run tests with the "Test" button
-
-## Server Setup (For Instructors)
-
-The course includes a built-in server for progress tracking and administration:
-
-### Quick Start
+Each file in `examples/` is one exercise. Open it, read the comment at the
+top, fill in the `todo!()` bodies, and run its tests:
 
 ```bash
-# Copy and configure environment
-cp .env.example .env
-# Edit .env with your admin token
-
-# Start the server
-cargo run
-
-# Server will be available at:
-# - http://localhost:3000 (landing page)
-# - http://localhost:3000/admin?token=<your_token> (admin dashboard)
+cargo test --example 00_hello_rust
 ```
 
-### Environment Configuration
+When the tests pass, move to the next file. That's it.
 
-Edit `.env` with your settings:
+If you want to try an exercise without installing anything, paste the file
+into the [Rust Playground](https://play.rust-lang.org/) and click "Test".
+
+### Optional: progress tracking with the CLI
+
+The repository ships with a small CLI that talks to a course server. Your
+instructor will tell you whether to use it. If you're working on your own,
+you can skip this section entirely.
+
+```bash
+cargo install --path .
+
+cargo course init                                       # register
+cargo course submit examples/00_hello_rust.rs           # submit
+cargo course submit examples/00_hello_rust.rs --pedantic # earn a star with fmt + clippy
+cargo course status                                     # see your progress
+```
+
+## The exercises
+
+Each exercise focuses on one concept. Later exercises build on earlier ones,
+so it's worth going in order.
+
+| #  | File                          | Topic                                              |
+|----|-------------------------------|----------------------------------------------------|
+| 00 | `00_hello_rust`               | String creation and formatting                     |
+| 01 | `01_integer_handling`         | Arithmetic and number operations                   |
+| 02 | `02_strings_and_chars`        | `&str`, `String`, and `char`                       |
+| 03 | `03_enums_and_matching`       | Pattern matching with HTTP status codes            |
+| 04 | `04_vectors_basics`           | Growable arrays and basic operations               |
+| 05 | `05_hashmaps`                 | Key-value storage for configuration and caching   |
+| 06 | `06_tuples`                   | Multiple return values and destructuring           |
+| 07 | `07_option_handling`          | Safe handling of missing values                    |
+| 08 | `08_result_handling`          | Error handling and validation                      |
+| 09 | `09_ownership_basics`         | Memory safety and borrowing                        |
+| 10 | `10_structs_and_methods`      | User account management                            |
+| 11 | `11_iterator_patterns`        | Data transformation with functional patterns       |
+| 12 | `12_password_validator`       | Open-ended project, your call                      |
+| 13 | `13_question_mark_operator`   | Error propagation with `?`                         |
+| 14 | `14_modules`                  | Organising code with `mod` and visibility          |
+| 15 | `15_word_counter`             | Strings, vectors, and hashmaps together            |
+| 16 | `16_env_parser`               | Parsing `.env` configuration files                 |
+| 17 | `17_csv_parser`               | A more involved parsing exercise                   |
+| 18 | `18_rust_fundamentals_quiz`   | Final review of what you've learned                |
+
+Every exercise has a module-level comment explaining what you're building
+and why, and a set of unit tests you'll make pass.
+
+## How to work through an exercise
+
+1. Read the `//!` comment at the top of the file. It tells you what's
+   going on and links to relevant standard library docs.
+2. Look at the test cases at the bottom. They show exactly what the
+   functions should do.
+3. Replace each `todo!()` with real code, one at a time.
+4. Run `cargo test --example <name>` until everything passes.
+5. Try a variation. Change a test, break the code, see what the compiler
+   says. The compiler is the best teacher you'll get.
+
+A few habits that help:
+
+- **Compile often.** `cargo check` is fast. Catching one mistake at a time
+  is much easier than catching ten.
+- **Read the error messages slowly.** Rust's errors are unusually good.
+  Look for the `help:` and `note:` lines.
+- **Use the standard library docs.** When you don't know which method
+  exists on a `String` or `Vec`, the answer is usually one click away at
+  [doc.rust-lang.org/std](https://doc.rust-lang.org/stable/std/).
+- **Don't rush.** This isn't a race.
+
+If you get stuck, see [Getting Unstuck](docs/getting_unstuck.md) for
+concrete strategies.
+
+## Helpful resources
+
+- [The Rust standard library](https://doc.rust-lang.org/stable/std/) is
+  your primary reference. It's well-written and has everything you need.
+- [The Rust Book](https://doc.rust-lang.org/book/) is the official
+  long-form introduction.
+- [Rust by Example](https://doc.rust-lang.org/rust-by-example/) is a
+  good lookup reference for syntax and small patterns.
+
+## For instructors: server setup
+
+The repository also contains a server that powers the CLI's progress
+tracking and an admin dashboard. You only need this if you're running
+the course for a group.
+
+```bash
+cp .env.example .env       # edit the file with your admin token
+cargo run                  # starts the server on http://localhost:3000
+```
+
+Configuration in `.env`:
 
 ```env
-# Required: Secret token for admin access
+# Required: secret token for admin access
 CORRODE_ADMIN_TOKEN=your_secret_admin_token_here
 
-# Optional: Database location (defaults to ./playground.db)
+# Optional: database location (defaults to ./playground.db)
 DATABASE_URL=sqlite:./playground.db
 
-# Optional: Server port (defaults to 3000)
+# Optional: port (defaults to 3000)
 PORT=3000
 ```
 
-### Admin Features
-
-- **Progress Dashboard**: View all participants and their completion status
-- **Recent Submissions**: See latest submissions with expandable source code
-- **Individual Progress**: Direct links to participant dashboards
-
-## Exercise Progression
-
-### Beginner Track (19 exercises)
-
-The exercises follow a carefully designed progression:
-
-1. **00_hello_rust** - String creation and formatting
-2. **01_integer_handling** - Arithmetic and number operations  
-3. **02_strings_and_chars** - `&str`, `String`, and `char` warm-up
-4. **03_enums_and_matching** - Pattern matching with HTTP status codes
-5. **04_vectors_basics** - Growable arrays and basic operations
-6. **05_hashmaps** - Key-value storage for configuration and caching
-7. **06_tuples** - Multiple return values and destructuring
-8. **07_option_handling** - Safe handling of missing values
-9. **08_result_handling** - Error handling and validation
-10. **09_ownership_basics** - Memory safety and borrowing
-11. **10_structs_and_methods** - User account management
-12. **11_iterator_patterns** - Data transformation with functional patterns
-13. **12_password_validator** - **Open-ended project** (be creative!)
-14. **13_question_mark_operator** - Elegant error propagation with `?`
-15. **14_modules** - Organising code with `mod` and visibility
-16. **15_word_counter** - **Combining concepts** (strings + vectors + hashmaps)
-17. **16_env_parser** - **Practical parsing** (environment files)
-18. **17_csv_parser** - **Complex parsing** (challenging final exercise)
-19. **18_rust_fundamentals_quiz** - Final review of the concepts you've learned
-
-Each exercise includes:
-- Clear learning objectives
-- Real-world context
-- Unit tests
-- Hints without hand-holding
-
-## Learning Philosophy
-
-### One Concept Per Exercise
-
-Each exercise focuses on a single Rust concept to avoid cognitive overload.
-You'll master each building block before moving to the next.
-
-### Progressive Complexity
-
-Early exercises establish fundamentals. Later exercises combine multiple
-concepts to build realistic applications.
-
-### Real-World Context
-
-Every exercise solves problems you'll encounter in production:
-
-- Error handling patterns
-- Data processing pipelines
-- Configuration management
-- HTTP API development
-- ...
-
-### Practical Over Theoretical
-
-We skip academic examples in favor of patterns you'll use at work.
-Rust has a [famously steep learning curve](https://corrode.dev/blog/flattening-rusts-learning-curve/), so let's focus on skills that will help you be productive quickly.
-
-## Tips for Success
-
-1. **Read the module documentation** (`//!`) to understand the context
-2. **Run tests frequently** to get immediate feedback
-3. **Don't skip exercises** - each builds on the previous
-4. **Experiment beyond the requirements** once tests pass
-5. **Focus on understanding** over speed
-6. **This is not a challenge**. Take your time!
-7. **Ask for help** if you're stuck, we got your back! 
-
-If you're stuck on an exercise, see [Getting Unstuck](docs/getting_unstuck.md) for concrete strategies (start small, compile often, read the error message, etc.).
-
-## Helpful Resources 
-
-- **Rust Documentation**: [doc.rust-lang.org](https://doc.rust-lang.org/stable/std/index.html): use this as your primary reference. It's excellently written and contains everything you'll need.
-- **The Rust Book**: [doc.rust-lang.org/book/](https://doc.rust-lang.org/book/): the official Rust book, great for understanding concepts in depth.
-- **Rust by Example**: [doc.rust-lang.org/rust-by-example/](https://doc.rust-lang.org/rust-by-example/)
+The admin dashboard is at `http://localhost:3000/admin?token=<your_token>`
+and shows participants, their completion status, and recent submissions.
 
 ## About corrode
 
-corrode is a Rust consultancy that helps teams adopt Rust for production applications.
-We focus on practical training and real-world implementation patterns.
-If you would like an in-person workshop, a remote training session, or a code review of your Rust code, please reach out to us.
+[corrode](https://corrode.dev) is a Rust consultancy. We help teams adopt
+Rust for production: training, code reviews, architecture, and the kind
+of practical experience you can't get from a book.
 
-Learn more at [corrode.dev](https://corrode.dev)
-
----
-
-**Ready to start?** Open `examples/00_hello_rust.rs` and begin your Rust journey! Good luck, and have fun!
+If you'd like an in-person workshop, a remote training session, or a
+review of your Rust codebase, get in touch.
