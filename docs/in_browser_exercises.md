@@ -204,7 +204,7 @@ Each step leaves `main` deployable.
 No new routes yet. The dashboard renders identically to today, just
 sourced from the new model.
 
-### PR 2 — Read-only exercise page + dashboard links
+### PR 2 — Read-only exercise page + dashboard links ✅
 
 - Add `templates/exercise.html` extending `base.html`.
 - Add `GET /exercise/:slug` and `GET /exercise/:ulid/:slug`. Both

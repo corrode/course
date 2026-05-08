@@ -50,11 +50,21 @@ struct DbSubmission {
 #[template(path = "landing.html")]
 struct LandingTemplate;
 
+/// Template for an exercise page
+#[derive(Template)]
+#[template(path = "exercise.html")]
+struct ExerciseTemplate {
+    exercise: Exercise,
+    /// `Some` when the page is rendered with participant context.
+    ulid: Option<String>,
+}
+
 /// Template for participant dashboard
 #[derive(Template)]
 #[template(path = "dashboard.html")]
 struct DashboardTemplate {
     participant_name: String,
+    ulid: String,
     exercises: Vec<ExerciseProgress>,
     stats: UserStats,
 }
@@ -231,6 +241,8 @@ async fn main() -> Result<()> {
         .route("/", get(landing_page))
         .route("/register", post(web_register))
         .route("/dashboard/{ulid}", get(participant_dashboard))
+        .route("/exercise/{slug}", get(public_exercise_page))
+        .route("/exercise/{ulid}/{slug}", get(participant_exercise_page))
         .route("/admin", get(admin_dashboard))
         .route("/admin/remove-participant/{ulid}", delete(admin_remove_participant))
         .nest("/api", api_routes)
@@ -305,6 +317,7 @@ async fn participant_dashboard(
 
     let template = DashboardTemplate {
         participant_name: participant.name,
+        ulid: ulid.clone(),
         exercises,
         stats,
     };
@@ -315,7 +328,58 @@ async fn participant_dashboard(
     }
 }
 
-/// Admin dashboard handler
+/// Public exercise page (no participant context).
+async fn public_exercise_page(
+    AxumPath(slug): AxumPath<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    render_exercise_page(&state, &slug, None)
+}
+
+/// Exercise page with participant context.
+async fn participant_exercise_page(
+    AxumPath((ulid, slug)): AxumPath<(String, String)>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    // Verify the participant exists; if not, fall back to the public page so
+    // the URL still resolves to something useful.
+    let exists = sqlx::query("SELECT 1 FROM participants WHERE id = ?")
+        .bind(&ulid)
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten()
+        .is_some();
+
+    let ulid = if exists { Some(ulid) } else { None };
+    render_exercise_page(&state, &slug, ulid)
+}
+
+fn render_exercise_page(
+    state: &AppState,
+    slug: &str,
+    ulid: Option<String>,
+) -> axum::response::Response {
+    // Look up by slug or by file_stem so both `/exercise/strings_and_chars`
+    // and `/exercise/02_strings_and_chars` resolve.
+    let Some(exercise) = state
+        .exercises
+        .iter()
+        .find(|e| e.slug == slug || e.file_stem == slug)
+        .cloned()
+    else {
+        return (StatusCode::NOT_FOUND, "Exercise not found").into_response();
+    };
+
+    let template = ExerciseTemplate { exercise, ulid };
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+        Err(e) => {
+            error!("Failed to render exercise template: {e}");
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to render template").into_response()
+        }
+    }
+}
 async fn admin_dashboard(
     Query(query): Query<AdminQuery>,
     State(state): State<AppState>,
