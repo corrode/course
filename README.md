@@ -212,6 +212,8 @@ Rust has a [famously steep learning curve](https://corrode.dev/blog/flattening-r
 6. **This is not a challenge**. Take your time!
 7. **Ask for help** if you're stuck, we got your back! 
 
+If you're stuck on an exercise, see [Getting Unstuck](docs/getting_unstuck.md) for concrete strategies (start small, compile often, read the error message, etc.).
+
 ## Helpful Resources 
 
 - **Rust Documentation**: [doc.rust-lang.org](https://doc.rust-lang.org/stable/std/index.html): use this as your primary reference. It's excellently written and contains everything you'll need.
