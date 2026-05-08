@@ -1,70 +1,249 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="container">
     <div class="nav">
         <a href="/" class="nav-brand">
-            <img src="/static/assets/corrode-logo.svg" alt="corrode" class="brand-logo" style="filter: var(--logo-filter);" />
+            <img
+                src="/static/assets/corrode-logo.svg"
+                alt="corrode"
+                class="brand-logo"
+                style="filter: var(--logo-filter)"
+            />
         </a>
         <div class="nav-links">
-            {% match ulid %}
-                {% when Some with (u) %}
-                    <a href="/dashboard/{{ u }}" class="nav-link">← Dashboard</a>
-                {% when None %}
-                    <a href="/" class="nav-link">← Home</a>
+            {% match ulid %} {% when Some with (u) %}
+            <a href="/dashboard/{{ u }}" class="nav-link">← Dashboard</a>
+            {% when None %}
+            <a href="/" class="nav-link">← Home</a>
             {% endmatch %}
         </div>
     </div>
 
     <div class="header">
         <h1>{{ exercise.title }}</h1>
-        <p style="font-family: 'SF Mono', Monaco, monospace; color: var(--color-text-muted);">
+        <p
+            style="
+                font-family: &quot;SF Mono&quot;, Monaco, monospace;
+                color: var(--color-text-muted);
+            "
+        >
             examples/{{ exercise.file_stem }}.rs
         </p>
     </div>
 
-    {% match ulid %}
-        {% when None %}
-            <div class="card" style="background-color: rgba(9, 105, 218, 0.08); border-color: rgba(9, 105, 218, 0.3); margin-bottom: 1.5rem;">
-                <p style="margin: 0; color: var(--color-text);">
-                    👋 Anyone can read and edit this exercise. <a href="/" style="font-weight: 600;">Register</a> to track your progress.
-                </p>
-            </div>
-        {% when Some with (_u) %}
-    {% endmatch %}
+    {% match ulid %} {% when None %}
+    <div
+        class="card"
+        style="
+            background-color: rgba(9, 105, 218, 0.08);
+            border-color: rgba(9, 105, 218, 0.3);
+            margin-bottom: 1.5rem;
+        "
+    >
+        <p style="margin: 0; color: var(--color-text)">
+            👋 Anyone can read and edit this exercise.
+            <a href="/" style="font-weight: 600">Register</a> to track your
+            progress.
+        </p>
+    </div>
+    {% when Some with (_u) %} {% endmatch %}
 
     <div class="card">
-        <div class="exercise-prose">
-            {{ exercise.intro_html|safe }}
-        </div>
+        <div class="exercise-prose">{{ exercise.intro_html|safe }}</div>
     </div>
 
     <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h2 style="margin: 0;">Starter code</h2>
-            <div class="copy-btn" onclick="copyCodeFromElement(document.getElementById('starter-code'))" title="Copy to clipboard" style="position: static;">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
-                </svg>
-                Copy
+        <div
+            style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            "
+        >
+            <h2 style="margin: 0">Your code</h2>
+            <div style="display: flex; gap: 0.5rem">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="reset-btn"
+                    title="Replace your edits with the original starter code"
+                >
+                    Reset to starter
+                </button>
+                <div
+                    class="copy-btn"
+                    id="copy-btn"
+                    title="Copy current code to clipboard"
+                    style="position: static"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path
+                            d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
+                            fill="currentColor"
+                        />
+                    </svg>
+                    Copy
+                </div>
             </div>
         </div>
-        <p style="color: var(--color-text-muted); font-size: 0.9rem; margin-top: 0;">
-            The editor and <code>Run tests</code> button are coming in the next iteration. For now, copy the code below and run it locally with <code>cargo test --example {{ exercise.file_stem }}</code>.
+        <p
+            style="
+                color: var(--color-text-muted);
+                font-size: 0.9rem;
+                margin-top: 0;
+            "
+        >
+            Edit the code below. <code>Run tests</code> and
+            <code>Submit</code> buttons are coming next; for now you can copy
+            the code and run it locally with
+            <code>cargo test --example {{ exercise.file_stem }}</code>.
         </p>
-        <div class="code-container">
-            <pre><code class="language-rust" id="starter-code">{{ exercise.starter_code }}</code></pre>
-        </div>
+        <noscript>
+            <p style="color: var(--color-text-muted)">
+                JavaScript is disabled — the editor below is a plain textarea.
+            </p>
+        </noscript>
+        <textarea
+            id="editor-fallback"
+            spellcheck="false"
+            style="
+                width: 100%;
+                min-height: 28rem;
+                font-family: &quot;SF Mono&quot;, Monaco, monospace;
+                font-size: 0.9rem;
+                padding: 1rem;
+                border: 1px solid var(--color-border);
+                border-radius: 3px;
+                background-color: var(--color-background);
+                color: var(--color-text);
+                resize: vertical;
+            "
+        >
+{{ exercise.starter_code }}</textarea
+        >
+        <div id="editor-mount" style="display: none"></div>
     </div>
 </div>
 
+<script type="module">
+    // CodeMirror 6 from CDN. We pin to a recent version so behaviour is
+    // reproducible. If esm.sh is unreachable the textarea fallback stays
+    // visible and remains usable.
+    const CM_VERSION = "6.0.1";
+    const LANG_VERSION = "6.0.1";
+    const THEME_VERSION = "6.1.2";
+
+    try {
+        const [
+            { EditorView, basicSetup },
+            { EditorState },
+            { rust },
+            { oneDark },
+        ] = await Promise.all([
+            import(`https://esm.sh/codemirror@${CM_VERSION}`),
+            import(`https://esm.sh/@codemirror/state@${CM_VERSION}`),
+            import(`https://esm.sh/@codemirror/lang-rust@${LANG_VERSION}`),
+            import(
+                `https://esm.sh/@codemirror/theme-one-dark@${THEME_VERSION}`
+            ),
+        ]);
+
+        const fallback = document.getElementById("editor-fallback");
+        const starter = fallback.value;
+        const mount = document.getElementById("editor-mount");
+
+        // Pick light/dark based on the site's current theme.
+        const isDark = (
+            document.documentElement.getAttribute("data-theme") || ""
+        ).startsWith("dark");
+        const extensions = [basicSetup, rust()];
+        if (isDark) extensions.push(oneDark);
+
+        const view = new EditorView({
+            state: EditorState.create({ doc: starter, extensions }),
+            parent: mount,
+        });
+        // Style the editor wrapper so it matches our other panels.
+        view.dom.style.border = "1px solid var(--color-border)";
+        view.dom.style.borderRadius = "3px";
+        view.dom.style.minHeight = "28rem";
+        view.dom.style.fontSize = "0.9rem";
+
+        fallback.style.display = "none";
+        mount.style.display = "block";
+
+        // Expose for future Run/Submit wiring.
+        window.exerciseEditor = {
+            getValue: () => view.state.doc.toString(),
+            setValue: (text) => {
+                view.dispatch({
+                    changes: {
+                        from: 0,
+                        to: view.state.doc.length,
+                        insert: text,
+                    },
+                });
+            },
+            isCodeMirror: true,
+        };
+    } catch (err) {
+        console.warn(
+            "CodeMirror failed to load, keeping textarea fallback:",
+            err,
+        );
+        const fallback = document.getElementById("editor-fallback");
+        window.exerciseEditor = {
+            getValue: () => fallback.value,
+            setValue: (text) => {
+                fallback.value = text;
+            },
+            isCodeMirror: false,
+        };
+    }
+</script>
+
+<script>
+    // Reset and Copy work against whichever editor is active (CM6 or textarea).
+    document.getElementById("reset-btn").addEventListener("click", () => {
+        if (!window.exerciseEditor) return;
+        if (!confirm("Replace your edits with the original starter code?"))
+            return;
+        // The textarea fallback always holds the unmodified starter code
+        // because we never write back to it once CodeMirror takes over.
+        const starter = document.getElementById("editor-fallback").value;
+        window.exerciseEditor.setValue(starter);
+    });
+
+    document.getElementById("copy-btn").addEventListener("click", async (e) => {
+        if (!window.exerciseEditor) return;
+        const btn = e.currentTarget;
+        const text = window.exerciseEditor.getValue();
+        try {
+            await navigator.clipboard.writeText(text);
+            btn.classList.add("copied");
+            setTimeout(() => btn.classList.remove("copied"), 1200);
+        } catch (err) {
+            console.warn("Clipboard write failed", err);
+        }
+    });
+</script>
+
 <style>
-    .exercise-prose h1, .exercise-prose h2, .exercise-prose h3 {
+    .exercise-prose h1,
+    .exercise-prose h2,
+    .exercise-prose h3 {
         color: var(--color-text);
         margin-top: 1.5rem;
         margin-bottom: 0.75rem;
     }
-    .exercise-prose h1:first-child, .exercise-prose h2:first-child {
+    .exercise-prose h1:first-child,
+    .exercise-prose h2:first-child {
         margin-top: 0;
     }
     .exercise-prose p {
@@ -72,7 +251,8 @@
         line-height: 1.6;
         margin: 0.75rem 0;
     }
-    .exercise-prose ul, .exercise-prose ol {
+    .exercise-prose ul,
+    .exercise-prose ol {
         color: var(--color-text);
         line-height: 1.6;
         padding-left: 1.5rem;
@@ -84,7 +264,7 @@
         background-color: var(--color-background);
         padding: 0.1rem 0.35rem;
         border-radius: 3px;
-        font-family: 'SF Mono', Monaco, monospace;
+        font-family: "SF Mono", Monaco, monospace;
         font-size: 0.9em;
     }
     .exercise-prose pre code {
@@ -95,7 +275,8 @@
         border-collapse: collapse;
         margin: 1rem 0;
     }
-    .exercise-prose th, .exercise-prose td {
+    .exercise-prose th,
+    .exercise-prose td {
         border: 1px solid var(--color-border);
         padding: 0.5rem 0.75rem;
         text-align: left;

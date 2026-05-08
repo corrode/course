@@ -213,7 +213,7 @@ sourced from the new model.
 - Update `dashboard.html`: each exercise row becomes a link to
   `/exercise/:ulid/:slug`. The `<details>` expand-in-place is removed.
 
-### PR 3 — CodeMirror 6 editor
+### PR 3 — CodeMirror 6 editor ✅
 
 - Replace the `<pre>` with a CM6 editor seeded with `starter_code`.
 - Add the `Reset to starter` button.
