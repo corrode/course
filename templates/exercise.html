@@ -63,7 +63,22 @@
             "
         >
             <h2 style="margin: 0">Your code</h2>
-            <div style="display: flex; gap: 0.5rem">
+            <div
+                style="
+                    display: flex;
+                    gap: 0.5rem;
+                    align-items: center;
+                    flex-wrap: wrap;
+                "
+            >
+                <button
+                    type="button"
+                    class="btn"
+                    id="run-btn"
+                    data-slug="{{ exercise.file_stem }}"
+                >
+                    ▶ Run tests
+                </button>
                 <button
                     type="button"
                     class="btn btn-secondary"
@@ -130,22 +145,9 @@
         <div id="editor-mount" style="display: none"></div>
 
         <div
-            style="
-                display: flex;
-                gap: 0.5rem;
-                align-items: center;
-                margin-top: 1rem;
-                flex-wrap: wrap;
-            "
+            id="run-status-row"
+            style="margin-top: 0.75rem; min-height: 1.2rem"
         >
-            <button
-                type="button"
-                class="btn"
-                id="run-btn"
-                data-slug="{{ exercise.file_stem }}"
-            >
-                ▶ Run tests
-            </button>
             <span
                 id="run-status"
                 style="color: var(--color-text-muted); font-size: 0.9rem"
