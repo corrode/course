@@ -1,14 +1,12 @@
 //! # User Account Management
 //!
-//! Structs and methods are how we model the real world in code! This concept
-//! dates back to Simula in the 1960s, which introduced object-oriented programming.
-//! Ole-Johan Dahl and Kristen Nygaard wanted to simulate real-world systems,
-//! so they created ways to bundle data with behavior.
+//! Structs and methods are how we model the real world in code. The idea
+//! goes back to Simula in the 1960s, when Ole-Johan Dahl and Kristen Nygaard
+//! wanted a language to simulate real-world systems and ended up inventing
+//! object-oriented programming.
 //!
-//! Rust's structs are like simplified classes - they group related data together
-//! and let you define methods that operate on that data. No inheritance complexity,
-//! just clean, simple composition. It's object-oriented programming without
-//! the sharp edges!
+//! Rust's structs group related data together and let you define methods
+//! that operate on that data. There's no inheritance, just composition.
 
 #[derive(Debug, PartialEq)]
 struct User {

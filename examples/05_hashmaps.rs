@@ -1,15 +1,13 @@
 //! # HashMap Basics
 //!
-//! Hash tables are one of the most important data structures ever invented!
-//! They were first described by Hans Peter Luhn at IBM in the 1950s, and today
-//! they power everything from database indexes to the caching that makes
-//! your web browsing fast.
+//! Hash tables are one of the most important data structures ever invented.
+//! They were first described by Hans Peter Luhn at IBM in the 1950s, and
+//! today they power everything from database indexes to the caching that
+//! makes web browsing fast.
 //!
-//! The "hash" in HashMap comes from hash functions - mathematical operations
-//! that turn any data into a fixed-size number. It's like having a super-fast
-//! librarian who can instantly tell you exactly which shelf any book is on!
-//!
-//! Ready to become a key-value wizard? Let's hash it out! 🗝️
+//! The "hash" in `HashMap` comes from hash functions: operations that turn
+//! any input into a fixed-size number. That number tells the map which
+//! bucket to look in, which is why lookups are (on average) constant time.
 
 use std::collections::HashMap;
 

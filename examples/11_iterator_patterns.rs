@@ -1,15 +1,12 @@
 //! # Data Processing with Iterators
 //!
-//! Iterators are one of the most beautiful concepts in computer science!
-//! They were popularized by functional programming languages like Lisp
-//! (created by John McCarthy in 1958, thanks!), but now they're everywhere.
+//! Iterators were popularised by functional languages like Lisp (created by
+//! John McCarthy in 1958), and today they're a core building block in most
+//! modern languages.
 //!
-//! Rust's iterators are "lazy" - they don't do any work until you ask them to.
-//! This makes them incredibly efficient! You can chain operations together
-//! like building a pipeline, and Rust will optimize the whole thing into
-//! very fast code. It's like having a factory assembly line for your data!
-//!
-//! Let's iterate over some data and transform it into something useful!
+//! Rust's iterators are lazy: they don't do any work until you ask for a
+//! result. You can chain operations together like a pipeline, and the
+//! compiler will usually fuse them into a single tight loop.
 
 /// Returns all users whose usernames start with 'a'.
 /// See: <https://doc.rust-lang.org/std/iter/trait.IntoIterator.html#tymethod.into_iter>

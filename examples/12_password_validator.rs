@@ -1,49 +1,39 @@
 //! # Password Validator - Open-Ended Exercise
 //!
-//! You've made it to the creative part!
-//! This one's more of a recreational exercise to celebrate your newly learned
-//! skills. (Congrats, BTW!)
+//! You've made it to the creative part. This one is more of a recreational
+//! exercise to celebrate the skills you've picked up so far. From here on
+//! it's mostly a matter of practice.
 //!
-//! Now it's just a matter of refining your skills, which requires practice,
-//! practice, practice.
+//! Password security combines computer science, psychology, and cryptography
+//! in interesting ways. The first computer password was created in 1961 at
+//! MIT for their Compatible Time-Sharing System. "password123" and "qwerty"
+//! are still among the most common passwords worldwide — please don't use
+//! them.
 //!
-//! Password security is a fascinating
-//! field that combines computer science, psychology, and cryptography.
-//! The first computer password was created in 1961 at MIT for their Compatible
-//! Time-Sharing System.
+//! This is your chance to combine everything you've learned. It's also fine
+//! to change all the code in this file to make it your own.
 //!
-//! Today, password security is more important than ever. The infamous
-//! "password123" and "qwerty" are still among the most common passwords
-//! worldwide (please don't use them!). Your validator could help make
-//! the internet a safer place.
+//! ## Suggested order
 //!
-//! This is your chance to be creative and combine everything you've learned.
+//! This file gives you a lot of room to be creative, but if you implement
+//! everything top to bottom in one go it's easy to get stuck. A reasonable
+//! order:
 //!
-//! Build something awesome - the future of secure authentication counts on you.
-//!
-//! Oh, and it's totally fine to change all the code in this file to make it your own.
-//!
-//! ## Suggested order of attack
-//!
-//! This file deliberately gives you a lot of room to be creative — but if
-//! you implement everything top to bottom in one go, it's easy to get stuck.
-//! Here's a battle-tested order:
-//!
-//! 1. **`PasswordReport::is_strong`** — start tiny. It's a one-line
-//!    comparison and gives you a feel for the data.
-//! 2. **`PasswordValidator::validate` — base requirements only.** Just the
+//! 1. `PasswordReport::is_strong` — start tiny. It's a one-line comparison
+//!    and gives you a feel for the data.
+//! 2. `PasswordValidator::validate`, base requirements only — just the
 //!    length / uppercase / lowercase / digit / special-char checks. Get the
 //!    `test_weak_passwords`, `test_medium_passwords`, `test_strong_passwords`,
 //!    and `test_feedback_quality` tests passing first.
-//! 3. **`PasswordGenerator::generate_secure_password`** — only after step 2.
-//!    A simple stdlib-only approach: cycle through your character set based on
+//! 3. `PasswordGenerator::generate_secure_password` — only after step 2. A
+//!    simple stdlib-only approach: cycle through your character set based on
 //!    a changing seed (e.g. system time nanoseconds), or pick a deterministic
 //!    sample for now and worry about true randomness later. The point of this
 //!    exercise is the validation logic, not cryptographic randomness.
-//! 4. **`PasswordAdvisor::suggest_improvements`** — turn the report's
-//!    feedback into actionable suggestions.
-//! 5. **(Optional) Advanced features.** Common-password lists, repeated
-//!    characters, keyboard patterns. Save these for last.
+//! 4. `PasswordAdvisor::suggest_improvements` — turn the report's feedback
+//!    into actionable suggestions.
+//! 5. Optional advanced features: common-password lists, repeated characters,
+//!    keyboard patterns. Save these for last.
 //!
 //! Tip: get one test green at a time, then move on.
 
@@ -92,7 +82,7 @@ impl PasswordValidator {
     ///
     /// Set is_strong = true if score >= 70
     fn validate(password: &str) -> PasswordReport {
-        // TODO: Implement your validation logic here!
+        // Implement your validation logic here.
         // Start with the base requirements, then get creative.
         //
         // Hints:

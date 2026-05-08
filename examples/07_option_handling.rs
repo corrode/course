@@ -1,15 +1,12 @@
 //! # Option<T> - Handling Missing Values
 //!
-//! The billion-dollar mistake! That's what Tony Hoare called his invention of
-//! null references in 1965. He said it led to "innumerable errors, vulnerabilities,
-//! and system crashes" over the years.
+//! Tony Hoare called the invention of null references in 1965 his
+//! "billion-dollar mistake." He said it led to "innumerable errors,
+//! vulnerabilities, and system crashes" over the years.
 //!
-//! Rust learned from this history and chose a different path. Instead of null
-//! pointers that can crash your program, Rust uses Option<T> to explicitly
-//! represent "maybe something, maybe nothing." It's impossible to forget to
-//! check - the compiler won't let you!
-//!
-//! Welcome to the future of safe programming! 🛡️
+//! Rust takes a different approach. Instead of nullable pointers that can
+//! crash your program, Rust uses `Option<T>` to explicitly represent "maybe
+//! something, maybe nothing." The compiler will not let you forget to check.
 
 /// Finds a user by ID in the database.
 /// Returns Some(username) if found, None if not found.

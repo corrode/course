@@ -1,17 +1,11 @@
 //! # Word Counter - Combining Concepts
 //!
-//! Congratulations! You've learned so many Rust concepts, and now it's time
-//! to put them all together! Word counting might seem simple, but it's actually
-//! the foundation of some amazing technologies.
+//! Now it's time to put the pieces together. Word counting looks simple, but
+//! it shows up in surprising places: Google's PageRank started with counting
+//! and analysing word relationships, and word counting is the canonical
+//! "Hello, World!" example for MapReduce-style data processing.
 //!
-//! Google's PageRank algorithm (which made Google successful) started with
-//! counting and analyzing word relationships. MapReduce, the technology that
-//! powers big data processing, often uses word counting as its "Hello, World!"
-//! example. And now it's your privilege to build the best word counter in the
-//! world.
-//!
-//! You're building something that connects to the biggest ideas in computer science.
-//! How cool is that? Let's count our way to greatness!
+//! This exercise combines strings, vectors, hashmaps, and iterators.
 
 use std::collections::HashMap;
 

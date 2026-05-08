@@ -1,28 +1,27 @@
-//! # The ? Operator - Elegant Error Propagation
+//! # The ? Operator - Error Propagation
 //!
-//! The question mark operator is Rust's secret weapon for clean error handling!
-//! Instead of writing verbose match statements for every Result, you can use `?`
-//! to automatically propagate errors up the call stack.
+//! The question mark operator is Rust's shorthand for "if this is an error,
+//! return it from the current function; otherwise, unwrap the value and
+//! continue." It replaces a lot of `match` boilerplate.
 //!
-//! This exercise builds on Result<T, E> from the previous lesson. The key insight:
-//! `?` eliminates boilerplate when you want to "bubble up" errors.
+//! This exercise builds on `Result<T, E>` from the previous lesson.
 
 use std::fs;
 
-/// Adds two parsed numbers. Compare this to doing it with match statements!
+/// Adds two parsed numbers. Compare this to doing it with match statements.
 /// See: https://doc.rust-lang.org/std/primitive.str.html#method.parse
 fn add_parsed_numbers(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> {
     todo!()
 }
 
-/// Reads a file and counts lines. Notice how ? works with different error types!
+/// Reads a file and counts lines. Note how `?` works with a different error type.
 /// See: https://doc.rust-lang.org/std/fs/fn.read_to_string.html
 fn count_file_lines(filename: &str) -> Result<usize, std::io::Error> {
     todo!()
 }
 
-/// Combines both parsing AND file I/O errors using Box<dyn Error>
-/// This shows how ? can handle multiple error types in one function!
+/// Combines parsing and file I/O errors using `Box<dyn Error>`.
+/// This shows how `?` can handle multiple error types in one function.
 /// See: https://doc.rust-lang.org/std/error/trait.Error.html
 fn sum_numbers_in_file(filename: &str) -> Result<i32, Box<dyn std::error::Error>> {
     todo!()

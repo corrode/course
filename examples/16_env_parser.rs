@@ -1,17 +1,15 @@
 //! # Environment File Parser
 //!
-//! Configuration files are everywhere in software! The .env file format
-//! became popular with twelve-factor app methodology, which emphasizes
-//! storing configuration in environment variables for security and flexibility.
+//! Configuration files are everywhere in software. The `.env` format became
+//! popular with the twelve-factor app methodology, which recommends storing
+//! configuration in environment variables rather than in code.
 //!
-//! This approach helps keep secrets out of your code (no more passwords
-//! accidentally committed to git!). Companies like Heroku popularized this
-//! pattern, and now it's used by millions of applications worldwide.
+//! Keeping secrets out of source control (no more passwords accidentally
+//! committed to git) is a big practical win. Heroku popularised this pattern,
+//! and it's now used by a lot of applications.
 //!
-//! You're about to build a parser that handles real-world configuration!
-//! This is the kind of code that keeps production systems running smoothly.
-//!
-//! Sounds simple, but it's incredibly hard to get right. Trust me on that one.
+//! The format looks simple, but it's surprisingly hard to parse correctly.
+//! Trust me on that one.
 
 use std::collections::HashMap;
 

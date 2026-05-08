@@ -1,15 +1,13 @@
 //! # Tuples and Destructuring
 //!
-//! Tuples are like gift boxes that can hold different types of treasures!
-//! This concept comes from mathematics, where tuples represent ordered lists
-//! of elements. René Descartes used coordinate pairs (tuples!) to invent
-//! analytic geometry - the foundation of computer graphics.
+//! A tuple is a fixed-size group of values, possibly of different types.
+//! The concept comes from mathematics, where tuples are ordered lists of
+//! elements. René Descartes used coordinate pairs (which are tuples) to
+//! invent analytic geometry, the foundation of computer graphics.
 //!
-//! In programming, tuples are perfect when you need to return multiple values
-//! from a function, or group related but different data together. Python
-//! developers will feel right at home here!
-//!
-//! Let's unwrap some tuples and discover their secrets! 📦
+//! In Rust, tuples are useful when a function needs to return more than one
+//! value, or when you want to group a few related values without defining a
+//! whole new struct.
 
 /// Returns a user's name and age as a tuple.
 /// For example, return "Alice" and 25.

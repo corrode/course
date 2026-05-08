@@ -1,17 +1,16 @@
 //! # CSV Parser - Complex Parsing Challenge
 //!
-//! Welcome to the final boss battle! CSV (Comma-Separated Values) has been
-//! around since the early days of computing. It's one of those formats that
-//! seems simple but has surprising complexity lurking beneath the surface.
+//! CSV (Comma-Separated Values) has been around since the early days of
+//! computing. It's one of those formats that looks trivial but has surprising
+//! complexity once you start handling quotes, escapes, and embedded commas.
 //!
 //! Edgar Codd, who invented the relational database model, would probably
-//! be amazed to see how his ideas about tabular data evolved into the
-//! universal data exchange format we use today. From Excel exports to
-//! data science pipelines, CSV is everywhere!
+//! be amazed at how his ideas about tabular data ended up in this universal
+//! data exchange format. From Excel exports to data science pipelines, CSV
+//! is everywhere.
 //!
-//! This exercise combines everything you've learned: strings, parsing, error
-//! handling, collections, and iteration. You've got all the tools you need.
-//! Good luck!
+//! This exercise pulls together strings, parsing, error handling, collections,
+//! and iteration. Good luck.
 
 /// Parses a simple CSV line without quotes.
 /// Splits on commas and trims whitespace.

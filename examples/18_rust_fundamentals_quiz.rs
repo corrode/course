@@ -11,9 +11,9 @@
 // The quiz is an interactive HTML page that tests fundamental Rust concepts.
 
 fn main() {
-    println!("🎯 This is the Rust Fundamentals Quiz!");
-    println!("📝 Test your knowledge of the concepts covered in this course");
-    println!("🚀 Click the quiz link in your dashboard to get started");
+    println!("This is the Rust Fundamentals Quiz.");
+    println!("It tests your knowledge of the concepts covered in this course.");
+    println!("Click the quiz link in your dashboard to get started.");
 }
 
 #[cfg(test)]

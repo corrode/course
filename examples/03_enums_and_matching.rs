@@ -1,15 +1,14 @@
 //! # HTTP Status Handling
 //!
-//! Welcome to the world of web development! HTTP status codes were invented
-//! by Tim Berners-Lee when he created the World Wide Web at CERN in 1989.
-//! These three-digit codes help computers (and humans) understand what happened
-//! with a web request.
+//! HTTP status codes were introduced by Tim Berners-Lee when he created the
+//! World Wide Web at CERN in 1989. These three-digit codes tell the client
+//! what happened with a request.
 //!
-//! The famous "404 Not Found" gets its name from room 404 at CERN where
-//! the original web servers lived. Today, you'll master Rust's `match`
-//! expressions - think of them as switch statements that actually work properly!
+//! Fun fact: the famous "404 Not Found" is sometimes said to be named after
+//! room 404 at CERN, though that story is more legend than fact.
 //!
-//! Ready to handle the web like a pro? Let's match some patterns! 🌐
+//! In this exercise you'll use Rust's `match` expression — think of it as a
+//! `switch` statement that the compiler forces you to handle exhaustively.
 
 #[derive(Debug, PartialEq)]
 enum HttpStatus {

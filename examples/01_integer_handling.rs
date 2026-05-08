@@ -1,14 +1,12 @@
 //! # Integer Operations
 //!
-//! Numbers are everywhere in programming! From calculating your grocery bill
-//! to powering the algorithms that sent humans to the moon (thanks, Margaret Hamilton!),
-//! integer arithmetic is fundamental to computer science.
+//! Numbers are everywhere in programming, from calculating a grocery bill to
+//! powering the algorithms that sent humans to the moon (thanks, Margaret
+//! Hamilton!). Integer arithmetic is fundamental to almost everything we do.
 //!
-//! Fun fact: The first computer bug was literally a bug - Grace Hopper found
-//! a moth stuck in a Harvard Mark II computer in 1947. But today, we'll focus
-//! on avoiding logical bugs in our number handling code.
-//!
-//! You've got this! Let's crunch some numbers! 🔢
+//! Fun fact: the first computer bug was literally a bug. Grace Hopper found
+//! a moth stuck in a Harvard Mark II computer in 1947. Today we'll focus on
+//! avoiding logical bugs in our number handling code.
 
 /// Convert a number to a string
 fn number_to_string(number: u32) -> String {

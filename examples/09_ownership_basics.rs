@@ -1,16 +1,18 @@
 //! # Ownership Basics
 //!
-//! Welcome to Rust's superpower! Ownership is what makes Rust special.
-//! While other languages either make you manage memory manually (hello,
-//! segfaults!) or use garbage collection (goodbye, predictable performance!),
-//! Rust found a third way.
+//! Ownership is the feature that makes Rust different from most other
+//! languages. C and C++ make you manage memory manually, which leads to a
+//! whole category of bugs: use-after-free, double-free, dangling pointers.
+//! Garbage-collected languages avoid those bugs at the cost of unpredictable
+//! pauses and runtime overhead.
+//!
+//! Rust takes a third path. The compiler tracks who owns each value, and
+//! when an owner goes out of scope the value is dropped. The rules are
+//! enforced at compile time, so there's no garbage collector at runtime.
 //!
 //! The ownership system was inspired by ideas from academia, particularly
-//! linear types and affine types. But don't worry about the theory -
-//! you'll build intuition through practice! Think of it as Rust being
-//! a very organized friend who always knows who's borrowing what.
-//!
-//! Once you master ownership, you'll wonder how you ever lived without it! 🦀
+//! linear and affine types. You don't need to know the theory — you'll build
+//! intuition by writing code.
 
 /// Takes ownership of a String and modifies it.
 /// When you pass a String to this function, ownership transfers.
@@ -29,7 +31,7 @@ fn borrow_string(s: &str) -> usize {
 /// Takes a mutable reference to modify the string in place.
 /// The &mut allows us to change the string's contents.
 fn mutate_string(s: &mut String) {
-    // Append " - now with 100% more crab!" to the string
+    // Append " - now with extra crab" to the string
     todo!()
 }
 
@@ -58,6 +60,6 @@ mod tests {
     fn test_mutable_borrow() {
         let mut s = String::from("Ferris");
         mutate_string(&mut s);
-        assert_eq!(s, "Ferris - now with 100% more crab!");
+        assert_eq!(s, "Ferris - now with extra crab");
     }
 }
