@@ -99,9 +99,9 @@
                 margin-top: 0;
             "
         >
-            Edit the code below. <code>Run tests</code> and
-            <code>Submit</code> buttons are coming next; for now you can copy
-            the code and run it locally with
+            Edit the code below and click <strong>Run tests</strong> to send it
+            to the Rust Playground. <code>Submit</code> is coming next; for now
+            you can also run locally with
             <code>cargo test --example {{ exercise.file_stem }}</code>.
         </p>
         <noscript>
@@ -128,6 +128,62 @@
 {{ exercise.starter_code }}</textarea
         >
         <div id="editor-mount" style="display: none"></div>
+
+        <div
+            style="
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
+                margin-top: 1rem;
+                flex-wrap: wrap;
+            "
+        >
+            <button
+                type="button"
+                class="btn"
+                id="run-btn"
+                data-slug="{{ exercise.file_stem }}"
+            >
+                ▶ Run tests
+            </button>
+            <span
+                id="run-status"
+                style="color: var(--color-text-muted); font-size: 0.9rem"
+            ></span>
+        </div>
+
+        <div id="output-panel" style="display: none; margin-top: 1rem">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem">Results</h3>
+            <ul
+                id="test-list"
+                style="list-style: none; padding: 0; margin: 0 0 0.75rem 0"
+            ></ul>
+            <details id="output-details">
+                <summary
+                    style="
+                        cursor: pointer;
+                        color: var(--color-text-muted);
+                        font-size: 0.85rem;
+                    "
+                >
+                    Compiler / runtime output
+                </summary>
+                <pre
+                    id="output-stderr"
+                    style="
+                        margin: 0.5rem 0 0 0;
+                        padding: 0.75rem;
+                        background-color: var(--color-background);
+                        border: 1px solid var(--color-border);
+                        border-radius: 3px;
+                        overflow-x: auto;
+                        font-family: &quot;SF Mono&quot;, Monaco, monospace;
+                        font-size: 0.8rem;
+                        white-space: pre-wrap;
+                    "
+                ></pre>
+            </details>
+        </div>
     </div>
 </div>
 
@@ -282,6 +338,107 @@
             console.warn("Clipboard write failed", err);
         }
     });
+
+    // Run tests via the /api/run proxy and render results.
+    const runBtn = document.getElementById("run-btn");
+    const runStatus = document.getElementById("run-status");
+    const outputPanel = document.getElementById("output-panel");
+    const testList = document.getElementById("test-list");
+    const outputStderr = document.getElementById("output-stderr");
+    const outputDetails = document.getElementById("output-details");
+
+    runBtn.addEventListener("click", async () => {
+        if (!window.exerciseEditor) return;
+        const code = window.exerciseEditor.getValue();
+        const slug = runBtn.dataset.slug;
+
+        runBtn.disabled = true;
+        runStatus.textContent = "Running on play.rust-lang.org…";
+        runStatus.style.color = "var(--color-text-muted)";
+
+        try {
+            const resp = await fetch("/api/run", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code, slug }),
+            });
+
+            if (!resp.ok) {
+                if (resp.status === 429) {
+                    runStatus.textContent =
+                        "Playground rate-limited us. Try again in a moment.";
+                } else if (resp.status === 502) {
+                    runStatus.textContent =
+                        "Playground unreachable. Check your connection or try again.";
+                } else {
+                    runStatus.textContent = `Run failed (HTTP ${resp.status}).`;
+                }
+                runStatus.style.color = "var(--color-error, #c62828)";
+                return;
+            }
+
+            const data = await resp.json();
+            renderResults(data);
+            const passed = data.test_results.filter((t) => t.passed).length;
+            const total = data.test_results.length;
+            if (total === 0) {
+                runStatus.textContent = data.success
+                    ? "Compiled. No tests ran."
+                    : "Did not compile.";
+                runStatus.style.color = data.success
+                    ? "var(--color-text-muted)"
+                    : "var(--color-error, #c62828)";
+            } else if (passed === total) {
+                runStatus.textContent = `All ${total} tests passed.`;
+                runStatus.style.color = "var(--color-success, #2e7d32)";
+            } else {
+                runStatus.textContent = `${passed} / ${total} tests passed.`;
+                runStatus.style.color = "var(--color-error, #c62828)";
+            }
+        } catch (err) {
+            console.error(err);
+            runStatus.textContent = "Run failed: " + err.message;
+            runStatus.style.color = "var(--color-error, #c62828)";
+        } finally {
+            runBtn.disabled = false;
+        }
+    });
+
+    function renderResults(data) {
+        outputPanel.style.display = "block";
+        testList.innerHTML = "";
+
+        for (const t of data.test_results) {
+            const li = document.createElement("li");
+            li.style.padding = "0.35rem 0.5rem";
+            li.style.fontFamily = "'SF Mono', Monaco, monospace";
+            li.style.fontSize = "0.85rem";
+            li.style.display = "flex";
+            li.style.alignItems = "center";
+            li.style.gap = "0.5rem";
+            const icon = document.createElement("span");
+            if (t.passed) {
+                icon.textContent = "✓";
+                icon.style.color = "var(--color-success, #2e7d32)";
+                icon.style.fontWeight = "700";
+            } else {
+                icon.textContent = "✗";
+                icon.style.color = "var(--color-error, #c62828)";
+                icon.style.fontWeight = "700";
+            }
+            const name = document.createElement("span");
+            name.textContent = t.name;
+            li.appendChild(icon);
+            li.appendChild(name);
+            testList.appendChild(li);
+        }
+
+        // If something went wrong, expand the details so the error is visible.
+        const failed = data.test_results.some((t) => !t.passed);
+        const compileFailed = !data.success && data.test_results.length === 0;
+        outputDetails.open = failed || compileFailed;
+        outputStderr.textContent = data.stderr || data.stdout || "(no output)";
+    }
 </script>
 
 <style>

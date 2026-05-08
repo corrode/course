@@ -234,6 +234,7 @@ async fn main() -> Result<()> {
         .route("/register", post(api_register))
         .route("/submit", post(api_submit))
         .route("/status/{ulid}", get(api_status))
+        .route("/run", post(api_run))
         .with_state(app_state.clone());
 
     // Build main routes
@@ -697,6 +698,139 @@ async fn api_status(
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
     }
+}
+
+/// Request body for `/api/run`. We accept any source code; the slug is
+/// optional and only used for logging.
+#[derive(Deserialize)]
+struct RunRequest {
+    code: String,
+    #[serde(default)]
+    slug: Option<String>,
+}
+
+/// Response shape mirroring the Playground `/execute` endpoint, plus a
+/// parsed list of test results extracted from stdout.
+#[derive(Serialize)]
+struct RunResponse {
+    success: bool,
+    stdout: String,
+    stderr: String,
+    test_results: Vec<TestResult>,
+}
+
+#[derive(Serialize)]
+struct TestResult {
+    name: String,
+    passed: bool,
+}
+
+/// Proxy handler: forwards the editor's source to play.rust-lang.org and
+/// returns the JSON. We intentionally keep this thin — the upstream
+/// already runs untrusted code in a sandbox and enforces its own rate
+/// limits, so we just pass status codes back through.
+async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, StatusCode> {
+    let slug = req.slug.as_deref().unwrap_or("<unknown>");
+    info!("/api/run: forwarding {} bytes for {slug}", req.code.len());
+
+    let body = serde_json::json!({
+        "channel": "stable",
+        "mode": "debug",
+        "edition": "2024",
+        "crateType": "bin",
+        "tests": true,
+        "backtrace": false,
+        "code": req.code,
+    });
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(20))
+        .build()
+        .map_err(|e| {
+            error!("reqwest client build failed: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let resp = client
+        .post("https://play.rust-lang.org/execute")
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| {
+            error!("Playground request failed: {e}");
+            StatusCode::BAD_GATEWAY
+        })?;
+
+    let status = resp.status();
+    if !status.is_success() {
+        warn!("Playground returned non-2xx: {status}");
+        // Forward 429 so the browser can show a 'rate limited' hint;
+        // collapse anything else to 502.
+        let mapped = if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+            StatusCode::TOO_MANY_REQUESTS
+        } else {
+            StatusCode::BAD_GATEWAY
+        };
+        return Err(mapped);
+    }
+
+    #[derive(Deserialize)]
+    struct PlaygroundResp {
+        success: bool,
+        stdout: String,
+        stderr: String,
+    }
+
+    let parsed: PlaygroundResp = resp.json().await.map_err(|e| {
+        error!("Failed to parse Playground response: {e}");
+        StatusCode::BAD_GATEWAY
+    })?;
+
+    let test_results = parse_test_results(&parsed.stdout);
+    info!(
+        "/api/run: {} test result(s) parsed (success={})",
+        test_results.len(),
+        parsed.success
+    );
+
+    Ok(Json(RunResponse {
+        success: parsed.success,
+        stdout: parsed.stdout,
+        stderr: parsed.stderr,
+        test_results,
+    }))
+}
+
+/// Parse `test some::name ... ok` / `... FAILED` lines from cargo test
+/// output. Anything we don't recognise is ignored, which is fine — the
+/// raw stdout is forwarded too, so the UI can still show it.
+fn parse_test_results(stdout: &str) -> Vec<TestResult> {
+    let mut out = Vec::new();
+    for line in stdout.lines() {
+        let line = line.trim_start();
+        let Some(rest) = line.strip_prefix("test ") else {
+            continue;
+        };
+        let Some((name, status)) = rest.rsplit_once(" ... ") else {
+            continue;
+        };
+        // The harness also emits per-suite summaries like
+        // "test result: ok. 4 passed; 0 failed". Skip those.
+        if name.starts_with("result:") {
+            continue;
+        }
+        let passed = match status.trim() {
+            "ok" => true,
+            "FAILED" => false,
+            // "ignored", "bench", etc. — skip.
+            _ => continue,
+        };
+        out.push(TestResult {
+            name: name.trim().to_string(),
+            passed,
+        });
+    }
+    out
 }
 
 /// Get user statistics for a specific participant

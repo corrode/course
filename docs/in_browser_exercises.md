@@ -220,7 +220,7 @@ sourced from the new model.
 - Rust language pack, theme matching the site palette, lazy-loaded
   after first paint.
 
-### PR 4 — `Run tests` + output panel
+### PR 4 — `Run tests` + output panel ✅
 
 - Add `POST /api/run` proxy to Playground `/execute`.
 - Wire the `Run tests` button to it.
