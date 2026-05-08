@@ -131,28 +131,65 @@
     </div>
 </div>
 
-<script type="module">
-    // CodeMirror 6 from CDN. We pin to a recent version so behaviour is
-    // reproducible. If esm.sh is unreachable the textarea fallback stays
-    // visible and remains usable.
-    const CM_VERSION = "6.0.1";
-    const LANG_VERSION = "6.0.1";
-    const THEME_VERSION = "6.1.2";
+<script type="importmap">
+    {
+        "imports": {
+            "@codemirror/state": "https://esm.sh/*@codemirror/state@6.4.1",
+            "@codemirror/view": "https://esm.sh/*@codemirror/view@6.26.3",
+            "@codemirror/language": "https://esm.sh/*@codemirror/language@6.10.2",
+            "@codemirror/commands": "https://esm.sh/*@codemirror/commands@6.6.0",
+            "@codemirror/lang-rust": "https://esm.sh/*@codemirror/lang-rust@6.0.1",
+            "@codemirror/theme-one-dark": "https://esm.sh/*@codemirror/theme-one-dark@6.1.2",
+            "@lezer/common": "https://esm.sh/*@lezer/common@1.2.1",
+            "@lezer/highlight": "https://esm.sh/*@lezer/highlight@1.2.0",
+            "@lezer/lr": "https://esm.sh/*@lezer/lr@1.4.1",
+            "@lezer/rust": "https://esm.sh/*@lezer/rust@1.0.2",
+            "style-mod": "https://esm.sh/style-mod@4.1.2",
+            "w3c-keyname": "https://esm.sh/w3c-keyname@2.2.8",
+            "crelt": "https://esm.sh/crelt@1.0.6"
+        }
+    }
+</script>
 
+<script type="module">
+    // CodeMirror 6 via an import map. The leading `*` on each esm.sh URL
+    // tells esm.sh to keep its own deps as bare specifiers, so the browser
+    // resolves *all* @codemirror/state references through this map and we
+    // end up with a single shared module instance. Without this, esm.sh
+    // would inline its own copy per package and EditorView would reject
+    // the resulting extensions with "Unrecognized extension value".
+    //
+    // We assemble our own minimal setup instead of using the `codemirror`
+    // umbrella package, because that package re-bundles all its deps and
+    // would re-introduce the duplication problem.
     try {
-        const [
-            { EditorView, basicSetup },
-            { EditorState },
-            { rust },
-            { oneDark },
-        ] = await Promise.all([
-            import(`https://esm.sh/codemirror@${CM_VERSION}`),
-            import(`https://esm.sh/@codemirror/state@${CM_VERSION}`),
-            import(`https://esm.sh/@codemirror/lang-rust@${LANG_VERSION}`),
-            import(
-                `https://esm.sh/@codemirror/theme-one-dark@${THEME_VERSION}`
-            ),
-        ]);
+        const [state, view, lang, commands, langRust, oneDark] =
+            await Promise.all([
+                import("@codemirror/state"),
+                import("@codemirror/view"),
+                import("@codemirror/language"),
+                import("@codemirror/commands"),
+                import("@codemirror/lang-rust"),
+                import("@codemirror/theme-one-dark"),
+            ]);
+
+        const { EditorState } = state;
+        const {
+            EditorView,
+            keymap,
+            highlightActiveLine,
+            highlightActiveLineGutter,
+            lineNumbers,
+            drawSelection,
+        } = view;
+        const {
+            syntaxHighlighting,
+            defaultHighlightStyle,
+            bracketMatching,
+            indentOnInput,
+        } = lang;
+        const { defaultKeymap, history, historyKeymap, indentWithTab } =
+            commands;
 
         const fallback = document.getElementById("editor-fallback");
         const starter = fallback.value;
@@ -162,30 +199,43 @@
         const isDark = (
             document.documentElement.getAttribute("data-theme") || ""
         ).startsWith("dark");
-        const extensions = [basicSetup, rust()];
-        if (isDark) extensions.push(oneDark);
 
-        const view = new EditorView({
+        const extensions = [
+            lineNumbers(),
+            highlightActiveLineGutter(),
+            highlightActiveLine(),
+            history(),
+            drawSelection(),
+            indentOnInput(),
+            bracketMatching(),
+            syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+            keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+            langRust.rust(),
+            EditorView.lineWrapping,
+        ];
+        if (isDark) extensions.push(oneDark.oneDark);
+
+        const editor = new EditorView({
             state: EditorState.create({ doc: starter, extensions }),
             parent: mount,
         });
         // Style the editor wrapper so it matches our other panels.
-        view.dom.style.border = "1px solid var(--color-border)";
-        view.dom.style.borderRadius = "3px";
-        view.dom.style.minHeight = "28rem";
-        view.dom.style.fontSize = "0.9rem";
+        editor.dom.style.border = "1px solid var(--color-border)";
+        editor.dom.style.borderRadius = "3px";
+        editor.dom.style.minHeight = "28rem";
+        editor.dom.style.fontSize = "0.9rem";
 
         fallback.style.display = "none";
         mount.style.display = "block";
 
         // Expose for future Run/Submit wiring.
         window.exerciseEditor = {
-            getValue: () => view.state.doc.toString(),
+            getValue: () => editor.state.doc.toString(),
             setValue: (text) => {
-                view.dispatch({
+                editor.dispatch({
                     changes: {
                         from: 0,
-                        to: view.state.doc.length,
+                        to: editor.state.doc.length,
                         insert: text,
                     },
                 });
