@@ -115,7 +115,7 @@ cp .env.example .env
 # Edit .env with your admin token
 
 # Start the server
-cargo run --bin server
+cargo run
 
 # Server will be available at:
 # - http://localhost:3000 (landing page)
