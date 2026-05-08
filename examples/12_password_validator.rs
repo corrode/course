@@ -22,6 +22,30 @@
 //! Build something awesome - the future of secure authentication counts on you.
 //!
 //! Oh, and it's totally fine to change all the code in this file to make it your own.
+//!
+//! ## Suggested order of attack
+//!
+//! This file deliberately gives you a lot of room to be creative — but if
+//! you implement everything top to bottom in one go, it's easy to get stuck.
+//! Here's a battle-tested order:
+//!
+//! 1. **`PasswordReport::is_strong`** — start tiny. It's a one-line
+//!    comparison and gives you a feel for the data.
+//! 2. **`PasswordValidator::validate` — base requirements only.** Just the
+//!    length / uppercase / lowercase / digit / special-char checks. Get the
+//!    `test_weak_passwords`, `test_medium_passwords`, `test_strong_passwords`,
+//!    and `test_feedback_quality` tests passing first.
+//! 3. **`PasswordGenerator::generate_secure_password`** — only after step 2.
+//!    A simple stdlib-only approach: cycle through your character set based on
+//!    a changing seed (e.g. system time nanoseconds), or pick a deterministic
+//!    sample for now and worry about true randomness later. The point of this
+//!    exercise is the validation logic, not cryptographic randomness.
+//! 4. **`PasswordAdvisor::suggest_improvements`** — turn the report's
+//!    feedback into actionable suggestions.
+//! 5. **(Optional) Advanced features.** Common-password lists, repeated
+//!    characters, keyboard patterns. Save these for last.
+//!
+//! Tip: get one test green at a time, then move on.
 
 #[derive(Debug, Clone)]
 enum PasswordStrength {
@@ -90,7 +114,11 @@ impl PasswordGenerator {
         // Optional: implement password generation
         // Hints:
         // - Define character sets (uppercase, lowercase, numbers, symbols)
-        // - Use rand crate (you'll need to add it to Cargo.toml)
+        // - Pick characters from those sets to assemble a password of `length`
+        // - For a stdlib-only source of variability, you can use
+        //   `std::time::SystemTime::now().duration_since(UNIX_EPOCH)?.subsec_nanos()`
+        //   as a seed. This isn't cryptographically secure, but it's enough
+        //   for an exercise. (In real code, reach for the `rand` crate.)
         // - Ensure the generated password passes your validator
         todo!()
     }
