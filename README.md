@@ -151,16 +151,16 @@ The exercises follow a carefully designed progression:
 
 1. **00_hello_rust** - String creation and formatting
 2. **01_integer_handling** - Arithmetic and number operations  
-3. **02_enums_and_matching** - Pattern matching with HTTP status codes
-4. **03_vectors_basics** - Growable arrays and basic operations
-5. **04_hashmaps** - Key-value storage for configuration and caching
-6. **05_tuples** - Multiple return values and destructuring
-7. **06_option_handling** - Safe handling of missing values
-8. **07_result_handling** - Error handling and validation
-9. **08_ownership_basics** - Memory safety and borrowing
-10. **09_structs_and_methods** - User account management
-11. **10_iterator_patterns** - Data transformation with functional patterns
-12. **11_strings_and_chars** - `&str`, `String`, `char`, and `Vec<char>` warm-up
+3. **02_strings_and_chars** - `&str`, `String`, `char`, and `Vec<char>` warm-up
+4. **03_enums_and_matching** - Pattern matching with HTTP status codes
+5. **04_vectors_basics** - Growable arrays and basic operations
+6. **05_hashmaps** - Key-value storage for configuration and caching
+7. **06_tuples** - Multiple return values and destructuring
+8. **07_option_handling** - Safe handling of missing values
+9. **08_result_handling** - Error handling and validation
+10. **09_ownership_basics** - Memory safety and borrowing
+11. **10_structs_and_methods** - User account management
+12. **11_iterator_patterns** - Data transformation with functional patterns
 13. **12_password_validator** - **Open-ended project** (be creative!)
 14. **13_question_mark_operator** - Elegant error propagation with `?`
 15. **14_modules** - Organising code with `mod` and visibility

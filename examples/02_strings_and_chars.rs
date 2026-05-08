@@ -1,9 +1,9 @@
-//! # Strings, &str, and chars - The Bridge to Real Text Processing
+//! # Strings, &str, and chars
 //!
-//! Before we tackle the password validator, let's get comfortable with the
-//! handful of string-related types you'll need. In many languages "a string is
-//! a string", but Rust splits the job across a few cooperating types — and
-//! that split is exactly what makes Rust strings fast *and* safe.
+//! Now that you've handled numbers, let's meet Rust's text types. In many
+//! languages "a string is a string", but Rust splits the job across a few
+//! cooperating types — and that split is exactly what makes Rust strings
+//! fast *and* safe.
 //!
 //! The cast you'll meet today:
 //!
@@ -12,7 +12,8 @@
 //! - `String`   — an owned, growable UTF-8 buffer. You own the memory.
 //! - `Vec<char>`— sometimes useful when you really need indexed character access.
 //!
-//! There's a recurring pattern here that you'll see again and again:
+//! There's a recurring pattern here that you'll see again and again in
+//! later exercises:
 //!
 //! | Borrowed (a "view") | Owned (you own the data) |
 //! |---------------------|--------------------------|
