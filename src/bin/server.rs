@@ -57,6 +57,36 @@ struct ExerciseTemplate {
     exercise: Exercise,
     /// `Some` when the page is rendered with participant context.
     ulid: Option<String>,
+    /// Status for the *current* exercise (attempted/completed/perfected).
+    /// All `false` on the public route.
+    current_status: UiExerciseStatus,
+    /// One entry per exercise in the catalog, ordered by `number`.
+    /// Used to render the bottom "chapter list" navigation.
+    dots: Vec<ProgressDot>,
+}
+
+/// One row in the bottom chapter list.
+#[derive(Clone)]
+struct ProgressDot {
+    slug: String,
+    number: u8,
+    title: String,
+    /// Has at least one submission (regardless of pass/fail).
+    attempted: bool,
+    /// `tests_passed` on at least one submission.
+    completed: bool,
+    /// Tests + fmt + clippy all green on the same submission.
+    perfected: bool,
+    current: bool,
+    is_quiz: bool,
+}
+
+/// Per-exercise progress used by the chapter list and current-status badge.
+#[derive(Clone, Default)]
+struct UiExerciseStatus {
+    attempted: bool,
+    completed: bool,
+    perfected: bool,
 }
 
 /// Template for participant dashboard
@@ -334,7 +364,7 @@ async fn public_exercise_page(
     AxumPath(slug): AxumPath<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    render_exercise_page(&state, &slug, None)
+    render_exercise_page(&state, &slug, None).await
 }
 
 /// Exercise page with participant context.
@@ -353,26 +383,79 @@ async fn participant_exercise_page(
         .is_some();
 
     let ulid = if exists { Some(ulid) } else { None };
-    render_exercise_page(&state, &slug, ulid)
+    render_exercise_page(&state, &slug, ulid).await
 }
 
-fn render_exercise_page(
+async fn render_exercise_page(
     state: &AppState,
     slug: &str,
     ulid: Option<String>,
 ) -> axum::response::Response {
     // Look up by slug or by file_stem so both `/exercise/strings_and_chars`
     // and `/exercise/02_strings_and_chars` resolve.
-    let Some(exercise) = state
+    let Some(idx) = state
         .exercises
         .iter()
-        .find(|e| e.slug == slug || e.file_stem == slug)
-        .cloned()
+        .position(|e| e.slug == slug || e.file_stem == slug)
     else {
         return (StatusCode::NOT_FOUND, "Exercise not found").into_response();
     };
+    let exercise = state.exercises[idx].clone();
 
-    let template = ExerciseTemplate { exercise, ulid };
+    // Per-exercise status — empty when no participant.
+    let progress: std::collections::HashMap<String, UiExerciseStatus> = match &ulid {
+        Some(u) => match get_exercise_progress(&state.pool, u, &state.exercises).await {
+            Ok(rows) => rows
+                .into_iter()
+                .map(|r| {
+                    (
+                        r.name,
+                        UiExerciseStatus {
+                            attempted: !r.submissions.is_empty(),
+                            completed: r.completed,
+                            perfected: r.perfected,
+                        },
+                    )
+                })
+                .collect(),
+            Err(e) => {
+                warn!("Failed to load progress for header dots: {e}");
+                std::collections::HashMap::new()
+            }
+        },
+        None => std::collections::HashMap::new(),
+    };
+
+    let current_status = progress
+        .get(&exercise.file_stem)
+        .cloned()
+        .unwrap_or_default();
+
+    let dots: Vec<ProgressDot> = state
+        .exercises
+        .iter()
+        .enumerate()
+        .map(|(i, e)| {
+            let s = progress.get(&e.file_stem).cloned().unwrap_or_default();
+            ProgressDot {
+                slug: e.slug.clone(),
+                number: e.number,
+                title: e.title.clone(),
+                attempted: s.attempted,
+                completed: s.completed,
+                perfected: s.perfected,
+                current: i == idx,
+                is_quiz: e.is_quiz(),
+            }
+        })
+        .collect();
+
+    let template = ExerciseTemplate {
+        exercise,
+        ulid,
+        current_status,
+        dots,
+    };
     match template.render() {
         Ok(html) => Html(html).into_response(),
         Err(e) => {

@@ -235,7 +235,7 @@ sourced from the new model.
   `/format` and `/clippy` and include their results.
 - Update header progress dots on success.
 
-### PR 6 — Header navigation
+### PR 6 — Header navigation ✅
 
 - Prev/next links in the header.
 - Progress dots reflecting the current participant's state.
@@ -247,3 +247,6 @@ sourced from the new model.
 - Dark/light theme parity for the editor.
 - Quiz page wrapped in the same layout for visual consistency.
 - Submission history surfaced on the exercise page.
+- No hover effects on any buttons. Instead, add a subtle color change on hover.
+- add the `--pedantic` fmt/clippy submission
+- episodes should have a stable episode id, which is used for the URL and for submissions. This way, if we add/remove/reorder exercises, the progress tracking doesn't break.
