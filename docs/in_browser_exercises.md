@@ -227,7 +227,7 @@ sourced from the new model.
 - Render the output panel: per-test pass/fail with stderr collapsed by
   default.
 
-### PR 5 — `Submit` and `Submit with formatting + lint`
+### PR 5 — `Submit` and `Submit with formatting + lint` ✅ (Submit only)
 
 - Show `Submit` only on the participant route.
 - On click: parse the run results, then POST to existing `/api/submit`.

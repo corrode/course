@@ -73,38 +73,33 @@
             >
                 <button
                     type="button"
-                    class="btn"
-                    id="run-btn"
-                    data-slug="{{ exercise.file_stem }}"
-                >
-                    ▶ Run tests
-                </button>
-                <button
-                    type="button"
                     class="btn btn-secondary"
                     id="reset-btn"
                     title="Replace your edits with the original starter code"
                 >
-                    Reset to starter
+                    Reset
                 </button>
-                <div
-                    class="copy-btn"
-                    id="copy-btn"
-                    title="Copy current code to clipboard"
-                    style="position: static"
+                <button
+                    type="button"
+                    class="btn"
+                    id="run-btn"
+                    data-slug="{{ exercise.file_stem }}"
                 >
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
-                            fill="currentColor"
-                        />
-                    </svg>
-                    Copy
-                </div>
+                    ▶ Run
+                </button>
+                {% match ulid %} {% when Some with (u) %}
+                <button
+                    type="button"
+                    class="btn"
+                    id="submit-btn"
+                    data-slug="{{ exercise.file_stem }}"
+                    data-ulid="{{ u }}"
+                    style="background-color: var(--color-success, #2e7d32)"
+                    title="Run tests, then record the result against your account"
+                >
+                    Submit
+                </button>
+                {% when None %} {% endmatch %}
             </div>
         </div>
         <p
@@ -114,9 +109,10 @@
                 margin-top: 0;
             "
         >
-            Edit the code below and click <strong>Run tests</strong> to send it
-            to the Rust Playground. <code>Submit</code> is coming next; for now
-            you can also run locally with
+            Edit the code below and click <strong>Run</strong> to test it on the
+            Rust Playground. {% match ulid %} {% when Some with (_u) %}
+            <strong>Submit</strong> records a passing run against your account.
+            {% when None %} {% endmatch %} You can also run locally with
             <code>cargo test --example {{ exercise.file_stem }}</code>.
         </p>
         <noscript>
@@ -124,25 +120,61 @@
                 JavaScript is disabled — the editor below is a plain textarea.
             </p>
         </noscript>
-        <textarea
-            id="editor-fallback"
-            spellcheck="false"
-            style="
-                width: 100%;
-                min-height: 28rem;
-                font-family: &quot;SF Mono&quot;, Monaco, monospace;
-                font-size: 0.9rem;
-                padding: 1rem;
-                border: 1px solid var(--color-border);
-                border-radius: 3px;
-                background-color: var(--color-background);
-                color: var(--color-text);
-                resize: vertical;
-            "
-        >
+        <div style="position: relative">
+            <button
+                type="button"
+                id="copy-btn"
+                title="Copy current code to clipboard"
+                aria-label="Copy code"
+                style="
+                    position: absolute;
+                    top: 0.5rem;
+                    right: 0.5rem;
+                    z-index: 5;
+                    background: var(--color-surface);
+                    color: var(--color-text-muted);
+                    border: 1px solid var(--color-border);
+                    border-radius: 3px;
+                    padding: 0.25rem 0.4rem;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    opacity: 0.65;
+                    transition: opacity 0.15s ease;
+                "
+            >
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    style="width: 14px; height: 14px"
+                >
+                    <path
+                        d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
+                        fill="currentColor"
+                    />
+                </svg>
+            </button>
+            <textarea
+                id="editor-fallback"
+                spellcheck="false"
+                style="
+                    width: 100%;
+                    min-height: 28rem;
+                    font-family: &quot;SF Mono&quot;, Monaco, monospace;
+                    font-size: 0.9rem;
+                    padding: 1rem;
+                    border: 1px solid var(--color-border);
+                    border-radius: 3px;
+                    background-color: var(--color-background);
+                    color: var(--color-text);
+                    resize: vertical;
+                "
+            >
 {{ exercise.starter_code }}</textarea
-        >
-        <div id="editor-mount" style="display: none"></div>
+            >
+            <div id="editor-mount" style="display: none"></div>
+        </div>
 
         <div
             id="run-status-row"
@@ -334,12 +366,29 @@
         const text = window.exerciseEditor.getValue();
         try {
             await navigator.clipboard.writeText(text);
-            btn.classList.add("copied");
-            setTimeout(() => btn.classList.remove("copied"), 1200);
+            // Brief visual confirmation (no permanent class change).
+            const prevColor = btn.style.color;
+            btn.style.color = "var(--color-success, #2e7d32)";
+            btn.style.opacity = "1";
+            setTimeout(() => {
+                btn.style.color = prevColor;
+                btn.style.opacity = "";
+            }, 1000);
         } catch (err) {
             console.warn("Clipboard write failed", err);
         }
     });
+
+    // Hover/focus reveals the icon-only Copy button more clearly.
+    {
+        const copyBtn = document.getElementById("copy-btn");
+        const reveal = () => (copyBtn.style.opacity = "1");
+        const hide = () => (copyBtn.style.opacity = "");
+        copyBtn.addEventListener("mouseenter", reveal);
+        copyBtn.addEventListener("mouseleave", hide);
+        copyBtn.addEventListener("focus", reveal);
+        copyBtn.addEventListener("blur", hide);
+    }
 
     // Run tests via the /api/run proxy and render results.
     const runBtn = document.getElementById("run-btn");
@@ -351,20 +400,96 @@
 
     runBtn.addEventListener("click", async () => {
         if (!window.exerciseEditor) return;
-        const code = window.exerciseEditor.getValue();
-        const slug = runBtn.dataset.slug;
-
         runBtn.disabled = true;
+        try {
+            const data = await runOnce(
+                window.exerciseEditor.getValue(),
+                runBtn.dataset.slug,
+            );
+            if (data) updateRunStatus(data);
+        } finally {
+            runBtn.disabled = false;
+        }
+    });
+
+    // Submit: only present on the participant route. Run first, then POST
+    // to /api/submit with the parsed flags. We trust the client — same
+    // model as the CLI — since this is a self-directed learning platform.
+    const submitBtn = document.getElementById("submit-btn");
+    if (submitBtn) {
+        submitBtn.addEventListener("click", async () => {
+            if (!window.exerciseEditor) return;
+            submitBtn.disabled = true;
+            runBtn.disabled = true;
+            try {
+                const code = window.exerciseEditor.getValue();
+                const slug = submitBtn.dataset.slug;
+                const ulid = submitBtn.dataset.ulid;
+
+                const data = await runOnce(code, slug);
+                if (!data) return;
+                updateRunStatus(data);
+
+                const total = data.test_results.length;
+                const passed = data.test_results.filter((t) => t.passed).length;
+                const tests_passed = total > 0 && passed === total;
+
+                runStatus.textContent +=
+                    " — " +
+                    (tests_passed
+                        ? "submitting…"
+                        : "not submitting (tests must pass first).");
+                if (!tests_passed) {
+                    runStatus.style.color = "var(--color-error, #c62828)";
+                    return;
+                }
+
+                const submitResp = await fetch("/api/submit", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        ulid,
+                        exercise_name: slug,
+                        source_code: code,
+                        tests_passed: true,
+                        clippy_passed: false,
+                        fmt_passed: false,
+                    }),
+                });
+
+                if (submitResp.ok) {
+                    runStatus.textContent = `✓ Submitted! ${passed}/${total} tests passed.`;
+                    runStatus.style.color = "var(--color-success, #2e7d32)";
+                } else if (submitResp.status === 401) {
+                    runStatus.textContent =
+                        "Submit rejected: your session is unknown. Try registering again.";
+                    runStatus.style.color = "var(--color-error, #c62828)";
+                } else {
+                    runStatus.textContent = `Submit failed (HTTP ${submitResp.status}).`;
+                    runStatus.style.color = "var(--color-error, #c62828)";
+                }
+            } catch (err) {
+                console.error(err);
+                runStatus.textContent = "Submit failed: " + err.message;
+                runStatus.style.color = "var(--color-error, #c62828)";
+            } finally {
+                submitBtn.disabled = false;
+                runBtn.disabled = false;
+            }
+        });
+    }
+
+    // Run on play.rust-lang.org via /api/run. Returns the parsed JSON, or
+    // null if the request failed (status text is updated either way).
+    async function runOnce(code, slug) {
         runStatus.textContent = "Running on play.rust-lang.org…";
         runStatus.style.color = "var(--color-text-muted)";
-
         try {
             const resp = await fetch("/api/run", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ code, slug }),
             });
-
             if (!resp.ok) {
                 if (resp.status === 429) {
                     runStatus.textContent =
@@ -376,35 +501,37 @@
                     runStatus.textContent = `Run failed (HTTP ${resp.status}).`;
                 }
                 runStatus.style.color = "var(--color-error, #c62828)";
-                return;
+                return null;
             }
-
             const data = await resp.json();
             renderResults(data);
-            const passed = data.test_results.filter((t) => t.passed).length;
-            const total = data.test_results.length;
-            if (total === 0) {
-                runStatus.textContent = data.success
-                    ? "Compiled. No tests ran."
-                    : "Did not compile.";
-                runStatus.style.color = data.success
-                    ? "var(--color-text-muted)"
-                    : "var(--color-error, #c62828)";
-            } else if (passed === total) {
-                runStatus.textContent = `All ${total} tests passed.`;
-                runStatus.style.color = "var(--color-success, #2e7d32)";
-            } else {
-                runStatus.textContent = `${passed} / ${total} tests passed.`;
-                runStatus.style.color = "var(--color-error, #c62828)";
-            }
+            return data;
         } catch (err) {
             console.error(err);
             runStatus.textContent = "Run failed: " + err.message;
             runStatus.style.color = "var(--color-error, #c62828)";
-        } finally {
-            runBtn.disabled = false;
+            return null;
         }
-    });
+    }
+
+    function updateRunStatus(data) {
+        const passed = data.test_results.filter((t) => t.passed).length;
+        const total = data.test_results.length;
+        if (total === 0) {
+            runStatus.textContent = data.success
+                ? "Compiled. No tests ran."
+                : "Did not compile.";
+            runStatus.style.color = data.success
+                ? "var(--color-text-muted)"
+                : "var(--color-error, #c62828)";
+        } else if (passed === total) {
+            runStatus.textContent = `All ${total} tests passed.`;
+            runStatus.style.color = "var(--color-success, #2e7d32)";
+        } else {
+            runStatus.textContent = `${passed} / ${total} tests passed.`;
+            runStatus.style.color = "var(--color-error, #c62828)";
+        }
+    }
 
     function renderResults(data) {
         outputPanel.style.display = "block";
