@@ -2,7 +2,7 @@
 //!
 //! See `docs/in_browser_exercises.md` for the design.
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -75,8 +75,8 @@ pub fn load(dir: &Path) -> Result<Arc<Vec<Exercise>>> {
 }
 
 fn parse_file(path: &Path) -> Result<Exercise> {
-    let starter_code = std::fs::read_to_string(path)
-        .with_context(|| format!("reading {}", path.display()))?;
+    let starter_code_full =
+        std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
 
     let file_stem = path
         .file_stem()
@@ -87,10 +87,13 @@ fn parse_file(path: &Path) -> Result<Exercise> {
     let (number, slug) = split_numeric_prefix(&file_stem)
         .ok_or_else(|| anyhow!("filename does not start with NN_: {file_stem}"))?;
 
-    let intro_md = extract_inner_doc(&starter_code)?;
+    let intro_md = extract_inner_doc(&starter_code_full)?;
     let (title, body_md) = split_title(&intro_md);
     let title = title.unwrap_or_else(|| file_stem.clone());
     let intro_html = render_markdown(&body_md);
+    // Editor sees the file *without* the inner doc-comment; the prose above
+    // already covers it, no need to repeat it inside the code area.
+    let starter_code = strip_inner_doc(&starter_code_full);
 
     Ok(Exercise {
         number,
@@ -100,6 +103,45 @@ fn parse_file(path: &Path) -> Result<Exercise> {
         intro_html,
         starter_code,
     })
+}
+
+/// Drop the leading run of inner doc-comment lines (`//!` or `/*! */`) plus
+/// any blank lines that follow, leaving the rest of the source intact.
+fn strip_inner_doc(source: &str) -> String {
+    let mut out: Vec<&str> = Vec::with_capacity(source.lines().count());
+    let mut header = true;
+    let mut in_block = false;
+    for line in source.lines() {
+        if header {
+            let trimmed = line.trim_start();
+            if in_block {
+                if trimmed.contains("*/") {
+                    in_block = false;
+                }
+                continue;
+            }
+            if trimmed.starts_with("//!") {
+                continue;
+            }
+            if trimmed.starts_with("/*!") {
+                if !trimmed.contains("*/") {
+                    in_block = true;
+                }
+                continue;
+            }
+            if trimmed.is_empty() {
+                // Skip blank lines that sat between or after the doc block.
+                continue;
+            }
+            header = false;
+        }
+        out.push(line);
+    }
+    let mut joined = out.join("\n");
+    if source.ends_with('\n') && !joined.ends_with('\n') {
+        joined.push('\n');
+    }
+    joined
 }
 
 /// Split `02_strings_and_chars` into `(2, "strings_and_chars")`.
@@ -166,7 +208,7 @@ fn split_title(md: &str) -> (Option<String>, String) {
 }
 
 fn render_markdown(md: &str) -> String {
-    use pulldown_cmark::{html, Options, Parser};
+    use pulldown_cmark::{Options, Parser, html};
     let mut opts = Options::empty();
     opts.insert(Options::ENABLE_TABLES);
     let parser = Parser::new_ext(md, opts);
@@ -205,6 +247,31 @@ mod tests {
             strings.starter_code.contains("fn first_char"),
             "starter code should contain function stubs"
         );
+        assert!(
+            !strings.starter_code.contains("//!"),
+            "editor starter code should have the inner doc comment stripped"
+        );
+        assert!(
+            strings.starter_code.starts_with("///")
+                || strings.starter_code.starts_with("fn")
+                || strings.starter_code.starts_with("use ")
+                || strings.starter_code.starts_with("#["),
+            "starter code should begin with code, not blank lines: {:?}",
+            &strings.starter_code[..40.min(strings.starter_code.len())]
+        );
+    }
+
+    #[test]
+    fn strip_inner_doc_removes_leading_block() {
+        let src = "//! # Title\n//!\n//! body\n\nfn main() {}\n";
+        assert_eq!(strip_inner_doc(src), "fn main() {}\n");
+    }
+
+    #[test]
+    fn strip_inner_doc_leaves_inner_attrs_alone() {
+        // No leading //!; nothing to strip.
+        let src = "use std::io;\n\nfn main() {}\n";
+        assert_eq!(strip_inner_doc(src), src);
     }
 
     #[test]

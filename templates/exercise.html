@@ -1,32 +1,23 @@
 {% extends "base.html" %} {% block content %}
 <div class="container">
-    <div class="nav">
-        <a href="/" class="nav-brand">
-            <img
-                src="/static/assets/corrode-logo.svg"
-                alt="corrode"
-                class="brand-logo"
-                style="filter: var(--logo-filter)"
-            />
-        </a>
-        <div class="nav-links">
-            {% match ulid %} {% when Some with (u) %}
-            <a href="/dashboard/{{ u }}" class="nav-link">← Dashboard</a>
-            {% when None %}
-            <a href="/" class="nav-link">← Home</a>
-            {% endmatch %}
-        </div>
-    </div>
+    <nav class="crumbs" aria-label="Breadcrumb">
+        {% match ulid %} {% when Some with (u) %}
+        <a href="/dashboard/{{ u }}" class="crumb">Home</a>
+        {% when None %}
+        <a href="/" class="crumb">Home</a>
+        {% endmatch %}
+        <span class="crumb-sep" aria-hidden="true">/</span>
+        <span class="crumb crumb-current"
+            >examples/{{ exercise.file_stem }}.rs</span
+        >
+    </nav>
 
     <div class="exercise-header">
         <div class="chapter-eyebrow">Chapter {{ exercise.number }}</div>
         <h1 class="exercise-title">{{ exercise.title }}</h1>
+        {% match ulid %} {% when Some with (_u) %}
         <div class="exercise-meta">
-            <span class="exercise-file"
-                >examples/{{ exercise.file_stem }}.rs</span
-            >
-            {% match ulid %} {% when Some with (_u) %} {% if
-            current_status.perfected %}
+            {% if current_status.perfected %}
             <span
                 class="status-badge status-perfected"
                 title="Tests, fmt, and clippy all passed"
@@ -42,24 +33,15 @@
                 title="Submitted but tests not yet passing"
                 >• Attempted</span
             >
-            {% endif %} {% when None %} {% endmatch %}
+            {% endif %}
         </div>
+        {% when None %} {% endmatch %}
     </div>
 
     {% match ulid %} {% when None %}
-    <div
-        class="card"
-        style="
-            background-color: rgba(9, 105, 218, 0.08);
-            border-color: rgba(9, 105, 218, 0.3);
-            margin-bottom: 1.5rem;
-        "
-    >
-        <p style="margin: 0; color: var(--color-text)">
-            👋 Anyone can read and edit this exercise.
-            <a href="/" style="font-weight: 600">Register</a> to track your
-            progress.
-        </p>
+    <div class="register-banner">
+        👋 Anyone can read and edit this exercise.
+        <a href="/">Register</a> to track your progress.
     </div>
     {% when Some with (_u) %} {% endmatch %}
 
@@ -155,7 +137,7 @@
                     font-size: 0.9rem;
                     padding: 1rem;
                     border: 1px solid var(--color-border);
-                    border-radius: 3px;
+                    border-radius: 12px;
                     background-color: var(--color-background);
                     color: var(--color-text);
                     resize: vertical;
@@ -196,10 +178,10 @@
                     id="output-stderr"
                     style="
                         margin: 0.5rem 0 0 0;
-                        padding: 0.75rem;
+                        padding: 0.85rem 1rem;
                         background-color: var(--color-background);
                         border: 1px solid var(--color-border);
-                        border-radius: 3px;
+                        border-radius: 12px;
                         overflow-x: auto;
                         font-family: &quot;SF Mono&quot;, Monaco, monospace;
                         font-size: 0.8rem;
@@ -332,7 +314,8 @@
         });
         // Style the editor wrapper so it matches our other panels.
         editor.dom.style.border = "1px solid var(--color-border)";
-        editor.dom.style.borderRadius = "3px";
+        editor.dom.style.borderRadius = "12px";
+        editor.dom.style.overflow = "hidden";
         editor.dom.style.minHeight = "28rem";
         editor.dom.style.fontSize = "0.9rem";
 
@@ -594,8 +577,8 @@
 <style>
     /* Reading column for the chapter prose. */
     .chapter-prose {
-        max-width: 42rem;
-        margin: 2rem auto 3rem;
+        max-width: 100%;
+        margin: 1.5rem 0 3rem;
         font-size: 1.05rem;
     }
     .exercise-prose h1,
@@ -641,11 +624,11 @@
         font-size: 0.88em;
         color: var(--color-text);
     }
-    /* Block code: gorgeous rounded dark block (Livebook-style). */
+    /* Block code: gorgeous rounded dark block, Catppuccin Mocha base. */
     .exercise-prose pre {
-        background-color: #1a1d23;
-        border: 1px solid #1a1d23;
-        border-radius: 10px;
+        background-color: #1e1e2e;
+        border: 1px solid #313244;
+        border-radius: 12px;
         padding: 1.1rem 1.25rem;
         margin: 1.5rem 0;
         overflow-x: auto;
@@ -654,7 +637,7 @@
     .exercise-prose pre code {
         background: none;
         padding: 0;
-        color: #e6edf3;
+        color: #cdd6f4;
         font-family: "SF Mono", Monaco, monospace;
         font-size: 0.9rem;
         line-height: 1.55;
@@ -691,8 +674,8 @@
 
     /* The exercise ("try it yourself") section: no card, just typography. */
     .exercise-section {
-        max-width: 56rem;
-        margin: 0 auto 2rem;
+        max-width: 100%;
+        margin: 0 0 2rem;
     }
     .exercise-section-head {
         display: flex;
@@ -725,18 +708,22 @@
 
     .exercise-header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin: 3.5rem 0 4rem;
     }
     .chapter-eyebrow {
         font-size: 0.75rem;
-        letter-spacing: 0.18em;
+        letter-spacing: 0.22em;
         font-weight: 600;
         color: var(--color-text-muted);
         text-transform: uppercase;
+        margin-bottom: 1rem;
     }
     .exercise-title {
-        margin: 0.35rem 0 0.6rem;
-        line-height: 1.1;
+        margin: 0 0 1.25rem;
+        line-height: 1.15;
+        font-size: 2.75rem;
+        font-weight: 700;
+        letter-spacing: -0.015em;
     }
     .exercise-meta {
         display: inline-flex;
@@ -744,6 +731,7 @@
         gap: 0.75rem;
         flex-wrap: wrap;
         justify-content: center;
+        margin-top: 0.5rem;
     }
     .exercise-file {
         font-family: "SF Mono", Monaco, monospace;
@@ -779,6 +767,48 @@
     }
     [data-theme="dark"] .status-perfected {
         color: #f1c40f;
+    }
+
+    /* ---------- Breadcrumb above the line ---------- */
+    .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 0 0.75rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--color-border);
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        flex-wrap: wrap;
+    }
+    .crumb {
+        color: var(--color-text-muted);
+        text-decoration: none;
+    }
+    .crumb:hover {
+        color: var(--color-text);
+    }
+    .crumb-sep {
+        opacity: 0.5;
+    }
+    .crumb-current {
+        font-family: "SF Mono", Monaco, monospace;
+        color: var(--color-text);
+    }
+
+    /* ---------- Register banner (public route only) ---------- */
+    .register-banner {
+        margin-bottom: 1.5rem;
+        padding: 0.6rem 0.9rem;
+        border-left: 3px solid var(--color-primary);
+        background: rgba(var(--color-primary-rgb), 0.06);
+        color: var(--color-text);
+        font-size: 0.95rem;
+        border-radius: 0 6px 6px 0;
+    }
+    .register-banner a {
+        color: var(--color-primary);
+        font-weight: 600;
     }
 
     .chapter-list {
