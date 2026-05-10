@@ -745,6 +745,66 @@
             attributes: true,
             attributeFilter: ["data-theme"],
         });
+
+        // Read-only CM6 instance for the "Compiler / runtime output" pane.
+        // Reusing the Rust grammar (and the same theme compartment trick)
+        // gives us syntax-highlighted snippets inside the diagnostic
+        // output without inventing our own ANSI replacement. Everything
+        // that isn't recognized as Rust falls back to plain monospace,
+        // which matches what a terminal would show anyway.
+        let outputView = null;
+        const outputThemeCompartment = new Compartment();
+        const outputMount = document.getElementById("output-stderr");
+        window.renderCargoOutput = (text) => {
+            if (!outputMount) return;
+            const dark = (
+                document.documentElement.getAttribute("data-theme") || ""
+            ).startsWith("dark");
+            if (!outputView) {
+                // First render: replace the <pre> contents with a CM6 view.
+                outputMount.textContent = "";
+                outputMount.style.padding = "0";
+                outputMount.style.fontFamily = "";
+                outputMount.style.fontSize = "";
+                const extensions = [
+                    EditorView.editable.of(false),
+                    EditorState.readOnly.of(true),
+                    EditorView.lineWrapping,
+                    langRust.rust(),
+                    syntaxHighlighting(defaultHighlightStyle, {
+                        fallback: true,
+                    }),
+                    outputThemeCompartment.of(dark ? oneDark.oneDark : []),
+                    EditorView.theme({
+                        "&": {
+                            backgroundColor: "transparent",
+                            fontSize: "0.8rem",
+                        },
+                        ".cm-content": {
+                            fontFamily: '"SF Mono", Monaco, monospace',
+                            padding: "0.85rem 1rem",
+                        },
+                        ".cm-scroller": { overflow: "auto" },
+                        "&.cm-focused": { outline: "none" },
+                    }),
+                ];
+                outputView = new EditorView({
+                    state: EditorState.create({ doc: text, extensions }),
+                    parent: outputMount,
+                });
+            } else {
+                outputView.dispatch({
+                    changes: {
+                        from: 0,
+                        to: outputView.state.doc.length,
+                        insert: text,
+                    },
+                    effects: outputThemeCompartment.reconfigure(
+                        dark ? oneDark.oneDark : [],
+                    ),
+                });
+            }
+        };
     } catch (err) {
         console.warn(
             "CodeMirror failed to load, keeping textarea fallback:",
@@ -1094,7 +1154,12 @@
         const failed = data.test_results.some((t) => !t.passed);
         const compileFailed = !data.success && data.test_results.length === 0;
         outputDetails.open = failed || compileFailed;
-        outputStderr.textContent = data.stderr || data.stdout || "(no output)";
+        const raw = data.stderr || data.stdout || "(no output)";
+        if (typeof window.renderCargoOutput === "function") {
+            window.renderCargoOutput(raw);
+        } else {
+            outputStderr.textContent = raw;
+        }
 
         // Make sure the panel is visible without forcing a jump if it
         // already is. `block: "nearest"` only scrolls when needed, so a
