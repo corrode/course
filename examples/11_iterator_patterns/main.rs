@@ -25,6 +25,12 @@ fn calculate_total_revenue() -> i32 {
     todo!()
 }
 
+#[test]
+fn test_revenue_calculation() {
+    let total = calculate_total_revenue();
+    assert_eq!(total, 14200); // Sum of all sales
+}
+
 /// Normalizes email addresses to lowercase.
 ///
 /// Now you need to transform every element instead of collapsing the
@@ -33,6 +39,13 @@ fn calculate_total_revenue() -> i32 {
 /// See: <https://doc.rust-lang.org/std/string/struct.String.html#method.to_lowercase>
 fn normalize_emails(emails: Vec<String>) -> Vec<String> {
     todo!()
+}
+
+#[test]
+fn test_email_normalization() {
+    let emails = vec!["Alice@EXAMPLE.COM".to_string(), "BOB@test.ORG".to_string()];
+    let normalized = normalize_emails(emails);
+    assert_eq!(normalized, vec!["alice@example.com", "bob@test.org"]);
 }
 
 /// Returns all users whose usernames start with 'a'.
@@ -45,6 +58,13 @@ fn select_usernames_starting_with_a(usernames: Vec<&str>) -> Vec<&str> {
     todo!()
 }
 
+#[test]
+fn test_active_users() {
+    let users = vec!["alice", "admin", "bob", "anonymous", "charlie"];
+    let active = select_usernames_starting_with_a(users);
+    assert_eq!(active, vec!["alice", "admin", "anonymous"]);
+}
+
 /// Finds all files with ".rs" extension.
 ///
 /// Same shape as the previous one, but the input is a `&[&str]` instead
@@ -54,40 +74,15 @@ fn find_rust_files<'file>(files: &[&'file str]) -> Vec<&'file str> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_revenue_calculation() {
-        let total = calculate_total_revenue();
-        assert_eq!(total, 14200); // Sum of all sales
-    }
-
-    #[test]
-    fn test_email_normalization() {
-        let emails = vec!["Alice@EXAMPLE.COM".to_string(), "BOB@test.ORG".to_string()];
-        let normalized = normalize_emails(emails);
-        assert_eq!(normalized, vec!["alice@example.com", "bob@test.org"]);
-    }
-
-    #[test]
-    fn test_active_users() {
-        let users = vec!["alice", "admin", "bob", "anonymous", "charlie"];
-        let active = select_usernames_starting_with_a(users);
-        assert_eq!(active, vec!["alice", "admin", "anonymous"]);
-    }
-
-    #[test]
-    fn test_rust_files() {
-        let files = &[
-            "main.rs",
-            "README.md",
-            "lib.rs",
-            "package.json",
-            "config.rs",
-        ];
-        let rust_files = find_rust_files(files);
-        assert_eq!(rust_files, vec!["main.rs", "lib.rs", "config.rs"]);
-    }
+#[test]
+fn test_rust_files() {
+    let files = &[
+        "main.rs",
+        "README.md",
+        "lib.rs",
+        "package.json",
+        "config.rs",
+    ];
+    let rust_files = find_rust_files(files);
+    assert_eq!(rust_files, vec!["main.rs", "lib.rs", "config.rs"]);
 }

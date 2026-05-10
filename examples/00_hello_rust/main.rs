@@ -13,15 +13,9 @@ fn format_welcome_message(name: &str) -> String {
     todo!("replace this line with your code")
 }
 
-// Oh, note! This part below is just for testing. You don't need to read or
-// understand it yet. But also: this is just Rust code, so if you're curious you can!
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_welcome_message() {
-        assert_eq!(format_welcome_message("Alice"), "Welcome, Alice!");
-        assert_eq!(format_welcome_message("Bob"), "Welcome, Bob!");
-    }
+// Tests live right next to the code they exercise. Don't worry about the syntax yet.
+#[test]
+fn test_welcome_message() {
+    assert_eq!(format_welcome_message("Alice"), "Welcome, Alice!");
+    assert_eq!(format_welcome_message("Bob"), "Welcome, Bob!");
 }

@@ -31,11 +31,44 @@ fn parse_env_line(line: &str) -> Result<(String, String), ParseError> {
     todo!()
 }
 
+#[test]
+fn test_parse_line() {
+    assert_eq!(
+        parse_env_line("PORT=8080"),
+        Ok(("PORT".to_string(), "8080".to_string()))
+    );
+    assert_eq!(
+        parse_env_line("HOST=localhost"),
+        Ok(("HOST".to_string(), "localhost".to_string()))
+    );
+    assert!(parse_env_line("INVALID").is_err());
+    assert!(parse_env_line("=value").is_err());
+    assert!(parse_env_line("KEY=").is_err());
+}
+
 /// Parses a complete .env file content.
 /// Ignores empty lines and lines starting with '#'.
 /// Returns HashMap of all valid key-value pairs.
 fn parse_env_file(content: &str) -> Result<HashMap<String, String>, ParseError> {
     todo!()
+}
+
+#[test]
+fn test_parse_file() {
+    let content = r#"
+# Database configuration
+HOST=localhost
+PORT=5432
+DATABASE=myapp
+
+# Empty line above should be ignored
+DEBUG=true
+"#;
+    let env = parse_env_file(content).unwrap();
+    assert_eq!(env.get("HOST"), Some(&"localhost".to_string()));
+    assert_eq!(env.get("PORT"), Some(&"5432".to_string()));
+    assert_eq!(env.get("DEBUG"), Some(&"true".to_string()));
+    assert_eq!(env.len(), 4);
 }
 
 /// Gets an environment variable with type conversion.
@@ -47,69 +80,31 @@ where
     todo!()
 }
 
+#[test]
+fn test_type_conversion() {
+    let mut env = HashMap::new();
+    env.insert("PORT".to_string(), "8080".to_string());
+    env.insert("DEBUG".to_string(), "true".to_string());
+
+    let port: Option<u16> = get_env_var(&env, "PORT");
+    assert_eq!(port, Some(8080));
+
+    let debug: Option<bool> = get_env_var(&env, "DEBUG");
+    assert_eq!(debug, Some(true));
+}
+
 /// Validates required environment variables are present.
 /// Returns Ok(()) if all required keys exist, Err with missing key otherwise.
 fn validate_required_vars(env: &HashMap<String, String>, required: &[&str]) -> Result<(), String> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_validation() {
+    let mut env = HashMap::new();
+    env.insert("HOST".to_string(), "localhost".to_string());
+    env.insert("PORT".to_string(), "8080".to_string());
 
-    #[test]
-    fn test_parse_line() {
-        assert_eq!(
-            parse_env_line("PORT=8080"),
-            Ok(("PORT".to_string(), "8080".to_string()))
-        );
-        assert_eq!(
-            parse_env_line("HOST=localhost"),
-            Ok(("HOST".to_string(), "localhost".to_string()))
-        );
-        assert!(parse_env_line("INVALID").is_err());
-        assert!(parse_env_line("=value").is_err());
-        assert!(parse_env_line("KEY=").is_err());
-    }
-
-    #[test]
-    fn test_parse_file() {
-        let content = r#"
-# Database configuration
-HOST=localhost
-PORT=5432
-DATABASE=myapp
-
-# Empty line above should be ignored
-DEBUG=true
-"#;
-        let env = parse_env_file(content).unwrap();
-        assert_eq!(env.get("HOST"), Some(&"localhost".to_string()));
-        assert_eq!(env.get("PORT"), Some(&"5432".to_string()));
-        assert_eq!(env.get("DEBUG"), Some(&"true".to_string()));
-        assert_eq!(env.len(), 4);
-    }
-
-    #[test]
-    fn test_type_conversion() {
-        let mut env = HashMap::new();
-        env.insert("PORT".to_string(), "8080".to_string());
-        env.insert("DEBUG".to_string(), "true".to_string());
-
-        let port: Option<u16> = get_env_var(&env, "PORT");
-        assert_eq!(port, Some(8080));
-
-        let debug: Option<bool> = get_env_var(&env, "DEBUG");
-        assert_eq!(debug, Some(true));
-    }
-
-    #[test]
-    fn test_validation() {
-        let mut env = HashMap::new();
-        env.insert("HOST".to_string(), "localhost".to_string());
-        env.insert("PORT".to_string(), "8080".to_string());
-
-        assert!(validate_required_vars(&env, &["HOST", "PORT"]).is_ok());
-        assert!(validate_required_vars(&env, &["HOST", "MISSING"]).is_err());
-    }
+    assert!(validate_required_vars(&env, &["HOST", "PORT"]).is_ok());
+    assert!(validate_required_vars(&env, &["HOST", "MISSING"]).is_err());
 }

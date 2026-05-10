@@ -42,48 +42,43 @@ impl User {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_new_user() {
+    let user = User::new("alice@example.com".to_string(), "Alice".to_string());
+    assert_eq!(user.login_count, 0);
+    assert_eq!(user.is_verified, false);
+}
 
-    #[test]
-    fn test_new_user() {
-        let user = User::new("alice@example.com".to_string(), "Alice".to_string());
-        assert_eq!(user.login_count, 0);
-        assert_eq!(user.is_verified, false);
-    }
+#[test]
+fn test_display_name() {
+    let user = User::new("alice@example.com".to_string(), "Alice".to_string());
+    assert_eq!(user.display_name(), "Alice (alice@example.com)");
+}
 
-    #[test]
-    fn test_display_name() {
-        let user = User::new("alice@example.com".to_string(), "Alice".to_string());
-        assert_eq!(user.display_name(), "Alice (alice@example.com)");
-    }
+#[test]
+fn test_login_tracking() {
+    let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
 
-    #[test]
-    fn test_login_tracking() {
-        let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
+    user.record_login();
+    assert_eq!(user.login_count, 1);
+    assert_eq!(user.is_verified, true);
 
+    user.record_login();
+    assert_eq!(user.login_count, 2);
+}
+
+#[test]
+fn test_premium_access() {
+    let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
+
+    // Not enough logins yet
+    assert_eq!(user.can_access_premium(), false);
+
+    // Record enough logins
+    for _ in 0..5 {
         user.record_login();
-        assert_eq!(user.login_count, 1);
-        assert_eq!(user.is_verified, true);
-
-        user.record_login();
-        assert_eq!(user.login_count, 2);
     }
 
-    #[test]
-    fn test_premium_access() {
-        let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
-
-        // Not enough logins yet
-        assert_eq!(user.can_access_premium(), false);
-
-        // Record enough logins
-        for _ in 0..5 {
-            user.record_login();
-        }
-
-        // Now has premium access
-        assert_eq!(user.can_access_premium(), true);
-    }
+    // Now has premium access
+    assert_eq!(user.can_access_premium(), true);
 }

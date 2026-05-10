@@ -292,6 +292,7 @@ async fn main() -> Result<()> {
         .route("/exercise/{ulid}/{slug}", get(participant_exercise_page))
         .route("/playground", get(playground_page))
         .route("/cheatsheet", get(cheatsheet_page))
+        .route("/cheatsheet/fragment", get(cheatsheet_fragment))
         .route("/admin", get(admin_dashboard))
         .route("/admin/remove-participant/{ulid}", delete(admin_remove_participant))
         .nest("/api", api_routes)
@@ -362,6 +363,20 @@ async fn cheatsheet_page() -> impl IntoResponse {
             Html("Error rendering template".to_string())
         }
     }
+}
+
+/// Returns the rendered cheatsheet markdown as a bare HTML fragment.
+/// Used by the in-page modal so we don't have to ship the entire
+/// document with every page load.
+async fn cheatsheet_fragment() -> impl IntoResponse {
+    let md = match std::fs::read_to_string("docs/cheatsheet.md") {
+        Ok(s) => s,
+        Err(e) => {
+            warn!("cheatsheet markdown missing: {e}");
+            "# Cheatsheet\n\n_Cheatsheet not found._".to_string()
+        }
+    };
+    Html(exercises::render_markdown(&md))
 }
 
 /// Web registration handler

@@ -33,6 +33,13 @@ fn count_chars(text: &str) -> usize {
     todo!()
 }
 
+#[test]
+fn test_count_chars() {
+    assert_eq!(count_chars("hello"), 5);
+    assert_eq!(count_chars("rust"), 4);
+    assert_eq!(count_chars(""), 0);
+}
+
 /// Takes a borrowed `&str` and returns an owned, uppercased `String`.
 ///
 /// Notice the signature: borrow on the way in, own on the way out. That's
@@ -43,6 +50,13 @@ fn shout(text: &str) -> String {
     todo!()
 }
 
+#[test]
+fn test_shout() {
+    assert_eq!(shout("hello"), "HELLO");
+    assert_eq!(shout("Rust"), "RUST");
+    assert_eq!(shout(""), "");
+}
+
 /// Returns true if `text` contains at least one ASCII uppercase letter.
 ///
 /// `for c in text.chars()` lets you inspect each character; the iterator
@@ -51,6 +65,14 @@ fn shout(text: &str) -> String {
 /// See: <https://doc.rust-lang.org/std/primitive.char.html#method.is_ascii_uppercase>
 fn has_uppercase(text: &str) -> bool {
     todo!()
+}
+
+#[test]
+fn test_has_uppercase() {
+    assert!(has_uppercase("Hello"));
+    assert!(has_uppercase("rustY"));
+    assert!(!has_uppercase("hello"));
+    assert!(!has_uppercase(""));
 }
 
 /// Returns the first character of `text`, or `None` if the string is empty.
@@ -64,36 +86,9 @@ fn first_char(text: &str) -> Option<char> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_count_chars() {
-        assert_eq!(count_chars("hello"), 5);
-        assert_eq!(count_chars("rust"), 4);
-        assert_eq!(count_chars(""), 0);
-    }
-
-    #[test]
-    fn test_shout() {
-        assert_eq!(shout("hello"), "HELLO");
-        assert_eq!(shout("Rust"), "RUST");
-        assert_eq!(shout(""), "");
-    }
-
-    #[test]
-    fn test_has_uppercase() {
-        assert!(has_uppercase("Hello"));
-        assert!(has_uppercase("rustY"));
-        assert!(!has_uppercase("hello"));
-        assert!(!has_uppercase(""));
-    }
-
-    #[test]
-    fn test_first_char() {
-        assert_eq!(first_char("hello"), Some('h'));
-        assert_eq!(first_char("rust"), Some('r'));
-        assert_eq!(first_char(""), None);
-    }
+#[test]
+fn test_first_char() {
+    assert_eq!(first_char("hello"), Some('h'));
+    assert_eq!(first_char("rust"), Some('r'));
+    assert_eq!(first_char(""), None);
 }

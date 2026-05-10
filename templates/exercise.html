@@ -1,17 +1,104 @@
-{% extends "base.html" %} {% block content %}
-<div class="container">
-    <nav class="crumbs" aria-label="Breadcrumb">
-        {% match ulid %} {% when Some with (u) %}
-        <a href="/dashboard/{{ u }}" class="crumb">Home</a>
-        {% when None %}
-        <a href="/" class="crumb">Home</a>
-        {% endmatch %}
-        <span class="crumb-sep" aria-hidden="true">/</span>
-        <span class="crumb crumb-current"
-            >examples/{{ exercise.file_stem }}.rs</span
+{% extends "base.html" %} {% block topbar_left %} {% match ulid %} {% when Some
+with (u) %}
+<a href="/dashboard/{{ u }}" class="topbar-home">Home</a>
+{% when None %}
+<a href="/" class="topbar-home">Home</a>
+{% endmatch %}
+<span class="topbar-crumb-sep" aria-hidden="true">/</span>
+<span class="topbar-crumb-static">examples</span>
+<span class="topbar-crumb-sep" aria-hidden="true">/</span>
+<div class="chapter-picker" data-chapter-picker>
+    <button
+        type="button"
+        class="chapter-picker-btn"
+        aria-haspopup="listbox"
+        aria-expanded="false"
+        aria-controls="chapter-picker-menu"
+        data-chapter-picker-toggle
+    >
+        <span class="chapter-picker-label">{{ exercise.file_stem }}.rs</span>
+        <svg
+            class="chapter-picker-chevron"
+            viewBox="0 0 12 12"
+            aria-hidden="true"
+            width="10"
+            height="10"
         >
-    </nav>
-
+            <path
+                d="M2 4l4 4 4-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+        </svg>
+    </button>
+    <div
+        id="chapter-picker-menu"
+        class="chapter-picker-menu"
+        role="listbox"
+        aria-label="Jump to chapter"
+        hidden
+    >
+        <div class="chapter-picker-sheet-header">
+            <span>Jump to chapter</span>
+            <button
+                type="button"
+                class="chapter-picker-sheet-close"
+                aria-label="Close"
+                data-chapter-picker-close
+            >
+                ×
+            </button>
+        </div>
+        <ul class="chapter-picker-list">
+            {% for d in dots %}
+            <li>
+                <a
+                    role="option"
+                    aria-selected="{% if d.current %}true{% else %}false{% endif %}"
+                    {%
+                    if
+                    d.current
+                    %}aria-current="page"
+                    {%
+                    endif
+                    %}
+                    {%
+                    match
+                    ulid
+                    %}{%
+                    when
+                    Some
+                    with
+                    (u)
+                    %}
+                    href="/exercise/{{ u }}/{{ d.slug }}"
+                    {%
+                    when
+                    None
+                    %}
+                    href="/exercise/{{ d.slug }}"
+                    {%
+                    endmatch
+                    %}
+                    class="chapter-picker-item{% if d.current %} is-current{% endif %}"
+                >
+                    <span class="chapter-picker-num">{{ d.number }}</span>
+                    <span class="chapter-picker-title">{{ d.title }}</span>
+                    <span class="chapter-picker-status" aria-hidden="true">
+                        {% if d.perfected %}★{% else if d.completed %}✓{% else
+                        if d.attempted %}·{% endif %}
+                    </span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %} {% block content %}
+<div class="container">
     <div class="exercise-header">
         <div class="chapter-eyebrow">Chapter {{ exercise.number }}</div>
         <h1 class="exercise-title">{{ exercise.title }}</h1>

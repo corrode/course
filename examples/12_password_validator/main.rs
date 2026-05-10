@@ -95,6 +95,39 @@ impl PasswordValidator {
     }
 }
 
+#[test]
+fn test_weak_passwords() {
+    let weak_password = PasswordValidator::validate("12345");
+    assert!(weak_password.score < 30);
+    assert!(!weak_password.is_strong());
+    assert!(!weak_password.feedback.is_empty());
+}
+
+#[test]
+fn test_medium_passwords() {
+    let medium = PasswordValidator::validate("Password1");
+    assert!(medium.score >= 30 && medium.score < 70);
+}
+
+#[test]
+fn test_strong_passwords() {
+    let strong = PasswordValidator::validate("MySecure!Password123");
+    assert!(strong.score >= 70);
+    assert!(strong.is_strong());
+}
+
+#[test]
+fn test_feedback_quality() {
+    let report = PasswordValidator::validate("weak");
+    // Ensure feedback is helpful and specific
+    assert!(
+        report
+            .feedback
+            .iter()
+            .any(|msg| msg.contains("characters") || msg.contains("length"))
+    );
+}
+
 struct PasswordGenerator {}
 
 impl PasswordGenerator {
@@ -114,6 +147,13 @@ impl PasswordGenerator {
     }
 }
 
+#[test]
+fn test_password_generation() {
+    let password = PasswordGenerator::generate_secure_password(12);
+    let report = PasswordValidator::validate(&password);
+    assert!(report.is_strong());
+}
+
 struct PasswordAdvisor {}
 
 impl PasswordAdvisor {
@@ -125,57 +165,12 @@ impl PasswordAdvisor {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_weak_passwords() {
-        let weak_password = PasswordValidator::validate("12345");
-        assert!(weak_password.score < 30);
-        assert!(!weak_password.is_strong());
-        assert!(!weak_password.feedback.is_empty());
-    }
-
-    #[test]
-    fn test_medium_passwords() {
-        let medium = PasswordValidator::validate("Password1");
-        assert!(medium.score >= 30 && medium.score < 70);
-    }
-
-    #[test]
-    fn test_strong_passwords() {
-        let strong = PasswordValidator::validate("MySecure!Password123");
-        assert!(strong.score >= 70);
-        assert!(strong.is_strong());
-    }
-
-    #[test]
-    fn test_feedback_quality() {
-        let report = PasswordValidator::validate("weak");
-        // Ensure feedback is helpful and specific
-        assert!(
-            report
-                .feedback
-                .iter()
-                .any(|msg| msg.contains("characters") || msg.contains("length"))
-        );
-    }
-
-    #[test]
-    fn test_password_generation() {
-        let password = PasswordGenerator::generate_secure_password(12);
-        let report = PasswordValidator::validate(&password);
-        assert!(report.is_strong());
-    }
-
-    #[test]
-    fn test_advisor_suggestions() {
-        let report = PasswordValidator::validate("weak");
-        let suggestions = PasswordAdvisor::suggest_improvements(&report);
-        assert!(!suggestions.is_empty());
-    }
-
-    // Add your own tests here!
-    // Test edge cases, specific character requirements, etc.
+#[test]
+fn test_advisor_suggestions() {
+    let report = PasswordValidator::validate("weak");
+    let suggestions = PasswordAdvisor::suggest_improvements(&report);
+    assert!(!suggestions.is_empty());
 }
+
+// Add your own tests here!
+// Test edge cases, specific character requirements, etc.

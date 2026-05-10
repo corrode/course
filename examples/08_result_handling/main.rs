@@ -11,13 +11,25 @@
 //!
 //! This approach was inspired by functional languages like Haskell and ML.
 
-/// Divides two numbers safely.
-/// Returns Ok(result) on success, Err(message) on division by zero.
+/// Divides `dividend` by `divisor`.
 ///
-/// Start here. The simplest way to produce a `Result`: an `if` checks the
-/// failure case, the `else` branch returns `Ok(...)`.
-fn safe_divide(a: f64, b: f64) -> Result<f64, &'static str> {
+/// Returns `Ok(quotient)` when the division is well-defined, or
+/// `Err("cannot divide by zero")` when `divisor` is `0.0`.
+///
+/// Start here. The simplest way to produce a `Result`: an `if` checks
+/// the failure case, the `else` branch returns `Ok(...)`.
+///
+/// The signature is the interesting part — `&'static str` for the error
+/// is the simplest possible error type and is fine while you're learning.
+fn safe_divide(dividend: f64, divisor: f64) -> Result<f64, &'static str> {
     todo!()
+}
+
+#[test]
+fn test_safe_division() {
+    assert_eq!(safe_divide(10.0, 2.0), Ok(5.0));
+    assert_eq!(safe_divide(-9.0, 3.0), Ok(-3.0));
+    assert!(safe_divide(10.0, 0.0).is_err());
 }
 
 /// Reads a configuration file (simulated).
@@ -30,6 +42,15 @@ fn read_config_file(filename: &str) -> Result<String, &'static str> {
     todo!()
 }
 
+#[test]
+fn test_config_reading() {
+    assert_eq!(
+        read_config_file("app.toml"),
+        Ok("config content".to_string())
+    );
+    assert!(read_config_file("").is_err());
+}
+
 /// Validates an email address (basic check).
 /// Returns Ok(email) if contains '@', Err(message) otherwise.
 ///
@@ -39,47 +60,33 @@ fn validate_email(email: &str) -> Result<&str, &'static str> {
     todo!()
 }
 
-/// Parses a string into a port number (1-65535).
-/// Returns Ok(port) if valid, Err(message) if invalid.
+#[test]
+fn test_email_validation() {
+    assert_eq!(validate_email("user@example.com"), Ok("user@example.com"));
+    assert!(validate_email("invalid-email").is_err());
+}
+
+/// Parses a percentage from a string. Accepts integers in `0..=100`,
+/// optionally with a trailing `%` (so `"42"` and `"42%"` both work).
 ///
-/// The trickiest of the four: two things can go wrong. First the input
-/// might not be a number at all; then, even if it parses cleanly, the
-/// value might be out of range. Both failures need to come out as `Err`.
-fn parse_port(input: &str) -> Result<u16, &'static str> {
+/// Returns `Ok(value)` on success, `Err(message)` otherwise.
+///
+/// The trickiest of the four: more than one thing can go wrong, and
+/// they need *different* error messages. Strip the optional `%` first,
+/// then `parse::<u8>()` the rest, then bounds-check. Each step is its
+/// own potential `Err`.
+fn parse_percentage(input: &str) -> Result<u8, &'static str> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_safe_division() {
-        assert_eq!(safe_divide(10.0, 2.0), Ok(5.0));
-        assert!(safe_divide(10.0, 0.0).is_err());
-    }
-
-    #[test]
-    fn test_config_reading() {
-        assert_eq!(
-            read_config_file("app.toml"),
-            Ok("config content".to_string())
-        );
-        assert!(read_config_file("").is_err());
-    }
-
-    #[test]
-    fn test_email_validation() {
-        assert_eq!(validate_email("user@example.com"), Ok("user@example.com"));
-        assert!(validate_email("invalid-email").is_err());
-    }
-
-    #[test]
-    fn test_port_parsing() {
-        assert_eq!(parse_port("8080"), Ok(8080));
-        assert_eq!(parse_port("80"), Ok(80));
-        assert!(parse_port("0").is_err());
-        assert!(parse_port("99999").is_err());
-        assert!(parse_port("invalid").is_err());
-    }
+#[test]
+fn test_percentage_parsing() {
+    assert_eq!(parse_percentage("0"), Ok(0));
+    assert_eq!(parse_percentage("42"), Ok(42));
+    assert_eq!(parse_percentage("100"), Ok(100));
+    assert_eq!(parse_percentage("75%"), Ok(75));
+    assert!(parse_percentage("101").is_err());
+    assert!(parse_percentage("-1").is_err());
+    assert!(parse_percentage("half").is_err());
+    assert!(parse_percentage("").is_err());
 }

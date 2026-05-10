@@ -86,8 +86,6 @@
                 min-height: 100vh;
                 display: flex;
                 flex-direction: column;
-                /* Leave room for the fixed top bar. */
-                padding-top: 3.25rem;
             }
 
             h1,
@@ -314,22 +312,17 @@
                 display: none !important;
             }
 
-            /* ---------- Global fixed top bar ---------- */
+            /* ---------- Global sticky top bar ---------- */
             .topbar {
-                position: fixed;
+                position: sticky;
                 top: 0;
-                left: 0;
-                right: 0;
                 z-index: 900;
-                height: 3.25rem;
-                background: var(--color-surface);
+                height: 3rem;
+                background: var(--color-background);
                 border-bottom: 1px solid var(--color-border);
                 display: flex;
                 align-items: center;
                 padding: 0 1.5rem;
-                gap: 1rem;
-                backdrop-filter: saturate(140%) blur(8px);
-                -webkit-backdrop-filter: saturate(140%) blur(8px);
             }
             .topbar-inner {
                 width: 100%;
@@ -337,33 +330,217 @@
                 margin: 0 auto;
                 display: flex;
                 align-items: center;
-                gap: 1.25rem;
+                gap: 0.4rem;
+                font-size: 0.875rem;
             }
-            .topbar-brand {
-                display: inline-flex;
-                align-items: center;
+            .topbar-home {
+                color: var(--color-text-muted);
                 text-decoration: none;
+                padding: 0.25rem 0.4rem;
+                border-radius: 4px;
+            }
+            .topbar-home:hover {
                 color: var(--color-text);
             }
-            .topbar-brand .brand-logo {
-                height: 22px;
-                filter: var(--logo-filter);
+            .topbar-crumb-sep {
+                color: var(--color-text-muted);
+                opacity: 0.6;
             }
-            .topbar-links {
-                display: flex;
+            .topbar-crumb-static {
+                color: var(--color-text-muted);
+            }
+            .topbar-crumb-current {
+                font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+                font-size: 0.85rem;
+                color: var(--color-text);
+            }
+            .topbar-spacer {
+                flex: 1;
+            }
+
+            /* ---------- Chapter picker (dropdown / mobile sheet) ---------- */
+            .chapter-picker {
+                position: relative;
+                display: inline-flex;
+            }
+            .chapter-picker-btn {
+                display: inline-flex;
                 align-items: center;
-                gap: 0.25rem;
-                margin-left: auto;
+                gap: 0.35rem;
+                background: transparent;
+                border: 1px solid transparent;
+                border-radius: 6px;
+                padding: 0.2rem 0.4rem 0.2rem 0.5rem;
+                color: var(--color-text);
+                cursor: pointer;
+                font: inherit;
+            }
+            .chapter-picker-btn:hover,
+            .chapter-picker-btn[aria-expanded="true"] {
+                background: color-mix(
+                    in srgb,
+                    var(--color-text) 8%,
+                    transparent
+                );
+                border-color: var(--color-border);
+            }
+            .chapter-picker-label {
+                font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+                font-size: 0.85rem;
+            }
+            .chapter-picker-chevron {
+                color: var(--color-text-muted);
+                transition: transform 0.15s ease;
+            }
+            .chapter-picker-btn[aria-expanded="true"] .chapter-picker-chevron {
+                transform: rotate(180deg);
+            }
+            .chapter-picker-menu {
+                position: absolute;
+                top: calc(100% + 6px);
+                left: 0;
+                z-index: 950;
+                min-width: 320px;
+                max-width: min(420px, calc(100vw - 1rem));
+                max-height: min(70vh, 28rem);
+                overflow-y: auto;
+                background: var(--color-background);
+                color: var(--color-text);
+                border: 1px solid var(--color-border);
+                border-radius: 10px;
+                box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+                padding: 0.35rem;
+            }
+            .chapter-picker-menu[hidden] {
+                display: none;
+            }
+            .chapter-picker-sheet-header {
+                /* Hidden on desktop; appears only in the mobile sheet. */
+                display: none;
+            }
+            .chapter-picker-list {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 1px;
+            }
+            .chapter-picker-item {
+                display: grid;
+                grid-template-columns: 2.25rem 1fr auto;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.45rem 0.6rem;
+                border-radius: 6px;
+                color: var(--color-text);
+                text-decoration: none;
+                font-size: 0.875rem;
+                line-height: 1.25;
+            }
+            .chapter-picker-item:hover {
+                background: color-mix(
+                    in srgb,
+                    var(--color-text) 8%,
+                    transparent
+                );
+            }
+            .chapter-picker-item.is-current {
+                background: color-mix(
+                    in srgb,
+                    var(--color-primary) 12%,
+                    transparent
+                );
+                color: var(--color-text);
+            }
+            .chapter-picker-num {
+                font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+                font-size: 0.75rem;
+                color: var(--color-text-muted);
+                text-align: right;
+            }
+            .chapter-picker-item.is-current .chapter-picker-num {
+                color: var(--color-primary);
+                font-weight: 600;
+            }
+            .chapter-picker-title {
+                color: inherit;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .chapter-picker-status {
+                color: var(--color-text-muted);
+                font-size: 0.8rem;
+                min-width: 0.8rem;
+                text-align: right;
+            }
+
+            /* Mobile: turn the popover into a bottom sheet so taps are
+               easy and the list isn't clipped by the viewport. */
+            @media (max-width: 640px) {
+                .chapter-picker-menu {
+                    position: fixed;
+                    inset: auto 0 0 0;
+                    top: auto;
+                    left: 0;
+                    right: 0;
+                    width: 100%;
+                    max-width: 100%;
+                    max-height: 80vh;
+                    border-radius: 14px 14px 0 0;
+                    padding: 0.5rem 0.5rem 1rem;
+                    box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.35);
+                    /* Sit above the (also-overlay) cheatsheet backdrop
+                       isn't necessary; this is its own layer. */
+                }
+                .chapter-picker-menu::before {
+                    /* Dim the page behind the sheet without an extra DOM
+                       node — we paint a fixed pseudo-backdrop. */
+                    content: "";
+                    position: fixed;
+                    inset: 0;
+                    background: color-mix(in srgb, black 45%, transparent);
+                    z-index: -1;
+                }
+                .chapter-picker-sheet-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0.5rem 0.4rem 0.6rem;
+                    font-weight: 600;
+                    color: var(--color-text);
+                    font-size: 0.95rem;
+                    border-bottom: 1px solid var(--color-border);
+                    margin-bottom: 0.4rem;
+                }
+                .chapter-picker-sheet-close {
+                    background: transparent;
+                    border: none;
+                    color: var(--color-text-muted);
+                    font-size: 1.5rem;
+                    line-height: 1;
+                    padding: 0.25rem 0.5rem;
+                    cursor: pointer;
+                }
+                .chapter-picker-item {
+                    padding: 0.7rem 0.6rem;
+                    font-size: 0.95rem;
+                }
             }
             .topbar-link {
                 display: inline-flex;
                 align-items: center;
-                gap: 0.4rem;
-                padding: 0.35rem 0.7rem;
+                gap: 0.35rem;
+                padding: 0.3rem 0.6rem;
                 border-radius: 6px;
-                font-size: 0.9rem;
+                font-size: 0.875rem;
                 color: var(--color-text-muted);
                 text-decoration: none;
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                font-family: inherit;
             }
             .topbar-link:hover {
                 color: var(--color-text);
@@ -374,8 +551,8 @@
                 );
             }
             .topbar-link svg {
-                width: 1rem;
-                height: 1rem;
+                width: 0.95rem;
+                height: 0.95rem;
             }
 
             /* ---------- Old in-page nav (admin/dashboard) ---------- */
@@ -409,11 +586,11 @@
 
             /* ---------- Theme toggle (lives inside the top bar) ---------- */
             .theme-toggle {
-                width: 2.25rem;
-                height: 2.25rem;
-                border-radius: 8px;
+                width: 1.9rem;
+                height: 1.9rem;
+                border-radius: 6px;
                 border: 1px solid var(--color-border);
-                background: var(--color-surface);
+                background: transparent;
                 color: var(--color-text);
                 cursor: pointer;
                 display: inline-flex;
@@ -425,8 +602,8 @@
                 border-color: var(--color-text-muted);
             }
             .theme-toggle svg {
-                width: 1.1rem;
-                height: 1.1rem;
+                width: 0.95rem;
+                height: 0.95rem;
             }
             .theme-toggle .icon-sun {
                 display: none;
@@ -518,6 +695,181 @@
                     display: none;
                 }
             }
+
+            /* ---------- Cheatsheet modal ---------- */
+            .cheatsheet-modal {
+                position: fixed;
+                inset: 0;
+                z-index: 1000;
+                display: none;
+                align-items: flex-start;
+                justify-content: center;
+                padding: 2.5rem 1rem 1rem;
+                background: color-mix(in srgb, black 55%, transparent);
+                -webkit-backdrop-filter: blur(4px);
+                backdrop-filter: blur(4px);
+            }
+            .cheatsheet-modal[data-open="true"] {
+                display: flex;
+            }
+            .cheatsheet-modal-dialog {
+                position: relative;
+                width: min(1280px, 100%);
+                max-height: calc(100vh - 3.5rem);
+                display: flex;
+                flex-direction: column;
+                background: var(--color-background);
+                color: var(--color-text);
+                border: 1px solid var(--color-border);
+                border-radius: 10px;
+                box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+                overflow: hidden;
+            }
+            .cheatsheet-modal-header {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                padding: 0.6rem 1rem;
+                border-bottom: 1px solid var(--color-border);
+                background: var(--color-surface);
+                flex-shrink: 0;
+            }
+            .cheatsheet-modal-header h2 {
+                margin: 0;
+                font-size: 1rem;
+            }
+            .cheatsheet-modal-hint {
+                margin-left: auto;
+                font-size: 0.78rem;
+                color: var(--color-text-muted);
+            }
+            .cheatsheet-modal-hint kbd {
+                font-family: "JetBrains Mono", ui-monospace, monospace;
+                font-size: 0.72rem;
+                background: color-mix(in srgb, currentColor 12%, transparent);
+                border: 1px solid
+                    color-mix(in srgb, currentColor 25%, transparent);
+                border-radius: 4px;
+                padding: 1px 5px;
+            }
+            .cheatsheet-modal-close {
+                background: transparent;
+                border: 1px solid var(--color-border);
+                color: inherit;
+                border-radius: 6px;
+                width: 28px;
+                height: 28px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 1rem;
+                line-height: 1;
+            }
+            .cheatsheet-modal-close:hover {
+                background: color-mix(in srgb, currentColor 8%, transparent);
+            }
+            .cheatsheet-modal-body {
+                overflow-y: auto;
+                padding: 0.75rem 1.25rem 1.25rem;
+                background: var(--color-background);
+            }
+            /* Multi-column flow: sections snake across columns and the
+               page becomes much denser. CSS columns honour `break-inside:
+               avoid` so a single section (heading + table) stays
+               together. */
+            .cheatsheet-modal-body {
+                column-width: 380px;
+                column-gap: 1.25rem;
+            }
+            .cheatsheet-modal-body > h1 {
+                column-span: all;
+                margin: 0 0 0.4rem;
+                font-size: 1.15rem;
+            }
+            .cheatsheet-modal-body > p {
+                column-span: all;
+                margin: 0 0 0.75rem;
+                font-size: 0.85rem;
+                color: var(--color-text-muted);
+            }
+            .cheatsheet-modal-body > h2 {
+                font-size: 0.9rem;
+                font-weight: 600;
+                margin: 0 0 0.3rem;
+                padding-bottom: 0.2rem;
+                border-bottom: 1px solid var(--color-border);
+                color: var(--color-text);
+                break-after: avoid;
+            }
+            .cheatsheet-modal-body > h2,
+            .cheatsheet-modal-body > table {
+                break-inside: avoid;
+            }
+            .cheatsheet-modal-body > table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 0 0 1rem;
+                font-size: 0.78rem;
+                table-layout: fixed;
+            }
+            .cheatsheet-modal-body > table th,
+            .cheatsheet-modal-body > table td {
+                border: none;
+                border-bottom: 1px solid var(--color-border);
+                padding: 0.25rem 0.45rem;
+                text-align: left;
+                vertical-align: top;
+                background: transparent;
+            }
+            .cheatsheet-modal-body > table th {
+                font-size: 0.7rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+                color: var(--color-text-muted);
+                background: transparent;
+            }
+            .cheatsheet-modal-body > table th:first-child,
+            .cheatsheet-modal-body > table td:first-child {
+                width: 45%;
+                font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+                font-size: 0.75rem;
+                white-space: normal;
+                word-break: break-word;
+            }
+            .cheatsheet-modal-body > table td code,
+            .cheatsheet-modal-body > table th code {
+                font-size: inherit;
+                padding: 0 2px;
+                background: color-mix(
+                    in srgb,
+                    var(--color-text) 6%,
+                    transparent
+                );
+                border-radius: 3px;
+            }
+            .cheatsheet-modal-body > table td:first-child code {
+                background: transparent;
+                padding: 0;
+            }
+            .cheatsheet-modal-body .cheatsheet-loading {
+                column-span: all;
+                color: var(--color-text-muted);
+                font-style: italic;
+            }
+            @media (max-width: 640px) {
+                .cheatsheet-modal {
+                    padding: 0.5rem 0.5rem 0.5rem;
+                }
+                .cheatsheet-modal-dialog {
+                    max-height: calc(100vh - 1rem);
+                }
+                .cheatsheet-modal-body {
+                    column-width: auto;
+                    columns: 1;
+                }
+            }
         </style>
         <script>
             // Apply the saved theme before paint to avoid a flash.
@@ -545,111 +897,139 @@
     <body>
         <header class="topbar" role="banner">
             <div class="topbar-inner">
-                <a href="/" class="topbar-brand" aria-label="corrode home">
-                    <img
-                        src="/static/assets/corrode-logo.svg"
-                        alt="corrode"
-                        class="brand-logo"
-                    />
+                {% block topbar_left %}
+                <a href="/" class="topbar-home">corrode</a>
+                {% endblock %}
+                <div class="topbar-spacer"></div>
+                <a
+                    class="topbar-link"
+                    href="/playground"
+                    title="Open the Rust scratchpad"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span>Playground</span>
                 </a>
-                <nav class="topbar-links" aria-label="Primary">
-                    <a
-                        class="topbar-link"
-                        href="/playground"
-                        title="Open the Rust scratchpad"
+                <a
+                    class="topbar-link"
+                    href="/cheatsheet"
+                    data-cheatsheet-toggle
+                    title="Quick reference of Rust syntax (press ?)"
+                    aria-haspopup="dialog"
+                    aria-controls="cheatsheet-modal"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
                     >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                        </svg>
-                        <span>Playground</span>
-                    </a>
-                    <a
-                        class="topbar-link"
-                        href="/cheatsheet"
-                        title="Quick reference of Rust syntax"
+                        <path
+                            d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"
+                        ></path>
+                        <path
+                            d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"
+                        ></path>
+                    </svg>
+                    <span>Cheatsheet</span>
+                </a>
+                <button
+                    type="button"
+                    class="theme-toggle"
+                    id="theme-toggle"
+                    aria-label="Toggle dark mode"
+                    title="Toggle dark mode"
+                    onclick="toggleTheme()"
+                >
+                    <svg
+                        class="icon-moon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
                     >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path
-                                d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"
-                            ></path>
-                            <path
-                                d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"
-                            ></path>
-                        </svg>
-                        <span>Cheatsheet</span>
-                    </a>
-                    <button
-                        type="button"
-                        class="theme-toggle"
-                        id="theme-toggle"
-                        aria-label="Toggle dark mode"
-                        title="Toggle dark mode"
-                        onclick="toggleTheme()"
+                        <path
+                            d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                            fill="currentColor"
+                            stroke="none"
+                        />
+                    </svg>
+                    <svg
+                        class="icon-sun"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
                     >
-                        <svg
-                            class="icon-moon"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path
-                                d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-                                fill="currentColor"
-                                stroke="none"
-                            />
-                        </svg>
-                        <svg
-                            class="icon-sun"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="4"
-                                fill="currentColor"
-                                stroke="none"
-                            />
-                            <line x1="12" y1="2" x2="12" y2="5" />
-                            <line x1="12" y1="19" x2="12" y2="22" />
-                            <line x1="2" y1="12" x2="5" y2="12" />
-                            <line x1="19" y1="12" x2="22" y2="12" />
-                            <line x1="4.2" y1="4.2" x2="6.3" y2="6.3" />
-                            <line x1="17.7" y1="17.7" x2="19.8" y2="19.8" />
-                            <line x1="4.2" y1="19.8" x2="6.3" y2="17.7" />
-                            <line x1="17.7" y1="6.3" x2="19.8" y2="4.2" />
-                        </svg>
-                    </button>
-                </nav>
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="4"
+                            fill="currentColor"
+                            stroke="none"
+                        />
+                        <line x1="12" y1="2" x2="12" y2="5" />
+                        <line x1="12" y1="19" x2="12" y2="22" />
+                        <line x1="2" y1="12" x2="5" y2="12" />
+                        <line x1="19" y1="12" x2="22" y2="12" />
+                        <line x1="4.2" y1="4.2" x2="6.3" y2="6.3" />
+                        <line x1="17.7" y1="17.7" x2="19.8" y2="19.8" />
+                        <line x1="4.2" y1="19.8" x2="6.3" y2="17.7" />
+                        <line x1="17.7" y1="6.3" x2="19.8" y2="4.2" />
+                    </svg>
+                </button>
             </div>
         </header>
 
         {% block content %}{% endblock %}
+
+        <!-- Cheatsheet modal: lazy-loaded from /cheatsheet/fragment -->
+        <div
+            class="cheatsheet-modal"
+            id="cheatsheet-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cheatsheet-modal-title"
+            aria-hidden="true"
+        >
+            <div class="cheatsheet-modal-dialog">
+                <div class="cheatsheet-modal-header">
+                    <h2 id="cheatsheet-modal-title">Cheatsheet</h2>
+                    <span class="cheatsheet-modal-hint">
+                        <kbd>?</kbd> to toggle &middot; <kbd>Esc</kbd> to close
+                    </span>
+                    <button
+                        type="button"
+                        class="cheatsheet-modal-close"
+                        aria-label="Close cheatsheet"
+                        data-cheatsheet-close
+                    >
+                        ×
+                    </button>
+                </div>
+                <div class="cheatsheet-modal-body" data-cheatsheet-body>
+                    <p class="cheatsheet-loading">Loading…</p>
+                </div>
+            </div>
+        </div>
 
         <footer class="site-footer">
             <div class="site-footer-inner">
@@ -735,6 +1115,245 @@
                     encoded;
                 window.open(url, "_blank");
             }
+
+            // ---- Chapter picker (breadcrumb dropdown) ----
+            (function () {
+                var picker = document.querySelector("[data-chapter-picker]");
+                if (!picker) return;
+                var btn = picker.querySelector("[data-chapter-picker-toggle]");
+                var menu = picker.querySelector(".chapter-picker-menu");
+                var closeBtn = picker.querySelector(
+                    "[data-chapter-picker-close]",
+                );
+                if (!btn || !menu) return;
+
+                function isOpen() {
+                    return btn.getAttribute("aria-expanded") === "true";
+                }
+                function open() {
+                    if (isOpen()) return;
+                    btn.setAttribute("aria-expanded", "true");
+                    menu.hidden = false;
+                    // Scroll the current item into view inside the menu.
+                    var current = menu.querySelector(
+                        ".chapter-picker-item.is-current",
+                    );
+                    if (current && current.scrollIntoView) {
+                        current.scrollIntoView({ block: "nearest" });
+                    }
+                    // Focus the current item (or the first) for keyboard
+                    // navigation.
+                    var focusTarget =
+                        current || menu.querySelector(".chapter-picker-item");
+                    if (focusTarget) focusTarget.focus({ preventScroll: true });
+                    document.addEventListener("click", onDocClick, true);
+                    document.addEventListener("keydown", onKeyDown, true);
+                }
+                function close() {
+                    if (!isOpen()) return;
+                    btn.setAttribute("aria-expanded", "false");
+                    menu.hidden = true;
+                    document.removeEventListener("click", onDocClick, true);
+                    document.removeEventListener("keydown", onKeyDown, true);
+                }
+                function toggle() {
+                    if (isOpen()) close();
+                    else open();
+                }
+                function onDocClick(e) {
+                    if (picker.contains(e.target)) return;
+                    close();
+                }
+                function onKeyDown(e) {
+                    if (e.key === "Escape") {
+                        e.preventDefault();
+                        close();
+                        btn.focus();
+                        return;
+                    }
+                    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                        var items = Array.prototype.slice.call(
+                            menu.querySelectorAll(".chapter-picker-item"),
+                        );
+                        if (!items.length) return;
+                        var idx = items.indexOf(document.activeElement);
+                        var next;
+                        if (e.key === "ArrowDown") {
+                            next = items[(idx + 1) % items.length];
+                        } else {
+                            next =
+                                items[(idx - 1 + items.length) % items.length];
+                        }
+                        e.preventDefault();
+                        if (next) next.focus();
+                    }
+                }
+
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggle();
+                });
+                if (closeBtn) {
+                    closeBtn.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        close();
+                    });
+                }
+            })();
+
+            // ---- Cheatsheet modal ----
+            (function () {
+                var modal = document.getElementById("cheatsheet-modal");
+                if (!modal) return;
+                var body = modal.querySelector("[data-cheatsheet-body]");
+                var loaded = false;
+                var loading = false;
+                var lastFocus = null;
+
+                function escapeHtml(s) {
+                    return s
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;");
+                }
+
+                async function highlight() {
+                    try {
+                        var mods = await Promise.all([
+                            import("https://esm.sh/*@lezer/rust@1.0.2"),
+                            import("https://esm.sh/*@lezer/highlight@1.2.0"),
+                        ]);
+                        var parser = mods[0].parser;
+                        var highlightTree = mods[1].highlightTree;
+                        var classHighlighter = mods[1].classHighlighter;
+                        body.querySelectorAll("pre > code").forEach(
+                            function (el) {
+                                var cls = el.className || "";
+                                if (cls && cls.indexOf("language-rust") === -1)
+                                    return;
+                                var code = el.textContent;
+                                var tree = parser.parse(code);
+                                var out = "";
+                                var pos = 0;
+                                highlightTree(
+                                    tree,
+                                    classHighlighter,
+                                    function (from, to, klass) {
+                                        if (from > pos)
+                                            out += escapeHtml(
+                                                code.slice(pos, from),
+                                            );
+                                        out +=
+                                            '<span class="' +
+                                            klass +
+                                            '">' +
+                                            escapeHtml(code.slice(from, to)) +
+                                            "</span>";
+                                        pos = to;
+                                    },
+                                );
+                                if (pos < code.length)
+                                    out += escapeHtml(code.slice(pos));
+                                el.innerHTML = out;
+                            },
+                        );
+                    } catch (e) {
+                        console.warn("cheatsheet highlight failed", e);
+                    }
+                }
+
+                async function ensureLoaded() {
+                    if (loaded || loading) return;
+                    loading = true;
+                    try {
+                        var resp = await fetch("/cheatsheet/fragment", {
+                            credentials: "same-origin",
+                        });
+                        if (!resp.ok) throw new Error("HTTP " + resp.status);
+                        body.innerHTML = await resp.text();
+                        loaded = true;
+                        highlight();
+                    } catch (e) {
+                        body.innerHTML =
+                            '<p class="cheatsheet-loading">Could not load cheatsheet (' +
+                            escapeHtml(String(e)) +
+                            '). Try the <a href="/cheatsheet">full page</a>.</p>';
+                    } finally {
+                        loading = false;
+                    }
+                }
+
+                function open() {
+                    lastFocus = document.activeElement;
+                    modal.setAttribute("data-open", "true");
+                    modal.setAttribute("aria-hidden", "false");
+                    document.body.style.overflow = "hidden";
+                    ensureLoaded();
+                    var closeBtn = modal.querySelector(
+                        "[data-cheatsheet-close]",
+                    );
+                    if (closeBtn) closeBtn.focus();
+                }
+
+                function close() {
+                    modal.removeAttribute("data-open");
+                    modal.setAttribute("aria-hidden", "true");
+                    document.body.style.overflow = "";
+                    if (lastFocus && typeof lastFocus.focus === "function") {
+                        lastFocus.focus();
+                    }
+                }
+
+                function toggle() {
+                    if (modal.getAttribute("data-open") === "true") close();
+                    else open();
+                }
+
+                // Wire toggle buttons.
+                document
+                    .querySelectorAll("[data-cheatsheet-toggle]")
+                    .forEach(function (el) {
+                        el.addEventListener("click", function (e) {
+                            e.preventDefault();
+                            toggle();
+                        });
+                    });
+                modal
+                    .querySelectorAll("[data-cheatsheet-close]")
+                    .forEach(function (el) {
+                        el.addEventListener("click", close);
+                    });
+                // Click on backdrop closes.
+                modal.addEventListener("click", function (e) {
+                    if (e.target === modal) close();
+                });
+
+                // Keyboard: `?` toggles, `Esc` closes. Ignore when typing
+                // in inputs / textareas / contenteditable / CodeMirror.
+                document.addEventListener("keydown", function (e) {
+                    var t = e.target;
+                    var inEditable =
+                        t &&
+                        (t.tagName === "INPUT" ||
+                            t.tagName === "TEXTAREA" ||
+                            t.isContentEditable ||
+                            (t.closest && t.closest(".cm-editor")));
+                    if (
+                        e.key === "Escape" &&
+                        modal.getAttribute("data-open") === "true"
+                    ) {
+                        e.preventDefault();
+                        close();
+                        return;
+                    }
+                    if (inEditable) return;
+                    if (e.key === "?" || (e.key === "/" && e.shiftKey)) {
+                        e.preventDefault();
+                        toggle();
+                    }
+                });
+            })();
         </script>
     </body>
 </html>

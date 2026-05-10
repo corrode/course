@@ -24,6 +24,12 @@ fn get_setting_or_default(setting: Option<u32>, default: u32) -> u32 {
     todo!()
 }
 
+#[test]
+fn test_setting_default() {
+    assert_eq!(get_setting_or_default(Some(42), 100), 42);
+    assert_eq!(get_setting_or_default(None, 100), 100);
+}
+
 /// Returns the length if `Some`, 0 if `None`.
 ///
 /// Same idea as above, but now the fallback isn't the value itself — you
@@ -35,6 +41,12 @@ fn optional_string_length(maybe_string: Option<&str>) -> usize {
     todo!()
 }
 
+#[test]
+fn test_optional_length() {
+    assert_eq!(optional_string_length(Some("hello")), 5);
+    assert_eq!(optional_string_length(None), 0);
+}
+
 /// Returns `Some(item)` if the list has items, `None` if empty.
 ///
 /// Now you have to produce an `Option` instead of consume one. You
@@ -43,6 +55,15 @@ fn optional_string_length(maybe_string: Option<&str>) -> usize {
 /// See: <https://doc.rust-lang.org/std/primitive.slice.html>
 fn get_first_item(items: &[String]) -> Option<&String> {
     todo!()
+}
+
+#[test]
+fn test_first_item() {
+    let items = vec!["first".to_string(), "second".to_string()];
+    assert_eq!(get_first_item(&items), Some(&"first".to_string()));
+
+    let empty: Vec<String> = vec![];
+    assert_eq!(get_first_item(&empty), None);
 }
 
 /// Finds a user by ID in the database.
@@ -56,39 +77,13 @@ fn find_user_by_id(users: &[(u32, String)], id: u32) -> Option<&str> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_setting_default() {
-        assert_eq!(get_setting_or_default(Some(42), 100), 42);
-        assert_eq!(get_setting_or_default(None, 100), 100);
-    }
-
-    #[test]
-    fn test_optional_length() {
-        assert_eq!(optional_string_length(Some("hello")), 5);
-        assert_eq!(optional_string_length(None), 0);
-    }
-
-    #[test]
-    fn test_first_item() {
-        let items = vec!["first".to_string(), "second".to_string()];
-        assert_eq!(get_first_item(&items), Some(&"first".to_string()));
-
-        let empty: Vec<String> = vec![];
-        assert_eq!(get_first_item(&empty), None);
-    }
-
-    #[test]
-    fn test_find_user() {
-        let users = [
-            (1, "alice".to_string()),
-            (2, "bob".to_string()),
-            (3, "charlie".to_string()),
-        ];
-        assert_eq!(find_user_by_id(&users, 2), Some("bob"));
-        assert_eq!(find_user_by_id(&users, 99), None);
-    }
+#[test]
+fn test_find_user() {
+    let users = [
+        (1, "alice".to_string()),
+        (2, "bob".to_string()),
+        (3, "charlie".to_string()),
+    ];
+    assert_eq!(find_user_by_id(&users, 2), Some("bob"));
+    assert_eq!(find_user_by_id(&users, 99), None);
 }

@@ -27,6 +27,14 @@ fn add_item(list: &mut Vec<String>, item: &str) {
     todo!()
 }
 
+#[test]
+fn test_add_item() {
+    let mut list = vec!["bread".to_string()];
+    add_item(&mut list, "butter");
+    assert_eq!(list.len(), 2);
+    assert_eq!(list[1], "butter");
+}
+
 /// Checks if the list contains a specific item.
 ///
 /// A read-only operation again, but this time we have to compare each
@@ -34,6 +42,14 @@ fn add_item(list: &mut Vec<String>, item: &str) {
 /// `Vec` also has a one-call method that does exactly this.
 fn contains_item(list: &Vec<String>, item: &str) -> bool {
     todo!()
+}
+
+#[test]
+fn test_count_and_contains() {
+    let list = vec!["apple".to_string(), "banana".to_string()];
+    assert_eq!(count_items(&list), 2);
+    assert_eq!(contains_item(&list, "apple"), true);
+    assert_eq!(contains_item(&list, "orange"), false);
 }
 
 /// Creates a shopping list from the given items.
@@ -46,31 +62,10 @@ fn create_shopping_list(items: &[&str]) -> Vec<String> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_count_and_contains() {
-        let list = vec!["apple".to_string(), "banana".to_string()];
-        assert_eq!(count_items(&list), 2);
-        assert_eq!(contains_item(&list, "apple"), true);
-        assert_eq!(contains_item(&list, "orange"), false);
-    }
-
-    #[test]
-    fn test_add_item() {
-        let mut list = vec!["bread".to_string()];
-        add_item(&mut list, "butter");
-        assert_eq!(list.len(), 2);
-        assert_eq!(list[1], "butter");
-    }
-
-    #[test]
-    fn test_create_list() {
-        let items = ["bread", "milk", "eggs"];
-        let list = create_shopping_list(&items);
-        assert_eq!(list.len(), 3);
-        assert_eq!(list[0], "bread");
-    }
+#[test]
+fn test_create_list() {
+    let items = ["bread", "milk", "eggs"];
+    let list = create_shopping_list(&items);
+    assert_eq!(list.len(), 3);
+    assert_eq!(list[0], "bread");
 }

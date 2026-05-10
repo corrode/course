@@ -16,11 +16,8 @@ fn main() {
     println!("Click the quiz link in your dashboard to get started.");
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn quiz_instructions() {
-        // This test always passes - the quiz is completed externally
-        assert!(true, "Quiz instructions are clear!");
-    }
+#[test]
+fn quiz_instructions() {
+    // This test always passes - the quiz is completed externally
+    assert!(true, "Quiz instructions are clear!");
 }

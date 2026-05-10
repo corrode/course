@@ -28,6 +28,13 @@ fn status_code(status: HttpStatus) -> u16 {
     todo!()
 }
 
+#[test]
+fn test_status_codes() {
+    assert_eq!(status_code(HttpStatus::Ok), 200);
+    assert_eq!(status_code(HttpStatus::NotFound), 404);
+    assert_eq!(status_code(HttpStatus::InternalServerError), 500);
+}
+
 /// Determines if the request should be retried.
 /// Only retry on server errors, not client errors.
 fn should_retry(status: HttpStatus) -> bool {
@@ -35,22 +42,10 @@ fn should_retry(status: HttpStatus) -> bool {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_status_codes() {
-        assert_eq!(status_code(HttpStatus::Ok), 200);
-        assert_eq!(status_code(HttpStatus::NotFound), 404);
-        assert_eq!(status_code(HttpStatus::InternalServerError), 500);
-    }
-
-    #[test]
-    fn test_retry_logic() {
-        assert_eq!(should_retry(HttpStatus::InternalServerError), true);
-        assert_eq!(should_retry(HttpStatus::NotFound), false);
-        assert_eq!(should_retry(HttpStatus::BadRequest), false);
-        assert_eq!(should_retry(HttpStatus::Ok), false);
-    }
+#[test]
+fn test_retry_logic() {
+    assert_eq!(should_retry(HttpStatus::InternalServerError), true);
+    assert_eq!(should_retry(HttpStatus::NotFound), false);
+    assert_eq!(should_retry(HttpStatus::BadRequest), false);
+    assert_eq!(should_retry(HttpStatus::Ok), false);
 }
