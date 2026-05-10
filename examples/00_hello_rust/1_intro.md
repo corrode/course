@@ -7,9 +7,9 @@ Nothing, really, and I hope that you'll still take a quick peek into those (befo
 To my defense, I was not planning to turn this into anything serious.
 It sort of... just happened?
 
-I personally had a hard time following the official Rust book when I was first learning the language a decade ago. It was a bit too much at once, and I had to have my editor open to play around with the examples. I wanted something more interactive, where I could run the code and see the results immediately. And I quick, structured path through the language, with exercises that build on each other; exercises, that were rooted in real-world problems, not just toy examples.
+I personally had a hard time following the official Rust book when I was first learning the language a decade ago. It was a bit too much at once, and I had to have my editor open to play around with the examples. I wanted something more interactive, where I could run the code and see the results immediately. And a quick, structured path through the language, with exercises that build on each other; exercises, that were rooted in real-world problems, not just toy examples.
 
-Throughout the years, I built up this catalog of exercises and examples that I pull out whenever someone's asking. I decided, that it's finally time to put it all together in one folder on my computer. And now it found its way on to your computer; isnt' that nice? 
+Throughout the years, I built up this catalog of exercises and examples that I pull out whenever someone's asking. I decided, that it's finally time to put it all together in one folder on my computer. And now it found its way on to your computer; isn't that nice? 
 
 # Why Rust?
 
@@ -71,7 +71,7 @@ If an exercise has you stumped, the **Getting Unstuck** section
 below collects a few concrete things to try before you reach for an
 answer.
 
-And finally, few habits worth carrying through:
+And finally, a few habits worth carrying through:
 
 - **Read the prose first.** Each chapter opens with a short note (like
   the one you're reading) and, where useful, a `concepts` page that
