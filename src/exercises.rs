@@ -175,9 +175,10 @@ fn parse_note(path: &Path) -> Result<Note> {
 
     let md =
         std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
-    let (title, body_md) = split_title(&md);
-    let title = title.unwrap_or_else(|| slug.clone());
-    let html = render_markdown(&body_md);
+    // Notes render as ordinary chapter prose. Keep the leading H1 so it
+    // appears as a real heading instead of being demoted into metadata.
+    let title = split_title(&md).0.unwrap_or_else(|| slug.clone());
+    let html = render_markdown(&md);
 
     Ok(Note {
         order,
@@ -293,6 +294,10 @@ fn render_markdown(md: &str) -> String {
     use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
     let mut opts = Options::empty();
     opts.insert(Options::ENABLE_TABLES);
+    // GFM unlocks GitHub-style alerts: `> [!NOTE]`, `> [!TIP]`, etc.
+    // pulldown-cmark recognizes them as `BlockQuote(Some(BlockQuoteKind))`,
+    // and the default HTML renderer wraps them in `<blockquote class="markdown-alert markdown-alert-note">`.
+    opts.insert(Options::ENABLE_GFM);
 
     // Rewrite outbound links so they open in a new tab. Anything with an
     // `http(s)://` scheme is treated as external; relative links and

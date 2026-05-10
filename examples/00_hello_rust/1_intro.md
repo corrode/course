@@ -1,13 +1,13 @@
 # Before you start
 
 These exercises are deliberately tiny. Solve them with the **standard
-library only** — no external crates needed. The goal is to build fluency
+library only**, no external crates needed. The goal is to build fluency
 with Rust's core types and idioms, one small focused problem at a time.
 
 A few habits worth carrying through:
 
 - **Read the doc comment first.** Each function's `///` block tells you what
-  the tests expect. The function signatures are intentionally minimal —
+  the tests expect. The function signatures are intentionally minimal, so
   you'll often want to look up which method on `&str`, `Vec<T>`, or
   `Option<T>` does what you need.
 - **Run the tests early and often.** A failing test is a friendly nudge,
