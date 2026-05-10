@@ -26,17 +26,21 @@ git clone https://github.com/corrode/course.git
 cd course
 ```
 
-Each file in `examples/` is one exercise. Open it, read the comment at the
-top, fill in the `todo!()` bodies, and run its tests:
+Each chapter lives in its own directory under `examples/`. Inside, you'll
+find a `main.rs` (the exercise itself) and, occasionally, one or more
+`*.md` notes with extra context. Open the chapter, read the comment at the
+top of `main.rs` plus any notes, fill in the `todo!()` bodies, and run the
+tests:
 
 ```bash
 cargo test --example 00_hello_rust
 ```
 
-When the tests pass, move to the next file. That's it.
+When the tests pass, move on to the next chapter. That's it.
 
-If you want to try an exercise without installing anything, paste the file
-into the [Rust Playground](https://play.rust-lang.org/) and click "Test".
+If you want to try an exercise without installing anything, paste
+`examples/<chapter>/main.rs` into the
+[Rust Playground](https://play.rust-lang.org/) and click "Test".
 
 ### Optional: progress tracking with the CLI
 
@@ -47,10 +51,10 @@ you can skip this section entirely.
 ```bash
 cargo install --path .
 
-cargo course init                                       # register
-cargo course submit examples/00_hello_rust.rs           # submit
-cargo course submit examples/00_hello_rust.rs --pedantic # earn a star with fmt + clippy
-cargo course status                                     # see your progress
+cargo course init                                            # register
+cargo course submit examples/00_hello_rust/main.rs           # submit
+cargo course submit examples/00_hello_rust/main.rs --pedantic # earn a star with fmt + clippy
+cargo course status                                          # see your progress
 ```
 
 ## The exercises
@@ -58,7 +62,7 @@ cargo course status                                     # see your progress
 Each exercise focuses on one concept. Later exercises build on earlier ones,
 so it's worth going in order.
 
-| #  | File                          | Topic                                              |
+| #  | Chapter                       | Topic                                              |
 |----|-------------------------------|----------------------------------------------------|
 | 00 | `00_hello_rust`               | String creation and formatting                     |
 | 01 | `01_integer_handling`         | Arithmetic and number operations                   |
@@ -81,12 +85,14 @@ so it's worth going in order.
 | 18 | `18_rust_fundamentals_quiz`   | Final review of what you've learned                |
 
 Every exercise has a module-level comment explaining what you're building
-and why, and a set of unit tests you'll make pass.
+and why, and a set of unit tests you'll make pass. Some chapters also
+ship a short note (`*.md`) with preliminary context.
 
 ## How to work through an exercise
 
-1. Read the `//!` comment at the top of the file. It tells you what's
-   going on and links to relevant standard library docs.
+1. Read the `//!` comment at the top of `main.rs`. It tells you what's
+   going on and links to relevant standard library docs. If the chapter
+   directory contains a `*.md` note, read that first.
 2. Look at the test cases at the bottom. They show exactly what the
    functions should do.
 3. Replace each `todo!()` with real code, one at a time.
