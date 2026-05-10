@@ -281,6 +281,7 @@ async fn main() -> Result<()> {
         .route("/submit", post(api_submit))
         .route("/status/{ulid}", get(api_status))
         .route("/run", post(api_run))
+        .route("/format", post(api_format))
         .with_state(app_state.clone());
 
     // Build main routes
@@ -961,6 +962,90 @@ async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, Statu
         stdout: parsed.stdout,
         stderr: parsed.stderr,
         test_results,
+    }))
+}
+
+/// Request body for `/api/format`. Same shape as `/api/run` minus the
+/// fields the formatter doesn't care about.
+#[derive(Deserialize)]
+struct FormatRequest {
+    code: String,
+    #[serde(default)]
+    slug: Option<String>,
+}
+
+/// Response shape returned to the browser. `success = false` means the
+/// formatter rejected the input (almost always a parse error); in that
+/// case `stderr` carries rustfmt's complaint and `code` is the
+/// (unchanged) original input.
+#[derive(Serialize)]
+struct FormatResponse {
+    success: bool,
+    code: String,
+    stderr: String,
+}
+
+/// Proxy handler for play.rust-lang.org's `/format` endpoint. Takes the
+/// editor's source, runs it through `rustfmt` upstream, and returns the
+/// reformatted code so the client can replace its buffer.
+async fn api_format(
+    Json(req): Json<FormatRequest>,
+) -> Result<Json<FormatResponse>, StatusCode> {
+    let slug = req.slug.as_deref().unwrap_or("<unknown>");
+    info!("/api/format: forwarding {} bytes for {slug}", req.code.len());
+
+    let body = serde_json::json!({
+        "channel": "stable",
+        "edition": "2024",
+        "code": req.code,
+    });
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| {
+            error!("reqwest client build failed: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let resp = client
+        .post("https://play.rust-lang.org/format")
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| {
+            error!("Playground format request failed: {e}");
+            StatusCode::BAD_GATEWAY
+        })?;
+
+    let status = resp.status();
+    if !status.is_success() {
+        warn!("Playground /format returned non-2xx: {status}");
+        let mapped = if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+            StatusCode::TOO_MANY_REQUESTS
+        } else {
+            StatusCode::BAD_GATEWAY
+        };
+        return Err(mapped);
+    }
+
+    #[derive(Deserialize)]
+    struct PlaygroundFormatResp {
+        success: bool,
+        code: String,
+        stderr: String,
+    }
+
+    let parsed: PlaygroundFormatResp = resp.json().await.map_err(|e| {
+        error!("Failed to parse Playground /format response: {e}");
+        StatusCode::BAD_GATEWAY
+    })?;
+
+    info!("/api/format: success={}", parsed.success);
+    Ok(Json(FormatResponse {
+        success: parsed.success,
+        code: parsed.code,
+        stderr: parsed.stderr,
     }))
 }
 

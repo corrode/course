@@ -44,6 +44,14 @@ endblock %} {% block content %}
                 </button>
                 <button
                     type="button"
+                    class="btn btn-secondary"
+                    id="format-btn"
+                    title="Reformat with rustfmt via play.rust-lang.org"
+                >
+                    Format
+                </button>
+                <button
+                    type="button"
                     class="btn"
                     id="run-btn"
                     data-slug="playground"
@@ -323,6 +331,64 @@ endblock %} {% block content %}
             return;
         setValue(starter);
     });
+
+    // Format button: rustfmt via /api/format. Replaces the buffer on success.
+    {
+        const formatBtn = document.getElementById("format-btn");
+        let formatInFlight = false;
+        formatBtn.addEventListener("click", async () => {
+            if (formatInFlight) return;
+            formatInFlight = true;
+            formatBtn.disabled = true;
+            const status = document.getElementById("run-status");
+            status.textContent = "Formatting\u2026";
+            status.style.color = "var(--color-text-muted)";
+            try {
+                const resp = await fetch("/api/format", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        code: getValue(),
+                        slug: "playground",
+                    }),
+                });
+                if (!resp.ok) {
+                    status.textContent =
+                        resp.status === 429
+                            ? "Formatter rate-limited; try again in a moment."
+                            : resp.status === 502
+                              ? "Formatter unreachable."
+                              : `Format failed (HTTP ${resp.status}).`;
+                    status.style.color = "var(--color-error, #c62828)";
+                    return;
+                }
+                const data = await resp.json();
+                if (!data.success) {
+                    status.textContent =
+                        "rustfmt couldn't parse the code \u2014 fix the syntax error first.";
+                    status.style.color = "var(--color-error, #c62828)";
+                    return;
+                }
+                if (data.code && data.code !== getValue()) {
+                    setValue(data.code);
+                    status.textContent = "Formatted.";
+                    status.style.color = "var(--color-success, #2e7d32)";
+                } else {
+                    status.textContent = "Already formatted.";
+                    status.style.color = "var(--color-text-muted)";
+                }
+            } catch (e) {
+                console.error(e);
+                status.textContent = "Format failed: " + e.message;
+                status.style.color = "var(--color-error, #c62828)";
+            } finally {
+                formatInFlight = false;
+                setTimeout(() => {
+                    formatBtn.disabled = false;
+                }, 250);
+            }
+        });
+    }
 
     // Run button: same /api/run proxy as the exercises, with debounce.
     const runBtn = document.getElementById("run-btn");

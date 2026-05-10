@@ -179,6 +179,15 @@ with (u) %}
                 </a>
                 <button
                     type="button"
+                    class="btn btn-secondary"
+                    id="format-btn"
+                    data-slug="{{ exercise.file_stem }}"
+                    title="Reformat with rustfmt via play.rust-lang.org"
+                >
+                    Format
+                </button>
+                <button
+                    type="button"
                     class="btn"
                     id="run-btn"
                     data-slug="{{ exercise.file_stem }}"
@@ -967,6 +976,69 @@ with (u) %}
         copyBtn.addEventListener("blur", hide);
     }
 
+    // Format via /api/format. Replaces the buffer on success; surfaces
+    // rustfmt's stderr in the run-status row on parse failure.
+    {
+        const formatBtn = document.getElementById("format-btn");
+        if (formatBtn) {
+            let formatInFlight = false;
+            formatBtn.addEventListener("click", async () => {
+                if (formatInFlight) return;
+                if (!window.exerciseEditor) return;
+                formatInFlight = true;
+                formatBtn.disabled = true;
+                const status = document.getElementById("run-status");
+                status.textContent = "Formatting\u2026";
+                status.style.color = "var(--color-text-muted)";
+                try {
+                    const resp = await fetch("/api/format", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            code: window.exerciseEditor.getValue(),
+                            slug: formatBtn.dataset.slug,
+                        }),
+                    });
+                    if (!resp.ok) {
+                        status.textContent =
+                            resp.status === 429
+                                ? "Formatter rate-limited; try again in a moment."
+                                : resp.status === 502
+                                  ? "Formatter unreachable."
+                                  : `Format failed (HTTP ${resp.status}).`;
+                        status.style.color = "var(--color-error, #c62828)";
+                        return;
+                    }
+                    const data = await resp.json();
+                    if (!data.success) {
+                        status.textContent =
+                            "rustfmt couldn't parse the code \u2014 fix the syntax error first.";
+                        status.style.color = "var(--color-error, #c62828)";
+                        return;
+                    }
+                    const current = window.exerciseEditor.getValue();
+                    if (data.code && data.code !== current) {
+                        window.exerciseEditor.setValue(data.code);
+                        status.textContent = "Formatted.";
+                        status.style.color = "var(--color-success, #2e7d32)";
+                    } else {
+                        status.textContent = "Already formatted.";
+                        status.style.color = "var(--color-text-muted)";
+                    }
+                } catch (e) {
+                    console.error(e);
+                    status.textContent = "Format failed: " + e.message;
+                    status.style.color = "var(--color-error, #c62828)";
+                } finally {
+                    formatInFlight = false;
+                    setTimeout(() => {
+                        formatBtn.disabled = false;
+                    }, 250);
+                }
+            });
+        }
+    }
+
     // Run tests via the /api/run proxy and render results.
     const runBtn = document.getElementById("run-btn");
     const runStatus = document.getElementById("run-status");
@@ -1350,9 +1422,10 @@ with (u) %}
         display: inline-flex;
         align-items: center;
         align-self: center;
+        height: 2.25rem;
         font-size: 0.85rem;
         font-weight: 600;
-        padding: 0.25rem 0.6rem;
+        padding: 0 0.75rem;
         border-radius: 999px;
         border: 1px solid transparent;
         color: var(--color-text-muted);
@@ -1363,6 +1436,7 @@ with (u) %}
             transform 0.2s ease;
         pointer-events: none;
         white-space: nowrap;
+        box-sizing: border-box;
     }
     .action-status.is-visible {
         opacity: 1;
