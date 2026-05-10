@@ -1,23 +1,20 @@
-//! # Hello Rust!
-//!
-//! Welcome to the Rust programming language.
+//! # Hello, Rust!
 //!
 //! As is common for new programming languages, we'll start with a simple
-//! "Hello, World!" program. This tradition goes back to the 1970s with
+//! "Hello, World!" program. [This tradition goes back to the 1970s][hello] with
 //! Brian Kernighan's C programming tutorial, and we'll follow it here.
+//!
+//! [hello]: https://www.hackerrank.com/blog/the-history-of-hello-world/
 
-/// Formats a user's display name for the UI.
-/// Returns "Welcome, {name}!" for user-facing messages.
+/// Your first exercise, how exciting!
+///
+/// Your task is to format return "Welcome, {name}!"
 fn format_welcome_message(name: &str) -> String {
-    todo!()
+    todo!("replace this line with your code")
 }
 
-/// Returns the application version string, e.g. "1.0.0".
-/// String literals have type &str and live for the entire program.
-fn get_app_version() -> &'static str {
-    todo!()
-}
-
+// Oh, note! This part below is just for testing. You don't need to read or
+// understand it yet. But also: this is just Rust code, so if you're curious you can!
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -26,10 +23,5 @@ mod tests {
     fn test_welcome_message() {
         assert_eq!(format_welcome_message("Alice"), "Welcome, Alice!");
         assert_eq!(format_welcome_message("Bob"), "Welcome, Bob!");
-    }
-
-    #[test]
-    fn test_app_version() {
-        assert_eq!(get_app_version(), "1.0.0");
     }
 }
