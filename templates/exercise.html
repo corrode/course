@@ -59,6 +59,15 @@
                 <button
                     type="button"
                     class="btn btn-secondary"
+                    id="vim-btn"
+                    title="Toggle Vim keybindings"
+                    aria-pressed="false"
+                >
+                    Vim: off
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
                     id="reset-btn"
                     title="Replace your edits with the original starter code"
                 >
@@ -233,7 +242,9 @@
             "@codemirror/commands": "https://esm.sh/*@codemirror/commands@6.6.0",
             "@codemirror/lang-rust": "https://esm.sh/*@codemirror/lang-rust@6.0.1",
             "@codemirror/autocomplete": "https://esm.sh/*@codemirror/autocomplete@6.18.0",
+            "@codemirror/search": "https://esm.sh/*@codemirror/search@6.5.6",
             "@codemirror/theme-one-dark": "https://esm.sh/*@codemirror/theme-one-dark@6.1.2",
+            "@replit/codemirror-vim": "https://esm.sh/*@replit/codemirror-vim@6.2.1",
             "@lezer/common": "https://esm.sh/*@lezer/common@1.2.1",
             "@lezer/highlight": "https://esm.sh/*@lezer/highlight@1.2.0",
             "@lezer/lr": "https://esm.sh/*@lezer/lr@1.4.1",
@@ -257,18 +268,27 @@
     // umbrella package, because that package re-bundles all its deps and
     // would re-introduce the duplication problem.
     try {
-        const [state, view, lang, commands, langRust, autocomplete, oneDark] =
-            await Promise.all([
-                import("@codemirror/state"),
-                import("@codemirror/view"),
-                import("@codemirror/language"),
-                import("@codemirror/commands"),
-                import("@codemirror/lang-rust"),
-                import("@codemirror/autocomplete"),
-                import("@codemirror/theme-one-dark"),
-            ]);
+        const [
+            state,
+            view,
+            lang,
+            commands,
+            langRust,
+            autocomplete,
+            oneDark,
+            vimMod,
+        ] = await Promise.all([
+            import("@codemirror/state"),
+            import("@codemirror/view"),
+            import("@codemirror/language"),
+            import("@codemirror/commands"),
+            import("@codemirror/lang-rust"),
+            import("@codemirror/autocomplete"),
+            import("@codemirror/theme-one-dark"),
+            import("@replit/codemirror-vim"),
+        ]);
 
-        const { EditorState } = state;
+        const { EditorState, Compartment } = state;
         const {
             EditorView,
             keymap,
@@ -540,7 +560,15 @@
             document.documentElement.getAttribute("data-theme") || ""
         ).startsWith("dark");
 
+        // Vim mode lives in a compartment so the toggle button can swap it
+        // in/out without rebuilding the editor. Persisted in localStorage so
+        // the choice survives reloads and follows learners across exercises.
+        const VIM_PREF_KEY = "corrode:editor:vim";
+        const vimCompartment = new Compartment();
+        const vimEnabledInitial = localStorage.getItem(VIM_PREF_KEY) === "1";
+
         const extensions = [
+            vimCompartment.of(vimEnabledInitial ? vimMod.vim() : []),
             lineNumbers(),
             highlightActiveLineGutter(),
             highlightActiveLine(),
@@ -592,12 +620,39 @@
                 });
             },
             isCodeMirror: true,
+            setVim: (enabled) => {
+                editor.dispatch({
+                    effects: vimCompartment.reconfigure(
+                        enabled ? vimMod.vim() : [],
+                    ),
+                });
+                localStorage.setItem(VIM_PREF_KEY, enabled ? "1" : "0");
+                editor.focus();
+            },
         };
+
+        // Sync the toggle button with the (possibly persisted) initial state.
+        const vimBtn = document.getElementById("vim-btn");
+        if (vimBtn) {
+            const renderVim = (on) => {
+                vimBtn.textContent = on ? "Vim: on" : "Vim: off";
+                vimBtn.setAttribute("aria-pressed", on ? "true" : "false");
+            };
+            let vimOn = vimEnabledInitial;
+            renderVim(vimOn);
+            vimBtn.addEventListener("click", () => {
+                vimOn = !vimOn;
+                window.exerciseEditor.setVim(vimOn);
+                renderVim(vimOn);
+            });
+        }
     } catch (err) {
         console.warn(
             "CodeMirror failed to load, keeping textarea fallback:",
             err,
         );
+        const vimBtn = document.getElementById("vim-btn");
+        if (vimBtn) vimBtn.style.display = "none";
         const fallback = document.getElementById("editor-fallback");
         window.exerciseEditor = {
             getValue: () => fallback.value,
