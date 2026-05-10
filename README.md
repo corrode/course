@@ -62,27 +62,27 @@ cargo course status                                          # see your progress
 Each exercise focuses on one concept. Later exercises build on earlier ones,
 so it's worth going in order.
 
-| #  | Chapter                       | Topic                                              |
-|----|-------------------------------|----------------------------------------------------|
-| 00 | `00_hello_rust`               | String creation and formatting                     |
-| 01 | `01_integer_handling`         | Arithmetic and number operations                   |
-| 02 | `02_strings_and_chars`        | `&str`, `String`, and `char`                       |
-| 03 | `03_enums_and_matching`       | Pattern matching with HTTP status codes            |
-| 04 | `04_vectors_basics`           | Growable arrays and basic operations               |
-| 05 | `05_hashmaps`                 | Key-value storage for configuration and caching   |
-| 06 | `06_tuples`                   | Multiple return values and destructuring           |
-| 07 | `07_option_handling`          | Safe handling of missing values                    |
-| 08 | `08_result_handling`          | Error handling and validation                      |
-| 09 | `09_ownership_basics`         | Memory safety and borrowing                        |
-| 10 | `10_structs_and_methods`      | User account management                            |
-| 11 | `11_iterator_patterns`        | Data transformation with functional patterns       |
-| 12 | `12_password_validator`       | Open-ended project, your call                      |
-| 13 | `13_question_mark_operator`   | Error propagation with `?`                         |
-| 14 | `14_modules`                  | Organising code with `mod` and visibility          |
-| 15 | `15_word_counter`             | Strings, vectors, and hashmaps together            |
-| 16 | `16_env_parser`               | Parsing `.env` configuration files                 |
-| 17 | `17_csv_parser`               | A more involved parsing exercise                   |
-| 18 | `18_rust_fundamentals_quiz`   | Final review of what you've learned                |
+| #  | Chapter                              | Topic                                              |
+|----|--------------------------------------|----------------------------------------------------|
+| 00 | `00_hello_rust`                      | String creation and formatting                     |
+| 01 | `01_integers`                        | Arithmetic and number operations                   |
+| 02 | `02_strings_and_chars`               | `&str`, `String`, and `char`                       |
+| 03 | `03_enums_and_pattern_matching`      | Sum types and exhaustive `match`                   |
+| 04 | `04_vectors`                         | Growable arrays and basic operations               |
+| 05 | `05_hashmaps`                        | Key-value storage for configuration and caching    |
+| 06 | `06_tuples_and_destructuring`        | Multiple return values and destructuring           |
+| 07 | `07_option`                          | Safe handling of missing values                    |
+| 08 | `08_result`                          | Error handling and validation                      |
+| 09 | `09_ownership_and_borrowing`         | Memory safety, moves, and references               |
+| 10 | `10_structs_and_methods`             | Modelling data with structs and `impl` blocks      |
+| 11 | `11_iterators`                       | Data transformation with functional patterns       |
+| 12 | `12_password_validator`              | Open-ended project, your call                      |
+| 13 | `13_question_mark_operator`          | Error propagation with `?`                         |
+| 14 | `14_modules_and_visibility`          | Organising code with `mod` and visibility          |
+| 15 | `15_word_counter`                    | Strings, vectors, and hashmaps together            |
+| 16 | `16_environment_file_parser`         | Parsing `.env` configuration files                 |
+| 17 | `17_csv_parser`                      | A more involved parsing exercise                   |
+| 18 | `18_rust_fundamentals_quiz`          | Final review of what you've learned                |
 
 Every exercise has a module-level comment explaining what you're building
 and why, and a set of unit tests you'll make pass. Some chapters also

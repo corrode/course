@@ -1,9 +1,9 @@
-//! # Strings, &str, and chars
+//! # Strings and chars
 //!
 //! Now that you've handled numbers, let's meet Rust's text types. In many
 //! languages "a string is a string", but Rust splits the job across a few
 //! cooperating types, and that split is exactly what makes Rust strings
-//! fast *and* safe.
+//! fast and safe.
 //!
 //! The cast you'll meet today:
 //!
@@ -24,73 +24,71 @@
 //! These exercises are deliberately tiny. Solve them with the standard
 //! library only. No external crates needed.
 
-/// Returns the first character of `text`, or `None` if the string is empty.
+/// Counts how many characters are in `text`.
 ///
-/// Hint: `text.chars().next()` gives you the first `char` (or `None`).
-/// See: <https://doc.rust-lang.org/std/primitive.str.html#method.chars>
-fn first_char(text: &str) -> Option<char> {
-    todo!()
-}
-
-/// Counts how many *characters* are in `text`.
-///
-/// Watch out: `text.len()` returns the number of *bytes*, which is not what
-/// we want here. Use `text.chars().count()` instead.
+/// Watch out: `text.len()` returns the number of bytes, not characters.
+/// For "hello" those happen to be the same, but for "café" they aren't.
 /// See: <https://doc.rust-lang.org/std/primitive.str.html#method.chars>
 fn count_chars(text: &str) -> usize {
     todo!()
 }
 
-/// Returns true if `text` contains at least one ASCII uppercase letter.
-///
-/// Two equally fine approaches:
-/// 1. A `for c in text.chars()` loop that returns `true` early.
-/// 2. `text.chars().any(|c| c.is_ascii_uppercase())`.
-///
-/// See: <https://doc.rust-lang.org/std/primitive.char.html#method.is_ascii_uppercase>
-fn has_uppercase(text: &str) -> bool {
-    todo!()
+#[test]
+fn test_count_chars() {
+    assert_eq!(count_chars("hello"), 5);
+    assert_eq!(count_chars("rust"), 4);
+    assert_eq!(count_chars(""), 0);
 }
 
 /// Takes a borrowed `&str` and returns an owned, uppercased `String`.
 ///
-/// Notice the signature: borrow on the way in, own on the way out. This
-/// is the most common shape of a string-processing function in Rust.
+/// Notice the signature: borrow on the way in, own on the way out. That's
+/// the pattern the table in the chapter intro is hinting at, and you'll
+/// see it everywhere in real Rust code.
 /// See: <https://doc.rust-lang.org/std/primitive.str.html#method.to_uppercase>
 fn shout(text: &str) -> String {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_shout() {
+    assert_eq!(shout("hello"), "HELLO");
+    assert_eq!(shout("Rust"), "RUST");
+    assert_eq!(shout(""), "");
+}
 
-    #[test]
-    fn test_first_char() {
-        assert_eq!(first_char("hello"), Some('h'));
-        assert_eq!(first_char("rust"), Some('r'));
-        assert_eq!(first_char(""), None);
-    }
+/// Returns true if `text` contains at least one ASCII uppercase letter.
+///
+/// `for c in text.chars()` lets you inspect each character; the iterator
+/// methods (`any`, `find`, ...) usually express this kind of "is there
+/// at least one ..." check more directly.
+/// See: <https://doc.rust-lang.org/std/primitive.char.html#method.is_ascii_uppercase>
+fn has_uppercase(text: &str) -> bool {
+    todo!()
+}
 
-    #[test]
-    fn test_count_chars() {
-        assert_eq!(count_chars("hello"), 5);
-        assert_eq!(count_chars("rust"), 4);
-        assert_eq!(count_chars(""), 0);
-    }
+#[test]
+fn test_has_uppercase() {
+    assert!(has_uppercase("Hello"));
+    assert!(has_uppercase("rustY"));
+    assert!(!has_uppercase("hello"));
+    assert!(!has_uppercase(""));
+}
 
-    #[test]
-    fn test_has_uppercase() {
-        assert!(has_uppercase("Hello"));
-        assert!(has_uppercase("rustY"));
-        assert!(!has_uppercase("hello"));
-        assert!(!has_uppercase(""));
-    }
+/// Returns the first character of `text`, or `None` if the string is empty.
+///
+/// This is your first peek at `Option<T>`: Rust's way of saying "there
+/// might not be a value here." Chapter 7 covers it properly; for now,
+/// `text.chars()` is already an iterator, and iterators know how to
+/// hand you their first element.
+/// See: <https://doc.rust-lang.org/std/primitive.str.html#method.chars>
+fn first_char(text: &str) -> Option<char> {
+    todo!()
+}
 
-    #[test]
-    fn test_shout() {
-        assert_eq!(shout("hello"), "HELLO");
-        assert_eq!(shout("Rust"), "RUST");
-        assert_eq!(shout(""), "");
-    }
+#[test]
+fn test_first_char() {
+    assert_eq!(first_char("hello"), Some('h'));
+    assert_eq!(first_char("rust"), Some('r'));
+    assert_eq!(first_char(""), None);
 }

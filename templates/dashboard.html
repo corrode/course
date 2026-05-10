@@ -75,6 +75,17 @@ cargo course status</code></pre>
     <div class="card">
         <h2 style="margin-bottom: 1.5rem">Exercises</h2>
 
+        <div class="pacing-note" role="note">
+            <strong>How the course paces itself.</strong>
+            Most chapters are short and additive. Two of them step up sharply on
+            purpose:
+            <strong>chapter 11 (iterators)</strong> introduces closures over
+            references, and <strong>chapter 17 (CSV parser)</strong> asks you to
+            write a small state machine. If you stall there, that's normal —
+            each of those chapters has a <em>Stuck? Show a hint</em>
+            disclosure under the prose to nudge you forward.
+        </div>
+
         <div class="exercise-list">
             {% for exercise in exercises %} {% if exercise.is_quiz %}
             <a href="/static/quiz.html" target="_blank" class="exercise-row">
@@ -250,6 +261,20 @@ cargo course status</code></pre>
     }
     .exercise-tag-quiz {
         background-color: rgba(9, 105, 218, 0.8);
+    }
+    .pacing-note {
+        margin: 0 0 1.25rem;
+        padding: 0.85rem 1rem;
+        border: 1px solid var(--color-border);
+        border-left: 3px solid var(--color-primary, #0969da);
+        border-radius: 6px;
+        background-color: var(--color-surface);
+        color: var(--color-text);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    .pacing-note strong {
+        color: var(--color-text);
     }
 </style>
 {% endblock %}

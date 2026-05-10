@@ -7,7 +7,7 @@
 //! Click the link below to take the quiz in a new tab. The quiz includes
 //! 20 questions with immediate feedback and explanations.
 
-// This is a special quiz "exercise" - no actual Rust code is needed here.
+// This is a special quiz "exercise": no actual Rust code is needed here.
 // The quiz is an interactive HTML page that tests fundamental Rust concepts.
 
 fn main() {
@@ -16,11 +16,8 @@ fn main() {
     println!("Click the quiz link in your dashboard to get started.");
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn quiz_instructions() {
-        // This test always passes - the quiz is completed externally
-        assert!(true, "Quiz instructions are clear!");
-    }
+#[test]
+fn test_quiz_placeholder() {
+    // This test always passes: the quiz is completed externally
+    assert!(true, "Quiz instructions are clear!");
 }

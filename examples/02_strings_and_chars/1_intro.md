@@ -27,6 +27,21 @@ You'll also meet `.chars()` a lot. It returns an iterator of `char`, and
 iterators have many useful adapters like `.next()`, `.count()`, and
 `.any(...)` (more on iterators in chapter 11).
 
+## A note on `for` loops
+
+The simplest way to consume an iterator is a `for` loop:
+
+```rust
+for c in "hello".chars() {
+    println!("{c}");
+}
+```
+
+You can read it as "for each `c` produced by the iterator on the right,
+run the body once." The loop variable is a fresh binding scoped to each
+iteration. Anything that produces an iterator (a `Vec`, a slice, a
+`HashMap`, `0..10`, ...) works on the right-hand side.
+
 ## Useful from the standard library
 
 - [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars)

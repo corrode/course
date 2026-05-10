@@ -1,0 +1,38 @@
+{% extends "base.html" %} {% block title %}Cheatsheet — corrode Rust Course{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="chapter-prose exercise-prose">{{ html|safe }}</div>
+</div>
+
+<script type="module">
+    // Reuse the same Lezer-Rust prose highlighter as the exercise pages.
+    try {
+        const [{ parser }, { highlightTree, classHighlighter }] = await Promise.all([
+            import("https://esm.sh/*@lezer/rust@1.0.2"),
+            import("https://esm.sh/*@lezer/highlight@1.2.0"),
+        ]);
+        const escape = (s) =>
+            s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const highlight = (code) => {
+            const tree = parser.parse(code);
+            let out = "";
+            let pos = 0;
+            highlightTree(tree, classHighlighter, (from, to, cls) => {
+                if (from > pos) out += escape(code.slice(pos, from));
+                out += `<span class="${cls}">${escape(code.slice(from, to))}</span>`;
+                pos = to;
+            });
+            if (pos < code.length) out += escape(code.slice(pos));
+            return out;
+        };
+        document.querySelectorAll(".exercise-prose pre > code").forEach((el) => {
+            const cls = el.className || "";
+            if (cls && !cls.includes("language-rust")) return;
+            el.innerHTML = highlight(el.textContent);
+        });
+    } catch (e) {
+        console.warn("cheatsheet syntax highlighting failed", e);
+    }
+</script>
+{% endblock %}

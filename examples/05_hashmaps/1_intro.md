@@ -35,6 +35,24 @@ for word in ["a", "b", "a"] {
 `entry().or_insert()` is the idiomatic way to do "look up, or insert a
 default and then take a mutable reference to it" in one step.
 
+## A note on `*` (dereference)
+
+The `*` in front of `counts.entry(...).or_insert(0)` is the *dereference
+operator*. `or_insert(0)` hands back a `&mut u32` — a pointer to the
+value inside the map — and `*` reaches through that pointer so we can
+actually update the `u32` it points at:
+
+```rust
+let mut n = 41;
+let r: &mut i32 = &mut n;
+*r += 1; // updates `n`, not `r`
+```
+
+Without the `*`, you'd be trying to add `1` to a reference, which the
+compiler won't let you do. References show up properly in chapter 9; for
+now it's enough to know that when a function returns `&mut T`, you reach
+the `T` through `*`.
+
 ## Useful from the standard library
 
 - [`HashMap::new`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.new)

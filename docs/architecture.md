@@ -1,0 +1,290 @@
+# Architecture
+
+A condensed map of the repository so future sessions don't have to
+re-explore from scratch. Update this file whenever the shape of the
+project changes (new top-level directory, new binary, schema change,
+renamed module, etc.).
+
+## What this repository is
+
+Two things in one crate:
+
+1. **A course** — `examples/NN_<slug>/` chapters that learners read,
+   edit, and run. This is what most edits target.
+2. **A small Axum server + CLI** that hosts the same exercises in a
+   browser and tracks per-participant progress against a SQLite
+   database. Optional for self-study, required for instructor-led
+   workshops.
+
+The Cargo package is `cargo-course` (Rust edition 2024). It exposes a
+library plus two binaries (`server`, `cargo-course` aka the CLI).
+
+## Top-level layout
+
+```
+course/
+├── Cargo.toml             # single crate, two binaries
+├── README.md              # learner-facing README
+├── .env / .env.example    # CORRODE_ADMIN_TOKEN, DATABASE_URL, PORT
+├── playground.db*         # local SQLite (gitignored in practice)
+├── docs/                  # design + reference docs (this file lives here)
+├── examples/              # the course content
+│   └── NN_<slug>/
+│       ├── main.rs        # the exercise (always present)
+│       ├── 1_intro.md     # optional prose notes, sorted by leading int
+│       ├── 2_hints.md     # optional; slug `hints` is special (see below)
+│       └── ...
+├── migrations/            # SQLx migrations, applied in order at startup
+├── src/
+│   ├── lib.rs             # re-exports `exercises` and `types`
+│   ├── types.rs           # API request/response + newtype wrappers
+│   ├── exercises.rs       # startup-time scan/parse of `examples/`
+│   └── bin/
+│       ├── server.rs      # Axum web server (default `cargo run`)
+│       └── cli.rs         # `cargo course …` subcommands
+├── templates/             # Askama templates rendered by the server
+├── static/                # served at `/static/*` (assets, fonts, quiz.html)
+└── target/                # cargo build output (ignored)
+```
+
+## Course content (`examples/`)
+
+### Per-chapter convention
+
+Each chapter is a directory `NN_<slug>/`. The leading `NN_` is the
+chapter number (zero-padded), the slug is concept-first
+(`07_option`, `11_iterators`). The directory name is the *canonical
+key* — it's what the database stores in `submissions.exercise_name`
+and what the CLI prints. Renaming a chapter requires a SQL migration
+that rewrites `submissions.exercise_name` (see
+`migrations/004_*.sql` and `migrations/005_*.sql` for the chained
+rename pattern that survives any prior state).
+
+Inside a chapter directory:
+
+- `main.rs` — required. Contains:
+  - A `//!` inner doc block. Its first `# H1` becomes the page title;
+    the rest is rendered to HTML for the prose pane above the editor.
+    The doc block is stripped from the in-editor starter code so the
+    learner doesn't see it twice.
+  - The exercise functions with `todo!()` bodies.
+  - `#[test]` functions. Naming convention: `test_<function_under_test>`,
+    with `_<scenario>` suffix when one target has multiple tests.
+    Chapter 9 uses `experiment_*` for intentionally-commented-out
+    borrow-checker demos; those are not assertions.
+- Optional `<n>_<slug>.md` notes. Sorted by `<n>`, rendered as HTML
+  above the editor pane. The slug `hints` is special: a note named
+  `<n>_hints.md` is pulled out of the regular notes list into
+  `Exercise.hints` and rendered as a closed `<details>` "Stuck?"
+  disclosure. Within each function in a hints file, only the first
+  bullet is shown initially; a "Show next hint" button reveals the
+  rest one at a time.
+
+### Style rules for exercise prose
+
+Recently enforced and worth preserving:
+
+- No `**bold**` in `//!` / `///` comments. Use plain text and let
+  context carry the emphasis.
+- No `*italics*` either.
+- No em-dashes (`—`). Replace with the punctuation that actually fits
+  the sentence: period, semicolon, colon, comma, or parentheses for
+  parentheticals.
+- Forward-reference future chapters when introducing a placeholder
+  pattern (e.g. chapter 1's "returning `0` on failure is a bad idea;
+  chapter 7/8 cover `Option`/`Result`").
+
+### Chapter complexity (from `docs/learner_journey.md`)
+
+Roughly: 0–6 easy plateau, 7–8 first ramp, **9 spike** (concept-hard,
+code-easy), 10 calm, **11 spike** (iterators + `&&T`), **12 spike**
+(open-ended build), 13–16 moderate, **17 spike** (CSV state
+machine), 18 trivial (HTML quiz). The dashboard surfaces 11 and 17 as
+the two intentional difficulty cliffs.
+
+## Server (`src/bin/server.rs`, ~1200 lines)
+
+Axum 0.8, askama 0.13, sqlx 0.8 (SQLite). One `AppState` holds:
+
+- `pool: SqlitePool`
+- `admin_token: String` (from `CORRODE_ADMIN_TOKEN` env var)
+- `exercises: Arc<Vec<Exercise>>` — parsed once at startup by
+  `exercises::load("examples/")`. Hot-reload is not implemented;
+  restart the server after editing chapter content.
+
+### Routes (current)
+
+Web (HTML, Askama):
+
+- `GET  /`                                 — landing + registration form
+- `POST /register`                         — web registration, redirects to `/dashboard/{ulid}`
+- `GET  /dashboard/{ulid}`                 — participant dashboard
+- `GET  /exercise/{slug}`                  — public, no progress
+- `GET  /exercise/{ulid}/{slug}`           — participant view (with progress)
+- `GET  /playground`                       — standalone scratchpad
+- `GET  /cheatsheet`                       — renders `docs/cheatsheet.md`
+- `GET  /cheatsheet/fragment`              — same body without the chrome (for the modal)
+- `GET  /admin?token=…`                    — admin dashboard
+- `DELETE /admin/remove-participant/{ulid}?token=…`
+
+JSON API (consumed by the CLI):
+
+- `POST /api/register`                     — `RegistrationRequest` → `RegistrationResponse`
+- `POST /api/submit`                       — `SubmissionRequest` → status code
+- `GET  /api/status/{ulid}`                — `ProgressResponse`
+- `POST /api/run`                          — proxies to play.rust-lang.org
+- `POST /api/format`                       — proxies to play.rust-lang.org
+
+`exercise.html` looks up by either `slug` or `file_stem`, so both
+`/exercise/strings_and_chars` and `/exercise/02_strings_and_chars`
+resolve.
+
+### Run/Format proxy
+
+`api_run` and `api_format` shell out to `play.rust-lang.org` with
+`channel=stable`, `edition=2024`. The server doesn't compile code
+itself. Failing-test output is post-processed to strip the
+`thread '…' panicked at …` header and surface the actual assertion
+(capped at 6 lines), and `not yet implemented` panics from `todo!()`
+are rewritten to a friendlier message before being shown to learners.
+
+## CLI (`src/bin/cli.rs`, ~600 lines)
+
+Invoked as `cargo course …` (cargo's `cargo-<name>` shim):
+
+- `init [--token T]` — register and save the token to a local file.
+- `submit [FILE] [--pedantic] [--all]` — run `cargo test --example`,
+  optionally `cargo fmt --check` and `cargo clippy -- -Dwarnings`,
+  POST to `/api/submit`.
+- `status` — `GET /api/status/{token}`, print a small table.
+- `open` — open the dashboard in the browser.
+- `token` — print the saved token.
+
+Server URL comes from `CORRODE_SERVER_URL` (default
+`http://localhost:3000`).
+
+## Library (`src/lib.rs`)
+
+Two modules:
+
+- `types` — `Name` and `Token` newtypes (validated at construction),
+  plus the API DTOs (`RegistrationRequest`, `SubmissionRequest`,
+  `ProgressResponse`, etc.). Shared between server and CLI.
+- `exercises` — startup-time scan of `examples/`:
+  - `scan_dir(&Path) -> Vec<Exercise>` walks `NN_<slug>/` directories,
+    parses each `main.rs` (`extract_inner_doc`, `split_title`,
+    `strip_inner_doc`), scans sibling `.md` notes, pulls the optional
+    `hints` note into its own slot.
+  - `render_markdown` — pulldown-cmark with the html feature enabled.
+  - Single tests at the bottom verify scanning against the real
+    `examples/` directory.
+
+## Database (SQLite, via `sqlx`)
+
+Two tables.
+
+`participants`:
+
+| column     | type       | notes                              |
+| ---------- | ---------- | ---------------------------------- |
+| id         | TEXT PK    | ULID                               |
+| name       | TEXT       | validated by `types::Name`         |
+| created_at | TIMESTAMP  | defaults to `CURRENT_TIMESTAMP`    |
+
+`submissions`:
+
+| column         | type      | notes                                                     |
+| -------------- | --------- | --------------------------------------------------------- |
+| id             | TEXT PK   | ULID                                                      |
+| participant_id | TEXT FK   | → `participants.id`                                       |
+| exercise_name  | TEXT      | matches a chapter directory name (`02_strings_and_chars`) |
+| source_code    | TEXT      | full file contents                                        |
+| tests_passed   | BOOLEAN   |                                                           |
+| clippy_passed  | BOOLEAN   | only true on `--pedantic` runs                            |
+| fmt_passed     | BOOLEAN   | only true on `--pedantic` runs                            |
+| submitted_at   | TIMESTAMP | defaults to `CURRENT_TIMESTAMP`                           |
+| content_hash   | TEXT      | added in `003`; deduplicates identical resubmissions      |
+
+Multiple submissions per (participant, exercise) are allowed
+(migration `002` dropped the original `UNIQUE` constraint). The
+"perfected" flag in the UI is computed as
+`tests_passed AND clippy_passed AND fmt_passed` on a single
+submission row.
+
+### Migrations
+
+Applied in order at startup by `sqlx::migrate!`:
+
+1. `001_initial.sql` — initial schema.
+2. `002_allow_multiple_submissions.sql` — drop `UNIQUE` constraint.
+3. `003_add_submission_hash.sql` — `content_hash` column + index.
+4. `004_rename_chapter_slugs.sql` — seven chapter directory renames
+   in the first audit pass.
+5. `005_concept_first_chapter_slugs.sql` — eight more renames in the
+   "titles foreground the Rust idea" pass. Chained off both the
+   original keys *and* the migration-004 intermediate names so any
+   database state ends up consistent.
+
+When renaming a chapter, always add a new migration; don't edit
+existing ones.
+
+## Templates (`templates/`)
+
+Askama 0.13. Each `.html` file maps to one of the structs in
+`server.rs`:
+
+- `base.html`              — shared layout (topbar, footer)
+- `landing.html`           — registration form
+- `dashboard.html`         — participant view, exercise list, stats
+- `exercise.html`          — prose + editor + run/test panels +
+                            chapter list at the bottom
+- `playground.html`        — standalone scratchpad
+- `cheatsheet.html`        — renders the cheatsheet markdown
+- `admin.html`             — admin dashboard
+
+The chapter picker / "next chapter" navigation is driven by the
+`dots: Vec<ProgressDot>` field on `ExerciseTemplate`, which is built
+fresh per request from `state.exercises` + the participant's
+submissions.
+
+## Static files (`static/`)
+
+Served by `tower-http` `ServeDir` at `/static/*`. Notable:
+
+- `static/quiz.html` — the chapter 18 quiz. Self-contained HTML/JS;
+  no backend involvement. The chapter's `main.rs` is essentially a
+  pointer to this file.
+- `static/assets/` — logos, screenshots.
+- `static/fonts/` — bundled webfonts.
+
+## Documentation (`docs/`)
+
+- `architecture.md`        — this file.
+- `learner_journey.md`     — chapter-by-chapter audit + cumulative
+                            changelog. The canonical record of
+                            "what's been fixed and why." Append new
+                            audit passes; don't rewrite history.
+- `cheatsheet.md`          — rendered by the server at `/cheatsheet`.
+- `quiz_module_plan.md`    — design notes for chapter 18's quiz.
+
+## Conventions for future edits
+
+- **Touch one layer at a time.** Exercise prose lives in
+  `examples/<chapter>/main.rs` and `.md` notes. Server logic lives in
+  `src/bin/server.rs`. Don't mix UI/HTML changes with exercise prose
+  in the same edit unless they're genuinely coupled.
+- **Test naming:** `test_<function_under_test>[_<scenario>]`. See
+  the `## Test naming` section in `learner_journey.md`.
+- **No bold / italics / em-dashes in exercise comments.** See the
+  per-pass changelog entries in `learner_journey.md`.
+- **Chapter directory renames need a migration.** Chain it off both
+  the original and any intermediate names already in flight.
+- **Server changes don't reload exercises at runtime.** Restart
+  after editing chapter content if you're testing against the
+  running server.
+- **Pre-existing compile errors in unsolved exercises are
+  intentional.** Chapter 13's `Result<_, io::Error>` not implementing
+  `PartialEq` against `Ok(2)` and chapter 14's private-item errors
+  are *the lesson*. `cargo test --example NN --no-run` is the right
+  check for "did I break anything"; project-wide
+  `cargo check --examples` will fail by design.

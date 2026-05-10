@@ -47,6 +47,23 @@ Field access uses dot notation (`user.name`). Inside `impl` you write
 `Self` (capital S) is shorthand for "the type I'm `impl`ing". `User` and
 `Self` are interchangeable inside `impl User`.
 
+## A note on ranges: `0..5`
+
+One of the tests in this chapter calls `record_login()` five times in a
+loop:
+
+```rust
+for _ in 0..5 {
+    user.record_login();
+}
+```
+
+`0..5` is a *range expression*. It produces the values `0, 1, 2, 3, 4`
+(end-exclusive). `0..=5` is the inclusive variant if you want `5` too.
+The loop variable is `_` here because the body doesn't need it — we
+just want "do this thing five times." Ranges are useful as iterators
+but also work as slice indices (`v[0..3]`).
+
 ## Useful from the standard library
 
 - [`std::fmt::Debug`](https://doc.rust-lang.org/std/fmt/trait.Debug.html)

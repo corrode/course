@@ -1,4 +1,4 @@
-//! # HTTP Status Handling
+//! # Enums and Pattern Matching
 //!
 //! HTTP status codes were introduced by Tim Berners-Lee when he created the
 //! World Wide Web at CERN in 1989. These three-digit codes tell the client
@@ -10,7 +10,12 @@
 //! In this exercise you'll use Rust's `match` expression. Think of it as a
 //! `switch` statement that the compiler forces you to handle exhaustively.
 
-#[derive(Debug, PartialEq)]
+// `Copy` lets you pass the same `HttpStatus` value to multiple
+// functions without it being moved on the first call. Plain enums
+// like this one (no `String`, no `Vec`, no other heap data) are
+// always cheap to copy, so deriving `Copy` (and `Clone`) costs you
+// nothing and removes a borrow-checker speed bump.
+#[derive(Debug, PartialEq, Clone, Copy)]
 enum HttpStatus {
     Ok,
     NotFound,
@@ -28,6 +33,13 @@ fn status_code(status: HttpStatus) -> u16 {
     todo!()
 }
 
+#[test]
+fn test_status_code() {
+    assert_eq!(status_code(HttpStatus::Ok), 200);
+    assert_eq!(status_code(HttpStatus::NotFound), 404);
+    assert_eq!(status_code(HttpStatus::InternalServerError), 500);
+}
+
 /// Determines if the request should be retried.
 /// Only retry on server errors, not client errors.
 fn should_retry(status: HttpStatus) -> bool {
@@ -35,22 +47,10 @@ fn should_retry(status: HttpStatus) -> bool {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_status_codes() {
-        assert_eq!(status_code(HttpStatus::Ok), 200);
-        assert_eq!(status_code(HttpStatus::NotFound), 404);
-        assert_eq!(status_code(HttpStatus::InternalServerError), 500);
-    }
-
-    #[test]
-    fn test_retry_logic() {
-        assert_eq!(should_retry(HttpStatus::InternalServerError), true);
-        assert_eq!(should_retry(HttpStatus::NotFound), false);
-        assert_eq!(should_retry(HttpStatus::BadRequest), false);
-        assert_eq!(should_retry(HttpStatus::Ok), false);
-    }
+#[test]
+fn test_should_retry() {
+    assert_eq!(should_retry(HttpStatus::InternalServerError), true);
+    assert_eq!(should_retry(HttpStatus::NotFound), false);
+    assert_eq!(should_retry(HttpStatus::BadRequest), false);
+    assert_eq!(should_retry(HttpStatus::Ok), false);
 }

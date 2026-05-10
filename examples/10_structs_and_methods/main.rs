@@ -1,4 +1,4 @@
-//! # User Account Management
+//! # Structs and Methods
 //!
 //! Structs and methods are how we model the real world in code. The idea
 //! goes back to Simula in the 1960s, when Ole-Johan Dahl and Kristen Nygaard
@@ -30,7 +30,11 @@ impl User {
     }
 
     /// Records a successful login attempt.
-    /// Increments login count and marks as verified after first login.
+    ///
+    /// Increments `login_count` and sets `is_verified` to `true`. The
+    /// verification flag is idempotent: setting it on every login is
+    /// fine because once you're verified you stay verified. (A real
+    /// system would only set it on first login; we keep it simple here.)
     fn record_login(&mut self) {
         todo!()
     }
@@ -42,48 +46,45 @@ impl User {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_new() {
+    let user = User::new("alice@example.com".to_string(), "Alice".to_string());
+    assert_eq!(user.login_count, 0);
+    assert_eq!(user.is_verified, false);
+}
 
-    #[test]
-    fn test_new_user() {
-        let user = User::new("alice@example.com".to_string(), "Alice".to_string());
-        assert_eq!(user.login_count, 0);
-        assert_eq!(user.is_verified, false);
-    }
+#[test]
+fn test_display_name() {
+    let user = User::new("alice@example.com".to_string(), "Alice".to_string());
+    assert_eq!(user.display_name(), "Alice (alice@example.com)");
+}
 
-    #[test]
-    fn test_display_name() {
-        let user = User::new("alice@example.com".to_string(), "Alice".to_string());
-        assert_eq!(user.display_name(), "Alice (alice@example.com)");
-    }
+#[test]
+fn test_record_login() {
+    let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
 
-    #[test]
-    fn test_login_tracking() {
-        let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
+    user.record_login();
+    assert_eq!(user.login_count, 1);
+    assert_eq!(user.is_verified, true);
 
+    user.record_login();
+    assert_eq!(user.login_count, 2);
+    // Verification stays on across subsequent logins (idempotent).
+    assert!(user.is_verified);
+}
+
+#[test]
+fn test_can_access_premium() {
+    let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
+
+    // Not enough logins yet
+    assert_eq!(user.can_access_premium(), false);
+
+    // Record enough logins
+    for _ in 0..5 {
         user.record_login();
-        assert_eq!(user.login_count, 1);
-        assert_eq!(user.is_verified, true);
-
-        user.record_login();
-        assert_eq!(user.login_count, 2);
     }
 
-    #[test]
-    fn test_premium_access() {
-        let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
-
-        // Not enough logins yet
-        assert_eq!(user.can_access_premium(), false);
-
-        // Record enough logins
-        for _ in 0..5 {
-            user.record_login();
-        }
-
-        // Now has premium access
-        assert_eq!(user.can_access_premium(), true);
-    }
+    // Now has premium access
+    assert_eq!(user.can_access_premium(), true);
 }

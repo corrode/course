@@ -4,6 +4,13 @@ This chapter is an open-ended project rather than a focused lesson. You
 already have the tools you need: structs, enums, iterators, `Option`,
 `Result`, vectors, and strings. The fun part is putting them together.
 
+From this chapter onward the files get longer, and the in-browser editor
+starts feeling cramped. The **Open in VS Code** button above the editor
+opens this file on [github.dev](https://github.dev/) — a full
+browser-based VS Code with proper find-in-file, multi-cursor, and the
+rest of the keyboard shortcuts you'd expect. Clone the repo locally if
+you want `rust-analyzer` and on-save formatting.
+
 ## A few patterns that come up
 
 **Counting with iterators.** The `.filter(...).count()` combo is a quick
@@ -33,6 +40,10 @@ let strength = match score {
     _ => PasswordStrength::Strong,
 };
 ```
+
+The `0..30` here is a *range pattern*. It's the same `..` syntax you saw
+in chapter 10 for ranges as values, but used inside a `match` arm to
+mean "any value in `0..30`." `..=` (inclusive) works in patterns too.
 
 **Cycling through characters for the generator.** If you want to avoid
 external crates, you can use the current time's nanoseconds as a poor
