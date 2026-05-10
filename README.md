@@ -111,7 +111,7 @@ A few habits that help:
   [doc.rust-lang.org/std](https://doc.rust-lang.org/stable/std/).
 - **Don't rush.** This isn't a race.
 
-If you get stuck, see [Getting Unstuck](docs/getting_unstuck.md) for
+If you get stuck, see [Getting Unstuck](examples/00_hello_rust/2_getting_unstuck.md) for
 concrete strategies.
 
 ## Helpful resources

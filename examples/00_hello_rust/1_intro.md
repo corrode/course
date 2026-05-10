@@ -47,16 +47,45 @@ The first few focus on one core concept (like a particular type or pattern), but
 All exercises can be completed by using the **standard library only**, no external crates needed. The goal is to build fluency with Rust's core types and idioms, one small focused problem at a time.
 
 You can use the inline editor or your own IDE to complete the exercises.
+There are three roughly equivalent ways to work through the course, and
+they mix freely — most people end up doing all three at some point:
+
+- **Right here in the browser.** Each chapter has a built-in editor with
+  Rust syntax highlighting and a run button. Just type and hit "Run."
+- **Locally with `cargo`.** Clone
+  [the repo](https://github.com/corrode/course), open a chapter under
+  `examples/NN_slug/main.rs` in your editor of choice, and run
+  `cargo test --example NN_slug` (or `cargo check` for a faster
+  compile-only loop). This is the closest thing to a real Rust workflow
+  and pays off as the exercises get longer.
+
+If you want the server to remember your progress across exercises
+(passes, perfect runs, the lot), there's a small `cargo course` CLI in
+the repo for submitting solutions from the command line. It's strictly
+optional — the in-browser flow already tracks progress for you, and if
+you're working through this on your own you can ignore the CLI
+entirely. The [`README`](https://github.com/corrode/course#optional-progress-tracking-with-the-cli)
+has the details.
+
+If an exercise has you stumped, the **Getting Unstuck** section
+below collects a few concrete things to try before you reach for an
+answer.
 
 And finally, few habits worth carrying through:
 
-- **Read the doc comment first.** Each function's `///` block tells you what
-  the tests expect. The function signatures are intentionally minimal, so
-  you'll often want to look up which method on `&str`, `Vec<T>`, or
-  `Option<T>` does what you need.
-- **Run the tests early and often.** A failing test is a friendly nudge,
-  not an obstacle. The compiler errors are often more useful than the test
-  output itself.
+- **Read the prose first.** Each chapter opens with a short note (like
+  the one you're reading) and, where useful, a `concepts` page that
+  introduces just enough new syntax to make the exercise solvable. Then
+  the `///` block on each function tells you what the tests expect.
+  Function signatures are intentionally minimal, so you'll often want
+  to look up which method on `&str`, `Vec<T>`, or `Option<T>` does what
+  you need.
+- **Compile early and often.** `cargo check` is fast and tells you
+  about type errors without running anything. Catching one mistake at
+  a time is much easier than catching ten.
+- **Read the error messages slowly.** Rust's compiler is unusually
+  helpful — the `help:` and `note:` lines often tell you exactly what
+  to change. A failing test is a friendly nudge, not an obstacle.
 - **It's fine to look things up.**
   [`std` docs](https://doc.rust-lang.org/std/) and
   [Rust by Example](https://doc.rust-lang.org/rust-by-example/) are your
