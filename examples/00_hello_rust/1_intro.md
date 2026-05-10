@@ -24,8 +24,7 @@ I stopped writing programs in other languages in any meaningful capacity. Rust w
 
 If you always wanted to know how computers really work, Rust is for you.
 
-
-# Things to know before you start 
+## Take it slow
 
 Rust is a Big Language with a "B."
 There is no possible way I could teach you all of Rust in one sitting.
@@ -40,10 +39,14 @@ Learning Rust requires you to roll up your sleeves and get your hands dirty. You
 So, at any point in the book, take the time to think and research.
 Every corner of computing is so rich and interesting, and Rust is the perfect language to explore it. But, also, you have to get the core mechanics down first. It's easy to get lost in the weeds, so stay pragmatic. Baby steps!
 
+# Things to know before you start 
+
 The exercises are deliberately tiny.
 The first few focus on one core concept (like a particular type or pattern), but I promise that they will fit together nicely as we go along. The later exercises will build on the earlier ones, so it's worth going in order or, if you're familiar with some of the concepts, at least skim through the earlier exercises before you jump into the later ones. 
 
 All exercises can be completed by using the **standard library only**, no external crates needed. The goal is to build fluency with Rust's core types and idioms, one small focused problem at a time.
+
+You can use the inline editor or your own IDE to complete the exercises.
 
 And finally, few habits worth carrying through:
 
