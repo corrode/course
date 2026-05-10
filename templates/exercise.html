@@ -80,6 +80,16 @@
                 >
                     Reset
                 </button>
+                <a
+                    class="btn btn-secondary"
+                    id="vscode-btn"
+                    href="https://github.dev/corrode/course/blob/main/examples/{{ exercise.file_stem }}/main.rs"
+                    target="_blank"
+                    rel="noopener"
+                    title="Open this file on github.dev (a browser-based VS Code)"
+                >
+                    Open in VS Code
+                </a>
                 <button
                     type="button"
                     class="btn"
@@ -878,8 +888,21 @@
     const outputStderr = document.getElementById("output-stderr");
     const outputDetails = document.getElementById("output-details");
 
+    // Debounce + reentrancy guard for the Run button. The async handler
+    // already disables the button while a request is in flight, but a
+    // burst of clicks fired before `disabled = true` takes effect can
+    // still queue multiple `/api/run` calls. The timestamp check below
+    // hard-rejects any click within 750ms of the last one, and `inFlight`
+    // covers the slower "already running" case.
+    let lastRunAt = 0;
+    let inFlight = false;
+
     runBtn.addEventListener("click", async () => {
         if (!window.exerciseEditor) return;
+        const now = Date.now();
+        if (inFlight || now - lastRunAt < 750) return;
+        lastRunAt = now;
+        inFlight = true;
         runBtn.disabled = true;
         try {
             const code = window.exerciseEditor.getValue();
@@ -903,7 +926,12 @@
                 }
             }
         } finally {
-            runBtn.disabled = false;
+            inFlight = false;
+            // Hold the disabled state briefly past the request to swallow
+            // double-clicks that landed during the in-flight window.
+            setTimeout(() => {
+                runBtn.disabled = false;
+            }, 250);
         }
     });
 

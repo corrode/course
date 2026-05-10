@@ -32,6 +32,30 @@ let upper = name.map(|s| s.to_uppercase());   // transform if Some
 let len = maybe_str.map_or(0, |s| s.len());   // transform-or-default
 ```
 
+### A note on `|x| ...` (closures)
+
+Those `|s| s.to_uppercase()` and `|s| s.len()` bits are *closures* —
+anonymous functions you can pass as arguments. The pipes hold the
+parameters; everything after them is the body:
+
+```rust
+let add_one = |x| x + 1;
+add_one(2); // 3
+```
+
+If the body needs multiple statements, wrap it in braces:
+
+```rust
+let greet = |name: &str| {
+    let trimmed = name.trim();
+    format!("hello, {trimmed}")
+};
+```
+
+Closures show up properly in chapter 11. For this chapter, just read
+`|s| s.len()` as "a tiny one-shot function that takes `s` and returns
+`s.len()`."
+
 A useful one to know: `if let` lets you handle just the `Some` case
 without writing a full `match`:
 

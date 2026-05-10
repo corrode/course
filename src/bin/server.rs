@@ -50,6 +50,22 @@ struct DbSubmission {
 #[template(path = "landing.html")]
 struct LandingTemplate;
 
+/// Template for the standalone playground (scratchpad) page.
+#[derive(Template)]
+#[template(path = "playground.html")]
+struct PlaygroundTemplate {
+    /// Initial source shown before the user has typed anything.
+    starter: String,
+}
+
+/// Template for the cheatsheet page — just renders pre-built HTML
+/// produced from `docs/cheatsheet.md` at startup.
+#[derive(Template)]
+#[template(path = "cheatsheet.html")]
+struct CheatsheetTemplate {
+    html: String,
+}
+
 /// Template for an exercise page
 #[derive(Template)]
 #[template(path = "exercise.html")]
@@ -274,6 +290,8 @@ async fn main() -> Result<()> {
         .route("/dashboard/{ulid}", get(participant_dashboard))
         .route("/exercise/{slug}", get(public_exercise_page))
         .route("/exercise/{ulid}/{slug}", get(participant_exercise_page))
+        .route("/playground", get(playground_page))
+        .route("/cheatsheet", get(cheatsheet_page))
         .route("/admin", get(admin_dashboard))
         .route("/admin/remove-participant/{ulid}", delete(admin_remove_participant))
         .nest("/api", api_routes)
@@ -296,6 +314,53 @@ async fn landing_page() -> impl IntoResponse {
     match template.render() {
         Ok(html) => Html(html),
         Err(_) => Html("Error rendering template".to_string()),
+    }
+}
+
+/// Standalone Rust scratchpad. Code is persisted client-side in
+/// `localStorage`; this handler only ships the starter snippet.
+async fn playground_page() -> impl IntoResponse {
+    const STARTER: &str = r#"//! Playground scratchpad.
+//!
+//! Anything you type here is saved to your browser's local storage and
+//! survives reloads. Press "Run" to compile and execute on
+//! play.rust-lang.org.
+//!
+//! Tip: delete this comment block once you don't need the reminder.
+
+fn main() {
+    println!("Hello from the playground!");
+}
+"#;
+    let template = PlaygroundTemplate {
+        starter: STARTER.to_string(),
+    };
+    match template.render() {
+        Ok(html) => Html(html),
+        Err(e) => {
+            error!("playground template render failed: {e}");
+            Html("Error rendering template".to_string())
+        }
+    }
+}
+
+/// Renders `docs/cheatsheet.md` as a standalone reference page.
+async fn cheatsheet_page() -> impl IntoResponse {
+    let md = match std::fs::read_to_string("docs/cheatsheet.md") {
+        Ok(s) => s,
+        Err(e) => {
+            warn!("cheatsheet markdown missing: {e}");
+            "# Cheatsheet\n\n_Cheatsheet not found._".to_string()
+        }
+    };
+    let html = exercises::render_markdown(&md);
+    let template = CheatsheetTemplate { html };
+    match template.render() {
+        Ok(html) => Html(html),
+        Err(e) => {
+            error!("cheatsheet template render failed: {e}");
+            Html("Error rendering template".to_string())
+        }
     }
 }
 

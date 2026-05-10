@@ -90,5 +90,13 @@ And finally, few habits worth carrying through:
   [`std` docs](https://doc.rust-lang.org/std/) and
   [Rust by Example](https://doc.rust-lang.org/rust-by-example/) are your
   friends. Reaching for them is a normal part of writing Rust.
+- **Keep the [Cheatsheet](/cheatsheet) open in another tab.** It's a
+  short, opinionated quick-reference for the syntax this course uses.
+  The link is also pinned in the top bar.
+- **Use the [Playground](/playground) for side experiments.** Anything
+  you don't want to clutter an exercise file with — a `println!` to
+  check what `"café".len()` returns, a quick `match` to make sure you
+  remember the syntax — belongs there. The contents are saved to your
+  browser and survive reloads.
 
 And now, without further ado, let's jump right in. 

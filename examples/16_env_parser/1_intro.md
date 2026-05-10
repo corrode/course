@@ -62,6 +62,26 @@ for line in content.lines() {
 }
 ```
 
+`continue` skips the rest of the current loop iteration and jumps to the
+next one. Its sibling, `break`, exits the loop entirely.
+
+## A note on raw strings: `r#"..."#`
+
+The tests in this chapter use raw string literals to embed a multi-line
+`.env` snippet without escaping anything:
+
+```rust
+let content = r#"
+HOST=localhost
+PORT=5432
+"#;
+```
+
+A raw string starts with `r` and zero or more `#`s, then a quote. It
+ends with the matching closing quote and `#`s. Inside, backslashes and
+quotes are literal — no escape sequences. Use more `#`s on each side if
+the content itself contains `"#`.
+
 ## Useful from the standard library
 
 - [`str::split_once`](https://doc.rust-lang.org/std/primitive.str.html#method.split_once)

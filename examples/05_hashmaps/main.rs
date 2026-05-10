@@ -17,20 +17,32 @@ fn create_default_config() -> HashMap<String, String> {
     todo!()
 }
 
-/// Gets a configuration value by key.
-/// Returns the value if found, "default" if not found.
-fn get_config_value(config: &HashMap<String, String>, key: &str) -> String {
+/// Updates a configuration value.
+/// Inserts or updates the key-value pair.
+///
+/// One method on `HashMap` covers both cases — it doesn't care whether
+/// the key was already there.
+fn set_config_value(config: &mut HashMap<String, String>, key: &str, value: &str) {
     todo!()
 }
 
-/// Updates a configuration value.
-/// Inserts or updates the key-value pair.
-fn set_config_value(config: &mut HashMap<String, String>, key: &str, value: &str) {
+/// Gets a configuration value by key.
+/// Returns the value if found, "default" if not found.
+///
+/// Looking up a key returns an `Option<&V>`, because the key might not
+/// be there. From chapter 7 you've already seen a few ways to collapse
+/// an `Option` into a concrete value.
+fn get_config_value(config: &HashMap<String, String>, key: &str) -> String {
     todo!()
 }
 
 /// Counts how many times each word appears.
 /// Returns a HashMap mapping words to their counts.
+///
+/// The naive way is `if contains_key { ... } else { insert(0) }` followed
+/// by an increment — it works, but `HashMap` has a more direct API for
+/// "give me the value for this key, with a default if it's missing."
+/// See: <https://doc.rust-lang.org/std/collections/struct.HashMap.html>
 fn count_words(words: &[&str]) -> HashMap<String, usize> {
     todo!()
 }
@@ -47,19 +59,19 @@ mod tests {
     }
 
     #[test]
+    fn test_set_config() {
+        let mut config = HashMap::new();
+        set_config_value(&mut config, "debug", "true");
+        assert_eq!(config.get("debug"), Some(&"true".to_string()));
+    }
+
+    #[test]
     fn test_get_config() {
         let mut config = HashMap::new();
         config.insert("timeout".to_string(), "30".to_string());
 
         assert_eq!(get_config_value(&config, "timeout"), "30");
         assert_eq!(get_config_value(&config, "missing"), "default");
-    }
-
-    #[test]
-    fn test_set_config() {
-        let mut config = HashMap::new();
-        set_config_value(&mut config, "debug", "true");
-        assert_eq!(config.get("debug"), Some(&"true".to_string()));
     }
 
     #[test]

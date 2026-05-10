@@ -1,0 +1,276 @@
+{% extends "base.html" %} {% block title %}Playground — corrode Rust Course{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="exercise-header">
+        <div class="chapter-eyebrow">Scratchpad</div>
+        <h1 class="exercise-title">Rust playground</h1>
+    </div>
+
+    <div class="chapter-prose exercise-prose">
+        <p>
+            A blank slate to experiment in. Code here is saved to your
+            browser's local storage automatically — close the tab and come
+            back; it'll still be there.
+        </p>
+        <p>
+            Press <strong>Run</strong> to compile and execute on
+            <a href="https://play.rust-lang.org" target="_blank" rel="noopener">play.rust-lang.org</a>.
+            The <code>//!</code> at the top of the file is just a doc-comment;
+            replace it with notes to yourself or delete it entirely.
+        </p>
+    </div>
+
+    <section class="exercise-section">
+        <div class="exercise-section-head">
+            <div>
+                <div class="section-eyebrow">Scratchpad</div>
+                <h2 class="section-title">main.rs</h2>
+            </div>
+            <div class="exercise-actions">
+                <span id="action-status" class="action-status" aria-live="polite"></span>
+                <button type="button" class="btn btn-secondary" id="reset-btn"
+                    title="Replace the buffer with the starter snippet">
+                    Reset
+                </button>
+                <button type="button" class="btn" id="run-btn" data-slug="playground">
+                    ▶ Run
+                </button>
+            </div>
+        </div>
+
+        <div style="position: relative">
+            <textarea id="editor-fallback" spellcheck="false" style="
+                width: 100%;
+                min-height: 28rem;
+                font-family: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
+                font-size: 0.9rem;
+                padding: 1rem;
+                border: 1px solid var(--color-border);
+                border-radius: 12px;
+                background-color: var(--color-background);
+                color: var(--color-text);
+                resize: vertical;
+            ">
+{{ starter }}</textarea>
+            <div id="editor-mount" style="display: none"></div>
+        </div>
+
+        <div id="run-status-row" style="
+            margin-top: 0.75rem;
+            min-height: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        ">
+            <span id="run-spinner" aria-hidden="true" style="display: none"></span>
+            <span id="run-status" style="color: var(--color-text-muted); font-size: 0.9rem"
+                aria-live="polite"></span>
+        </div>
+
+        <div id="output-panel" style="display: none; margin-top: 1rem">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem">Output</h3>
+            <pre id="output-stderr" style="
+                margin: 0;
+                padding: 0.85rem 1rem;
+                background-color: var(--color-background);
+                border: 1px solid var(--color-border);
+                border-radius: 12px;
+                overflow-x: auto;
+                font-family: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
+                font-size: 0.8rem;
+                white-space: pre-wrap;
+            "></pre>
+        </div>
+    </section>
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "@codemirror/state": "https://esm.sh/*@codemirror/state@6.4.1",
+            "@codemirror/view": "https://esm.sh/*@codemirror/view@6.26.3",
+            "@codemirror/language": "https://esm.sh/*@codemirror/language@6.10.2",
+            "@codemirror/commands": "https://esm.sh/*@codemirror/commands@6.6.0",
+            "@codemirror/lang-rust": "https://esm.sh/*@codemirror/lang-rust@6.0.1",
+            "@codemirror/theme-one-dark": "https://esm.sh/*@codemirror/theme-one-dark@6.1.2"
+        }
+    }
+</script>
+
+<script type="module">
+    const STORAGE_KEY = "corrode:playground:draft";
+    const fallback = document.getElementById("editor-fallback");
+    const starter = fallback.value;
+
+    // Restore previous draft, if any.
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved !== null) fallback.value = saved;
+    } catch (_) {}
+
+    let getValue = () => fallback.value;
+    let setValue = (text) => { fallback.value = text; persist(); };
+    const persist = () => {
+        try { localStorage.setItem(STORAGE_KEY, getValue()); } catch (_) {}
+    };
+    fallback.addEventListener("input", persist);
+
+    try {
+        const [state, view, lang, commands, langRust, oneDark] = await Promise.all([
+            import("@codemirror/state"),
+            import("@codemirror/view"),
+            import("@codemirror/language"),
+            import("@codemirror/commands"),
+            import("@codemirror/lang-rust"),
+            import("@codemirror/theme-one-dark"),
+        ]);
+        const { EditorState, Compartment } = state;
+        const { EditorView, keymap, lineNumbers, highlightActiveLine } = view;
+        const { syntaxHighlighting, defaultHighlightStyle, bracketMatching, indentOnInput } = lang;
+        const { defaultKeymap, history, historyKeymap, indentWithTab } = commands;
+
+        const themeCompartment = new Compartment();
+        const dark = (document.documentElement.getAttribute("data-theme") || "").startsWith("dark");
+
+        const mount = document.getElementById("editor-mount");
+        const editor = new EditorView({
+            state: EditorState.create({
+                doc: fallback.value,
+                extensions: [
+                    lineNumbers(),
+                    highlightActiveLine(),
+                    bracketMatching(),
+                    indentOnInput(),
+                    history(),
+                    keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+                    langRust.rust(),
+                    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+                    themeCompartment.of(dark ? oneDark.oneDark : []),
+                    EditorView.lineWrapping,
+                    EditorView.updateListener.of((u) => { if (u.docChanged) persist(); }),
+                    EditorView.theme({
+                        "&": { fontSize: "0.9rem", minHeight: "28rem" },
+                        ".cm-content": {
+                            fontFamily: '"JetBrains Mono", "SF Mono", Monaco, monospace',
+                            padding: "1rem",
+                        },
+                    }),
+                ],
+            }),
+            parent: mount,
+        });
+        editor.dom.style.border = "1px solid var(--color-border)";
+        editor.dom.style.borderRadius = "12px";
+        editor.dom.style.overflow = "hidden";
+
+        fallback.style.display = "none";
+        mount.style.display = "block";
+
+        getValue = () => editor.state.doc.toString();
+        setValue = (text) => {
+            editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: text } });
+            persist();
+        };
+
+        new MutationObserver(() => {
+            const isDark = (document.documentElement.getAttribute("data-theme") || "").startsWith("dark");
+            editor.dispatch({
+                effects: themeCompartment.reconfigure(isDark ? oneDark.oneDark : []),
+            });
+        }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    } catch (err) {
+        console.warn("CodeMirror failed to load on playground; falling back to textarea", err);
+    }
+
+    // Reset button restores the original starter.
+    document.getElementById("reset-btn").addEventListener("click", () => {
+        if (!confirm("Replace the playground with the starter snippet?")) return;
+        setValue(starter);
+    });
+
+    // Run button: same /api/run proxy as the exercises, with debounce.
+    const runBtn = document.getElementById("run-btn");
+    const runStatus = document.getElementById("run-status");
+    const runSpinner = document.getElementById("run-spinner");
+    const outputPanel = document.getElementById("output-panel");
+    const outputStderr = document.getElementById("output-stderr");
+    let lastRunAt = 0;
+    runBtn.addEventListener("click", async () => {
+        const now = Date.now();
+        if (now - lastRunAt < 1000) return; // debounce: 1s minimum gap
+        lastRunAt = now;
+        runBtn.disabled = true;
+        runSpinner.style.display = "inline-block";
+        runStatus.textContent = "Running on play.rust-lang.org…";
+        runStatus.style.color = "var(--color-text-muted)";
+        try {
+            const resp = await fetch("/api/run", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: getValue(), slug: "playground" }),
+            });
+            if (!resp.ok) {
+                runStatus.textContent =
+                    resp.status === 429 ? "Rate-limited; try again in a moment."
+                    : resp.status === 502 ? "Playground unreachable."
+                    : `Run failed (HTTP ${resp.status}).`;
+                runStatus.style.color = "var(--color-error, #c62828)";
+                return;
+            }
+            const data = await resp.json();
+            outputPanel.style.display = "block";
+            const out = data.stdout || "";
+            const err = data.stderr || "";
+            outputStderr.textContent = (out + (out && err ? "\n\n" : "") + err) || "(no output)";
+            runStatus.textContent = data.success ? "Done." : "Compilation or runtime error.";
+            runStatus.style.color = data.success
+                ? "var(--color-text-muted)"
+                : "var(--color-error, #c62828)";
+        } catch (e) {
+            console.error(e);
+            runStatus.textContent = "Run failed: " + e.message;
+            runStatus.style.color = "var(--color-error, #c62828)";
+        } finally {
+            runSpinner.style.display = "none";
+            // Keep the button disabled briefly so eager double-clicks don't fire two runs.
+            setTimeout(() => { runBtn.disabled = false; }, 500);
+        }
+    });
+</script>
+
+<style>
+    .exercise-header { margin: 1rem 0 1.5rem; }
+    .chapter-eyebrow {
+        font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+        text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 0.4rem;
+    }
+    .exercise-title { font-size: 2rem; }
+    .exercise-section {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .exercise-section-head {
+        display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+        margin-bottom: 1rem; flex-wrap: wrap;
+    }
+    .section-eyebrow {
+        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+        text-transform: uppercase; color: var(--color-text-muted);
+    }
+    .section-title { margin: 0; font-size: 1.1rem; }
+    .exercise-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+    #run-spinner {
+        width: 0.9rem; height: 0.9rem;
+        border: 2px solid var(--color-border);
+        border-top-color: var(--color-primary);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}

@@ -290,7 +290,7 @@ fn split_title(md: &str) -> (Option<String>, String) {
     (title, body)
 }
 
-fn render_markdown(md: &str) -> String {
+pub fn render_markdown(md: &str) -> String {
     use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
     let mut opts = Options::empty();
     opts.insert(Options::ENABLE_TABLES);

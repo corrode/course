@@ -7,34 +7,52 @@
 //! Rust takes a different approach. Instead of nullable pointers that can
 //! crash your program, Rust uses `Option<T>` to explicitly represent "maybe
 //! something, maybe nothing." The compiler will not let you forget to check.
+//!
+//! The four exercises below build on each other:
+//!   1. Consume an `Option` with a fallback value.
+//!   2. Consume an `Option` and transform what's inside.
+//!   3. Produce an `Option` from a collection.
+//!   4. Produce an `Option` by searching a collection.
 
-/// Finds a user by ID in the database.
-/// Returns Some(username) if found, None if not found.
+/// Returns the value if `Some`, otherwise returns the default.
 ///
-/// See: https://doc.rust-lang.org/std/primitive.slice.html#method.iter
-/// See: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find
-/// See: https://doc.rust-lang.org/std/option/enum.Option.html#method.map
-fn find_user_by_id<'a>(users: &'a [(u32, &'a str)], id: u32) -> Option<&'a str> {
-    todo!()
-}
-
-/// Gets the first item from a list.
-/// Returns Some(item) if list has items, None if empty.
-fn get_first_item(items: &[String]) -> Option<&String> {
-    todo!()
-}
-
-/// Gets a configuration value with a default fallback.
-/// Returns the value if Some, otherwise returns the default.
+/// Start here. The simplest `Option` pattern: you're handed one, and you
+/// either use what's inside or fall back to a default. `match` works,
+/// and `Option` also has a few helper methods that are shorter.
+/// See: <https://doc.rust-lang.org/std/option/enum.Option.html>
 fn get_setting_or_default(setting: Option<u32>, default: u32) -> u32 {
     todo!()
 }
 
-/// Safely gets the length of an optional string.
-/// Returns the length if Some, 0 if None.
-/// See: https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or
-/// See: https://doc.rust-lang.org/std/keyword.match.html
+/// Returns the length if `Some`, 0 if `None`.
+///
+/// Same idea as above, but now the fallback isn't the value itself — you
+/// need to call `.len()` on the inner string first. A `match` makes both
+/// branches explicit; iterator-style methods on `Option` are tidier once
+/// you spot them.
+/// See: <https://doc.rust-lang.org/std/keyword.match.html>
 fn optional_string_length(maybe_string: Option<&str>) -> usize {
+    todo!()
+}
+
+/// Returns `Some(item)` if the list has items, `None` if empty.
+///
+/// Now you have to produce an `Option` instead of consume one. You
+/// could write the empty-check yourself with `if items.is_empty()`,
+/// but slices already have a method that returns exactly this shape.
+/// See: <https://doc.rust-lang.org/std/primitive.slice.html>
+fn get_first_item(items: &[String]) -> Option<&String> {
+    todo!()
+}
+
+/// Finds a user by ID in the database.
+/// Returns `Some(username)` if found, `None` if not found.
+///
+/// The trickiest of the four: produce an `Option` by searching. The
+/// iterator chapter is still ahead, but `slice::iter()` plus a search
+/// combinator already gets you most of the way; the matched tuple still
+/// needs to be reduced down to just the username.
+fn find_user_by_id(users: &[(u32, String)], id: u32) -> Option<&str> {
     todo!()
 }
 
@@ -43,10 +61,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_find_user() {
-        let users = [(1, "alice"), (2, "bob"), (3, "charlie")];
-        assert_eq!(find_user_by_id(&users, 2), Some("bob"));
-        assert_eq!(find_user_by_id(&users, 99), None);
+    fn test_setting_default() {
+        assert_eq!(get_setting_or_default(Some(42), 100), 42);
+        assert_eq!(get_setting_or_default(None, 100), 100);
+    }
+
+    #[test]
+    fn test_optional_length() {
+        assert_eq!(optional_string_length(Some("hello")), 5);
+        assert_eq!(optional_string_length(None), 0);
     }
 
     #[test]
@@ -59,14 +82,13 @@ mod tests {
     }
 
     #[test]
-    fn test_setting_default() {
-        assert_eq!(get_setting_or_default(Some(42), 100), 42);
-        assert_eq!(get_setting_or_default(None, 100), 100);
-    }
-
-    #[test]
-    fn test_optional_length() {
-        assert_eq!(optional_string_length(Some("hello")), 5);
-        assert_eq!(optional_string_length(None), 0);
+    fn test_find_user() {
+        let users = [
+            (1, "alice".to_string()),
+            (2, "bob".to_string()),
+            (3, "charlie".to_string()),
+        ];
+        assert_eq!(find_user_by_id(&users, 2), Some("bob"));
+        assert_eq!(find_user_by_id(&users, 99), None);
     }
 }

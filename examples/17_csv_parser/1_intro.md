@@ -50,6 +50,24 @@ Two things worth pointing out:
   gives you the current string and replaces it with an empty one in a
   single move. No clone, no temporary.
 
+## A note on `while let`
+
+`while let Some(c) = chars.next() { ... }` is the loop counterpart of
+`if let` from chapter 7. It keeps running as long as the pattern
+matches, and stops as soon as it doesn't. Iterators return `None` at
+the end, so `while let Some(...)` is a natural fit when you need more
+control than a `for` loop gives you (here we want to call
+`chars.next()` again *inside* the loop body to consume the second `"`).
+
+Tuple matching like `match (c, in_quotes) { ... }` is the same idea as
+chapter 6's `let (a, b) = pair`, just used as a `match` scrutinee. The
+arms then pattern-match both elements at once, and the guards (chapter
+8's `if chars.peek() == Some(&'"')`) do the rest.
+
+The tests in this chapter also lean heavily on raw strings
+(`r#"..."#`, introduced in chapter 16) so the CSV examples can contain
+literal commas and quotes without an escape forest.
+
 ## A useful tactic
 
 When stateful parsing gets hairy, write the simple version first
