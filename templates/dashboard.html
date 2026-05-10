@@ -1,12 +1,14 @@
-{% extends "base.html" %}
-
-{% block title %}{{ participant_name }}'s Progress - corrode Rust Course{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}{{ participant_name }}'s Progress -
+corrode Rust Course{% endblock %} {% block content %}
 <div class="container">
     <div class="nav">
         <a href="/" class="nav-brand">
-            <img src="/static/assets/corrode-logo.svg" alt="corrode" class="brand-logo" style="filter: var(--logo-filter);" />
+            <img
+                src="/static/assets/corrode-logo.svg"
+                alt="corrode"
+                class="brand-logo"
+                style="filter: var(--logo-filter)"
+            />
         </a>
         <div class="nav-links">
             <span class="nav-link">Welcome, {{ participant_name }}!</span>
@@ -34,13 +36,23 @@
     </div>
 
     <div class="card">
-        <details style="margin-bottom: 1.5rem;">
-            <summary style="cursor: pointer; font-size: 1.1rem; font-weight: 600; color: var(--color-text); padding: 0.75rem 0; border-bottom: 1px solid var(--color-border);">
-                Getting Started - Click to expand
+        <details style="margin-bottom: 1.5rem">
+            <summary
+                style="
+                    cursor: pointer;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    color: var(--color-text);
+                    padding: 0.75rem 0;
+                    border-bottom: 1px solid var(--color-border);
+                "
+            >
+                Prefer your own IDE? - Click to expand
             </summary>
-            <div style="padding-top: 1.5rem;">
-                <p style="color: var(--color-text-muted); margin-bottom: 1rem;">
-                    Follow these steps to get started with submitting exercises:
+            <div style="padding-top: 1.5rem">
+                <p style="color: var(--color-text-muted); margin-bottom: 1rem">
+                    You can solve every exercise in the browser, but if you'd
+                    rather use your own editor, here's the CLI workflow:
                 </p>
                 <div class="code-container">
                     <pre><code class="language-bash"># Clone the repository
@@ -61,182 +73,183 @@ cargo course status</code></pre>
     </div>
 
     <div class="card">
-        <h2 style="margin-bottom: 1.5rem;">Exercise Progress</h2>
-        
+        <h2 style="margin-bottom: 1.5rem">Exercises</h2>
+
         <div class="exercise-list">
-            {% for exercise in exercises %}
-            <div class="exercise-item" style="display: block; border: 1px solid var(--color-border); margin-bottom: 1rem; border-radius: 3px; transition: border-color 0.2s ease;">
-                <details>
-                    <summary style="cursor: pointer; list-style: none; padding: 0;">
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 1rem; flex-grow: 1;">
-                                <span class="exercise-status">
-                                    {% if exercise.is_quiz %}
-                                        <div style="width: 24px; height: 24px; background-color: #0969da; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
-                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px;">
-                                                <path d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13M12 17H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                        </div>
-                                    {% else %}
-                                        {% if exercise.perfected %}
-                                            <div class="icon-star">
-                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
-                                                </svg>
-                                            </div>
-                                        {% else %}
-                                            {% if exercise.completed %}
-                                                <div class="icon-check">
-                                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="white"/>
-                                                    </svg>
-                                                </div>
-                                            {% else %}
-                                                <div class="icon-pending">
-                                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/>
-                                                        <path d="M12 6V12L16 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                    </svg>
-                                                </div>
-                                            {% endif %}
-                                        {% endif %}
-                                    {% endif %}
-                                </span>
-                                
-                                <div style="font-weight: 600; color: var(--color-text); font-size: 1.1rem;">{{ exercise.title }}</div>
-                            </div>
-                            
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
-                                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                    {% if exercise.is_quiz %}
-                                        <div style="font-family: 'SF Mono', Monaco, monospace; font-size: 0.9rem; color: var(--color-text-muted);">Interactive Quiz</div>
-                                        <span style="background-color: rgba(9, 105, 218, 0.8); color: white; font-size: 0.75rem; font-weight: 500; padding: 0.25rem 0.5rem; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.05em;">quiz</span>
-                                    {% else %}
-                                        <div style="font-family: 'SF Mono', Monaco, monospace; font-size: 0.9rem; color: var(--color-text-muted);">{{ exercise.name }}.rs</div>
-                                        <span style="background-color: rgba(16, 185, 129, 0.8); color: white; font-size: 0.75rem; font-weight: 500; padding: 0.25rem 0.5rem; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.05em;">beginner</span>
-                                    {% endif %}
-                                </div>
-                                <div style="font-size: 0.75rem; color: var(--color-text-muted);">Click to expand</div>
-                            </div>
+            {% for exercise in exercises %} {% if exercise.is_quiz %}
+            <a href="/static/quiz.html" target="_blank" class="exercise-row">
+                <div class="exercise-row-left">
+                    <span class="exercise-status">
+                        <div
+                            style="
+                                width: 24px;
+                                height: 24px;
+                                background-color: #0969da;
+                                border-radius: 50%;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                            "
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                style="width: 14px; height: 14px"
+                            >
+                                <path
+                                    d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13M12 17H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+                                    stroke="white"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
                         </div>
-                    </summary>
-                    
-                    <div style="margin-top: 1rem;">
-                        {% if !exercise.description.is_empty() %}
-                        <div style="padding: 1rem; background-color: var(--color-background); border: 1px solid var(--color-border); border-radius: 3px; margin-bottom: 1rem;">
-                            <p style="color: var(--color-text-muted); font-size: 0.95rem; line-height: 1.5; margin: 0;">
-                                {{ exercise.description }}
-                            </p>
+                    </span>
+                    <div class="exercise-title">{{ exercise.title }}</div>
+                </div>
+                <div class="exercise-row-right">
+                    <div class="exercise-filename">Interactive Quiz</div>
+                    <span class="exercise-tag exercise-tag-quiz">quiz</span>
+                </div>
+            </a>
+            {% else %}
+            <a
+                href="/exercise/{{ ulid }}/{{ exercise.name }}"
+                class="exercise-row"
+            >
+                <div class="exercise-row-left">
+                    <span class="exercise-status">
+                        {% if exercise.perfected %}
+                        <div class="icon-star">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                                    fill="white"
+                                />
+                            </svg>
                         </div>
-                        {% endif %}
-                        
-                        {% if exercise.is_quiz %}
-                        <div style="margin-top: 1rem; padding: 1.5rem; background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 3px; text-align: center;">
-                            <div style="margin-bottom: 1rem;">
-                                <div style="width: 48px; height: 48px; background-color: #0969da; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 24px; height: 24px;">
-                                        <path d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13M12 17H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                </div>
-                                <h3 style="color: var(--color-text); margin: 0 0 0.5rem 0; font-size: 1.1rem;">Take the Interactive Quiz</h3>
-                                <p style="color: var(--color-text-muted); margin: 0 0 1.5rem 0; font-size: 0.9rem;">
-                                    Test your knowledge with 20 questions covering fundamental Rust concepts. Get immediate feedback and explanations!
-                                </p>
-                            </div>
-                            
-                            <a href="/static/quiz.html" target="_blank" class="btn" style="background-color: #0969da; color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 600; transition: all 0.2s ease;">
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px;">
-                                    <path d="M10 6H6C4.89543 6 4 6.89543 4 8V18C4 19.1046 4.89543 20 6 20H16C17.1046 20 18 19.1046 18 18V8C18 6.89543 17.1046 6 16 6H12M10 6V4C10 3.44772 10.4477 3 11 3H13C13.5523 3 14 3.44772 14 4V6M10 6H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                Start Quiz
-                            </a>
-                            
-                            <p style="color: var(--color-text-muted); margin: 1rem 0 0 0; font-size: 0.8rem;">
-                                Opens in a new tab • No submission required
-                            </p>
-                        </div>
-                        {% elif !exercise.submissions.is_empty() %}
-                        <div style="margin-top: 1rem;">
-                            <h4 style="color: var(--color-text); margin-bottom: 0.75rem; font-size: 0.9rem;">
-                                Your Submissions ({{ exercise.submissions.len() }})
-                            </h4>
-                            
-                            <div style="display: grid; gap: 0.75rem;">
-                                {% for submission in exercise.submissions %}
-                                <div style="border: 1px solid var(--color-border); border-radius: 3px; padding: 0.75rem; background-color: var(--color-surface);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                            {% if submission.tests_passed %}
-                                                {% if submission.fmt_passed && submission.clippy_passed %}
-                                                    <div class="icon-star" style="width: 16px; height: 16px;">
-                                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
-                                                        </svg>
-                                                    </div>
-                                                    <span style="color: var(--color-warning); font-size: 0.875rem; font-weight: 500;">Perfected</span>
-                                                {% else %}
-                                                    <div class="icon-check" style="width: 16px; height: 16px;">
-                                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="white"/>
-                                                        </svg>
-                                                    </div>
-                                                    <span style="color: var(--color-success); font-size: 0.875rem; font-weight: 500;">Passed</span>
-                                                {% endif %}
-                                            {% else %}
-                                                <div style="width: 16px; height: 16px; background-color: var(--color-error); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
-                                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 10px; height: 10px;">
-                                                        <path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                    </svg>
-                                                </div>
-                                                <span style="color: var(--color-error); font-size: 0.875rem; font-weight: 500;">Failed</span>
-                                            {% endif %}
-                                        </div>
-                                        <div style="font-size: 0.75rem; color: var(--color-text-muted);">
-                                            {{ submission.submitted_at }}
-                                        </div>
-                                    </div>
-                                    
-                                    <details style="margin-top: 0.5rem;">
-                                        <summary style="cursor: pointer; color: var(--color-text-muted); font-size: 0.75rem; padding: 0.25rem 0;">
-                                            View Source Code
-                                        </summary>
-                                        <div class="code-container" style="margin-top: 0.5rem;">
-                                            <div class="copy-btn" onclick="copyCodeFromElement(this.nextElementSibling.nextElementSibling.querySelector('code'))" title="Copy to clipboard">
-                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
-                                                </svg>
-                                                Copy
-                                            </div>
-                                            <div class="copy-btn" onclick="openCodeInPlayground(this.nextElementSibling.querySelector('code'), this, '{{ exercise.name }} - {{ submission.submitted_at }}')" title="Open in Rust Playground" style="right: 70px;">
-                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
-                                                </svg>
-                                                Play
-                                            </div>
-                                            <pre><code class="language-rust">{{ submission.source_code }}</code></pre>
-                                        </div>
-                                    </details>
-                                </div>
-                                {% endfor %}
-                            </div>
+                        {% else if exercise.completed %}
+                        <div class="icon-check">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z"
+                                    fill="white"
+                                />
+                            </svg>
                         </div>
                         {% else %}
-                        <div style="margin-top: 1rem; padding: 1rem; background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 3px; text-align: center;">
-                            <p style="color: var(--color-text-muted); font-size: 0.875rem; margin: 0;">
-                                No submissions yet. Submit your solution to see it here!
-                            </p>
+                        <div class="icon-pending">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="white"
+                                    stroke-width="2"
+                                    fill="none"
+                                />
+                                <path
+                                    d="M12 6V12L16 16"
+                                    stroke="white"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
                         </div>
                         {% endif %}
-                    </div>
-                </details>
-            </div>
-            {% endfor %}
+                    </span>
+                    <div class="exercise-title">{{ exercise.title }}</div>
+                </div>
+                <div class="exercise-row-right">
+                    <div class="exercise-filename">{{ exercise.name }}.rs</div>
+                    <span class="exercise-arrow">→</span>
+                </div>
+            </a>
+            {% endif %} {% endfor %}
         </div>
     </div>
 
-
-    <div style="text-align: center; margin-top: 3rem; color: var(--color-text-muted);">
+    <div
+        style="
+            text-align: center;
+            margin-top: 3rem;
+            color: var(--color-text-muted);
+        "
+    >
         <p>Keep going! Every exercise brings you closer to Rust mastery</p>
     </div>
 </div>
+
+<style>
+    .exercise-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        border: 1px solid var(--color-border);
+        margin-bottom: 0.75rem;
+        border-radius: 3px;
+        padding: 1rem;
+        text-decoration: none;
+        color: inherit;
+        transition:
+            border-color 0.15s ease,
+            background-color 0.15s ease;
+    }
+    .exercise-row:hover {
+        border-color: var(--color-primary, #0969da);
+        background-color: var(--color-surface);
+    }
+    .exercise-row-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .exercise-row-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .exercise-title {
+        font-weight: 600;
+        color: var(--color-text);
+        font-size: 1.05rem;
+    }
+    .exercise-filename {
+        font-family: "SF Mono", Monaco, monospace;
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+    }
+    .exercise-arrow {
+        color: var(--color-text-muted);
+        font-size: 1.1rem;
+    }
+    .exercise-tag {
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 500;
+        padding: 0.2rem 0.5rem;
+        border-radius: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .exercise-tag-quiz {
+        background-color: rgba(9, 105, 218, 0.8);
+    }
+</style>
 {% endblock %}

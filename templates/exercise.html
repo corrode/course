@@ -1,0 +1,1515 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+    <nav class="crumbs" aria-label="Breadcrumb">
+        {% match ulid %} {% when Some with (u) %}
+        <a href="/dashboard/{{ u }}" class="crumb">Home</a>
+        {% when None %}
+        <a href="/" class="crumb">Home</a>
+        {% endmatch %}
+        <span class="crumb-sep" aria-hidden="true">/</span>
+        <span class="crumb crumb-current"
+            >examples/{{ exercise.file_stem }}.rs</span
+        >
+    </nav>
+
+    <div class="exercise-header">
+        <div class="chapter-eyebrow">Chapter {{ exercise.number }}</div>
+        <h1 class="exercise-title">{{ exercise.title }}</h1>
+        {% match ulid %} {% when Some with (_u) %}
+        <div class="exercise-meta" id="exercise-meta">
+            {% if current_status.perfected %}
+            <span
+                class="status-badge status-perfected"
+                title="Tests, fmt, and clippy all passed"
+                >★ Perfected</span
+            >
+            {% else if current_status.completed %}
+            <span class="status-badge status-completed" title="Tests passed"
+                >✓ Passed</span
+            >
+            {% else if current_status.attempted %}
+            <span
+                class="status-badge status-attempted"
+                title="Submitted but tests not yet passing"
+                >• Attempted</span
+            >
+            {% endif %}
+        </div>
+        {% when None %} {% endmatch %}
+    </div>
+
+    {% match ulid %} {% when None %}
+    <div class="register-banner">
+        👋 Anyone can read and edit this exercise.
+        <a href="/">Register</a> to track your progress.
+    </div>
+    {% when Some with (_u) %} {% endmatch %}
+
+    <div class="chapter-prose exercise-prose">
+        {{ exercise.intro_html|safe }}
+    </div>
+
+    <section class="exercise-section">
+        <div class="exercise-section-head">
+            <div>
+                <div class="section-eyebrow">Exercise</div>
+                <h2 class="section-title">Try it yourself</h2>
+            </div>
+            <div class="exercise-actions">
+                <span
+                    id="action-status"
+                    class="action-status"
+                    aria-live="polite"
+                ></span>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="vim-btn"
+                    title="Toggle Vim keybindings"
+                    aria-pressed="false"
+                >
+                    Vim: off
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="reset-btn"
+                    title="Replace your edits with the original starter code"
+                >
+                    Reset
+                </button>
+                <button
+                    type="button"
+                    class="btn"
+                    id="run-btn"
+                    data-slug="{{ exercise.file_stem }}"
+                >
+                    ▶ Run
+                </button>
+                {% match ulid %} {% when Some with (u) %}
+                <button
+                    type="button"
+                    class="btn btn-success"
+                    id="submit-btn"
+                    data-slug="{{ exercise.file_stem }}"
+                    data-ulid="{{ u }}"
+                    title="Save this passing solution as your progress"
+                    style="display: none"
+                >
+                    ✓ Submit
+                </button>
+                {% when None %} {% endmatch %}
+            </div>
+        </div>
+        <noscript>
+            <p style="color: var(--color-text-muted)">
+                JavaScript is disabled — the editor below is a plain textarea.
+            </p>
+        </noscript>
+        <div style="position: relative">
+            <button
+                type="button"
+                id="copy-btn"
+                title="Copy current code to clipboard"
+                aria-label="Copy code"
+                style="
+                    position: absolute;
+                    top: 0.5rem;
+                    right: 0.5rem;
+                    z-index: 5;
+                    background: var(--color-surface);
+                    color: var(--color-text-muted);
+                    border: 1px solid var(--color-border);
+                    border-radius: 3px;
+                    padding: 0.25rem 0.4rem;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    opacity: 0.65;
+                    transition: opacity 0.15s ease;
+                "
+            >
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    style="width: 14px; height: 14px"
+                >
+                    <path
+                        d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
+                        fill="currentColor"
+                    />
+                </svg>
+            </button>
+            <textarea
+                id="editor-fallback"
+                spellcheck="false"
+                style="
+                    width: 100%;
+                    min-height: 28rem;
+                    font-family: &quot;SF Mono&quot;, Monaco, monospace;
+                    font-size: 0.9rem;
+                    padding: 1rem;
+                    border: 1px solid var(--color-border);
+                    border-radius: 12px;
+                    background-color: var(--color-background);
+                    color: var(--color-text);
+                    resize: vertical;
+                "
+            >
+{{ exercise.starter_code }}</textarea
+            >
+            <div id="editor-mount" style="display: none"></div>
+        </div>
+
+        <div
+            id="run-status-row"
+            style="
+                margin-top: 0.75rem;
+                min-height: 1.2rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            "
+        >
+            <span
+                id="run-spinner"
+                aria-hidden="true"
+                style="display: none"
+            ></span>
+            <span
+                id="run-status"
+                style="color: var(--color-text-muted); font-size: 0.9rem"
+                aria-live="polite"
+            ></span>
+        </div>
+
+        <div id="output-panel" style="display: none; margin-top: 1rem">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem">Results</h3>
+            <ul
+                id="test-list"
+                style="list-style: none; padding: 0; margin: 0 0 0.75rem 0"
+            ></ul>
+            <details id="output-details">
+                <summary
+                    style="
+                        cursor: pointer;
+                        color: var(--color-text-muted);
+                        font-size: 0.85rem;
+                    "
+                >
+                    Compiler / runtime output
+                </summary>
+                <pre
+                    id="output-stderr"
+                    style="
+                        margin: 0.5rem 0 0 0;
+                        padding: 0.85rem 1rem;
+                        background-color: var(--color-background);
+                        border: 1px solid var(--color-border);
+                        border-radius: 12px;
+                        overflow-x: auto;
+                        font-family: &quot;SF Mono&quot;, Monaco, monospace;
+                        font-size: 0.8rem;
+                        white-space: pre-wrap;
+                    "
+                ></pre>
+            </details>
+        </div>
+    </section>
+
+    <nav
+        class="chapter-list"
+        aria-label="All exercises"
+        style="--chapter-rows: {{ (dots.len() + 1) / 2 }}"
+    >
+        {% for d in dots %} {% if d.current %}
+        <span
+            class="chapter-row current{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
+            id="current-chapter-row"
+            aria-current="page"
+        >
+            <span class="chapter-num">{{ d.number }}</span>
+            <span class="chapter-title">{{ d.title }}</span>
+            <span class="chapter-mark" aria-hidden="true"></span>
+        </span>
+        {% else %} {% match ulid %} {% when Some with (u) %}
+        <a
+            href="/exercise/{{ u }}/{{ d.slug }}"
+            class="chapter-row{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
+        >
+            <span class="chapter-num">{{ d.number }}</span>
+            <span class="chapter-title">{{ d.title }}</span>
+            <span class="chapter-mark" aria-hidden="true"></span>
+        </a>
+        {% when None %}
+        <a
+            href="/exercise/{{ d.slug }}"
+            class="chapter-row{% if d.is_quiz %} quiz{% endif %}"
+        >
+            <span class="chapter-num">{{ d.number }}</span>
+            <span class="chapter-title">{{ d.title }}</span>
+            <span class="chapter-mark" aria-hidden="true"></span>
+        </a>
+        {% endmatch %} {% endif %} {% endfor %}
+    </nav>
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "@codemirror/state": "https://esm.sh/*@codemirror/state@6.4.1",
+            "@codemirror/view": "https://esm.sh/*@codemirror/view@6.26.3",
+            "@codemirror/language": "https://esm.sh/*@codemirror/language@6.10.2",
+            "@codemirror/commands": "https://esm.sh/*@codemirror/commands@6.6.0",
+            "@codemirror/lang-rust": "https://esm.sh/*@codemirror/lang-rust@6.0.1",
+            "@codemirror/autocomplete": "https://esm.sh/*@codemirror/autocomplete@6.18.0",
+            "@codemirror/search": "https://esm.sh/*@codemirror/search@6.5.6",
+            "@codemirror/theme-one-dark": "https://esm.sh/*@codemirror/theme-one-dark@6.1.2",
+            "@replit/codemirror-vim": "https://esm.sh/*@replit/codemirror-vim@6.2.1",
+            "@lezer/common": "https://esm.sh/*@lezer/common@1.2.1",
+            "@lezer/highlight": "https://esm.sh/*@lezer/highlight@1.2.0",
+            "@lezer/lr": "https://esm.sh/*@lezer/lr@1.4.1",
+            "@lezer/rust": "https://esm.sh/*@lezer/rust@1.0.2",
+            "style-mod": "https://esm.sh/style-mod@4.1.2",
+            "w3c-keyname": "https://esm.sh/w3c-keyname@2.2.8",
+            "crelt": "https://esm.sh/crelt@1.0.6"
+        }
+    }
+</script>
+
+<script type="module">
+    // CodeMirror 6 via an import map. The leading `*` on each esm.sh URL
+    // tells esm.sh to keep its own deps as bare specifiers, so the browser
+    // resolves *all* @codemirror/state references through this map and we
+    // end up with a single shared module instance. Without this, esm.sh
+    // would inline its own copy per package and EditorView would reject
+    // the resulting extensions with "Unrecognized extension value".
+    //
+    // We assemble our own minimal setup instead of using the `codemirror`
+    // umbrella package, because that package re-bundles all its deps and
+    // would re-introduce the duplication problem.
+    try {
+        const [
+            state,
+            view,
+            lang,
+            commands,
+            langRust,
+            autocomplete,
+            oneDark,
+            vimMod,
+        ] = await Promise.all([
+            import("@codemirror/state"),
+            import("@codemirror/view"),
+            import("@codemirror/language"),
+            import("@codemirror/commands"),
+            import("@codemirror/lang-rust"),
+            import("@codemirror/autocomplete"),
+            import("@codemirror/theme-one-dark"),
+            import("@replit/codemirror-vim"),
+        ]);
+
+        const { EditorState, Compartment } = state;
+        const {
+            EditorView,
+            keymap,
+            highlightActiveLine,
+            highlightActiveLineGutter,
+            lineNumbers,
+            drawSelection,
+            Decoration,
+            ViewPlugin,
+        } = view;
+        const {
+            syntaxHighlighting,
+            defaultHighlightStyle,
+            bracketMatching,
+            indentOnInput,
+        } = lang;
+        const { defaultKeymap, history, historyKeymap, indentWithTab } =
+            commands;
+        const {
+            autocompletion,
+            completionKeymap,
+            closeBrackets,
+            closeBracketsKeymap,
+        } = autocomplete;
+
+        // ---- Local-word + Rust-keyword completion ----
+        // No LSP; we just suggest Rust keywords plus identifiers already
+        // present in the buffer. Cheap, never wrong, and stops the editor
+        // from feeling "dumb" on long identifiers.
+        //
+        // Curated rather than exhaustive: covers strict + reserved Rust
+        // keywords, primitive types, and the prelude bits (types, traits,
+        // macros) that show up in nearly every exercise.
+        const RUST_KEYWORDS = [
+            // Strict keywords
+            "as",
+            "async",
+            "await",
+            "break",
+            "const",
+            "continue",
+            "crate",
+            "dyn",
+            "else",
+            "enum",
+            "extern",
+            "false",
+            "fn",
+            "for",
+            "if",
+            "impl",
+            "in",
+            "let",
+            "loop",
+            "match",
+            "mod",
+            "move",
+            "mut",
+            "pub",
+            "ref",
+            "return",
+            "self",
+            "Self",
+            "static",
+            "struct",
+            "super",
+            "trait",
+            "true",
+            "type",
+            "unsafe",
+            "use",
+            "where",
+            "while",
+            // Reserved keywords occasionally useful
+            "box",
+            "try",
+            "union",
+            // Primitive types
+            "bool",
+            "char",
+            "str",
+            "i8",
+            "i16",
+            "i32",
+            "i64",
+            "i128",
+            "isize",
+            "u8",
+            "u16",
+            "u32",
+            "u64",
+            "u128",
+            "usize",
+            "f32",
+            "f64",
+            // Prelude variants
+            "Some",
+            "None",
+            "Ok",
+            "Err",
+            // Prelude types
+            "Option",
+            "Result",
+            "Vec",
+            "String",
+            "Box",
+            "Rc",
+            "Arc",
+            "RefCell",
+            "Cell",
+            "HashMap",
+            "HashSet",
+            "BTreeMap",
+            "BTreeSet",
+            // Prelude traits
+            "Clone",
+            "Copy",
+            "Debug",
+            "Display",
+            "Default",
+            "PartialEq",
+            "Eq",
+            "PartialOrd",
+            "Ord",
+            "Hash",
+            "From",
+            "Into",
+            "TryFrom",
+            "TryInto",
+            "AsRef",
+            "AsMut",
+            "Iterator",
+            "IntoIterator",
+            "Drop",
+            "Send",
+            "Sync",
+            "Sized",
+            "Fn",
+            "FnMut",
+            "FnOnce",
+            // Common macros
+            "println!",
+            "print!",
+            "eprintln!",
+            "eprint!",
+            "format!",
+            "write!",
+            "writeln!",
+            "vec!",
+            "panic!",
+            "todo!",
+            "unimplemented!",
+            "unreachable!",
+            "assert!",
+            "assert_eq!",
+            "assert_ne!",
+            "debug_assert!",
+            "debug_assert_eq!",
+            "debug_assert_ne!",
+            "matches!",
+            "dbg!",
+            "include_str!",
+            "env!",
+        ];
+        const IDENT_RE = /[A-Za-z_][A-Za-z0-9_]*/g;
+        function localCompletions(context) {
+            const word = context.matchBefore(/[A-Za-z_][A-Za-z0-9_]*/);
+            if (!word || (word.from === word.to && !context.explicit)) {
+                return null;
+            }
+            const seen = new Set();
+            const options = [];
+            for (const kw of RUST_KEYWORDS) {
+                if (kw !== word.text) {
+                    seen.add(kw);
+                    options.push({ label: kw, type: "keyword" });
+                }
+            }
+            const text = context.state.doc.toString();
+            IDENT_RE.lastIndex = 0;
+            let m;
+            while ((m = IDENT_RE.exec(text))) {
+                const ident = m[0];
+                if (ident.length < 3) continue;
+                if (ident === word.text) continue;
+                if (seen.has(ident)) continue;
+                seen.add(ident);
+                options.push({ label: ident, type: "variable" });
+            }
+            return { from: word.from, options, validFor: /^[A-Za-z0-9_]*$/ };
+        }
+
+        // ---- URL linkify plugin ----
+        // Underlines bare http(s) URLs in the editor; Cmd/Ctrl-click
+        // (or middle-click) opens them in a new tab. Matches inside
+        // string literals and doc comments alike, since we're decorating
+        // the raw text.
+        const URL_RE = /\bhttps?:\/\/[^\s<>"'`)\]]+/g;
+        const urlMark = Decoration.mark({
+            class: "cm-url",
+            attributes: { title: "Click to open" },
+        });
+        function buildUrlDecorations(viewInstance) {
+            const builder = [];
+            for (const { from, to } of viewInstance.visibleRanges) {
+                const text = viewInstance.state.doc.sliceString(from, to);
+                let m;
+                URL_RE.lastIndex = 0;
+                while ((m = URL_RE.exec(text))) {
+                    // Trim trailing punctuation that's almost never part
+                    // of the URL itself.
+                    let end = m.index + m[0].length;
+                    while (end > m.index && ".,;:!?".includes(text[end - 1])) {
+                        end -= 1;
+                    }
+                    if (end > m.index) {
+                        builder.push(urlMark.range(from + m.index, from + end));
+                    }
+                }
+            }
+            return Decoration.set(builder, true);
+        }
+        const urlPlugin = ViewPlugin.fromClass(
+            class {
+                constructor(v) {
+                    this.decorations = buildUrlDecorations(v);
+                }
+                update(u) {
+                    if (u.docChanged || u.viewportChanged) {
+                        this.decorations = buildUrlDecorations(u.view);
+                    }
+                }
+            },
+            {
+                decorations: (v) => v.decorations,
+                eventHandlers: {
+                    mousedown(e, v) {
+                        if (e.button !== 0 && e.button !== 1) return;
+                        const target =
+                            e.target && e.target.closest
+                                ? e.target.closest(".cm-url")
+                                : null;
+                        if (!target) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(target.textContent, "_blank", "noopener");
+                    },
+                },
+            },
+        );
+        const urlTheme = EditorView.theme({
+            ".cm-url": {
+                textDecoration: "underline",
+                textDecorationColor: "rgba(127,127,127,0.6)",
+                textUnderlineOffset: "2px",
+                cursor: "pointer",
+            },
+            ".cm-url:hover": {
+                textDecorationColor: "currentColor",
+            },
+        });
+
+        const fallback = document.getElementById("editor-fallback");
+        const starter = fallback.value;
+        const mount = document.getElementById("editor-mount");
+
+        // Per-exercise draft persistence. Keyed by slug so each exercise
+        // keeps its own buffer; the starter is always recoverable from the
+        // textarea fallback (or the Reset button).
+        const slugForDraft = document.getElementById("run-btn").dataset.slug;
+        const DRAFT_KEY = `corrode:draft:${slugForDraft}`;
+        const savedDraft = localStorage.getItem(DRAFT_KEY);
+        const initialDoc =
+            savedDraft != null && savedDraft !== "" ? savedDraft : starter;
+
+        // Pick light/dark based on the site's current theme.
+        const isDark = (
+            document.documentElement.getAttribute("data-theme") || ""
+        ).startsWith("dark");
+
+        // Vim mode lives in a compartment so the toggle button can swap it
+        // in/out without rebuilding the editor. Persisted in localStorage so
+        // the choice survives reloads and follows learners across exercises.
+        const VIM_PREF_KEY = "corrode:editor:vim";
+        const vimCompartment = new Compartment();
+        const vimEnabledInitial = localStorage.getItem(VIM_PREF_KEY) === "1";
+
+        const extensions = [
+            vimCompartment.of(vimEnabledInitial ? vimMod.vim() : []),
+            lineNumbers(),
+            highlightActiveLineGutter(),
+            highlightActiveLine(),
+            history(),
+            drawSelection(),
+            indentOnInput(),
+            bracketMatching(),
+            syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+            closeBrackets(),
+            autocompletion({ override: [localCompletions] }),
+            keymap.of([
+                ...closeBracketsKeymap,
+                ...defaultKeymap,
+                ...historyKeymap,
+                ...completionKeymap,
+                indentWithTab,
+            ]),
+            langRust.rust(),
+            EditorView.lineWrapping,
+            urlPlugin,
+            urlTheme,
+        ];
+        if (isDark) extensions.push(oneDark.oneDark);
+
+        // Persist the buffer on every change (debounced) so navigating
+        // away or accidental reloads don't blow away the learner's work.
+        let saveTimer = null;
+        const persistDraft = (text) => {
+            try {
+                if (text === starter) {
+                    localStorage.removeItem(DRAFT_KEY);
+                } else {
+                    localStorage.setItem(DRAFT_KEY, text);
+                }
+            } catch (_) {
+                // Quota or private-mode failure: ignore; draft just won't persist.
+            }
+        };
+        const persistExt = EditorView.updateListener.of((u) => {
+            if (!u.docChanged) return;
+            // Any edit invalidates the previous Run result, so flip the
+            // primary action back to Run if Submit is currently showing.
+            const runEl = document.getElementById("run-btn");
+            const submitEl = document.getElementById("submit-btn");
+            if (submitEl && submitEl.style.display !== "none") {
+                submitEl.style.display = "none";
+                if (runEl) runEl.style.display = "";
+            }
+            // Stale pass/fail pill no longer reflects current code.
+            const pill = document.getElementById("action-status");
+            if (pill && pill.classList.contains("is-visible")) {
+                pill.classList.remove(
+                    "is-visible",
+                    "is-pass",
+                    "is-fail",
+                    "celebrate",
+                );
+                pill.textContent = "";
+            }
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(
+                () => persistDraft(u.state.doc.toString()),
+                300,
+            );
+        });
+        extensions.push(persistExt);
+
+        const editor = new EditorView({
+            state: EditorState.create({ doc: initialDoc, extensions }),
+            parent: mount,
+        });
+        // Style the editor wrapper so it matches our other panels.
+        editor.dom.style.border = "1px solid var(--color-border)";
+        editor.dom.style.borderRadius = "12px";
+        editor.dom.style.overflow = "hidden";
+        editor.dom.style.minHeight = "28rem";
+        editor.dom.style.fontSize = "0.9rem";
+
+        fallback.style.display = "none";
+        mount.style.display = "block";
+
+        // Expose for future Run/Submit wiring.
+        window.exerciseEditor = {
+            getValue: () => editor.state.doc.toString(),
+            setValue: (text) => {
+                editor.dispatch({
+                    changes: {
+                        from: 0,
+                        to: editor.state.doc.length,
+                        insert: text,
+                    },
+                });
+            },
+            isCodeMirror: true,
+            setVim: (enabled) => {
+                editor.dispatch({
+                    effects: vimCompartment.reconfigure(
+                        enabled ? vimMod.vim() : [],
+                    ),
+                });
+                localStorage.setItem(VIM_PREF_KEY, enabled ? "1" : "0");
+                editor.focus();
+            },
+        };
+
+        // Sync the toggle button with the (possibly persisted) initial state.
+        const vimBtn = document.getElementById("vim-btn");
+        if (vimBtn) {
+            const renderVim = (on) => {
+                vimBtn.textContent = on ? "Vim: on" : "Vim: off";
+                vimBtn.setAttribute("aria-pressed", on ? "true" : "false");
+            };
+            let vimOn = vimEnabledInitial;
+            renderVim(vimOn);
+            vimBtn.addEventListener("click", () => {
+                vimOn = !vimOn;
+                window.exerciseEditor.setVim(vimOn);
+                renderVim(vimOn);
+            });
+        }
+    } catch (err) {
+        console.warn(
+            "CodeMirror failed to load, keeping textarea fallback:",
+            err,
+        );
+        const vimBtn = document.getElementById("vim-btn");
+        if (vimBtn) vimBtn.style.display = "none";
+        const fallback = document.getElementById("editor-fallback");
+        window.exerciseEditor = {
+            getValue: () => fallback.value,
+            setValue: (text) => {
+                fallback.value = text;
+            },
+            isCodeMirror: false,
+        };
+    }
+</script>
+
+<script>
+    // Reset and Copy work against whichever editor is active (CM6 or textarea).
+    document.getElementById("reset-btn").addEventListener("click", () => {
+        if (!window.exerciseEditor) return;
+        if (!confirm("Replace your edits with the original starter code?"))
+            return;
+        // The textarea fallback always holds the unmodified starter code
+        // because we never write back to it once CodeMirror takes over.
+        const starter = document.getElementById("editor-fallback").value;
+        window.exerciseEditor.setValue(starter);
+        // Drop the persisted draft so a reload re-shows the starter.
+        try {
+            const slug = document.getElementById("run-btn").dataset.slug;
+            localStorage.removeItem(`corrode:draft:${slug}`);
+        } catch (_) {}
+    });
+
+    document.getElementById("copy-btn").addEventListener("click", async (e) => {
+        if (!window.exerciseEditor) return;
+        const btn = e.currentTarget;
+        const text = window.exerciseEditor.getValue();
+        try {
+            await navigator.clipboard.writeText(text);
+            // Brief visual confirmation (no permanent class change).
+            const prevColor = btn.style.color;
+            btn.style.color = "var(--color-success, #2e7d32)";
+            btn.style.opacity = "1";
+            setTimeout(() => {
+                btn.style.color = prevColor;
+                btn.style.opacity = "";
+            }, 1000);
+        } catch (err) {
+            console.warn("Clipboard write failed", err);
+        }
+    });
+
+    // Hover/focus reveals the icon-only Copy button more clearly.
+    {
+        const copyBtn = document.getElementById("copy-btn");
+        const reveal = () => (copyBtn.style.opacity = "1");
+        const hide = () => (copyBtn.style.opacity = "");
+        copyBtn.addEventListener("mouseenter", reveal);
+        copyBtn.addEventListener("mouseleave", hide);
+        copyBtn.addEventListener("focus", reveal);
+        copyBtn.addEventListener("blur", hide);
+    }
+
+    // Run tests via the /api/run proxy and render results.
+    const runBtn = document.getElementById("run-btn");
+    const runStatus = document.getElementById("run-status");
+    const outputPanel = document.getElementById("output-panel");
+    const testList = document.getElementById("test-list");
+    const outputStderr = document.getElementById("output-stderr");
+    const outputDetails = document.getElementById("output-details");
+
+    runBtn.addEventListener("click", async () => {
+        if (!window.exerciseEditor) return;
+        runBtn.disabled = true;
+        try {
+            const code = window.exerciseEditor.getValue();
+            const data = await runOnce(code, runBtn.dataset.slug);
+            if (!data) return;
+            updateRunStatus(data);
+
+            // When tests pass on the participant route, hide Run and reveal
+            // Submit in its place. Submitting always stores a version, so
+            // we keep it as an explicit click — but make it the obvious
+            // next action so passing tests can't be mistaken for "saved".
+            if (submitBtn) {
+                const total = data.test_results.length;
+                const passed = data.test_results.filter((t) => t.passed).length;
+                if (total > 0 && passed === total) {
+                    showSubmit();
+                    runStatus.textContent +=
+                        " — click Submit to save your progress.";
+                } else {
+                    showRun();
+                }
+            }
+        } finally {
+            runBtn.disabled = false;
+        }
+    });
+
+    // Submit: only present on the participant route. Run first, then POST
+    // to /api/submit with the parsed flags. We trust the client — same
+    // model as the CLI — since this is a self-directed learning platform.
+    const submitBtn = document.getElementById("submit-btn");
+
+    // Two-step UX: Run is the primary action until tests pass, then it's
+    // swapped out for Submit. Any subsequent edit puts Run back so the
+    // learner re-validates before saving a new version.
+    function showSubmit() {
+        if (!submitBtn) return;
+        runBtn.style.display = "none";
+        submitBtn.style.display = "";
+        submitBtn.focus();
+    }
+    function showRun() {
+        if (!submitBtn) return;
+        runBtn.style.display = "";
+        submitBtn.style.display = "none";
+    }
+
+    // The textarea fallback dispatches native input events; the CodeMirror
+    // path handles the swap from inside its updateListener (see above).
+    const fallbackEl = document.getElementById("editor-fallback");
+    if (fallbackEl) fallbackEl.addEventListener("input", showRun);
+
+    async function submitOnce(code, passed, total) {
+        const slug = submitBtn.dataset.slug;
+        const ulid = submitBtn.dataset.ulid;
+        try {
+            const submitResp = await fetch("/api/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ulid,
+                    exercise_name: slug,
+                    source_code: code,
+                    tests_passed: true,
+                    clippy_passed: false,
+                    fmt_passed: false,
+                }),
+            });
+            if (submitResp.ok) {
+                runStatus.textContent = `✓ Saved progress — ${passed}/${total} tests passed.`;
+                runStatus.style.color = "var(--color-success, #2e7d32)";
+                markAsCompleted();
+                return true;
+            } else if (submitResp.status === 401) {
+                runStatus.textContent =
+                    "Submit rejected: your session is unknown. Try registering again.";
+            } else {
+                runStatus.textContent = `Submit failed (HTTP ${submitResp.status}).`;
+            }
+            runStatus.style.color = "var(--color-error, #c62828)";
+        } catch (err) {
+            console.error(err);
+            runStatus.textContent = "Submit failed: " + err.message;
+            runStatus.style.color = "var(--color-error, #c62828)";
+        }
+        return false;
+    }
+
+    // Optimistically reflect a successful submission in the page chrome:
+    // the status badge in the header and the current row in the sidebar.
+    // Avoids the "I passed but nothing changed" confusion until next
+    // navigation triggers a fresh server render.
+    function markAsCompleted() {
+        const meta = document.getElementById("exercise-meta");
+        if (meta) {
+            const hasPassed = meta.querySelector(
+                ".status-perfected, .status-completed",
+            );
+            if (!hasPassed) {
+                meta.innerHTML =
+                    '<span class="status-badge status-completed" title="Tests passed">✓ Passed</span>';
+            }
+        }
+        const row = document.getElementById("current-chapter-row");
+        if (row && !row.classList.contains("completed")) {
+            row.classList.add("attempted", "completed");
+        }
+    }
+
+    if (submitBtn) {
+        submitBtn.addEventListener("click", async () => {
+            if (!window.exerciseEditor) return;
+            submitBtn.disabled = true;
+            runBtn.disabled = true;
+            try {
+                const code = window.exerciseEditor.getValue();
+                const data = await runOnce(code, submitBtn.dataset.slug);
+                if (!data) return;
+                updateRunStatus(data);
+
+                const total = data.test_results.length;
+                const passed = data.test_results.filter((t) => t.passed).length;
+                const tests_passed = total > 0 && passed === total;
+
+                if (!tests_passed) {
+                    runStatus.textContent +=
+                        " — not saving progress (tests must pass first).";
+                    runStatus.style.color = "var(--color-error, #c62828)";
+                    return;
+                }
+
+                await submitOnce(code, passed, total);
+            } finally {
+                submitBtn.disabled = false;
+                runBtn.disabled = false;
+            }
+        });
+    }
+
+    const runSpinner = document.getElementById("run-spinner");
+    const actionStatus = document.getElementById("action-status");
+
+    // Render the inline pill that lives next to the buttons. `tone` is
+    // "pass" | "fail" | "neutral"; passing the same pass tone twice
+    // re-triggers the celebratory pulse via animation restart.
+    function setActionStatus(text, tone) {
+        if (!actionStatus) return;
+        actionStatus.textContent = text;
+        actionStatus.classList.remove("is-pass", "is-fail", "celebrate");
+        if (!text) {
+            actionStatus.classList.remove("is-visible");
+            return;
+        }
+        actionStatus.classList.add("is-visible");
+        if (tone === "pass") {
+            actionStatus.classList.add("is-pass");
+            // Force a reflow so the keyframes restart even when the same
+            // class is re-applied (e.g. two passing Runs in a row).
+            void actionStatus.offsetWidth;
+            actionStatus.classList.add("celebrate");
+        } else if (tone === "fail") {
+            actionStatus.classList.add("is-fail");
+        }
+    }
+    function clearActionStatus() {
+        setActionStatus("", "neutral");
+    }
+
+    // Run on play.rust-lang.org via /api/run. Returns the parsed JSON, or
+    // null if the request failed (status text is updated either way).
+    async function runOnce(code, slug) {
+        runStatus.textContent = "Running on play.rust-lang.org…";
+        runStatus.style.color = "var(--color-text-muted)";
+        runSpinner.style.display = "inline-block";
+        clearActionStatus();
+        try {
+            const resp = await fetch("/api/run", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code, slug }),
+            });
+            if (!resp.ok) {
+                if (resp.status === 429) {
+                    runStatus.textContent =
+                        "Playground rate-limited us. Try again in a moment.";
+                } else if (resp.status === 502) {
+                    runStatus.textContent =
+                        "Playground unreachable. Check your connection or try again.";
+                } else {
+                    runStatus.textContent = `Run failed (HTTP ${resp.status}).`;
+                }
+                runStatus.style.color = "var(--color-error, #c62828)";
+                return null;
+            }
+            const data = await resp.json();
+            renderResults(data);
+            return data;
+        } catch (err) {
+            console.error(err);
+            runStatus.textContent = "Run failed: " + err.message;
+            runStatus.style.color = "var(--color-error, #c62828)";
+            return null;
+        } finally {
+            runSpinner.style.display = "none";
+        }
+    }
+
+    function updateRunStatus(data) {
+        const passed = data.test_results.filter((t) => t.passed).length;
+        const total = data.test_results.length;
+        if (total === 0) {
+            runStatus.textContent = data.success
+                ? "Compiled. No tests ran."
+                : "Did not compile.";
+            runStatus.style.color = data.success
+                ? "var(--color-text-muted)"
+                : "var(--color-error, #c62828)";
+            setActionStatus(
+                data.success ? "Compiled" : "Did not compile",
+                data.success ? "neutral" : "fail",
+            );
+        } else if (passed === total) {
+            runStatus.textContent = `All ${total} tests passed.`;
+            runStatus.style.color = "var(--color-success, #2e7d32)";
+            setActionStatus(
+                total === 1 ? "✓ 1 test passed" : `✓ ${total} tests passed`,
+                "pass",
+            );
+        } else {
+            runStatus.textContent = `${passed} / ${total} tests passed.`;
+            runStatus.style.color = "var(--color-error, #c62828)";
+            const failed = total - passed;
+            setActionStatus(
+                failed === 1
+                    ? `✗ 1 test failed (${passed}/${total})`
+                    : `✗ ${failed} tests failed (${passed}/${total})`,
+                "fail",
+            );
+        }
+    }
+
+    function renderResults(data) {
+        outputPanel.style.display = "block";
+        testList.innerHTML = "";
+
+        for (const t of data.test_results) {
+            const li = document.createElement("li");
+            li.style.padding = "0.35rem 0.5rem";
+            li.style.fontFamily = "'SF Mono', Monaco, monospace";
+            li.style.fontSize = "0.85rem";
+            li.style.display = "flex";
+            li.style.alignItems = "center";
+            li.style.gap = "0.5rem";
+            const icon = document.createElement("span");
+            if (t.passed) {
+                icon.textContent = "✓";
+                icon.style.color = "var(--color-success, #2e7d32)";
+                icon.style.fontWeight = "700";
+            } else {
+                icon.textContent = "✗";
+                icon.style.color = "var(--color-error, #c62828)";
+                icon.style.fontWeight = "700";
+            }
+            const name = document.createElement("span");
+            name.textContent = t.name;
+            li.appendChild(icon);
+            li.appendChild(name);
+            testList.appendChild(li);
+        }
+
+        // If something went wrong, expand the details so the error is visible.
+        const failed = data.test_results.some((t) => !t.passed);
+        const compileFailed = !data.success && data.test_results.length === 0;
+        outputDetails.open = failed || compileFailed;
+        outputStderr.textContent = data.stderr || data.stdout || "(no output)";
+
+        // Make sure the panel is visible without forcing a jump if it
+        // already is. `block: "nearest"` only scrolls when needed, so a
+        // user looking at the results stays put on subsequent runs.
+        outputPanel.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+        });
+    }
+</script>
+
+<style>
+    /* Inline pill next to the Run/Submit buttons. Empty until a Run
+       finishes; then mirrors the result count in compact form. */
+    .action-status {
+        display: inline-flex;
+        align-items: center;
+        align-self: center;
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        color: var(--color-text-muted);
+        opacity: 0;
+        transform: translateY(2px);
+        transition:
+            opacity 0.2s ease,
+            transform 0.2s ease;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+    .action-status.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .action-status.is-fail {
+        color: var(--color-error);
+        background: color-mix(in srgb, var(--color-error) 12%, transparent);
+        border-color: color-mix(in srgb, var(--color-error) 35%, transparent);
+    }
+    .action-status.is-pass {
+        color: var(--color-success);
+        background: color-mix(in srgb, var(--color-success) 14%, transparent);
+        border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+    }
+    /* One-shot celebratory pulse on first pass of a Run. Subtle: a soft
+       green glow that fades out, plus a tiny scale bump. Respect users
+       who'd rather not see motion. */
+    .action-status.celebrate {
+        animation: action-pass-pulse 0.9s ease-out;
+    }
+    @keyframes action-pass-pulse {
+        0% {
+            transform: translateY(0) scale(1);
+            box-shadow: 0 0 0 0
+                color-mix(in srgb, var(--color-success) 55%, transparent);
+        }
+        40% {
+            transform: translateY(0) scale(1.06);
+            box-shadow: 0 0 0 8px
+                color-mix(in srgb, var(--color-success) 0%, transparent);
+        }
+        100% {
+            transform: translateY(0) scale(1);
+            box-shadow: 0 0 0 0
+                color-mix(in srgb, var(--color-success) 0%, transparent);
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .action-status.celebrate {
+            animation: none;
+        }
+    }
+
+    /* Inline spinner shown while a Run is in flight. */
+    #run-spinner {
+        width: 0.9rem;
+        height: 0.9rem;
+        border: 2px solid var(--color-border);
+        border-top-color: var(--color-primary);
+        border-radius: 50%;
+        display: inline-block;
+        animation: run-spin 0.7s linear infinite;
+    }
+    @keyframes run-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        #run-spinner {
+            animation-duration: 2s;
+        }
+    }
+
+    /* Reading column for the chapter prose. */
+    .chapter-prose {
+        max-width: 100%;
+        margin: 1.5rem 0 3rem;
+        font-size: 1.05rem;
+    }
+    .exercise-prose h1,
+    .exercise-prose h2,
+    .exercise-prose h3 {
+        color: var(--color-text);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin-top: 2.25rem;
+        margin-bottom: 1rem;
+        line-height: 1.25;
+    }
+    .exercise-prose h2 {
+        font-size: 1.6rem;
+    }
+    .exercise-prose h3 {
+        font-size: 1.2rem;
+    }
+    .exercise-prose h1:first-child,
+    .exercise-prose h2:first-child {
+        margin-top: 0;
+    }
+    .exercise-prose p {
+        color: var(--color-text);
+        line-height: 1.7;
+        margin: 1rem 0;
+    }
+    .exercise-prose ul,
+    .exercise-prose ol {
+        color: var(--color-text);
+        line-height: 1.7;
+        padding-left: 1.5rem;
+    }
+    .exercise-prose li {
+        margin: 0.35rem 0;
+    }
+    /* Inline code: subtle pill, never a full block. */
+    .exercise-prose :not(pre) > code {
+        background-color: var(--color-surface);
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        font-family: "SF Mono", Monaco, monospace;
+        font-size: 0.88em;
+        color: var(--color-text);
+    }
+    /* Block code: gorgeous rounded dark block, Catppuccin Mocha base. */
+    .exercise-prose pre {
+        background-color: #1e1e2e;
+        border: 1px solid #313244;
+        border-radius: 12px;
+        padding: 1.1rem 1.25rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .exercise-prose pre code {
+        background: none;
+        padding: 0;
+        color: #cdd6f4;
+        font-family: "SF Mono", Monaco, monospace;
+        font-size: 0.9rem;
+        line-height: 1.55;
+    }
+    .exercise-prose blockquote {
+        margin: 1.25rem 0;
+        padding: 0.25rem 0 0.25rem 1rem;
+        border-left: 3px solid var(--color-border);
+        color: var(--color-text-muted);
+    }
+    .exercise-prose table {
+        border-collapse: collapse;
+        margin: 1.25rem 0;
+        font-size: 0.95rem;
+    }
+    .exercise-prose th,
+    .exercise-prose td {
+        border: 1px solid var(--color-border);
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+    }
+    .exercise-prose th {
+        background-color: var(--color-surface);
+        font-weight: 600;
+    }
+    .exercise-prose a {
+        color: var(--color-primary, #0969da);
+    }
+    .exercise-prose hr {
+        border: 0;
+        border-top: 1px solid var(--color-border);
+        margin: 2rem 0;
+    }
+
+    /* The exercise ("try it yourself") section: no card, just typography. */
+    .exercise-section {
+        max-width: 100%;
+        margin: 0 0 2rem;
+    }
+    .exercise-section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+    .section-eyebrow {
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+        font-weight: 600;
+    }
+    .section-title {
+        margin: 0.15rem 0 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .exercise-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .exercise-header {
+        text-align: center;
+        margin: 3.5rem 0 4rem;
+    }
+    .chapter-eyebrow {
+        font-size: 0.75rem;
+        letter-spacing: 0.22em;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
+    .exercise-title {
+        margin: 0 0 1.25rem;
+        line-height: 1.15;
+        font-size: 2.75rem;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        color: #fc218a;
+    }
+    .exercise-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+    .exercise-file {
+        font-family: "SF Mono", Monaco, monospace;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        border: 1px solid transparent;
+        line-height: 1.4;
+    }
+    .status-attempted {
+        color: var(--color-text-muted);
+        border-color: var(--color-border);
+        background: var(--color-background);
+    }
+    .status-completed {
+        color: var(--color-success, #2e7d32);
+        border-color: rgba(46, 125, 50, 0.3);
+        background: rgba(46, 125, 50, 0.08);
+    }
+    .status-perfected {
+        color: #8a6d00;
+        border-color: rgba(241, 196, 15, 0.45);
+        background: rgba(241, 196, 15, 0.15);
+    }
+    [data-theme="dark"] .status-perfected {
+        color: #f1c40f;
+    }
+
+    /* ---------- Breadcrumb above the line ---------- */
+    .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 0 0.75rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--color-border);
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        flex-wrap: wrap;
+    }
+    .crumb {
+        color: var(--color-text-muted);
+        text-decoration: none;
+    }
+    .crumb:hover {
+        color: var(--color-text);
+    }
+    .crumb-sep {
+        opacity: 0.5;
+    }
+    .crumb-current {
+        font-family: "SF Mono", Monaco, monospace;
+        color: var(--color-text);
+    }
+
+    /* ---------- Register banner (public route only) ---------- */
+    .register-banner {
+        margin-bottom: 1.5rem;
+        padding: 0.6rem 0.9rem;
+        border-left: 3px solid var(--color-primary);
+        background: rgba(var(--color-primary-rgb), 0.06);
+        color: var(--color-text);
+        font-size: 0.95rem;
+        border-radius: 0 6px 6px 0;
+    }
+    .register-banner a {
+        color: var(--color-primary);
+        font-weight: 600;
+    }
+
+    .chapter-list {
+        margin-top: 3rem;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0 2rem;
+        max-width: 60rem;
+    }
+    @media (min-width: 720px) {
+        /* Two-column layout where numbers increment top-to-bottom inside
+           each column (column 1 = first half, column 2 = second half),
+           rather than left-to-right across rows. The row count is set per
+           page via the `--chapter-rows` custom property on .chapter-list. */
+        .chapter-list {
+            grid-template-columns: 1fr 1fr;
+            grid-auto-flow: column;
+            grid-template-rows: repeat(var(--chapter-rows, 10), auto);
+        }
+    }
+    .chapter-row {
+        display: grid;
+        grid-template-columns: 2.25rem 1fr auto;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.65rem 0.75rem;
+        border-top: 1px solid var(--color-border);
+        color: var(--color-primary, #0969da);
+        text-decoration: none;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        transition: background-color 120ms;
+    }
+    .chapter-row:last-child {
+        border-bottom: 1px solid var(--color-border);
+    }
+    .chapter-row:hover,
+    .chapter-row:focus-visible {
+        background-color: var(--color-background);
+    }
+    .chapter-row .chapter-num {
+        color: var(--color-text-muted);
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+    }
+    .chapter-row .chapter-title {
+        font-weight: 500;
+    }
+    /* The mark cell is always present so columns line up; styled per state. */
+    .chapter-row .chapter-mark {
+        width: 0.6rem;
+        height: 0.6rem;
+        border-radius: 999px;
+        background: transparent;
+        border: 1px solid var(--color-border);
+    }
+
+    /* Three shades of progress — subtle, accumulating. */
+    .chapter-row.attempted {
+        background-color: rgba(125, 125, 125, 0.06);
+    }
+    .chapter-row.attempted .chapter-mark {
+        background: var(--color-text-muted);
+        border-color: var(--color-text-muted);
+        opacity: 0.45;
+    }
+    .chapter-row.completed {
+        background-color: rgba(46, 125, 50, 0.07);
+    }
+    .chapter-row.completed .chapter-mark {
+        background: var(--color-success, #2e7d32);
+        border-color: var(--color-success, #2e7d32);
+        opacity: 1;
+    }
+    .chapter-row.perfected {
+        background-color: rgba(241, 196, 15, 0.1);
+    }
+    .chapter-row.perfected .chapter-mark {
+        background: #f1c40f;
+        border-color: #f1c40f;
+    }
+    .chapter-row.completed:hover,
+    .chapter-row.completed:focus-visible {
+        background-color: rgba(46, 125, 50, 0.13);
+    }
+    .chapter-row.perfected:hover,
+    .chapter-row.perfected:focus-visible {
+        background-color: rgba(241, 196, 15, 0.18);
+    }
+
+    .chapter-row.current {
+        background-color: var(--color-background);
+        color: var(--color-text);
+        font-weight: 700;
+        box-shadow: inset 3px 0 0 var(--color-primary, #0969da);
+    }
+    .chapter-row.current .chapter-num {
+        color: var(--color-text);
+        font-weight: 700;
+    }
+    .chapter-row.current.completed {
+        background-color: rgba(46, 125, 50, 0.12);
+    }
+    .chapter-row.current.perfected {
+        background-color: rgba(241, 196, 15, 0.18);
+    }
+    .chapter-row.quiz .chapter-title {
+        font-style: italic;
+    }
+</style>
+{% endblock %}

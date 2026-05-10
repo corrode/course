@@ -1,755 +1,578 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}corrode Rust Course{% endblock %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet" />
-    
-    <!-- Prism.js for syntax highlighting -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <style>
-        :root {
-            /* Default theme (dark-twir) */
-            --color-background: #2a2a2a;
-            --color-surface: #353535;
-            --color-primary: #d2991d;
-            --color-primary-muted: #9a7015;
-            --color-primary-rgb: 210, 153, 29;
-            --color-text: #f0f0f0;
-            --color-text-muted: #aeaeae;
-            --color-border: #353535;
-            --color-input-bg: #1f1f1f;
-            --color-input-border: #4a4a4a;
-            --color-success: #10b981;
-            --color-warning: #f59e0b;
-            --color-error: #ef4444;
-        }
-
-        /* Light themes */
-        html[data-theme="light-docs-rs"] {
-            --color-background: #ffffff;
-            --color-surface: #f5f5f5;
-            --color-primary: #000000;
-            --color-primary-muted: #333333;
-            --color-primary-rgb: 0, 0, 0;
-            --color-text: #000000;
-            --color-text-muted: #505050;
-            --color-border: #e0e0e0;
-            --color-input-bg: #ffffff;
-            --color-input-border: #d1d5db;
-        }
-
-        html[data-theme="light-hacker-news"] {
-            --color-background: #f6f6ef;
-            --color-surface: #ffffff;
-            --color-primary: #ff6600;
-            --color-primary-muted: #cc5200;
-            --color-primary-rgb: 255, 102, 0;
-            --color-text: #333333;
-            --color-text-muted: #828282;
-            --color-border: #e0e0e0;
-            --color-input-bg: #ffffff;
-            --color-input-border: #d1d5db;
-        }
-
-        /* Dark themes */
-        html[data-theme="dark-twir"] {
-            --color-background: #2a2a2a;
-            --color-surface: #353535;
-            --color-primary: #d2991d;
-            --color-primary-muted: #9a7015;
-            --color-primary-rgb: 210, 153, 29;
-            --color-text: #f0f0f0;
-            --color-text-muted: #aeaeae;
-            --color-border: #353535;
-            --color-input-bg: #1f1f1f;
-            --color-input-border: #4a4a4a;
-        }
-
-        html[data-theme="dark-nord"] {
-            --color-background: #2e3440;
-            --color-surface: #3b4252;
-            --color-primary: #88c0d0;
-            --color-primary-muted: #81a1c1;
-            --color-primary-rgb: 136, 192, 208;
-            --color-text: #eceff4;
-            --color-text-muted: #d8dee9;
-            --color-border: #4c566a;
-            --color-input-bg: #242933;
-            --color-input-border: #4c566a;
-        }
-
-        html[data-theme="dark-solarized"] {
-            --color-background: #002b36;
-            --color-surface: #073642;
-            --color-primary: #b58900;
-            --color-primary-muted: #93a1a1;
-            --color-primary-rgb: 181, 137, 0;
-            --color-text: #839496;
-            --color-text-muted: #586e75;
-            --color-border: #073642;
-            --color-input-bg: #001e27;
-            --color-input-border: #094855;
-        }
-
-        html[data-theme="dark-dracula"] {
-            --color-background: #282a36;
-            --color-surface: #44475a;
-            --color-primary: #ff79c6;
-            --color-primary-muted: #bd93f9;
-            --color-primary-rgb: 255, 121, 198;
-            --color-text: #f8f8f2;
-            --color-text-muted: #6272a4;
-            --color-border: #44475a;
-            --color-input-bg: #1e1f29;
-            --color-input-border: #44475a;
-        }
-
-        html[data-theme="dark-catppuccin"] {
-            --color-background: #1e1e2e;
-            --color-surface: #313244;
-            --color-primary: #cba6f7;
-            --color-primary-muted: #a6adc8;
-            --color-primary-rgb: 203, 166, 247;
-            --color-text: #cdd6f4;
-            --color-text-muted: #6c7086;
-            --color-border: #313244;
-            --color-input-bg: #11111b;
-            --color-input-border: #313244;
-        }
-
-        html[data-theme="light-github"] {
-            --color-background: #ffffff;
-            --color-surface: #f6f8fa;
-            --color-primary: #0969da;
-            --color-primary-muted: #0550ae;
-            --color-primary-rgb: 9, 105, 218;
-            --color-text: #24292f;
-            --color-text-muted: #656d76;
-            --color-border: #d1d9e0;
-            --color-input-bg: #ffffff;
-            --color-input-border: #d1d9e0;
-        }
-
-        html[data-theme="light-rust"] {
-            --color-background: #ffffff;
-            --color-surface: #fafafa;
-            --color-primary: #ce422b;
-            --color-primary-muted: #a33820;
-            --color-primary-rgb: 206, 66, 43;
-            --color-text: #333333;
-            --color-text-muted: #737373;
-            --color-border: #e6e6e6;
-            --color-input-bg: #ffffff;
-            --color-input-border: #d4d4d4;
-        }
-
-        /* Prevent transitions during load */
-        .preload * {
-            transition: none !important;
-            animation-duration: 0.001s !important;
-        }
-
-        /* Normal transitions after load */
-        * {
-            transition: background-color 0.1s ease, color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-            background-color: var(--color-background);
-            color: var(--color-text);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        .container {
-            max-width: 1024px;
-            margin: 0 auto;
-            padding: 60px 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .header h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            font-family: "Bebas Neue", sans-serif;
-            color: var(--color-primary);
-            margin-bottom: 1rem;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            color: var(--color-text-muted);
-            font-weight: 500;
-        }
-
-        .card {
-            background-color: var(--color-surface);
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--color-text);
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 16px 24px;
-            background-color: var(--color-input-bg);
-            border: 2px solid var(--color-input-border);
-            border-radius: 8px;
-            color: var(--color-text);
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--color-primary);
-        }
-
-        .form-control::placeholder {
-            color: var(--color-text-muted);
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 16px 24px;
-            background-color: var(--color-primary);
-            color: var(--color-background);
-            text-decoration: none;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn:hover {
-            background-color: var(--color-primary-muted);
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background-color: var(--color-surface);
-            color: var(--color-text);
-            border: 2px solid var(--color-border);
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--color-primary);
-        }
-
-        .exercise-list {
-            display: grid;
-        }
-
-        .exercise-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            background-color: var(--color-surface);
-            border: 2px solid var(--color-border);
-            border-radius: 3px;
-            transition: all 0.2s ease;
-        }
-
-        .exercise-item:hover {
-            border-color: var(--color-primary);
-            background-color: rgba(var(--color-primary-rgb), 0.05);
-        }
-
-        .exercise-status {
-            font-size: 1.5rem;
-            margin-right: 1rem;
-        }
-
-        .exercise-name {
-            font-weight: 500;
-            color: var(--color-text);
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
-        }
-
-        .status-completed {
-            color: var(--color-success);
-        }
-
-        .status-perfected {
-            color: var(--color-warning);
-        }
-
-        .status-pending {
-            color: var(--color-text-muted);
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-card {
-            text-align: center;
-            padding: 1rem;
-            background-color: var(--color-surface);
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--color-primary);
-            display: block;
-        }
-
-        .stat-label {
-            color: var(--color-text-muted);
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        .admin-table th,
-        .admin-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        .admin-table th {
-            background-color: var(--color-surface);
-            font-weight: 600;
-            color: var(--color-text);
-        }
-
-        .admin-table td {
-            color: var(--color-text-muted);
-        }
-
-        .code-block {
-            background-color: var(--color-background);
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem 0;
-            overflow-x: auto;
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
-            font-size: 0.875rem;
-            line-height: 1.5;
-        }
-
-        .nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        .nav-brand {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--color-primary);
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .nav-link {
-            color: var(--color-text-muted);
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-
-        .nav-link:hover {
-            color: var(--color-text);
-        }
-
-        /* SVG Icons */
-        .icon-check {
-            width: 24px;
-            height: 24px;
-            background-color: var(--color-success);
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon-star {
-            width: 24px;
-            height: 24px;
-            background-color: var(--color-warning);
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon-pending {
-            width: 24px;
-            height: 24px;
-            background-color: var(--color-text-muted);
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon-check svg, .icon-star svg, .icon-pending svg {
-            width: 14px;
-            height: 14px;
-            fill: white;
-        }
-
-        /* Prism.js syntax highlighting integration */
-        pre[class*="language-"] {
-            background: var(--color-background) !important;
-            border: 2px solid var(--color-border) !important;
-            border-radius: 8px !important;
-            padding: 1rem !important;
-            margin: 0.5rem 0 !important;
-            overflow-x: auto !important;
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace !important;
-            font-size: 0.875rem !important;
-            line-height: 1.5 !important;
-        }
-
-        code[class*="language-"] {
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace !important;
-            font-size: 0.875rem !important;
-        }
-
-        /* Theme-aware syntax highlighting colors */
-        html[data-theme^="dark"] .token.comment,
-        html[data-theme^="dark"] .token.prolog,
-        html[data-theme^="dark"] .token.doctype,
-        html[data-theme^="dark"] .token.cdata {
-            color: #6b7280;
-        }
-
-        html[data-theme^="dark"] .token.punctuation {
-            color: var(--color-text);
-        }
-
-        html[data-theme^="dark"] .token.keyword {
-            color: #8b5cf6;
-        }
-
-        html[data-theme^="dark"] .token.string {
-            color: #10b981;
-        }
-
-        html[data-theme^="dark"] .token.number {
-            color: #f59e0b;
-        }
-
-        html[data-theme^="dark"] .token.function {
-            color: #3b82f6;
-        }
-
-        html[data-theme^="light"] .token.comment,
-        html[data-theme^="light"] .token.prolog,
-        html[data-theme^="light"] .token.doctype,
-        html[data-theme^="light"] .token.cdata {
-            color: #6b7280;
-        }
-
-        html[data-theme^="light"] .token.keyword {
-            color: #7c3aed;
-        }
-
-        html[data-theme^="light"] .token.string {
-            color: #059669;
-        }
-
-        html[data-theme^="light"] .token.number {
-            color: #d97706;
-        }
-
-        html[data-theme^="light"] .token.function {
-            color: #2563eb;
-        }
-
-        /* Copy button styling */
-        .code-container {
-            position: relative;
-        }
-
-        .copy-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            padding: 6px 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.75rem;
-            color: var(--color-text-muted);
-            transition: all 0.2s ease;
-            opacity: 0.7;
-        }
-
-        .copy-btn:hover {
-            opacity: 1;
-            border-color: var(--color-primary);
-            color: var(--color-text);
-        }
-
-        .copy-btn svg {
-            width: 14px;
-            height: 14px;
-            fill: currentColor;
-        }
-
-        .copy-btn.copied {
-            color: var(--color-success);
-            border-color: var(--color-success);
-        }
-
-        /* Theme switcher styles */
-        .theme-switcher {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background-color: var(--color-surface);
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .theme-switcher label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--color-text);
-        }
-
-        .theme-switcher select {
-            background-color: var(--color-surface);
-            color: var(--color-text);
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .theme-switcher select:focus {
-            outline: none;
-            border-color: var(--color-primary);
-        }
-
-        /* Brand logo styles */
-        .brand-logo {
-            height: 78px;
-            margin-bottom: 1.5rem;
-        }
-
-        :root {
-            --logo-filter: invert(100%);
-        }
-
-        html[data-theme^="light"] {
-            --logo-filter: invert(0%);
-        }
-
-        .brand-logo {
-            filter: var(--logo-filter);
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 40px 16px;
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}corrode Rust Course{% endblock %}</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            /* ---------- Theme tokens ---------- */
+            :root {
+                /* GitHub Primer — light */
+                --color-background: #ffffff;
+                --color-surface: #f6f8fa;
+                --color-primary: #0969da;
+                --color-primary-muted: #0550ae;
+                --color-primary-rgb: 9, 105, 218;
+                --color-text: #1f2328;
+                --color-text-muted: #59636e;
+                --color-border: #d1d9e0;
+                --color-input-bg: #ffffff;
+                --color-input-border: #d1d9e0;
+                --color-success: #1a7f37;
+                --color-warning: #9a6700;
+                --color-error: #d1242f;
+                --logo-filter: invert(0%);
             }
 
+            html[data-theme="dark"] {
+                /* GitHub Primer — dark */
+                --color-background: #0d1117;
+                --color-surface: #151b23;
+                --color-primary: #4493f8;
+                --color-primary-muted: #1f6feb;
+                --color-primary-rgb: 68, 147, 248;
+                --color-text: #f0f6fc;
+                --color-text-muted: #9198a1;
+                --color-border: #3d444d;
+                --color-input-bg: #0d1117;
+                --color-input-border: #3d444d;
+                --color-success: #3fb950;
+                --color-warning: #d29922;
+                --color-error: #f85149;
+                --logo-filter: invert(100%);
+            }
+
+            /* ---------- Reset ---------- */
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    "Inter",
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    Roboto,
+                    "Helvetica Neue",
+                    sans-serif;
+                background-color: var(--color-background);
+                color: var(--color-text);
+                line-height: 1.6;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* ---------- Layout ---------- */
+            .container {
+                width: 100%;
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 1.5rem 1.5rem 4rem;
+                flex: 1 0 auto;
+            }
+
+            .header {
+                text-align: center;
+                margin-bottom: 3rem;
+            }
             .header h1 {
-                font-size: 2rem;
+                font-size: 2.5rem;
+                font-weight: 700;
+                letter-spacing: -0.01em;
+                color: var(--color-text);
+                margin-bottom: 0.5rem;
+            }
+            .header p {
+                font-size: 1.05rem;
+                color: var(--color-text-muted);
+            }
+
+            /* ---------- Cards / forms / buttons (used by other pages) ---------- */
+            .card {
+                background-color: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: 8px;
+                padding: 1.5rem;
+                margin-bottom: 1.25rem;
+            }
+            .form-group {
+                margin-bottom: 1.25rem;
+            }
+            .form-group label {
+                display: block;
+                margin-bottom: 0.4rem;
+                font-weight: 600;
+                color: var(--color-text);
+            }
+            .form-control {
+                width: 100%;
+                padding: 0.7rem 1rem;
+                background-color: var(--color-input-bg);
+                border: 1px solid var(--color-input-border);
+                border-radius: 6px;
+                color: var(--color-text);
+                font-size: 1rem;
+            }
+            .form-control:focus {
+                outline: none;
+                border-color: var(--color-primary);
+            }
+            .form-control::placeholder {
+                color: var(--color-text-muted);
+            }
+
+            .btn {
+                display: inline-block;
+                padding: 0.6rem 1.1rem;
+                background-color: var(--color-primary);
+                color: #fff;
+                text-decoration: none;
+                border: 1px solid var(--color-primary);
+                border-radius: 6px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+            }
+            .btn:hover {
+                background-color: var(--color-primary-muted);
+            }
+            .btn-secondary {
+                background-color: var(--color-surface);
+                color: var(--color-text);
+                border: 1px solid var(--color-border);
+            }
+            .btn-secondary:hover {
+                background-color: var(--color-background);
+                border-color: var(--color-text-muted);
+                color: var(--color-text);
+            }
+            .btn-success {
+                background-color: var(--color-success);
+                border-color: var(--color-success);
+                color: #fff;
+            }
+            .btn-success:hover {
+                /* Slight darken on hover; falls back to filter so we don't
+                   need a separate token per theme. */
+                filter: brightness(0.92);
+            }
+
+            .exercise-list {
+                display: grid;
+            }
+            .exercise-item {
+                display: flex;
+                align-items: center;
+                padding: 1rem;
+                background-color: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: 6px;
+            }
+            .exercise-item:hover {
+                border-color: var(--color-primary);
+            }
+            .exercise-status {
+                font-size: 1.25rem;
+                margin-right: 1rem;
+            }
+            .exercise-name {
+                font-weight: 500;
+                color: var(--color-text);
+                font-family: "SF Mono", Monaco, monospace;
+            }
+            .status-completed {
+                color: var(--color-success);
+            }
+            .status-perfected {
+                color: var(--color-warning);
+            }
+            .status-pending {
+                color: var(--color-text-muted);
             }
 
             .stats {
-                grid-template-columns: 1fr;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .stat-card {
+                text-align: center;
+                padding: 1rem;
+                background-color: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: 8px;
+            }
+            .stat-number {
+                font-size: 1.75rem;
+                font-weight: 700;
+                color: var(--color-primary);
+                display: block;
+            }
+            .stat-label {
+                color: var(--color-text-muted);
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
             }
 
             .admin-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 1rem;
+            }
+            .admin-table th,
+            .admin-table td {
+                padding: 0.6rem 0.75rem;
+                text-align: left;
+                border-bottom: 1px solid var(--color-border);
+            }
+            .admin-table th {
+                background-color: var(--color-surface);
+                font-weight: 600;
+                color: var(--color-text);
+            }
+            .admin-table td {
+                color: var(--color-text-muted);
+            }
+
+            .code-block {
+                background-color: #1e1e2e;
+                color: #cdd6f4;
+                border: 1px solid #313244;
+                border-radius: 12px;
+                padding: 1rem;
+                margin: 1rem 0;
+                overflow-x: auto;
+                font-family: "SF Mono", Monaco, monospace;
                 font-size: 0.875rem;
+                line-height: 1.5;
             }
 
-            .theme-switcher {
-                top: 10px;
-                right: 10px;
-                flex-direction: column;
+            /* ---------- Top bar / brand (kept for non-exercise pages) ---------- */
+            .nav {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 2rem;
+                padding-bottom: 0.75rem;
+                border-bottom: 1px solid var(--color-border);
+            }
+            .nav-brand {
+                font-size: 1.25rem;
+                font-weight: 700;
+                color: var(--color-text);
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+            }
+            .nav-links {
+                display: flex;
+                gap: 1rem;
+                align-items: center;
+            }
+            .nav-link {
+                color: var(--color-text-muted);
+                text-decoration: none;
+                font-size: 0.95rem;
+            }
+            .nav-link:hover {
+                color: var(--color-text);
+            }
+
+            .brand-logo {
+                height: 28px;
+                display: block;
+                filter: var(--logo-filter);
+            }
+
+            /* ---------- Theme toggle (top-right, aligned to container) ---------- */
+            .theme-toggle {
+                position: fixed;
+                top: 1rem;
+                /* Align the toggle's right edge with the page content's right
+                   edge (1100px container + 1.5rem padding). On narrow viewports,
+                   fall back to a comfortable 1rem inset. */
+                right: max(1rem, calc((100vw - 1100px) / 2 + 1.5rem));
+                z-index: 1000;
+                width: 2.25rem;
+                height: 2.25rem;
+                border-radius: 8px;
+                border: 1px solid var(--color-border);
+                background: var(--color-surface);
+                color: var(--color-text);
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .theme-toggle:hover {
+                border-color: var(--color-text-muted);
+            }
+            .theme-toggle svg {
+                width: 1.1rem;
+                height: 1.1rem;
+            }
+            .theme-toggle .icon-sun {
+                display: none;
+            }
+            .theme-toggle .icon-moon {
+                display: inline-block;
+            }
+            html[data-theme="dark"] .theme-toggle .icon-sun {
+                display: inline-block;
+            }
+            html[data-theme="dark"] .theme-toggle .icon-moon {
+                display: none;
+            }
+
+            /* ---------- Code-container helpers (admin/dashboard) ---------- */
+            .code-container {
+                position: relative;
+            }
+            .copy-btn {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: 4px;
+                padding: 4px 8px;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
                 gap: 4px;
+                color: var(--color-text);
+                font-size: 0.8rem;
             }
-        }
-    </style>
-</head>
-<body class="preload">
-    <!-- Theme switcher -->
-    <div class="theme-switcher">
-        <label for="theme-select">Theme:</label>
-        <select id="theme-select" onchange="setTheme(this.value)">
-            <optgroup label="Light Themes">
-                <option value="light-hacker-news">Hacker News</option>
-                <option value="light-docs-rs">Docs.rs</option>
-                <option value="light-github">GitHub</option>
-                <option value="light-rust">Rust</option>
-            </optgroup>
-            <optgroup label="Dark Themes">
-                <option value="dark-twir">This Week in Rust</option>
-                <option value="dark-nord">Nord</option>
-                <option value="dark-solarized">Solarized Dark</option>
-                <option value="dark-dracula">Dracula</option>
-                <option value="dark-catppuccin">Catppuccin</option>
-            </optgroup>
-        </select>
-    </div>
-
-    {% block content %}{% endblock %}
-
-    <script>
-        // Remove preload class after page is fully loaded to prevent flicker
-        window.addEventListener("load", () => {
-            document.body.classList.remove("preload");
-        });
-
-        // Theme switching function
-        function setTheme(theme) {
-            document.documentElement.setAttribute("data-theme", theme);
-            localStorage.setItem("theme", theme);
-        }
-
-        // Initialize theme
-        document.addEventListener("DOMContentLoaded", () => {
-            const savedTheme = localStorage.getItem("theme") || "dark-twir";
-            setTheme(savedTheme);
-            document.getElementById("theme-select").value = savedTheme;
-        });
-
-        // Copy to clipboard functionality
-        async function copyToClipboard(text, button) {
-            try {
-                await navigator.clipboard.writeText(text);
-                
-                // Update button state
-                const originalContent = button.innerHTML;
-                button.innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
-                    </svg>
-                    Copied!
-                `;
-                button.classList.add('copied');
-                
-                // Reset after 2 seconds
-                setTimeout(() => {
-                    button.innerHTML = originalContent;
-                    button.classList.remove('copied');
-                }, 2000);
-            } catch (err) {
-                console.error('Failed to copy: ', err);
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
+            .copy-btn:hover {
+                border-color: var(--color-text-muted);
             }
-        }
-
-        // Copy code from DOM element
-        function copyCodeFromElement(codeElement) {
-            const text = codeElement.textContent;
-            const button = codeElement.closest('.code-container').querySelector('.copy-btn');
-            copyToClipboard(text, button);
-        }
-
-        // Open code in Rust Playground from DOM element
-        function openCodeInPlayground(codeElement, button, title = 'Rust Code') {
-            const text = codeElement.textContent;
-            openInRustPlayground(text, button, title);
-        }
-
-        // Open code in Rust Playground
-        function openInRustPlayground(code, button, title = 'Rust Code') {
-            try {
-                // Encode the code for URL
-                const encodedCode = encodeURIComponent(code);
-                
-                // Create playground URL
-                const playgroundUrl = `https://play.rust-lang.org/?version=stable&mode=debug&edition=2024&code=${encodedCode}`;
-                
-                // Open in new tab
-                window.open(playgroundUrl, '_blank');
-                
-                // Update button state briefly
-                const originalContent = button.innerHTML;
-                button.innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
-                    </svg>
-                    Opened!
-                `;
-                button.classList.add('copied');
-                
-                // Reset after 2 seconds
-                setTimeout(() => {
-                    button.innerHTML = originalContent;
-                    button.classList.remove('copied');
-                }, 2000);
-            } catch (err) {
-                console.error('Failed to open playground: ', err);
-                alert('Failed to open Rust Playground. Please try again.');
+            .copy-btn svg {
+                width: 14px;
+                height: 14px;
             }
-        }
-    </script>
-</body>
+
+            /* ---------- Footer ---------- */
+            .site-footer {
+                border-top: 1px solid var(--color-border);
+                padding: 1.5rem;
+                background: var(--color-surface);
+                color: var(--color-text-muted);
+                font-size: 0.85rem;
+            }
+            .site-footer-inner {
+                max-width: 1100px;
+                margin: 0 auto;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+            .site-footer .brand-logo {
+                height: 22px;
+            }
+            .site-footer a {
+                color: var(--color-text-muted);
+                text-decoration: none;
+            }
+            .site-footer a:hover {
+                color: var(--color-text);
+                text-decoration: underline;
+            }
+
+            @media (max-width: 768px) {
+                .container {
+                    padding: 1rem 1rem 3rem;
+                }
+                .header h1 {
+                    font-size: 1.75rem;
+                }
+                .stats {
+                    grid-template-columns: 1fr;
+                }
+                .admin-table {
+                    font-size: 0.875rem;
+                }
+                .theme-toggle {
+                    top: 0.5rem;
+                    right: 0.5rem;
+                }
+            }
+        </style>
+        <script>
+            // Apply the saved theme before paint to avoid a flash.
+            (function () {
+                try {
+                    var t = localStorage.getItem("theme");
+                    if (!t) {
+                        t =
+                            window.matchMedia &&
+                            window.matchMedia("(prefers-color-scheme: dark)")
+                                .matches
+                                ? "dark"
+                                : "light";
+                    }
+                    document.documentElement.setAttribute("data-theme", t);
+                } catch (_) {
+                    document.documentElement.setAttribute(
+                        "data-theme",
+                        "light",
+                    );
+                }
+            })();
+        </script>
+    </head>
+    <body>
+        <button
+            type="button"
+            class="theme-toggle"
+            id="theme-toggle"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+            onclick="toggleTheme()"
+        >
+            <svg
+                class="icon-moon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+            >
+                <path
+                    d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                    fill="currentColor"
+                    stroke="none"
+                />
+            </svg>
+            <svg
+                class="icon-sun"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+            >
+                <circle
+                    cx="12"
+                    cy="12"
+                    r="4"
+                    fill="currentColor"
+                    stroke="none"
+                />
+                <line x1="12" y1="2" x2="12" y2="5" />
+                <line x1="12" y1="19" x2="12" y2="22" />
+                <line x1="2" y1="12" x2="5" y2="12" />
+                <line x1="19" y1="12" x2="22" y2="12" />
+                <line x1="4.2" y1="4.2" x2="6.3" y2="6.3" />
+                <line x1="17.7" y1="17.7" x2="19.8" y2="19.8" />
+                <line x1="4.2" y1="19.8" x2="6.3" y2="17.7" />
+                <line x1="17.7" y1="6.3" x2="19.8" y2="4.2" />
+            </svg>
+        </button>
+
+        {% block content %}{% endblock %}
+
+        <footer class="site-footer">
+            <div class="site-footer-inner">
+                <a href="/" aria-label="corrode home">
+                    <img
+                        src="/static/assets/corrode-logo.svg"
+                        alt="corrode"
+                        class="brand-logo"
+                    />
+                </a>
+                <div>
+                    Hands-on Rust exercises &middot;
+                    <a href="https://corrode.dev" target="_blank" rel="noopener"
+                        >corrode.dev</a
+                    >
+                    &middot;
+                    <a
+                        href="https://github.com/corrode/course"
+                        target="_blank"
+                        rel="noopener"
+                        >source</a
+                    >
+                </div>
+            </div>
+        </footer>
+
+        <script>
+            // Toggle between light and dark.
+            function toggleTheme() {
+                var current =
+                    document.documentElement.getAttribute("data-theme") ||
+                    "light";
+                var next = current === "dark" ? "light" : "dark";
+                document.documentElement.setAttribute("data-theme", next);
+                try {
+                    localStorage.setItem("theme", next);
+                } catch (_) {}
+            }
+
+            // Back-compat shim for any callers still using setTheme(name).
+            function setTheme(theme) {
+                var t = theme === "dark" || theme === "light" ? theme : "light";
+                document.documentElement.setAttribute("data-theme", t);
+                try {
+                    localStorage.setItem("theme", t);
+                } catch (_) {}
+            }
+
+            // ---- Clipboard helpers used by admin/dashboard pages ----
+            async function copyToClipboard(text, button) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    if (button) {
+                        var orig = button.innerHTML;
+                        button.innerHTML = "Copied!";
+                        setTimeout(function () {
+                            button.innerHTML = orig;
+                        }, 1500);
+                    }
+                } catch (err) {
+                    console.error("Failed to copy:", err);
+                }
+            }
+            function copyCodeFromElement(codeElement) {
+                var text = codeElement.textContent;
+                var container = codeElement.closest(".code-container");
+                var button = container
+                    ? container.querySelector(".copy-btn")
+                    : null;
+                copyToClipboard(text, button);
+            }
+            function openCodeInPlayground(codeElement, button, title) {
+                openInRustPlayground(
+                    codeElement.textContent,
+                    button,
+                    title || "Rust Code",
+                );
+            }
+            function openInRustPlayground(code, button, _title) {
+                var encoded = encodeURIComponent(code);
+                var url =
+                    "https://play.rust-lang.org/?version=stable&mode=debug&edition=2024&code=" +
+                    encoded;
+                window.open(url, "_blank");
+            }
+        </script>
+    </body>
 </html>

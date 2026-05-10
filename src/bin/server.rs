@@ -1,3 +1,4 @@
+use cargo_course::exercises::{self, Exercise};
 use cargo_course::types::*;
 
 use anyhow::Result;
@@ -11,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, SqlitePool, Row, Sqlite};
 use std::env;
+use std::sync::Arc;
 use tower_http::services::ServeDir;
 use ulid::Ulid;
 
@@ -19,6 +21,7 @@ use ulid::Ulid;
 struct AppState {
     pool: SqlitePool,
     admin_token: String,
+    exercises: Arc<Vec<Exercise>>,
 }
 
 /// Database model for participants
@@ -47,11 +50,51 @@ struct DbSubmission {
 #[template(path = "landing.html")]
 struct LandingTemplate;
 
+/// Template for an exercise page
+#[derive(Template)]
+#[template(path = "exercise.html")]
+struct ExerciseTemplate {
+    exercise: Exercise,
+    /// `Some` when the page is rendered with participant context.
+    ulid: Option<String>,
+    /// Status for the *current* exercise (attempted/completed/perfected).
+    /// All `false` on the public route.
+    current_status: UiExerciseStatus,
+    /// One entry per exercise in the catalog, ordered by `number`.
+    /// Used to render the bottom "chapter list" navigation.
+    dots: Vec<ProgressDot>,
+}
+
+/// One row in the bottom chapter list.
+#[derive(Clone)]
+struct ProgressDot {
+    slug: String,
+    number: u8,
+    title: String,
+    /// Has at least one submission (regardless of pass/fail).
+    attempted: bool,
+    /// `tests_passed` on at least one submission.
+    completed: bool,
+    /// Tests + fmt + clippy all green on the same submission.
+    perfected: bool,
+    current: bool,
+    is_quiz: bool,
+}
+
+/// Per-exercise progress used by the chapter list and current-status badge.
+#[derive(Clone, Default)]
+struct UiExerciseStatus {
+    attempted: bool,
+    completed: bool,
+    perfected: bool,
+}
+
 /// Template for participant dashboard
 #[derive(Template)]
 #[template(path = "dashboard.html")]
 struct DashboardTemplate {
     participant_name: String,
+    ulid: String,
     exercises: Vec<ExerciseProgress>,
     stats: UserStats,
 }
@@ -206,13 +249,22 @@ async fn main() -> Result<()> {
     migrator.run(&pool).await?;
     info!("Database migrations completed");
 
-    let app_state = AppState { pool, admin_token: admin_token.clone() };
+    // Scan exercises once at startup.
+    let exercises = exercises::load(std::path::Path::new("examples"))
+        .map_err(|e| {
+            error!("Failed to scan exercises: {e:#}");
+            e
+        })?;
+    info!("Loaded {} exercises", exercises.len());
+
+    let app_state = AppState { pool, admin_token: admin_token.clone(), exercises };
 
     // Build API routes
     let api_routes = Router::new()
         .route("/register", post(api_register))
         .route("/submit", post(api_submit))
         .route("/status/{ulid}", get(api_status))
+        .route("/run", post(api_run))
         .with_state(app_state.clone());
 
     // Build main routes
@@ -220,6 +272,8 @@ async fn main() -> Result<()> {
         .route("/", get(landing_page))
         .route("/register", post(web_register))
         .route("/dashboard/{ulid}", get(participant_dashboard))
+        .route("/exercise/{slug}", get(public_exercise_page))
+        .route("/exercise/{ulid}/{slug}", get(participant_exercise_page))
         .route("/admin", get(admin_dashboard))
         .route("/admin/remove-participant/{ulid}", delete(admin_remove_participant))
         .nest("/api", api_routes)
@@ -281,7 +335,7 @@ async fn participant_dashboard(
     };
 
     // Get exercise progress
-    let exercises = match get_exercise_progress(&state.pool, &ulid).await {
+    let exercises = match get_exercise_progress(&state.pool, &ulid, &state.exercises).await {
         Ok(exercises) => exercises,
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get exercise progress").into_response(),
     };
@@ -294,6 +348,7 @@ async fn participant_dashboard(
 
     let template = DashboardTemplate {
         participant_name: participant.name,
+        ulid: ulid.clone(),
         exercises,
         stats,
     };
@@ -304,7 +359,111 @@ async fn participant_dashboard(
     }
 }
 
-/// Admin dashboard handler
+/// Public exercise page (no participant context).
+async fn public_exercise_page(
+    AxumPath(slug): AxumPath<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    render_exercise_page(&state, &slug, None).await
+}
+
+/// Exercise page with participant context.
+async fn participant_exercise_page(
+    AxumPath((ulid, slug)): AxumPath<(String, String)>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    // Verify the participant exists; if not, fall back to the public page so
+    // the URL still resolves to something useful.
+    let exists = sqlx::query("SELECT 1 FROM participants WHERE id = ?")
+        .bind(&ulid)
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten()
+        .is_some();
+
+    let ulid = if exists { Some(ulid) } else { None };
+    render_exercise_page(&state, &slug, ulid).await
+}
+
+async fn render_exercise_page(
+    state: &AppState,
+    slug: &str,
+    ulid: Option<String>,
+) -> axum::response::Response {
+    // Look up by slug or by file_stem so both `/exercise/strings_and_chars`
+    // and `/exercise/02_strings_and_chars` resolve.
+    let Some(idx) = state
+        .exercises
+        .iter()
+        .position(|e| e.slug == slug || e.file_stem == slug)
+    else {
+        return (StatusCode::NOT_FOUND, "Exercise not found").into_response();
+    };
+    let exercise = state.exercises[idx].clone();
+
+    // Per-exercise status — empty when no participant.
+    let progress: std::collections::HashMap<String, UiExerciseStatus> = match &ulid {
+        Some(u) => match get_exercise_progress(&state.pool, u, &state.exercises).await {
+            Ok(rows) => rows
+                .into_iter()
+                .map(|r| {
+                    (
+                        r.name,
+                        UiExerciseStatus {
+                            attempted: !r.submissions.is_empty(),
+                            completed: r.completed,
+                            perfected: r.perfected,
+                        },
+                    )
+                })
+                .collect(),
+            Err(e) => {
+                warn!("Failed to load progress for header dots: {e}");
+                std::collections::HashMap::new()
+            }
+        },
+        None => std::collections::HashMap::new(),
+    };
+
+    let current_status = progress
+        .get(&exercise.file_stem)
+        .cloned()
+        .unwrap_or_default();
+
+    let dots: Vec<ProgressDot> = state
+        .exercises
+        .iter()
+        .enumerate()
+        .map(|(i, e)| {
+            let s = progress.get(&e.file_stem).cloned().unwrap_or_default();
+            ProgressDot {
+                slug: e.slug.clone(),
+                number: e.number,
+                title: e.title.clone(),
+                attempted: s.attempted,
+                completed: s.completed,
+                perfected: s.perfected,
+                current: i == idx,
+                is_quiz: e.is_quiz(),
+            }
+        })
+        .collect();
+
+    let template = ExerciseTemplate {
+        exercise,
+        ulid,
+        current_status,
+        dots,
+    };
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+        Err(e) => {
+            error!("Failed to render exercise template: {e}");
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to render template").into_response()
+        }
+    }
+}
 async fn admin_dashboard(
     Query(query): Query<AdminQuery>,
     State(state): State<AppState>,
@@ -597,7 +756,7 @@ async fn api_status(
 ) -> Result<Json<ProgressResponse>, StatusCode> {
     info!("Status request for participant: {}", ulid);
     
-    match get_exercise_progress(&state.pool, &ulid).await {
+    match get_exercise_progress(&state.pool, &ulid, &state.exercises).await {
         Ok(exercises) => {
             let completed_count = exercises.iter().filter(|e| e.completed).count();
             let perfected_count = exercises.iter().filter(|e| e.perfected).count();
@@ -622,6 +781,139 @@ async fn api_status(
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
     }
+}
+
+/// Request body for `/api/run`. We accept any source code; the slug is
+/// optional and only used for logging.
+#[derive(Deserialize)]
+struct RunRequest {
+    code: String,
+    #[serde(default)]
+    slug: Option<String>,
+}
+
+/// Response shape mirroring the Playground `/execute` endpoint, plus a
+/// parsed list of test results extracted from stdout.
+#[derive(Serialize)]
+struct RunResponse {
+    success: bool,
+    stdout: String,
+    stderr: String,
+    test_results: Vec<TestResult>,
+}
+
+#[derive(Serialize)]
+struct TestResult {
+    name: String,
+    passed: bool,
+}
+
+/// Proxy handler: forwards the editor's source to play.rust-lang.org and
+/// returns the JSON. We intentionally keep this thin — the upstream
+/// already runs untrusted code in a sandbox and enforces its own rate
+/// limits, so we just pass status codes back through.
+async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, StatusCode> {
+    let slug = req.slug.as_deref().unwrap_or("<unknown>");
+    info!("/api/run: forwarding {} bytes for {slug}", req.code.len());
+
+    let body = serde_json::json!({
+        "channel": "stable",
+        "mode": "debug",
+        "edition": "2024",
+        "crateType": "bin",
+        "tests": true,
+        "backtrace": false,
+        "code": req.code,
+    });
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(20))
+        .build()
+        .map_err(|e| {
+            error!("reqwest client build failed: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let resp = client
+        .post("https://play.rust-lang.org/execute")
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| {
+            error!("Playground request failed: {e}");
+            StatusCode::BAD_GATEWAY
+        })?;
+
+    let status = resp.status();
+    if !status.is_success() {
+        warn!("Playground returned non-2xx: {status}");
+        // Forward 429 so the browser can show a 'rate limited' hint;
+        // collapse anything else to 502.
+        let mapped = if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+            StatusCode::TOO_MANY_REQUESTS
+        } else {
+            StatusCode::BAD_GATEWAY
+        };
+        return Err(mapped);
+    }
+
+    #[derive(Deserialize)]
+    struct PlaygroundResp {
+        success: bool,
+        stdout: String,
+        stderr: String,
+    }
+
+    let parsed: PlaygroundResp = resp.json().await.map_err(|e| {
+        error!("Failed to parse Playground response: {e}");
+        StatusCode::BAD_GATEWAY
+    })?;
+
+    let test_results = parse_test_results(&parsed.stdout);
+    info!(
+        "/api/run: {} test result(s) parsed (success={})",
+        test_results.len(),
+        parsed.success
+    );
+
+    Ok(Json(RunResponse {
+        success: parsed.success,
+        stdout: parsed.stdout,
+        stderr: parsed.stderr,
+        test_results,
+    }))
+}
+
+/// Parse `test some::name ... ok` / `... FAILED` lines from cargo test
+/// output. Anything we don't recognise is ignored, which is fine — the
+/// raw stdout is forwarded too, so the UI can still show it.
+fn parse_test_results(stdout: &str) -> Vec<TestResult> {
+    let mut out = Vec::new();
+    for line in stdout.lines() {
+        let line = line.trim_start();
+        let Some(rest) = line.strip_prefix("test ") else {
+            continue;
+        };
+        let Some((name, status)) = rest.rsplit_once(" ... ") else {
+            continue;
+        };
+        // The harness also emits per-suite summaries like
+        // "test result: ok. 4 passed; 0 failed". Skip those.
+        if name.starts_with("result:") {
+            continue;
+        }
+        let passed = match status.trim() {
+            "ok" => true,
+            "FAILED" => false,
+            // "ignored", "bench", etc. — skip.
+            _ => continue,
+        };
+        out.push(TestResult {
+            name: name.trim().to_string(),
+            passed,
+        });
+    }
+    out
 }
 
 /// Get user statistics for a specific participant
@@ -687,47 +979,24 @@ async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
 }
 
 /// Get exercise progress for a participant
-async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Result<Vec<ExerciseProgress>> {
-    // Scan the examples directory for exercise files
-    let examples_dir = std::path::Path::new("examples");
-    if !examples_dir.exists() {
-        return Err(anyhow::anyhow!("Examples directory not found"));
-    }
-
-    let mut exercise_files = Vec::new();
-    for entry in std::fs::read_dir(examples_dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        
-        if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-            if file_name.ends_with(".rs") && !file_name.starts_with("_") {
-                exercise_files.push(file_name.to_string());
-            }
-        }
-    }
-    
-    // Sort files for consistent ordering
-    exercise_files.sort();
-
+async fn get_exercise_progress<'a>(
+    pool: &'a SqlitePool,
+    ulid: &'a str,
+    catalog: &'a [Exercise],
+) -> Result<Vec<ExerciseProgress>> {
     // Get all submissions (both successful and failed)
-    let all_submissions: Vec<DbSubmission> =
-        sqlx::query_as("SELECT * FROM submissions WHERE participant_id = ? ORDER BY exercise_name, submitted_at DESC")
-            .bind(ulid)
-            .fetch_all(pool)
-            .await?;
+    let all_submissions: Vec<DbSubmission> = sqlx::query_as(
+        "SELECT * FROM submissions WHERE participant_id = ? ORDER BY exercise_name, submitted_at DESC",
+    )
+    .bind(ulid)
+    .fetch_all(pool)
+    .await?;
 
-    let mut exercises = Vec::new();
-    for file_name in exercise_files {
-        let exercise_name = file_name.strip_suffix(".rs").unwrap_or(&file_name);
-        
-        // Parse the exercise documentation
-        let (title, description) = parse_exercise_docs(&format!("examples/{}", file_name))
-            .unwrap_or_else(|_| (exercise_name.to_string(), String::new()));
-        
-        // Get all submissions for this exercise
+    let mut exercises = Vec::with_capacity(catalog.len());
+    for ex in catalog {
         let exercise_submissions: Vec<ExerciseSubmission> = all_submissions
             .iter()
-            .filter(|s| s.exercise_name == exercise_name)
+            .filter(|s| s.exercise_name == ex.file_stem)
             .map(|s| ExerciseSubmission {
                 id: s.id.clone(),
                 source_code: s.source_code.clone(),
@@ -738,29 +1007,19 @@ async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Resul
             })
             .collect();
 
-        // Check if this is a quiz exercise
-        let is_quiz = exercise_name.contains("quiz");
-        
-        // Determine exercise status based on submissions
-        let completed = if is_quiz {
-            // For quiz exercises, consider them completed if they've been accessed
-            // (We could track this differently if needed)
-            false // For now, quizzes are never marked as "completed" 
-        } else {
-            exercise_submissions.iter().any(|s| s.tests_passed)
-        };
-        let perfected = if is_quiz {
-            false // Quizzes don't have "perfected" status
-        } else {
-            exercise_submissions.iter().any(|s| s.tests_passed && s.fmt_passed && s.clippy_passed)
-        };
+        let is_quiz = ex.is_quiz();
+        let completed = !is_quiz && exercise_submissions.iter().any(|s| s.tests_passed);
+        let perfected = !is_quiz
+            && exercise_submissions
+                .iter()
+                .any(|s| s.tests_passed && s.fmt_passed && s.clippy_passed);
 
         exercises.push(ExerciseProgress {
-            name: exercise_name.to_string(),
+            name: ex.file_stem.clone(),
             completed,
             perfected,
-            title,
-            description,
+            title: ex.title.clone(),
+            description: String::new(),
             submissions: exercise_submissions,
             is_quiz,
         });
@@ -769,54 +1028,7 @@ async fn get_exercise_progress<'a>(pool: &'a SqlitePool, ulid: &'a str) -> Resul
     Ok(exercises)
 }
 
-/// Parse exercise documentation from Rust file doc comments
-fn parse_exercise_docs(file_path: &str) -> Result<(String, String)> {
-    let content = std::fs::read_to_string(file_path)?;
-    let lines: Vec<&str> = content.lines().collect();
-    
-    let mut title = String::new();
-    let mut description_lines = Vec::new();
-    let mut in_doc_comment = false;
-    let mut found_title = false;
-    
-    for line in lines {
-        let trimmed = line.trim();
-        
-        if trimmed.starts_with("//!") {
-            in_doc_comment = true;
-            let doc_content = trimmed.strip_prefix("//!").unwrap_or("").trim();
-            
-            if !found_title && doc_content.starts_with("# ") {
-                // Extract title from # heading
-                title = doc_content.strip_prefix("# ").unwrap_or(doc_content).to_string();
-                found_title = true;
-            } else if found_title && !doc_content.is_empty() {
-                // Collect description lines after title
-                description_lines.push(doc_content.to_string());
-            }
-        } else if in_doc_comment && !trimmed.starts_with("//") {
-            // End of doc comment block
-            break;
-        }
-    }
-    
-    // Join description lines and clean up
-    let description = description_lines
-        .join(" ")
-        .trim()
-        .to_string();
-    
-    // Fallback title if none found
-    if title.is_empty() {
-        title = file_path.strip_prefix("examples/")
-            .unwrap_or(file_path)
-            .strip_suffix(".rs")
-            .unwrap_or(file_path)
-            .to_string();
-    }
-    
-    Ok((title, description))
-}
+
 
 /// Calculate a hash for submission content to detect duplicates
 fn calculate_submission_hash(participant_id: &str, exercise_name: &str, source_code: &str) -> String {
