@@ -232,6 +232,7 @@
             "@codemirror/language": "https://esm.sh/*@codemirror/language@6.10.2",
             "@codemirror/commands": "https://esm.sh/*@codemirror/commands@6.6.0",
             "@codemirror/lang-rust": "https://esm.sh/*@codemirror/lang-rust@6.0.1",
+            "@codemirror/autocomplete": "https://esm.sh/*@codemirror/autocomplete@6.18.0",
             "@codemirror/theme-one-dark": "https://esm.sh/*@codemirror/theme-one-dark@6.1.2",
             "@lezer/common": "https://esm.sh/*@lezer/common@1.2.1",
             "@lezer/highlight": "https://esm.sh/*@lezer/highlight@1.2.0",
@@ -256,13 +257,14 @@
     // umbrella package, because that package re-bundles all its deps and
     // would re-introduce the duplication problem.
     try {
-        const [state, view, lang, commands, langRust, oneDark] =
+        const [state, view, lang, commands, langRust, autocomplete, oneDark] =
             await Promise.all([
                 import("@codemirror/state"),
                 import("@codemirror/view"),
                 import("@codemirror/language"),
                 import("@codemirror/commands"),
                 import("@codemirror/lang-rust"),
+                import("@codemirror/autocomplete"),
                 import("@codemirror/theme-one-dark"),
             ]);
 
@@ -285,6 +287,179 @@
         } = lang;
         const { defaultKeymap, history, historyKeymap, indentWithTab } =
             commands;
+        const {
+            autocompletion,
+            completionKeymap,
+            closeBrackets,
+            closeBracketsKeymap,
+        } = autocomplete;
+
+        // ---- Local-word + Rust-keyword completion ----
+        // No LSP; we just suggest Rust keywords plus identifiers already
+        // present in the buffer. Cheap, never wrong, and stops the editor
+        // from feeling "dumb" on long identifiers.
+        //
+        // Curated rather than exhaustive: covers strict + reserved Rust
+        // keywords, primitive types, and the prelude bits (types, traits,
+        // macros) that show up in nearly every exercise.
+        const RUST_KEYWORDS = [
+            // Strict keywords
+            "as",
+            "async",
+            "await",
+            "break",
+            "const",
+            "continue",
+            "crate",
+            "dyn",
+            "else",
+            "enum",
+            "extern",
+            "false",
+            "fn",
+            "for",
+            "if",
+            "impl",
+            "in",
+            "let",
+            "loop",
+            "match",
+            "mod",
+            "move",
+            "mut",
+            "pub",
+            "ref",
+            "return",
+            "self",
+            "Self",
+            "static",
+            "struct",
+            "super",
+            "trait",
+            "true",
+            "type",
+            "unsafe",
+            "use",
+            "where",
+            "while",
+            // Reserved keywords occasionally useful
+            "box",
+            "try",
+            "union",
+            // Primitive types
+            "bool",
+            "char",
+            "str",
+            "i8",
+            "i16",
+            "i32",
+            "i64",
+            "i128",
+            "isize",
+            "u8",
+            "u16",
+            "u32",
+            "u64",
+            "u128",
+            "usize",
+            "f32",
+            "f64",
+            // Prelude variants
+            "Some",
+            "None",
+            "Ok",
+            "Err",
+            // Prelude types
+            "Option",
+            "Result",
+            "Vec",
+            "String",
+            "Box",
+            "Rc",
+            "Arc",
+            "RefCell",
+            "Cell",
+            "HashMap",
+            "HashSet",
+            "BTreeMap",
+            "BTreeSet",
+            // Prelude traits
+            "Clone",
+            "Copy",
+            "Debug",
+            "Display",
+            "Default",
+            "PartialEq",
+            "Eq",
+            "PartialOrd",
+            "Ord",
+            "Hash",
+            "From",
+            "Into",
+            "TryFrom",
+            "TryInto",
+            "AsRef",
+            "AsMut",
+            "Iterator",
+            "IntoIterator",
+            "Drop",
+            "Send",
+            "Sync",
+            "Sized",
+            "Fn",
+            "FnMut",
+            "FnOnce",
+            // Common macros
+            "println!",
+            "print!",
+            "eprintln!",
+            "eprint!",
+            "format!",
+            "write!",
+            "writeln!",
+            "vec!",
+            "panic!",
+            "todo!",
+            "unimplemented!",
+            "unreachable!",
+            "assert!",
+            "assert_eq!",
+            "assert_ne!",
+            "debug_assert!",
+            "debug_assert_eq!",
+            "debug_assert_ne!",
+            "matches!",
+            "dbg!",
+            "include_str!",
+            "env!",
+        ];
+        const IDENT_RE = /[A-Za-z_][A-Za-z0-9_]*/g;
+        function localCompletions(context) {
+            const word = context.matchBefore(/[A-Za-z_][A-Za-z0-9_]*/);
+            if (!word || (word.from === word.to && !context.explicit)) {
+                return null;
+            }
+            const seen = new Set();
+            const options = [];
+            for (const kw of RUST_KEYWORDS) {
+                if (kw !== word.text) {
+                    seen.add(kw);
+                    options.push({ label: kw, type: "keyword" });
+                }
+            }
+            const text = context.state.doc.toString();
+            IDENT_RE.lastIndex = 0;
+            let m;
+            while ((m = IDENT_RE.exec(text))) {
+                const ident = m[0];
+                if (ident.length < 3) continue;
+                if (ident === word.text) continue;
+                if (seen.has(ident)) continue;
+                seen.add(ident);
+                options.push({ label: ident, type: "variable" });
+            }
+            return { from: word.from, options, validFor: /^[A-Za-z0-9_]*$/ };
+        }
 
         // ---- URL linkify plugin ----
         // Underlines bare http(s) URLs in the editor; Cmd/Ctrl-click
@@ -374,7 +549,15 @@
             indentOnInput(),
             bracketMatching(),
             syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-            keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+            closeBrackets(),
+            autocompletion({ override: [localCompletions] }),
+            keymap.of([
+                ...closeBracketsKeymap,
+                ...defaultKeymap,
+                ...historyKeymap,
+                ...completionKeymap,
+                indentWithTab,
+            ]),
             langRust.rust(),
             EditorView.lineWrapping,
             urlPlugin,
