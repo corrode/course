@@ -274,6 +274,8 @@
             highlightActiveLineGutter,
             lineNumbers,
             drawSelection,
+            Decoration,
+            ViewPlugin,
         } = view;
         const {
             syntaxHighlighting,
@@ -283,6 +285,76 @@
         } = lang;
         const { defaultKeymap, history, historyKeymap, indentWithTab } =
             commands;
+
+        // ---- URL linkify plugin ----
+        // Underlines bare http(s) URLs in the editor; Cmd/Ctrl-click
+        // (or middle-click) opens them in a new tab. Matches inside
+        // string literals and doc comments alike, since we're decorating
+        // the raw text.
+        const URL_RE = /\bhttps?:\/\/[^\s<>"'`)\]]+/g;
+        const urlMark = Decoration.mark({
+            class: "cm-url",
+            attributes: { title: "Click to open" },
+        });
+        function buildUrlDecorations(viewInstance) {
+            const builder = [];
+            for (const { from, to } of viewInstance.visibleRanges) {
+                const text = viewInstance.state.doc.sliceString(from, to);
+                let m;
+                URL_RE.lastIndex = 0;
+                while ((m = URL_RE.exec(text))) {
+                    // Trim trailing punctuation that's almost never part
+                    // of the URL itself.
+                    let end = m.index + m[0].length;
+                    while (end > m.index && ".,;:!?".includes(text[end - 1])) {
+                        end -= 1;
+                    }
+                    if (end > m.index) {
+                        builder.push(urlMark.range(from + m.index, from + end));
+                    }
+                }
+            }
+            return Decoration.set(builder, true);
+        }
+        const urlPlugin = ViewPlugin.fromClass(
+            class {
+                constructor(v) {
+                    this.decorations = buildUrlDecorations(v);
+                }
+                update(u) {
+                    if (u.docChanged || u.viewportChanged) {
+                        this.decorations = buildUrlDecorations(u.view);
+                    }
+                }
+            },
+            {
+                decorations: (v) => v.decorations,
+                eventHandlers: {
+                    mousedown(e, v) {
+                        if (e.button !== 0 && e.button !== 1) return;
+                        const target =
+                            e.target && e.target.closest
+                                ? e.target.closest(".cm-url")
+                                : null;
+                        if (!target) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(target.textContent, "_blank", "noopener");
+                    },
+                },
+            },
+        );
+        const urlTheme = EditorView.theme({
+            ".cm-url": {
+                textDecoration: "underline",
+                textDecorationColor: "rgba(127,127,127,0.6)",
+                textUnderlineOffset: "2px",
+                cursor: "pointer",
+            },
+            ".cm-url:hover": {
+                textDecorationColor: "currentColor",
+            },
+        });
 
         const fallback = document.getElementById("editor-fallback");
         const starter = fallback.value;
@@ -305,6 +377,8 @@
             keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
             langRust.rust(),
             EditorView.lineWrapping,
+            urlPlugin,
+            urlTheme,
         ];
         if (isDark) extensions.push(oneDark.oneDark);
 
