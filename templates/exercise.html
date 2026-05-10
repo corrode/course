@@ -16,7 +16,7 @@
         <div class="chapter-eyebrow">Chapter {{ exercise.number }}</div>
         <h1 class="exercise-title">{{ exercise.title }}</h1>
         {% match ulid %} {% when Some with (_u) %}
-        <div class="exercise-meta">
+        <div class="exercise-meta" id="exercise-meta">
             {% if current_status.perfected %}
             <span
                 class="status-badge status-perfected"
@@ -56,6 +56,11 @@
                 <h2 class="section-title">Try it yourself</h2>
             </div>
             <div class="exercise-actions">
+                <span
+                    id="action-status"
+                    class="action-status"
+                    aria-live="polite"
+                ></span>
                 <button
                     type="button"
                     class="btn btn-secondary"
@@ -84,14 +89,14 @@
                 {% match ulid %} {% when Some with (u) %}
                 <button
                     type="button"
-                    class="btn"
+                    class="btn btn-success"
                     id="submit-btn"
                     data-slug="{{ exercise.file_stem }}"
                     data-ulid="{{ u }}"
-                    style="background-color: var(--color-success, #2e7d32)"
-                    title="Run tests, then record the result against your account"
+                    title="Save this passing solution as your progress"
+                    style="display: none"
                 >
-                    Submit
+                    ✓ Submit
                 </button>
                 {% when None %} {% endmatch %}
             </div>
@@ -159,11 +164,23 @@
 
         <div
             id="run-status-row"
-            style="margin-top: 0.75rem; min-height: 1.2rem"
+            style="
+                margin-top: 0.75rem;
+                min-height: 1.2rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            "
         >
+            <span
+                id="run-spinner"
+                aria-hidden="true"
+                style="display: none"
+            ></span>
             <span
                 id="run-status"
                 style="color: var(--color-text-muted); font-size: 0.9rem"
+                aria-live="polite"
             ></span>
         </div>
 
@@ -201,10 +218,15 @@
         </div>
     </section>
 
-    <nav class="chapter-list" aria-label="All exercises">
+    <nav
+        class="chapter-list"
+        aria-label="All exercises"
+        style="--chapter-rows: {{ (dots.len() + 1) / 2 }}"
+    >
         {% for d in dots %} {% if d.current %}
         <span
             class="chapter-row current{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
+            id="current-chapter-row"
             aria-current="page"
         >
             <span class="chapter-num">{{ d.number }}</span>
@@ -555,6 +577,15 @@
         const starter = fallback.value;
         const mount = document.getElementById("editor-mount");
 
+        // Per-exercise draft persistence. Keyed by slug so each exercise
+        // keeps its own buffer; the starter is always recoverable from the
+        // textarea fallback (or the Reset button).
+        const slugForDraft = document.getElementById("run-btn").dataset.slug;
+        const DRAFT_KEY = `corrode:draft:${slugForDraft}`;
+        const savedDraft = localStorage.getItem(DRAFT_KEY);
+        const initialDoc =
+            savedDraft != null && savedDraft !== "" ? savedDraft : starter;
+
         // Pick light/dark based on the site's current theme.
         const isDark = (
             document.documentElement.getAttribute("data-theme") || ""
@@ -593,8 +624,51 @@
         ];
         if (isDark) extensions.push(oneDark.oneDark);
 
+        // Persist the buffer on every change (debounced) so navigating
+        // away or accidental reloads don't blow away the learner's work.
+        let saveTimer = null;
+        const persistDraft = (text) => {
+            try {
+                if (text === starter) {
+                    localStorage.removeItem(DRAFT_KEY);
+                } else {
+                    localStorage.setItem(DRAFT_KEY, text);
+                }
+            } catch (_) {
+                // Quota or private-mode failure: ignore; draft just won't persist.
+            }
+        };
+        const persistExt = EditorView.updateListener.of((u) => {
+            if (!u.docChanged) return;
+            // Any edit invalidates the previous Run result, so flip the
+            // primary action back to Run if Submit is currently showing.
+            const runEl = document.getElementById("run-btn");
+            const submitEl = document.getElementById("submit-btn");
+            if (submitEl && submitEl.style.display !== "none") {
+                submitEl.style.display = "none";
+                if (runEl) runEl.style.display = "";
+            }
+            // Stale pass/fail pill no longer reflects current code.
+            const pill = document.getElementById("action-status");
+            if (pill && pill.classList.contains("is-visible")) {
+                pill.classList.remove(
+                    "is-visible",
+                    "is-pass",
+                    "is-fail",
+                    "celebrate",
+                );
+                pill.textContent = "";
+            }
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(
+                () => persistDraft(u.state.doc.toString()),
+                300,
+            );
+        });
+        extensions.push(persistExt);
+
         const editor = new EditorView({
-            state: EditorState.create({ doc: starter, extensions }),
+            state: EditorState.create({ doc: initialDoc, extensions }),
             parent: mount,
         });
         // Style the editor wrapper so it matches our other panels.
@@ -674,6 +748,11 @@
         // because we never write back to it once CodeMirror takes over.
         const starter = document.getElementById("editor-fallback").value;
         window.exerciseEditor.setValue(starter);
+        // Drop the persisted draft so a reload re-shows the starter.
+        try {
+            const slug = document.getElementById("run-btn").dataset.slug;
+            localStorage.removeItem(`corrode:draft:${slug}`);
+        } catch (_) {}
     });
 
     document.getElementById("copy-btn").addEventListener("click", async (e) => {
@@ -718,11 +797,26 @@
         if (!window.exerciseEditor) return;
         runBtn.disabled = true;
         try {
-            const data = await runOnce(
-                window.exerciseEditor.getValue(),
-                runBtn.dataset.slug,
-            );
-            if (data) updateRunStatus(data);
+            const code = window.exerciseEditor.getValue();
+            const data = await runOnce(code, runBtn.dataset.slug);
+            if (!data) return;
+            updateRunStatus(data);
+
+            // When tests pass on the participant route, hide Run and reveal
+            // Submit in its place. Submitting always stores a version, so
+            // we keep it as an explicit click — but make it the obvious
+            // next action so passing tests can't be mistaken for "saved".
+            if (submitBtn) {
+                const total = data.test_results.length;
+                const passed = data.test_results.filter((t) => t.passed).length;
+                if (total > 0 && passed === total) {
+                    showSubmit();
+                    runStatus.textContent +=
+                        " — click Submit to save your progress.";
+                } else {
+                    showRun();
+                }
+            }
         } finally {
             runBtn.disabled = false;
         }
@@ -732,6 +826,84 @@
     // to /api/submit with the parsed flags. We trust the client — same
     // model as the CLI — since this is a self-directed learning platform.
     const submitBtn = document.getElementById("submit-btn");
+
+    // Two-step UX: Run is the primary action until tests pass, then it's
+    // swapped out for Submit. Any subsequent edit puts Run back so the
+    // learner re-validates before saving a new version.
+    function showSubmit() {
+        if (!submitBtn) return;
+        runBtn.style.display = "none";
+        submitBtn.style.display = "";
+        submitBtn.focus();
+    }
+    function showRun() {
+        if (!submitBtn) return;
+        runBtn.style.display = "";
+        submitBtn.style.display = "none";
+    }
+
+    // The textarea fallback dispatches native input events; the CodeMirror
+    // path handles the swap from inside its updateListener (see above).
+    const fallbackEl = document.getElementById("editor-fallback");
+    if (fallbackEl) fallbackEl.addEventListener("input", showRun);
+
+    async function submitOnce(code, passed, total) {
+        const slug = submitBtn.dataset.slug;
+        const ulid = submitBtn.dataset.ulid;
+        try {
+            const submitResp = await fetch("/api/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ulid,
+                    exercise_name: slug,
+                    source_code: code,
+                    tests_passed: true,
+                    clippy_passed: false,
+                    fmt_passed: false,
+                }),
+            });
+            if (submitResp.ok) {
+                runStatus.textContent = `✓ Saved progress — ${passed}/${total} tests passed.`;
+                runStatus.style.color = "var(--color-success, #2e7d32)";
+                markAsCompleted();
+                return true;
+            } else if (submitResp.status === 401) {
+                runStatus.textContent =
+                    "Submit rejected: your session is unknown. Try registering again.";
+            } else {
+                runStatus.textContent = `Submit failed (HTTP ${submitResp.status}).`;
+            }
+            runStatus.style.color = "var(--color-error, #c62828)";
+        } catch (err) {
+            console.error(err);
+            runStatus.textContent = "Submit failed: " + err.message;
+            runStatus.style.color = "var(--color-error, #c62828)";
+        }
+        return false;
+    }
+
+    // Optimistically reflect a successful submission in the page chrome:
+    // the status badge in the header and the current row in the sidebar.
+    // Avoids the "I passed but nothing changed" confusion until next
+    // navigation triggers a fresh server render.
+    function markAsCompleted() {
+        const meta = document.getElementById("exercise-meta");
+        if (meta) {
+            const hasPassed = meta.querySelector(
+                ".status-perfected, .status-completed",
+            );
+            if (!hasPassed) {
+                meta.innerHTML =
+                    '<span class="status-badge status-completed" title="Tests passed">✓ Passed</span>';
+            }
+        }
+        const row = document.getElementById("current-chapter-row");
+        if (row && !row.classList.contains("completed")) {
+            row.classList.add("attempted", "completed");
+        }
+    }
+
     if (submitBtn) {
         submitBtn.addEventListener("click", async () => {
             if (!window.exerciseEditor) return;
@@ -739,10 +911,7 @@
             runBtn.disabled = true;
             try {
                 const code = window.exerciseEditor.getValue();
-                const slug = submitBtn.dataset.slug;
-                const ulid = submitBtn.dataset.ulid;
-
-                const data = await runOnce(code, slug);
+                const data = await runOnce(code, submitBtn.dataset.slug);
                 if (!data) return;
                 updateRunStatus(data);
 
@@ -750,44 +919,14 @@
                 const passed = data.test_results.filter((t) => t.passed).length;
                 const tests_passed = total > 0 && passed === total;
 
-                runStatus.textContent +=
-                    " — " +
-                    (tests_passed
-                        ? "submitting…"
-                        : "not submitting (tests must pass first).");
                 if (!tests_passed) {
+                    runStatus.textContent +=
+                        " — not saving progress (tests must pass first).";
                     runStatus.style.color = "var(--color-error, #c62828)";
                     return;
                 }
 
-                const submitResp = await fetch("/api/submit", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        ulid,
-                        exercise_name: slug,
-                        source_code: code,
-                        tests_passed: true,
-                        clippy_passed: false,
-                        fmt_passed: false,
-                    }),
-                });
-
-                if (submitResp.ok) {
-                    runStatus.textContent = `✓ Submitted! ${passed}/${total} tests passed.`;
-                    runStatus.style.color = "var(--color-success, #2e7d32)";
-                } else if (submitResp.status === 401) {
-                    runStatus.textContent =
-                        "Submit rejected: your session is unknown. Try registering again.";
-                    runStatus.style.color = "var(--color-error, #c62828)";
-                } else {
-                    runStatus.textContent = `Submit failed (HTTP ${submitResp.status}).`;
-                    runStatus.style.color = "var(--color-error, #c62828)";
-                }
-            } catch (err) {
-                console.error(err);
-                runStatus.textContent = "Submit failed: " + err.message;
-                runStatus.style.color = "var(--color-error, #c62828)";
+                await submitOnce(code, passed, total);
             } finally {
                 submitBtn.disabled = false;
                 runBtn.disabled = false;
@@ -795,11 +934,42 @@
         });
     }
 
+    const runSpinner = document.getElementById("run-spinner");
+    const actionStatus = document.getElementById("action-status");
+
+    // Render the inline pill that lives next to the buttons. `tone` is
+    // "pass" | "fail" | "neutral"; passing the same pass tone twice
+    // re-triggers the celebratory pulse via animation restart.
+    function setActionStatus(text, tone) {
+        if (!actionStatus) return;
+        actionStatus.textContent = text;
+        actionStatus.classList.remove("is-pass", "is-fail", "celebrate");
+        if (!text) {
+            actionStatus.classList.remove("is-visible");
+            return;
+        }
+        actionStatus.classList.add("is-visible");
+        if (tone === "pass") {
+            actionStatus.classList.add("is-pass");
+            // Force a reflow so the keyframes restart even when the same
+            // class is re-applied (e.g. two passing Runs in a row).
+            void actionStatus.offsetWidth;
+            actionStatus.classList.add("celebrate");
+        } else if (tone === "fail") {
+            actionStatus.classList.add("is-fail");
+        }
+    }
+    function clearActionStatus() {
+        setActionStatus("", "neutral");
+    }
+
     // Run on play.rust-lang.org via /api/run. Returns the parsed JSON, or
     // null if the request failed (status text is updated either way).
     async function runOnce(code, slug) {
         runStatus.textContent = "Running on play.rust-lang.org…";
         runStatus.style.color = "var(--color-text-muted)";
+        runSpinner.style.display = "inline-block";
+        clearActionStatus();
         try {
             const resp = await fetch("/api/run", {
                 method: "POST",
@@ -827,6 +997,8 @@
             runStatus.textContent = "Run failed: " + err.message;
             runStatus.style.color = "var(--color-error, #c62828)";
             return null;
+        } finally {
+            runSpinner.style.display = "none";
         }
     }
 
@@ -840,12 +1012,27 @@
             runStatus.style.color = data.success
                 ? "var(--color-text-muted)"
                 : "var(--color-error, #c62828)";
+            setActionStatus(
+                data.success ? "Compiled" : "Did not compile",
+                data.success ? "neutral" : "fail",
+            );
         } else if (passed === total) {
             runStatus.textContent = `All ${total} tests passed.`;
             runStatus.style.color = "var(--color-success, #2e7d32)";
+            setActionStatus(
+                total === 1 ? "✓ 1 test passed" : `✓ ${total} tests passed`,
+                "pass",
+            );
         } else {
             runStatus.textContent = `${passed} / ${total} tests passed.`;
             runStatus.style.color = "var(--color-error, #c62828)";
+            const failed = total - passed;
+            setActionStatus(
+                failed === 1
+                    ? `✗ 1 test failed (${passed}/${total})`
+                    : `✗ ${failed} tests failed (${passed}/${total})`,
+                "fail",
+            );
         }
     }
 
@@ -883,10 +1070,102 @@
         const compileFailed = !data.success && data.test_results.length === 0;
         outputDetails.open = failed || compileFailed;
         outputStderr.textContent = data.stderr || data.stdout || "(no output)";
+
+        // Make sure the panel is visible without forcing a jump if it
+        // already is. `block: "nearest"` only scrolls when needed, so a
+        // user looking at the results stays put on subsequent runs.
+        outputPanel.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+        });
     }
 </script>
 
 <style>
+    /* Inline pill next to the Run/Submit buttons. Empty until a Run
+       finishes; then mirrors the result count in compact form. */
+    .action-status {
+        display: inline-flex;
+        align-items: center;
+        align-self: center;
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        color: var(--color-text-muted);
+        opacity: 0;
+        transform: translateY(2px);
+        transition:
+            opacity 0.2s ease,
+            transform 0.2s ease;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+    .action-status.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .action-status.is-fail {
+        color: var(--color-error);
+        background: color-mix(in srgb, var(--color-error) 12%, transparent);
+        border-color: color-mix(in srgb, var(--color-error) 35%, transparent);
+    }
+    .action-status.is-pass {
+        color: var(--color-success);
+        background: color-mix(in srgb, var(--color-success) 14%, transparent);
+        border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+    }
+    /* One-shot celebratory pulse on first pass of a Run. Subtle: a soft
+       green glow that fades out, plus a tiny scale bump. Respect users
+       who'd rather not see motion. */
+    .action-status.celebrate {
+        animation: action-pass-pulse 0.9s ease-out;
+    }
+    @keyframes action-pass-pulse {
+        0% {
+            transform: translateY(0) scale(1);
+            box-shadow: 0 0 0 0
+                color-mix(in srgb, var(--color-success) 55%, transparent);
+        }
+        40% {
+            transform: translateY(0) scale(1.06);
+            box-shadow: 0 0 0 8px
+                color-mix(in srgb, var(--color-success) 0%, transparent);
+        }
+        100% {
+            transform: translateY(0) scale(1);
+            box-shadow: 0 0 0 0
+                color-mix(in srgb, var(--color-success) 0%, transparent);
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .action-status.celebrate {
+            animation: none;
+        }
+    }
+
+    /* Inline spinner shown while a Run is in flight. */
+    #run-spinner {
+        width: 0.9rem;
+        height: 0.9rem;
+        border: 2px solid var(--color-border);
+        border-top-color: var(--color-primary);
+        border-radius: 50%;
+        display: inline-block;
+        animation: run-spin 0.7s linear infinite;
+    }
+    @keyframes run-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        #run-spinner {
+            animation-duration: 2s;
+        }
+    }
+
     /* Reading column for the chapter prose. */
     .chapter-prose {
         max-width: 100%;
@@ -1036,6 +1315,7 @@
         font-size: 2.75rem;
         font-weight: 700;
         letter-spacing: -0.015em;
+        color: #fc218a;
     }
     .exercise-meta {
         display: inline-flex;
@@ -1131,8 +1411,14 @@
         max-width: 60rem;
     }
     @media (min-width: 720px) {
+        /* Two-column layout where numbers increment top-to-bottom inside
+           each column (column 1 = first half, column 2 = second half),
+           rather than left-to-right across rows. The row count is set per
+           page via the `--chapter-rows` custom property on .chapter-list. */
         .chapter-list {
             grid-template-columns: 1fr 1fr;
+            grid-auto-flow: column;
+            grid-template-rows: repeat(var(--chapter-rows, 10), auto);
         }
     }
     .chapter-row {

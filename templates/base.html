@@ -147,13 +147,24 @@
                 background-color: var(--color-primary-muted);
             }
             .btn-secondary {
-                background-color: transparent;
+                background-color: var(--color-surface);
                 color: var(--color-text);
                 border: 1px solid var(--color-border);
             }
             .btn-secondary:hover {
-                background-color: var(--color-surface);
+                background-color: var(--color-background);
                 border-color: var(--color-text-muted);
+                color: var(--color-text);
+            }
+            .btn-success {
+                background-color: var(--color-success);
+                border-color: var(--color-success);
+                color: #fff;
+            }
+            .btn-success:hover {
+                /* Slight darken on hover; falls back to filter so we don't
+                   need a separate token per theme. */
+                filter: brightness(0.92);
             }
 
             .exercise-list {
@@ -285,11 +296,14 @@
                 filter: var(--logo-filter);
             }
 
-            /* ---------- Theme toggle (top-right) ---------- */
+            /* ---------- Theme toggle (top-right, aligned to container) ---------- */
             .theme-toggle {
                 position: fixed;
                 top: 1rem;
-                right: 1rem;
+                /* Align the toggle's right edge with the page content's right
+                   edge (1100px container + 1.5rem padding). On narrow viewports,
+                   fall back to a comfortable 1rem inset. */
+                right: max(1rem, calc((100vw - 1100px) / 2 + 1.5rem));
                 z-index: 1000;
                 width: 2.25rem;
                 height: 2.25rem;
