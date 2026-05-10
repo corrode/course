@@ -1,6 +1,6 @@
 use cargo_course::types::*;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
 use std::env;
 use std::fs;
@@ -72,7 +72,11 @@ async fn main() -> Result<()> {
     match cli.command {
         Commands::Course(args) => match args.command {
             CourseCommands::Init { token } => handle_init(token).await,
-            CourseCommands::Submit { file, pedantic, all } => handle_submit(file.as_deref(), pedantic, all).await,
+            CourseCommands::Submit {
+                file,
+                pedantic,
+                all,
+            } => handle_submit(file.as_deref(), pedantic, all).await,
             CourseCommands::Status => handle_status().await,
             CourseCommands::Open => handle_open().await,
             CourseCommands::Token => handle_token().await,
@@ -86,9 +90,9 @@ async fn handle_token() -> Result<()> {
             println!("{}", token.as_str());
             Ok(())
         }
-        Err(_) => {
-            Err(anyhow!("No token found. Run 'cargo course init' to register."))
-        }
+        Err(_) => Err(anyhow!(
+            "No token found. Run 'cargo course init' to register."
+        )),
     }
 }
 
@@ -155,7 +159,7 @@ async fn handle_submit(file: Option<&str>, pedantic: bool, all: bool) -> Result<
     if all {
         return handle_submit_all(pedantic).await;
     }
-    
+
     let file = file.ok_or_else(|| anyhow!("File path is required when not using --all"))?;
     // 1. Read source code from file
     let source_code =
@@ -212,24 +216,24 @@ async fn handle_submit(file: Option<&str>, pedantic: bool, all: bool) -> Result<
 /// Submit all exercises that pass tests.
 async fn handle_submit_all(pedantic: bool) -> Result<()> {
     println!("🔍 Scanning for exercises...");
-    
+
     // Read token from file
     let token = read_token()?;
-    
+
     // Get list of all exercise files
     let exercise_files = find_exercise_files()?;
     if exercise_files.is_empty() {
         println!("❌ No exercise files found in examples/ directory");
         return Ok(());
     }
-    
+
     println!("📋 Found {} exercise files", exercise_files.len());
     println!("🚀 Testing exercises in parallel...");
-    
+
     // Process exercises in parallel using bounded concurrency
     let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(4)); // Limit to 4 concurrent operations
     let token = std::sync::Arc::new(token);
-    
+
     let tasks: Vec<_> = exercise_files
         .into_iter()
         .map(|file_path| {
@@ -241,11 +245,11 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
             })
         })
         .collect();
-    
+
     // Wait for all tasks to complete and collect results
     let mut successful_submissions = 0;
     let mut failed_exercises = Vec::new();
-    
+
     for task in tasks {
         match task.await {
             Ok(result) => match result {
@@ -263,7 +267,7 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
             }
         }
     }
-    
+
     // Summary
     println!("\n📊 Submission Summary:");
     println!("✅ Successfully submitted: {successful_submissions}");
@@ -271,11 +275,11 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
         println!("❌ Failed exercises: {}", failed_exercises.len());
         println!("   {}", failed_exercises.join(", "));
     }
-    
+
     if successful_submissions > 0 {
         println!("\n🎉 Use 'cargo course status' to see your updated progress!");
     }
-    
+
     Ok(())
 }
 
@@ -293,10 +297,10 @@ async fn process_single_exercise(
             return Err(file_path);
         }
     };
-    
+
     print!("🧪 Testing {exercise_name}... ");
     std::io::stdout().flush().unwrap();
-    
+
     // Run tests for this exercise
     let (tests_passed, _test_output) = match run_cargo_test(&exercise_name).await {
         Ok(result) => result,
@@ -305,12 +309,12 @@ async fn process_single_exercise(
             return Err(exercise_name);
         }
     };
-    
+
     if !tests_passed {
         println!("❌ Tests failed");
         return Err(exercise_name);
     }
-    
+
     // Tests passed, now read source code
     let source_code = match fs::read_to_string(&file_path) {
         Ok(content) => content,
@@ -319,7 +323,7 @@ async fn process_single_exercise(
             return Err(exercise_name);
         }
     };
-    
+
     // If pedantic flag, also run fmt + clippy (these are global checks)
     let (fmt_passed, clippy_passed) = if pedantic {
         match (run_cargo_fmt().await, run_cargo_clippy().await) {
@@ -332,7 +336,7 @@ async fn process_single_exercise(
     } else {
         (false, false)
     };
-    
+
     // Submit to server
     let submission_result = submit_to_server(SubmissionRequest {
         ulid: token.as_str().to_string(),
@@ -341,8 +345,9 @@ async fn process_single_exercise(
         tests_passed,
         clippy_passed,
         fmt_passed,
-    }).await;
-    
+    })
+    .await;
+
     match submission_result {
         Ok(_) => {
             if pedantic && fmt_passed && clippy_passed {
@@ -360,27 +365,37 @@ async fn process_single_exercise(
 }
 
 /// Find all exercise files in the examples directory.
+///
+/// Each chapter is a directory `examples/NN_slug/` containing a `main.rs`.
+/// Returns the path to each chapter's `main.rs`.
 fn find_exercise_files() -> Result<Vec<String>> {
     let examples_dir = Path::new("examples");
     if !examples_dir.exists() {
         return Err(anyhow!("examples/ directory not found"));
     }
-    
+
     let mut exercise_files = Vec::new();
-    
+
     for entry in fs::read_dir(examples_dir)? {
         let entry = entry?;
         let path = entry.path();
-        
-        if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-            if file_name.ends_with(".rs") && !file_name.starts_with("_") {
-                if let Some(path_str) = path.to_str() {
-                    exercise_files.push(path_str.to_string());
-                }
+        if !path.is_dir() {
+            continue;
+        }
+        let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
+        if dir_name.starts_with('_') || dir_name.starts_with('.') {
+            continue;
+        }
+        let main_rs = path.join("main.rs");
+        if main_rs.exists() {
+            if let Some(p) = main_rs.to_str() {
+                exercise_files.push(p.to_string());
             }
         }
     }
-    
+
     // Sort files for consistent ordering
     exercise_files.sort();
     Ok(exercise_files)
@@ -410,24 +425,43 @@ async fn handle_status() -> Result<()> {
     Ok(())
 }
 
-/// Extract exercise name from file path.
+/// Extract exercise name from a file or chapter path.
 ///
 /// Examples:
-/// - `examples/01_strings.rs` → `01_strings`
-/// - `01_strings.rs` → `01_strings`
+/// - `examples/00_hello_rust/main.rs` → `00_hello_rust`
+/// - `examples/00_hello_rust/`        → `00_hello_rust`
+/// - `examples/00_hello_rust`         → `00_hello_rust`
+/// - `00_hello_rust`                  → `00_hello_rust`
+/// - `examples/01_strings.rs`         → `01_strings` (legacy flat layout)
 fn extract_exercise_name(file_path: &str) -> Result<String> {
     let path = Path::new(file_path);
-    let filename = path
+
+    // Chapter-directory layout: a path ending in `main.rs` belongs to the
+    // parent chapter directory.
+    if path.file_name().and_then(|n| n.to_str()) == Some("main.rs") {
+        if let Some(parent) = path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|s| s.to_str())
+        {
+            return Ok(parent.to_string());
+        }
+    }
+
+    // Bare directory or chapter slug — use the last path component as-is
+    // (works for `examples/00_hello_rust/`, `examples/00_hello_rust`, and
+    // a bare `00_hello_rust`).
+    let last = path
         .file_name()
         .ok_or_else(|| anyhow!("Invalid file path"))?
         .to_str()
         .ok_or_else(|| anyhow!("Invalid filename"))?;
 
-    // Remove .rs extension
-    if let Some(name) = filename.strip_suffix(".rs") {
+    // Legacy flat layout: still strip a trailing `.rs` if present.
+    if let Some(name) = last.strip_suffix(".rs") {
         Ok(name.to_string())
     } else {
-        Err(anyhow!("File must have .rs extension"))
+        Ok(last.to_string())
     }
 }
 
@@ -475,7 +509,8 @@ async fn register_with_server(name: &Name) -> Result<String> {
                      • The course server is not running\n\
                      • You're working offline\n\n\
                      💡 For offline practice, use manual testing instead:\n\
-                     cargo test --example 00_hello_rust", get_server_url()
+                     cargo test --example 00_hello_rust",
+                    get_server_url()
                 )
             } else {
                 anyhow!("Network error: {e}")
@@ -503,7 +538,8 @@ async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
                 anyhow!(
                     "❌ Cannot connect to the corrode course server at {}\n\n\
                      💡 Your solution was tested locally but couldn't be submitted.\n\
-                     For offline practice, continue using: cargo test --example <exercise_name>", get_server_url()
+                     For offline practice, continue using: cargo test --example <exercise_name>",
+                    get_server_url()
                 )
             } else {
                 anyhow!("Network error: {e}")
@@ -513,10 +549,12 @@ async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
     if !response.status().is_success() {
         let error_msg = match response.status() {
             reqwest::StatusCode::UNAUTHORIZED => {
-                "Invalid token. Please run 'cargo course init' to register or check your token.".to_string()
+                "Invalid token. Please run 'cargo course init' to register or check your token."
+                    .to_string()
             }
             reqwest::StatusCode::BAD_REQUEST => {
-                "Invalid submission data. Please check your exercise file and try again.".to_string()
+                "Invalid submission data. Please check your exercise file and try again."
+                    .to_string()
             }
             status => {
                 format!("Submission failed: {}", status)
@@ -532,7 +570,11 @@ async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
 async fn fetch_progress(token: &Token) -> Result<ProgressResponse> {
     let client = reqwest::Client::new();
     let response = client
-        .get(&format!("{}/api/status/{}", get_server_url(), token.as_str()))
+        .get(&format!(
+            "{}/api/status/{}",
+            get_server_url(),
+            token.as_str()
+        ))
         .send()
         .await
         .map_err(|e| {
@@ -540,7 +582,8 @@ async fn fetch_progress(token: &Token) -> Result<ProgressResponse> {
                 anyhow!(
                     "❌ Cannot connect to the corrode course server at {}\n\n\
                      💡 Server is not available to show your progress.\n\
-                     Continue practicing with: cargo test --example <exercise_name>", get_server_url()
+                     Continue practicing with: cargo test --example <exercise_name>",
+                    get_server_url()
                 )
             } else {
                 anyhow!("Network error: {e}")

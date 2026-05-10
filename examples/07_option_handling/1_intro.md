@@ -1,0 +1,63 @@
+# Option<T>: when a value might be missing
+
+Rust has no `null`. Instead, when a value might be absent, the type makes
+that explicit using `Option<T>`:
+
+```rust
+enum Option<T> {
+    Some(T),
+    None,
+}
+```
+
+The compiler will not let you accidentally use a `None` as if it were a
+real value. Every time you have an `Option`, you have to deal with both
+cases. That's the whole point.
+
+There are two main ways to unwrap an option. Pattern matching is the
+fundamental tool:
+
+```rust
+match find_user(id) {
+    Some(name) => println!("found {name}"),
+    None => println!("no such user"),
+}
+```
+
+But for common cases there are shorter combinators:
+
+```rust
+let port = settings.port.unwrap_or(8080);     // value or fallback
+let upper = name.map(|s| s.to_uppercase());   // transform if Some
+let len = maybe_str.map_or(0, |s| s.len());   // transform-or-default
+```
+
+A useful one to know: `if let` lets you handle just the `Some` case
+without writing a full `match`:
+
+```rust
+if let Some(user) = find_user(id) {
+    println!("welcome, {user}");
+}
+```
+
+Many standard-library methods return `Option`. `.first()`, `.last()`,
+`.next()` on iterators, `.get()` on slices and maps, `.find(...)` on
+iterators. You'll meet `Option` everywhere.
+
+## Useful from the standard library
+
+- [`Option::unwrap_or`](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or)
+  returns the inner value or a fallback. The reach-for-this-first method.
+- [`Option::map`](https://doc.rust-lang.org/std/option/enum.Option.html#method.map)
+  applies a function inside the `Some`, leaves `None` alone. Like a
+  one-element pipeline.
+- [`Option::map_or`](https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or)
+  combines `.map(...)` and `.unwrap_or(...)` into one call.
+- [`Option::is_some`](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_some)
+  and [`Option::is_none`](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_none)
+  for plain bool checks.
+- [`Iterator::find`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find)
+  returns the first matching item as an `Option`. Common in lookups.
+- [The Rust Book on `if let`](https://doc.rust-lang.org/book/ch06-03-if-let.html)
+  for the lighter alternative to `match`.

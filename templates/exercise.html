@@ -43,7 +43,9 @@
         👋 Anyone can read and edit this exercise.
         <a href="/">Register</a> to track your progress.
     </div>
-    {% when Some with (_u) %} {% endmatch %}
+    {% when Some with (_u) %} {% endmatch %} {% for note in exercise.notes %}
+    <div class="chapter-prose exercise-prose">{{ note.html|safe }}</div>
+    {% endfor %}
 
     <div class="chapter-prose exercise-prose">
         {{ exercise.intro_html|safe }}
@@ -586,7 +588,10 @@
         const initialDoc =
             savedDraft != null && savedDraft !== "" ? savedDraft : starter;
 
-        // Pick light/dark based on the site's current theme.
+        // Pick light/dark based on the site's current theme. The choice
+        // lives in a compartment so the theme toggle can swap it without
+        // rebuilding the editor (see the MutationObserver further down).
+        const themeCompartment = new Compartment();
         const isDark = (
             document.documentElement.getAttribute("data-theme") || ""
         ).startsWith("dark");
@@ -621,8 +626,8 @@
             EditorView.lineWrapping,
             urlPlugin,
             urlTheme,
+            themeCompartment.of(isDark ? oneDark.oneDark : []),
         ];
-        if (isDark) extensions.push(oneDark.oneDark);
 
         // Persist the buffer on every change (debounced) so navigating
         // away or accidental reloads don't blow away the learner's work.
@@ -720,6 +725,86 @@
                 renderVim(vimOn);
             });
         }
+
+        // React to the site-wide light/dark toggle. The toggle just flips
+        // `data-theme` on `<html>`; we watch that attribute and reconfigure
+        // the theme compartment so the editor swaps palettes immediately,
+        // no reload needed. Same handle the prose CSS uses, so editor and
+        // prose stay in sync.
+        const themeObserver = new MutationObserver(() => {
+            const dark = (
+                document.documentElement.getAttribute("data-theme") || ""
+            ).startsWith("dark");
+            editor.dispatch({
+                effects: themeCompartment.reconfigure(
+                    dark ? oneDark.oneDark : [],
+                ),
+            });
+        });
+        themeObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["data-theme"],
+        });
+
+        // Read-only CM6 instance for the "Compiler / runtime output" pane.
+        // Reusing the Rust grammar (and the same theme compartment trick)
+        // gives us syntax-highlighted snippets inside the diagnostic
+        // output without inventing our own ANSI replacement. Everything
+        // that isn't recognized as Rust falls back to plain monospace,
+        // which matches what a terminal would show anyway.
+        let outputView = null;
+        const outputThemeCompartment = new Compartment();
+        const outputMount = document.getElementById("output-stderr");
+        window.renderCargoOutput = (text) => {
+            if (!outputMount) return;
+            const dark = (
+                document.documentElement.getAttribute("data-theme") || ""
+            ).startsWith("dark");
+            if (!outputView) {
+                // First render: replace the <pre> contents with a CM6 view.
+                outputMount.textContent = "";
+                outputMount.style.padding = "0";
+                outputMount.style.fontFamily = "";
+                outputMount.style.fontSize = "";
+                const extensions = [
+                    EditorView.editable.of(false),
+                    EditorState.readOnly.of(true),
+                    EditorView.lineWrapping,
+                    langRust.rust(),
+                    syntaxHighlighting(defaultHighlightStyle, {
+                        fallback: true,
+                    }),
+                    outputThemeCompartment.of(dark ? oneDark.oneDark : []),
+                    EditorView.theme({
+                        "&": {
+                            backgroundColor: "transparent",
+                            fontSize: "0.8rem",
+                        },
+                        ".cm-content": {
+                            fontFamily: '"SF Mono", Monaco, monospace',
+                            padding: "0.85rem 1rem",
+                        },
+                        ".cm-scroller": { overflow: "auto" },
+                        "&.cm-focused": { outline: "none" },
+                    }),
+                ];
+                outputView = new EditorView({
+                    state: EditorState.create({ doc: text, extensions }),
+                    parent: outputMount,
+                });
+            } else {
+                outputView.dispatch({
+                    changes: {
+                        from: 0,
+                        to: outputView.state.doc.length,
+                        insert: text,
+                    },
+                    effects: outputThemeCompartment.reconfigure(
+                        dark ? oneDark.oneDark : [],
+                    ),
+                });
+            }
+        };
     } catch (err) {
         console.warn(
             "CodeMirror failed to load, keeping textarea fallback:",
@@ -1069,7 +1154,12 @@
         const failed = data.test_results.some((t) => !t.passed);
         const compileFailed = !data.success && data.test_results.length === 0;
         outputDetails.open = failed || compileFailed;
-        outputStderr.textContent = data.stderr || data.stdout || "(no output)";
+        const raw = data.stderr || data.stdout || "(no output)";
+        if (typeof window.renderCargoOutput === "function") {
+            window.renderCargoOutput(raw);
+        } else {
+            outputStderr.textContent = raw;
+        }
 
         // Make sure the panel is visible without forcing a jump if it
         // already is. `block: "nearest"` only scrolls when needed, so a
@@ -1078,6 +1168,63 @@
             behavior: "smooth",
             block: "nearest",
         });
+    }
+</script>
+
+<script type="module">
+    // Syntax-highlight code blocks in chapter prose (notes + intro)
+    // using the same Lezer Rust grammar that powers the editor. No
+    // extra dependency — everything below is already in the import map
+    // for CodeMirror, so the parser is shared between editor and prose.
+    //
+    // We use `classHighlighter` so the resulting `<span class="tok-...">`
+    // markup is themed by plain CSS (see the `.tok-*` rules in the style
+    // block below), which keeps the prose colors decoupled from whichever
+    // CodeMirror theme the editor is running.
+    try {
+        const [{ parser }, { highlightTree, classHighlighter }] =
+            await Promise.all([
+                import("@lezer/rust"),
+                import("@lezer/highlight"),
+            ]);
+
+        const highlightRust = (code) => {
+            const tree = parser.parse(code);
+            let out = "";
+            let pos = 0;
+            const escape = (s) =>
+                s
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+            highlightTree(tree, classHighlighter, (from, to, cls) => {
+                if (from > pos) out += escape(code.slice(pos, from));
+                out += `<span class="${cls}">${escape(code.slice(from, to))}</span>`;
+                pos = to;
+            });
+            if (pos < code.length) out += escape(code.slice(pos));
+            return out;
+        };
+
+        // Most prose snippets in this course are Rust, and pulldown-cmark
+        // won't tag fences that didn't specify a language. Treat both
+        // unmarked blocks and explicit `rust`/`rs` fences as Rust; leave
+        // other languages alone (they stay in the base prose color).
+        document
+            .querySelectorAll(".exercise-prose pre > code")
+            .forEach((el) => {
+                const langClass = [...el.classList].find((c) =>
+                    c.startsWith("language-"),
+                );
+                const lang = langClass
+                    ? langClass.slice("language-".length)
+                    : "";
+                if (lang && lang !== "rust" && lang !== "rs") return;
+                el.innerHTML = highlightRust(el.textContent);
+            });
+    } catch (err) {
+        // Highlighting is non-essential; fall back silently to plain text.
+        console.warn("prose syntax highlighting failed to load", err);
     }
 </script>
 
@@ -1166,6 +1313,72 @@
         }
     }
 
+    /* GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, etc). pulldown-cmark
+       0.12 with `ENABLE_GFM` emits a single class on the blockquote, e.g.
+       `<blockquote class="markdown-alert-note">`, with no title element.
+       We attach the colored bar/background via the class, then synthesize
+       a small uppercase "NOTE" / "TIP" / etc. label via `::before` content
+       so notes don't have to write the label themselves. */
+    .exercise-prose blockquote[class^="markdown-alert-"] {
+        margin: 1.25rem 0;
+        padding: 0.75rem 1rem 0.5rem;
+        border-left: 4px solid var(--md-alert-color, var(--color-primary));
+        background: color-mix(
+            in srgb,
+            var(--md-alert-color, var(--color-primary)) 8%,
+            transparent
+        );
+        border-radius: 0 6px 6px 0;
+        color: var(--color-text);
+        /* Override the generic blockquote styling further down. */
+        font-style: normal;
+    }
+    .exercise-prose blockquote[class^="markdown-alert-"] > :first-child {
+        margin-top: 0;
+    }
+    .exercise-prose blockquote[class^="markdown-alert-"] > :last-child {
+        margin-bottom: 0;
+    }
+    .exercise-prose blockquote[class^="markdown-alert-"]::before {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--md-alert-color, var(--color-primary));
+        margin-bottom: 0.4rem;
+    }
+    .exercise-prose .markdown-alert-note {
+        --md-alert-color: var(--color-primary);
+    }
+    .exercise-prose .markdown-alert-note::before {
+        content: "Note";
+    }
+    .exercise-prose .markdown-alert-tip {
+        --md-alert-color: var(--color-success, #1a7f37);
+    }
+    .exercise-prose .markdown-alert-tip::before {
+        content: "Tip";
+    }
+    .exercise-prose .markdown-alert-important {
+        --md-alert-color: #8250df;
+    }
+    .exercise-prose .markdown-alert-important::before {
+        content: "Important";
+    }
+    .exercise-prose .markdown-alert-warning {
+        --md-alert-color: var(--color-warning, #9a6700);
+    }
+    .exercise-prose .markdown-alert-warning::before {
+        content: "Warning";
+    }
+    .exercise-prose .markdown-alert-caution {
+        --md-alert-color: var(--color-error, #d1242f);
+    }
+    .exercise-prose .markdown-alert-caution::before {
+        content: "Caution";
+    }
+
     /* Reading column for the chapter prose. */
     .chapter-prose {
         max-width: 100%;
@@ -1215,10 +1428,12 @@
         font-size: 0.88em;
         color: var(--color-text);
     }
-    /* Block code: gorgeous rounded dark block, Catppuccin Mocha base. */
+    /* Block code: rounded panel that follows the active theme. The dark
+       palette is Catppuccin Mocha; the light palette is GitHub-ish so it
+       sits naturally on the GitHub Primer light theme used elsewhere. */
     .exercise-prose pre {
-        background-color: #1e1e2e;
-        border: 1px solid #313244;
+        background-color: #f6f8fa;
+        border: 1px solid var(--color-border);
         border-radius: 12px;
         padding: 1.1rem 1.25rem;
         margin: 1.5rem 0;
@@ -1228,10 +1443,101 @@
     .exercise-prose pre code {
         background: none;
         padding: 0;
-        color: #cdd6f4;
+        color: #24292f;
         font-family: "SF Mono", Monaco, monospace;
         font-size: 0.9rem;
         line-height: 1.55;
+    }
+    [data-theme="dark"] .exercise-prose pre {
+        background-color: #1e1e2e;
+        border-color: #313244;
+    }
+    [data-theme="dark"] .exercise-prose pre code {
+        color: #cdd6f4;
+    }
+    /* Lezer `classHighlighter` token classes. Same parser the editor uses,
+       so identifiers tokenize identically in prose and code. Two palettes:
+       a GitHub-Primer-flavored set for light, Catppuccin Mocha for dark.
+       Anything not listed falls back to the base prose code color. */
+    .exercise-prose .tok-keyword {
+        color: #cf222e;
+    }
+    .exercise-prose .tok-typeName,
+    .exercise-prose .tok-className {
+        color: #953800;
+    }
+    .exercise-prose .tok-string,
+    .exercise-prose .tok-string2 {
+        color: #0a3069;
+    }
+    .exercise-prose .tok-number,
+    .exercise-prose .tok-bool,
+    .exercise-prose .tok-atom,
+    .exercise-prose .tok-literal {
+        color: #0550ae;
+    }
+    .exercise-prose .tok-variableName.tok-definition,
+    .exercise-prose .tok-propertyName.tok-definition {
+        color: #8250df;
+    }
+    .exercise-prose .tok-macroName,
+    .exercise-prose .tok-meta {
+        color: #116329;
+    }
+    .exercise-prose .tok-comment {
+        color: #6e7781;
+        font-style: italic;
+    }
+    .exercise-prose .tok-operator,
+    .exercise-prose .tok-punctuation {
+        color: #57606a;
+    }
+    .exercise-prose .tok-invalid {
+        color: #cf222e;
+    }
+    .exercise-prose .tok-emphasis {
+        font-style: italic;
+    }
+    .exercise-prose .tok-strong {
+        font-weight: 700;
+    }
+    /* Dark-theme overrides — Catppuccin Mocha. Scoped under
+       `[data-theme="dark"]` so flipping the toggle re-themes the prose
+       code blocks immediately without a reload. */
+    [data-theme="dark"] .exercise-prose .tok-keyword {
+        color: #cba6f7; /* mauve */
+    }
+    [data-theme="dark"] .exercise-prose .tok-typeName,
+    [data-theme="dark"] .exercise-prose .tok-className {
+        color: #f9e2af; /* yellow */
+    }
+    [data-theme="dark"] .exercise-prose .tok-string,
+    [data-theme="dark"] .exercise-prose .tok-string2 {
+        color: #a6e3a1; /* green */
+    }
+    [data-theme="dark"] .exercise-prose .tok-number,
+    [data-theme="dark"] .exercise-prose .tok-bool,
+    [data-theme="dark"] .exercise-prose .tok-atom,
+    [data-theme="dark"] .exercise-prose .tok-literal {
+        color: #fab387; /* peach */
+    }
+    [data-theme="dark"] .exercise-prose .tok-variableName.tok-definition,
+    [data-theme="dark"] .exercise-prose .tok-propertyName.tok-definition {
+        color: #89b4fa; /* blue */
+    }
+    [data-theme="dark"] .exercise-prose .tok-macroName,
+    [data-theme="dark"] .exercise-prose .tok-meta {
+        color: #f5c2e7; /* pink */
+    }
+    [data-theme="dark"] .exercise-prose .tok-comment {
+        color: #6c7086; /* overlay0 */
+    }
+    [data-theme="dark"] .exercise-prose .tok-operator,
+    [data-theme="dark"] .exercise-prose .tok-punctuation {
+        color: #94a3b8;
+    }
+    [data-theme="dark"] .exercise-prose .tok-invalid {
+        color: #f38ba8; /* red */
     }
     .exercise-prose blockquote {
         margin: 1.25rem 0;
@@ -1256,6 +1562,28 @@
     }
     .exercise-prose a {
         color: var(--color-primary, #0969da);
+    }
+    /* External link affordance: a tiny up-right arrow nudged after the
+       link text. The SVG is encoded inline so it inherits no asset path,
+       and `currentColor` makes it pick up the link color in any theme. */
+    .exercise-prose a.external-link::after {
+        content: "";
+        display: inline-block;
+        width: 0.7em;
+        height: 0.7em;
+        margin-left: 0.2em;
+        vertical-align: 0.05em;
+        background-color: currentColor;
+        /* arrow icon (Lucide "arrow-up-right"): two paths combined */
+        -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M7 17L17 7'/><path d='M8 7h9v9'/></svg>")
+            no-repeat center / contain;
+        mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M7 17L17 7'/><path d='M8 7h9v9'/></svg>")
+            no-repeat center / contain;
+        opacity: 0.75;
+    }
+    .exercise-prose a.external-link:hover::after,
+    .exercise-prose a.external-link:focus-visible::after {
+        opacity: 1;
     }
     .exercise-prose hr {
         border: 0;

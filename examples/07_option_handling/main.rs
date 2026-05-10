@@ -14,7 +14,7 @@
 /// See: https://doc.rust-lang.org/std/primitive.slice.html#method.iter
 /// See: https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find
 /// See: https://doc.rust-lang.org/std/option/enum.Option.html#method.map
-fn find_user_by_id(users: &[(u32, &str)], id: u32) -> Option<&str> {
+fn find_user_by_id<'a>(users: &'a [(u32, &'a str)], id: u32) -> Option<&'a str> {
     todo!()
 }
 

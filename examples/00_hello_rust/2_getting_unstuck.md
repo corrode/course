@@ -77,7 +77,7 @@ surprisingly quickly.
 
 - Take a short break. A walk away from the keyboard solves a startling
   number of "impossible" bugs.
-- Explain the problem out loud, to a colleague or to a rubber duck. The act
+- Explain the problem out loud, to a colleague or to a rubber crab. The act
   of putting it into words often surfaces the answer.
 - Ask for help. Don't sit stuck for an hour when five minutes with another
   person would unblock you.

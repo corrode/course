@@ -1,19 +1,41 @@
-//! Startup-time scan and parse of `examples/*.rs` exercise files.
+//! Startup-time scan and parse of `examples/NN_slug/` chapter directories.
 //!
-//! See `docs/in_browser_exercises.md` for the design.
+//! Each chapter is a directory `examples/NN_slug/` containing exactly one
+//! `main.rs` (the exercise) and zero or more `<n>_<slug>.md` notes that
+//! render before the exercise prose on the web. The chapter directory name
+//! matches the historical `file_stem`, so database keys (`exercise_name`)
+//! are preserved across the migration.
+//!
+//! See `docs/in_browser_exercises.md` for the original design.
 
 use anyhow::{Context, Result, anyhow};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-/// A single exercise, parsed from one `examples/NN_slug.rs` file.
+/// A short prose note that lives next to an exercise. Notes give us a place
+/// to put preliminary information ("solve with std only", section
+/// preambles, etc.) without bloating the exercise's own `//!` block.
+#[derive(Debug, Clone)]
+pub struct Note {
+    /// In-chapter ordering taken from the leading `<n>_` of the filename.
+    pub order: u8,
+    /// Slug after the leading number, e.g. `intro` for `1_intro.md`.
+    pub slug: String,
+    /// First H1 of the note, falling back to the slug.
+    pub title: String,
+    /// Rendered HTML body (everything after the H1).
+    pub html: String,
+}
+
+/// A single exercise, parsed from one `examples/NN_slug/` chapter directory.
 #[derive(Debug, Clone)]
 pub struct Exercise {
-    /// Numeric prefix from the filename, e.g. `2` for `02_strings_and_chars.rs`.
+    /// Numeric prefix from the directory name, e.g. `2` for `02_strings_and_chars`.
     pub number: u8,
     /// Slug without the numeric prefix, e.g. `strings_and_chars`.
     pub slug: String,
-    /// File stem including the prefix, e.g. `02_strings_and_chars`.
+    /// Directory name including the prefix, e.g. `02_strings_and_chars`.
+    /// Doubles as the key used in the `submissions.exercise_name` column.
     pub file_stem: String,
     /// Title, taken from the first H1 of the `//!` block. Falls back to
     /// `file_stem` if no H1 is present.
@@ -23,6 +45,9 @@ pub struct Exercise {
     pub intro_html: String,
     /// Verbatim file contents — what the editor is seeded with.
     pub starter_code: String,
+    /// Optional notes that render before `intro_html` on the web, in
+    /// `order` order. Empty for chapters without any `.md` files.
+    pub notes: Vec<Note>,
 }
 
 impl Exercise {
@@ -33,36 +58,36 @@ impl Exercise {
     }
 }
 
-/// Scan a directory for `NN_*.rs` files and parse each one.
+/// Scan a directory for `NN_slug/` chapter dirs and parse each one.
 ///
-/// Files whose stem does not match `^\d+_` are skipped. Files that fail
-/// to parse are logged and skipped, so a single bad file does not take
-/// down the whole server.
+/// Directories whose name does not match `^\d+_` are skipped. Chapters
+/// missing a `main.rs` are logged and skipped, so a single malformed
+/// chapter does not take down the whole server.
 pub fn scan_dir(dir: &Path) -> Result<Vec<Exercise>> {
     if !dir.exists() {
         return Err(anyhow!("Examples directory not found: {}", dir.display()));
     }
 
-    let mut paths: Vec<PathBuf> = std::fs::read_dir(dir)
+    let mut chapter_dirs: Vec<PathBuf> = std::fs::read_dir(dir)
         .with_context(|| format!("reading {}", dir.display()))?
         .filter_map(std::result::Result::ok)
         .map(|e| e.path())
-        .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("rs"))
+        .filter(|p| p.is_dir())
         .filter(|p| {
-            p.file_stem()
+            p.file_name()
                 .and_then(|s| s.to_str())
                 .is_some_and(|s| s.chars().next().is_some_and(|c| c.is_ascii_digit()))
         })
         .collect();
 
-    paths.sort();
+    chapter_dirs.sort();
 
-    let mut out = Vec::with_capacity(paths.len());
-    for path in paths {
-        match parse_file(&path) {
+    let mut out = Vec::with_capacity(chapter_dirs.len());
+    for chapter_dir in chapter_dirs {
+        match parse_chapter(&chapter_dir) {
             Ok(ex) => out.push(ex),
             Err(e) => {
-                log::warn!("Skipping {}: {e:#}", path.display());
+                log::warn!("Skipping {}: {e:#}", chapter_dir.display());
             }
         }
     }
@@ -74,18 +99,22 @@ pub fn load(dir: &Path) -> Result<Arc<Vec<Exercise>>> {
     Ok(Arc::new(scan_dir(dir)?))
 }
 
-fn parse_file(path: &Path) -> Result<Exercise> {
-    let starter_code_full =
-        std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
-
-    let file_stem = path
-        .file_stem()
+fn parse_chapter(dir: &Path) -> Result<Exercise> {
+    let file_stem = dir
+        .file_name()
         .and_then(|s| s.to_str())
-        .ok_or_else(|| anyhow!("invalid filename"))?
+        .ok_or_else(|| anyhow!("invalid directory name"))?
         .to_string();
 
     let (number, slug) = split_numeric_prefix(&file_stem)
-        .ok_or_else(|| anyhow!("filename does not start with NN_: {file_stem}"))?;
+        .ok_or_else(|| anyhow!("directory does not start with NN_: {file_stem}"))?;
+
+    let main_rs = dir.join("main.rs");
+    if !main_rs.exists() {
+        return Err(anyhow!("missing main.rs in {}", dir.display()));
+    }
+    let starter_code_full = std::fs::read_to_string(&main_rs)
+        .with_context(|| format!("reading {}", main_rs.display()))?;
 
     let intro_md = extract_inner_doc(&starter_code_full)?;
     let (title, body_md) = split_title(&intro_md);
@@ -95,6 +124,8 @@ fn parse_file(path: &Path) -> Result<Exercise> {
     // already covers it, no need to repeat it inside the code area.
     let starter_code = strip_inner_doc(&starter_code_full);
 
+    let notes = scan_notes(dir)?;
+
     Ok(Exercise {
         number,
         slug,
@@ -102,6 +133,58 @@ fn parse_file(path: &Path) -> Result<Exercise> {
         title,
         intro_html,
         starter_code,
+        notes,
+    })
+}
+
+/// Find `<n>_<slug>.md` notes alongside the chapter's `main.rs` and parse
+/// each into a `Note`. Sorted by the leading number so chapter authors
+/// can interleave notes with code in any order they like.
+fn scan_notes(chapter_dir: &Path) -> Result<Vec<Note>> {
+    let mut paths: Vec<PathBuf> = std::fs::read_dir(chapter_dir)
+        .with_context(|| format!("reading {}", chapter_dir.display()))?
+        .filter_map(std::result::Result::ok)
+        .map(|e| e.path())
+        .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("md"))
+        .filter(|p| {
+            p.file_stem()
+                .and_then(|s| s.to_str())
+                .is_some_and(|s| s.chars().next().is_some_and(|c| c.is_ascii_digit()))
+        })
+        .collect();
+    paths.sort();
+
+    let mut notes = Vec::with_capacity(paths.len());
+    for path in paths {
+        match parse_note(&path) {
+            Ok(n) => notes.push(n),
+            Err(e) => log::warn!("Skipping note {}: {e:#}", path.display()),
+        }
+    }
+    Ok(notes)
+}
+
+fn parse_note(path: &Path) -> Result<Note> {
+    let stem = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .ok_or_else(|| anyhow!("invalid note filename"))?
+        .to_string();
+    let (order, slug) = split_numeric_prefix(&stem)
+        .ok_or_else(|| anyhow!("note does not start with N_: {stem}"))?;
+
+    let md =
+        std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    // Notes render as ordinary chapter prose. Keep the leading H1 so it
+    // appears as a real heading instead of being demoted into metadata.
+    let title = split_title(&md).0.unwrap_or_else(|| slug.clone());
+    let html = render_markdown(&md);
+
+    Ok(Note {
+        order,
+        slug,
+        title,
+        html,
     })
 }
 
@@ -208,12 +291,64 @@ fn split_title(md: &str) -> (Option<String>, String) {
 }
 
 fn render_markdown(md: &str) -> String {
-    use pulldown_cmark::{Options, Parser, html};
+    use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
     let mut opts = Options::empty();
     opts.insert(Options::ENABLE_TABLES);
-    let parser = Parser::new_ext(md, opts);
+    // GFM unlocks GitHub-style alerts: `> [!NOTE]`, `> [!TIP]`, etc.
+    // pulldown-cmark recognizes them as `BlockQuote(Some(BlockQuoteKind))`,
+    // and the default HTML renderer wraps them in `<blockquote class="markdown-alert markdown-alert-note">`.
+    opts.insert(Options::ENABLE_GFM);
+
+    // Rewrite outbound links so they open in a new tab. Anything with an
+    // `http(s)://` scheme is treated as external; relative links and
+    // intra-doc anchors are left alone. CommonMark forbids nested links,
+    // so a single bool is enough state to pair Start ↔ End.
+    let mut in_external = false;
+    let parser = Parser::new_ext(md, opts).map(move |ev| match ev {
+        Event::Start(Tag::Link {
+            ref dest_url,
+            ref title,
+            ..
+        }) if is_external(dest_url) => {
+            in_external = true;
+            Event::Html(
+                format!(
+                    "<a href=\"{href}\" title=\"{title}\" class=\"external-link\" target=\"_blank\" rel=\"noopener noreferrer\">",
+                    href = escape_attr(dest_url),
+                    title = escape_attr(title),
+                )
+                .into(),
+            )
+        }
+        Event::End(TagEnd::Link) if in_external => {
+            in_external = false;
+            Event::Html("</a>".into())
+        }
+        other => other,
+    });
+
     let mut out = String::with_capacity(md.len() * 2);
     html::push_html(&mut out, parser);
+    out
+}
+
+fn is_external(url: &str) -> bool {
+    url.starts_with("http://") || url.starts_with("https://")
+}
+
+/// Minimal HTML attribute escaper for the small set of values we emit.
+fn escape_attr(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&#39;"),
+            _ => out.push(c),
+        }
+    }
     out
 }
 
@@ -258,6 +393,40 @@ mod tests {
                 || strings.starter_code.starts_with("#["),
             "starter code should begin with code, not blank lines: {:?}",
             &strings.starter_code[..40.min(strings.starter_code.len())]
+        );
+    }
+
+    #[test]
+    fn discovers_chapter_notes() {
+        // 00_hello_rust ships with an introductory note (added in the
+        // same migration as the chapter-directory layout).
+        let exercises =
+            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let chapter = exercises
+            .iter()
+            .find(|e| e.slug == "hello_rust")
+            .expect("expected 00_hello_rust to be present");
+        assert!(
+            !chapter.notes.is_empty(),
+            "expected at least one note in 00_hello_rust"
+        );
+        let first = &chapter.notes[0];
+        assert_eq!(first.order, 1);
+        assert!(
+            first.html.contains("<p>"),
+            "note should render to HTML, got: {}",
+            first.html
+        );
+        // External links should be rewritten to open in a new tab.
+        assert!(
+            first.html.contains("target=\"_blank\""),
+            "external links should open in a new tab, got: {}",
+            first.html
+        );
+        assert!(
+            first.html.contains("class=\"external-link\""),
+            "external links should be tagged for the icon affordance, got: {}",
+            first.html
         );
     }
 
