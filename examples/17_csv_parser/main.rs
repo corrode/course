@@ -30,9 +30,9 @@ fn test_simple_csv() {
 fn parse_csv_line(line: &str) -> Vec<String> {
     // This is challenging! Suggested order of attack:
     //
-    //   1. Handle the easy cases first — plain `a,b,c` and simply quoted
+    //   1. Handle the easy cases first: plain `a,b,c` and simply quoted
     //      `"a","b","c"`. The first test below covers exactly this.
-    //   2. Handle commas *inside* quoted fields: `"a,b",c`.
+    //   2. Handle commas inside quoted fields: `"a,b",c`.
     //   3. Finally, handle escaped quotes inside a quoted field, where
     //      `""` means a literal `"`: `"a""b",c` -> [`a"b`, `c`].
     //
@@ -45,7 +45,7 @@ fn parse_csv_line(line: &str) -> Vec<String> {
 #[test]
 fn test_quoted_csv_basic() {
     // Warm-up: every field is quoted, no commas inside, no escapes.
-    // Get this passing first — it forces you to enter and exit a quoted
+    // Get this passing first; it forces you to enter and exit a quoted
     // field, but nothing trickier.
     let line = r#""a","b","c""#;
     let fields = parse_csv_line(line);
@@ -68,6 +68,11 @@ fn test_csv_with_quotes_inside() {
 
 /// Parses a complete CSV file.
 /// First line is headers, remaining lines are data.
+///
+/// Use [`str::lines`](https://doc.rust-lang.org/std/primitive.str.html#method.lines)
+/// to split on newlines. `lines()` already handles a trailing `\n`
+/// gracefully; it won't yield an empty last line for `"a,b\n"`. Real
+/// CSVs often end with a newline, so this is the right tool.
 /// Returns (headers, rows).
 fn parse_csv_file(content: &str) -> (Vec<String>, Vec<Vec<String>>) {
     todo!()
@@ -84,6 +89,23 @@ fn test_complete_csv() {
 
 /// Converts CSV data to a vector of records (HashMap).
 /// Each record maps column names to values.
+///
+/// Hint: pair headers with each row using
+/// [`Iterator::zip`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.zip),
+/// then `collect` into a `HashMap<String, String>`. Sketch:
+///
+/// ```ignore
+/// rows.iter()
+///     .map(|row| {
+///         headers.iter().cloned()
+///             .zip(row.iter().cloned())
+///             .collect::<HashMap<_, _>>()
+///     })
+///     .collect()
+/// ```
+///
+/// `cloned()` is needed because the `HashMap` wants owned `String`s but
+/// the iterators are yielding `&String`.
 fn csv_to_records(
     headers: &[String],
     rows: &[Vec<String>],

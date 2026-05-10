@@ -12,7 +12,7 @@
 
 // `Copy` lets you pass the same `HttpStatus` value to multiple
 // functions without it being moved on the first call. Plain enums
-// like this one — no `String`, no `Vec`, no other heap data — are
+// like this one (no `String`, no `Vec`, no other heap data) are
 // always cheap to copy, so deriving `Copy` (and `Clone`) costs you
 // nothing and removes a borrow-checker speed bump.
 #[derive(Debug, PartialEq, Clone, Copy)]

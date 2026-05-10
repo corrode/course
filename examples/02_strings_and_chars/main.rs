@@ -3,7 +3,7 @@
 //! Now that you've handled numbers, let's meet Rust's text types. In many
 //! languages "a string is a string", but Rust splits the job across a few
 //! cooperating types, and that split is exactly what makes Rust strings
-//! fast *and* safe.
+//! fast and safe.
 //!
 //! The cast you'll meet today:
 //!
@@ -77,7 +77,7 @@ fn test_has_uppercase() {
 
 /// Returns the first character of `text`, or `None` if the string is empty.
 ///
-/// This is your first peek at `Option<T>` — Rust's way of saying "there
+/// This is your first peek at `Option<T>`: Rust's way of saying "there
 /// might not be a value here." Chapter 7 covers it properly; for now,
 /// `text.chars()` is already an iterator, and iterators know how to
 /// hand you their first element.

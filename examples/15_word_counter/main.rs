@@ -36,6 +36,13 @@ fn test_case_insensitive() {
 
 /// Finds the most common word in the text.
 /// Returns the word and its count, or None if text is empty.
+///
+/// Tip: this is the function where the borrow checker pushes back. To
+/// return `(String, usize)` you need to own the key, but `iter()` on
+/// a `HashMap` only hands out borrows. The trick is
+/// [`into_iter`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.into_iter):
+/// it consumes the map and yields `(K, V)` pairs by value, so combining
+/// it with `max_by_key` gives you back an owned `(String, usize)`.
 fn most_common_word(text: &str) -> Option<(String, usize)> {
     // Use count_words() then find the max by count
     todo!()
@@ -67,6 +74,11 @@ fn test_frequent_words() {
 
 /// Calculates basic text statistics.
 /// Returns (total_words, unique_words, average_word_length).
+///
+/// In real code you'd reach for a `struct TextStats { total: usize,
+/// unique: usize, avg_len: f64 }` here; a 3-tuple is hard to read at
+/// the call site. We're sticking with a tuple to keep the focus on the
+/// iterator chain in the body.
 fn text_stats(text: &str) -> (usize, usize, f64) {
     todo!()
 }
@@ -78,4 +90,8 @@ fn test_text_statistics() {
     assert_eq!(total, 3);
     assert_eq!(unique, 3);
     assert!((avg_len - 4.33).abs() < 0.1); // Average length ≈ 4.33
+    // Side note: floats don't compare exactly (the value here is
+    // really 13/3 = 4.333...), so we check that we're close enough
+    // by taking the absolute difference and comparing to a tolerance.
+    // Direct `==` on `f64` is almost always the wrong thing.
 }

@@ -31,14 +31,14 @@ fn test_tax_calculation() {
     assert_eq!(calculate_total_with_tax(50, 10.0), 55);
     // Pin down the rounding behaviour: 100 + 8.4% = 108.4, which should
     // round to 108 (not truncate to anything else). If you used `as u32`
-    // alone, this case may surprise you — try `.round()` first.
+    // alone, this case may surprise you; try `.round()` first.
     assert_eq!(calculate_total_with_tax(100, 8.4), 108);
 }
 
 /// Parses a string into a positive integer.
 /// Returns the number if valid, 0 if invalid.
 ///
-/// Note: returning `0` on failure is a *bad* idea in real code — it
+/// Note: returning `0` on failure is a bad idea in real code. It
 /// silently merges "the input was the number zero" with "the input was
 /// garbage". Rust has a much better tool for this: `Result`. We use the
 /// lossy version here only because we haven't met `Result` yet; chapter 7

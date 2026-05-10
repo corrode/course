@@ -8,7 +8,11 @@
 
 /// Your first exercise, how exciting!
 ///
-/// Your task is to format return "Welcome, {name}!"
+/// Your task is to return the string `"Welcome, {name}!"` from this
+/// function. The intro mentions `println!`, but `println!` prints. It
+/// returns `()`. The macro that builds a `String` for you to return is
+/// [`format!`](https://doc.rust-lang.org/std/macro.format.html), which uses
+/// the same `{name}` placeholder syntax.
 fn format_welcome_message(name: &str) -> String {
     todo!("replace this line with your code")
 }

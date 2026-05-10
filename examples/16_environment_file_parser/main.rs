@@ -21,13 +21,14 @@ enum ParseError {
 }
 
 /// Parses a single line of an .env file.
-/// Format: "KEY=value" (no spaces around =)
-/// Returns Ok((key, value)) or Err(ParseError).
+/// Format: `KEY=value`. Surrounding whitespace on either side of `=` is
+/// trimmed (so `KEY = value` is accepted and yields `("KEY", "value")`).
+/// Returns `Ok((key, value))` or `Err(ParseError)`.
 fn parse_env_line(line: &str) -> Result<(String, String), ParseError> {
     // 1. Check if line contains '='
     // 2. Split on '=' (use .split_once())
-    // 3. Validate key and value are not empty
-    // 4. Trim whitespace from both parts
+    // 3. Trim whitespace from both halves
+    // 4. Validate that key and value are not empty after trimming
     todo!()
 }
 
@@ -44,10 +45,18 @@ fn test_parse_line() {
     assert!(parse_env_line("INVALID").is_err());
     assert!(parse_env_line("=value").is_err());
     assert!(parse_env_line("KEY=").is_err());
+    // Surrounding whitespace is trimmed, not rejected.
+    assert_eq!(
+        parse_env_line("KEY = value"),
+        Ok(("KEY".to_string(), "value".to_string()))
+    );
 }
 
 /// Parses a complete .env file content.
-/// Ignores empty lines and lines starting with '#'.
+/// Ignores empty lines and lines starting with `#` (after trimming, so
+/// `   # comment` counts as a comment too). Stops at the first malformed
+/// line and returns `Err`. Strict parsing is easier to debug than
+/// silently dropping lines.
 /// Returns HashMap of all valid key-value pairs.
 fn parse_env_file(content: &str) -> Result<HashMap<String, String>, ParseError> {
     todo!()
@@ -73,6 +82,12 @@ DEBUG=true
 
 /// Gets an environment variable with type conversion.
 /// Parses the string value into the requested type.
+///
+/// Hint: the natural shape is `env.get(key)?.parse().ok()`. Don't try to
+/// `?` the parse: `T::Err` is unconstrained here, so `?` would need a
+/// `From<T::Err>` bound that we haven't added. `.ok()` collapses
+/// `Result<T, T::Err>` into `Option<T>`, which is what the signature
+/// returns anyway.
 fn get_env_var<T>(env: &HashMap<String, String>, key: &str) -> Option<T>
 where
     T: std::str::FromStr,

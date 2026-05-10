@@ -13,6 +13,19 @@
 //!   2. Consume an `Option` and transform what's inside.
 //!   3. Produce an `Option` from a collection.
 //!   4. Produce an `Option` by searching a collection.
+//!
+//! ## A quick word on closures
+//!
+//! Several methods on `Option` (and on iterators in chapter 11) take a
+//! closure: an anonymous function written `|args| body`. For example:
+//!
+//! ```ignore
+//! Some(3).map(|n| n * 2)             // -> Some(6)
+//! Some("hi").map(|s| s.to_uppercase()) // -> Some("HI".to_string())
+//! ```
+//!
+//! The `|n|` is the parameter list, the rest is the body. Types are
+//! usually inferred. You'll see this syntax everywhere from here on.
 
 /// Returns the value if `Some`, otherwise returns the default.
 ///
@@ -32,7 +45,7 @@ fn test_setting_default() {
 
 /// Returns the length if `Some`, 0 if `None`.
 ///
-/// Same idea as above, but now the fallback isn't the value itself — you
+/// Same idea as above, but now the fallback isn't the value itself. You
 /// need to call `.len()` on the inner string first. A `match` makes both
 /// branches explicit; iterator-style methods on `Option` are tidier once
 /// you spot them.
@@ -73,6 +86,15 @@ fn test_first_item() {
 /// iterator chapter is still ahead, but `slice::iter()` plus a search
 /// combinator already gets you most of the way; the matched tuple still
 /// needs to be reduced down to just the username.
+///
+/// Type walk-through (this is the puzzle):
+///
+/// - `users.iter()`               yields `&(u32, String)`
+/// - `.find(|(uid, _)| *uid == id)`  yields `Option<&(u32, String)>`
+/// - `.map(|(_, name)| name.as_str())` yields `Option<&str>` (the return type)
+///
+/// `name.as_str()` turns the `&String` we destructured out of the tuple
+/// into the `&str` the signature wants.
 fn find_user_by_id(users: &[(u32, String)], id: u32) -> Option<&str> {
     todo!()
 }

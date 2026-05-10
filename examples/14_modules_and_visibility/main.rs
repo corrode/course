@@ -42,7 +42,8 @@ mod status {
     }
 }
 
-/// TODO: Make this public and fix the calculator::add call
+/// Wraps `calculator::add`. To make this compile, you need to make
+/// `add` (in the `calculator` module above) public with `pub fn add`.
 fn calculate(x: i32, y: i32) -> i32 {
     calculator::add(x, y)
 }
@@ -52,7 +53,12 @@ fn test_calculation() {
     assert_eq!(calculate(2, 3), 5);
 }
 
-/// TODO: Make this public and fix the config::Settings access
+/// Builds a `config::Settings`. To make this compile, you need to:
+/// - make the `Settings` struct public,
+/// - make `Settings::new` public,
+/// - and (further down, for `test_settings`) make `get_port` public too.
+/// Notice: `pub struct Settings` does not automatically make its
+/// fields or methods public.
 fn create_settings() -> config::Settings {
     config::Settings::new(8080)
 }
@@ -63,7 +69,8 @@ fn test_settings() {
     assert_eq!(settings.get_port(), 8080);
 }
 
-/// TODO: Make this public and fix the status::State access  
+/// Returns the current state. To make this compile, make the `State`
+/// enum and its variants (`Running`, `Stopped`) public.
 fn get_status() -> status::State {
     status::State::Running
 }
@@ -72,6 +79,6 @@ fn get_status() -> status::State {
 fn test_status() {
     let state = get_status();
     // Once you make `State` (and its variants) public, this compiles and
-    // pins down the actual return value — not just "it builds".
+    // pins down the actual return value, not just "it builds".
     assert_eq!(state, status::State::Running);
 }

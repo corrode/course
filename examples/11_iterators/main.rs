@@ -9,16 +9,16 @@
 //! compiler will usually fuse them into a single tight loop.
 //!
 //! The four exercises below introduce one new combinator at a time:
-//!   1. `sum`        — collapse an iterator down to a single value.
-//!   2. `map`        — transform every element.
-//!   3. `filter`     — keep only the elements you want.
-//!   4. `filter` + `to_string` — same, but with a borrowing twist.
+//!   1. `sum`        : collapse an iterator down to a single value.
+//!   2. `map`        : transform every element.
+//!   3. `filter`     : keep only the elements you want.
+//!   4. `filter` + `to_string`: same, but with a borrowing twist.
 //!
 //! Heads-up on closure arguments: `.iter()` yields `&T`, but `filter`
-//! gives its closure *another* reference on top, so the closure sees
+//! gives its closure another reference on top, so the closure sees
 //! `&&T`. That's why you'll often see `**c == ...` or `s.starts_with(...)`
 //! (which auto-derefs) instead of plain `c == ...`. Don't be alarmed
-//! when the compiler complains about a missing `&` — see
+//! when the compiler complains about a missing `&`, see
 //! [the cheatsheet](/cheatsheet) entry on iterators.
 
 /// Calculates total revenue from sales data.
@@ -76,7 +76,7 @@ fn test_active_users() {
 ///
 /// Same shape as the previous one, but the input is a `&[&str]` (a
 /// borrowed slice of borrowed strings), so the iterator yields `&&str`.
-/// We sidestep that double-reference by returning owned `String`s — the
+/// We sidestep that double-reference by returning owned `String`s; the
 /// lesson here is iterators, not lifetimes. To go from `&&str` to
 /// `String`, reach for [`str::to_string`].
 fn find_rust_files(files: &[&str]) -> Vec<String> {

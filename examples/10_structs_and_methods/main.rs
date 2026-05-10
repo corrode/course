@@ -30,7 +30,11 @@ impl User {
     }
 
     /// Records a successful login attempt.
-    /// Increments login count and marks as verified after first login.
+    ///
+    /// Increments `login_count` and sets `is_verified` to `true`. The
+    /// verification flag is idempotent: setting it on every login is
+    /// fine because once you're verified you stay verified. (A real
+    /// system would only set it on first login; we keep it simple here.)
     fn record_login(&mut self) {
         todo!()
     }
@@ -65,6 +69,8 @@ fn test_login_tracking() {
 
     user.record_login();
     assert_eq!(user.login_count, 2);
+    // Verification stays on across subsequent logins (idempotent).
+    assert!(user.is_verified);
 }
 
 #[test]

@@ -60,7 +60,7 @@ fn test_mutable_borrow() {
 }
 
 // =====================================================================
-// Experiments — get the errors *on purpose*
+// Experiments: get the errors on purpose
 //
 // Passing the tests above is the easy part of this chapter. Ownership
 // only really clicks once you've seen the canonical errors with your

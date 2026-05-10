@@ -19,7 +19,7 @@
 /// Start here. The simplest way to produce a `Result`: an `if` checks
 /// the failure case, the `else` branch returns `Ok(...)`.
 ///
-/// The signature is the interesting part — `&'static str` for the error
+/// The signature is the interesting part: `&'static str` for the error
 /// is the simplest possible error type and is fine while you're learning.
 fn safe_divide(dividend: f64, divisor: f64) -> Result<f64, &'static str> {
     todo!()
@@ -37,7 +37,7 @@ fn test_safe_division() {
 ///
 /// Same shape as `safe_divide`, but returning an owned `String`. Notice
 /// you can mix `Ok(String::from("..."))` and `Err("...")` in the same
-/// function — the success and error types are independent.
+/// function: the success and error types are independent.
 fn read_config_file(filename: &str) -> Result<String, &'static str> {
     todo!()
 }
@@ -54,8 +54,11 @@ fn test_config_reading() {
 /// Validates an email address (basic check).
 /// Returns Ok(email) if contains '@', Err(message) otherwise.
 ///
-/// Now the `Ok` value is a borrow of the input. The lifetime on the
-/// input is what lets us hand part of it back to the caller.
+/// Now the `Ok` value is a borrow of the input. The `&str` in the return
+/// type implicitly borrows from `email`, so the compiler infers a lifetime
+/// linking input and output via lifetime elision. Chapter 9 makes this
+/// explicit; for now, just notice the function compiles even though no
+/// lifetimes appear in the signature.
 fn validate_email(email: &str) -> Result<&str, &'static str> {
     todo!()
 }
@@ -71,10 +74,17 @@ fn test_email_validation() {
 ///
 /// Returns `Ok(value)` on success, `Err(message)` otherwise.
 ///
-/// The trickiest of the four: more than one thing can go wrong, and
-/// they need *different* error messages. Strip the optional `%` first,
-/// then `parse::<u8>()` the rest, then bounds-check. Each step is its
-/// own potential `Err`.
+/// This is the hardest function in the chapter; the previous three
+/// were warmups. More than one thing can go wrong, and they need
+/// different error messages. Strip the optional `%` first, then
+/// `parse::<u8>()` the rest, then bounds-check. Each step is its own
+/// potential `Err`.
+///
+/// Note: the error type here is `&'static str`, which means the message
+/// has to be a string literal. If you find yourself wanting
+/// `format!("{input} is out of range")` in an `Err`, you'd need to
+/// change the return type to `Result<u8, String>`. Stick with literals
+/// for this exercise.
 fn parse_percentage(input: &str) -> Result<u8, &'static str> {
     todo!()
 }

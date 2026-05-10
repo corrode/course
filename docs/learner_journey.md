@@ -906,3 +906,65 @@ in the order they appear in this document.
   historical keys and the intermediate names from migration 004 so
   no learner progress is lost regardless of which migration state a
   database is currently in.
+
+## Per-chapter (second pass)
+
+A second sweep through the per-chapter sharp edges that hadn't yet
+been addressed in code:
+
+- **Chapter 0** — the doc comment on `format_welcome_message` now
+  spells out that the function must *return* a `String`, calls out
+  that `println!` is not the right macro here, and links
+  [`format!`](https://doc.rust-lang.org/std/macro.format.html).
+- **Chapter 4** — the `contains_item` doc comment no longer hints at
+  "a one-call method on `Vec` that does this" (which would lead the
+  learner straight into the `Vec::contains` / `&str` mismatch). It
+  now shows the explicit `for` loop appropriate at this point in the
+  course, plus a forward-pointer to the chapter-11 `iter().any(...)`
+  one-liner.
+- **Chapter 5** — `count_words` documents the `*map.entry(k).or_insert(0)
+  += 1` idiom directly and explains why the naive
+  `contains_key`/`get_mut`/`insert` approach fights the borrow checker.
+- **Chapter 6** — `get_first_name` notes that the `(String, String)`
+  parameter is moved (not `Copy`) and contrasts it with `swap_values`,
+  which works on `(i32, i32)` precisely because tuples of `Copy` types
+  are themselves `Copy`.
+- **Chapter 7** — the chapter-level `//!` block now formally introduces
+  closure syntax (`|args| body`) with two worked examples, and
+  `find_user_by_id` ships a step-by-step type walk-through
+  (`&(u32, String)` → `Option<&(u32, String)>` → `Option<&str>`) so
+  the learner doesn't have to invent the `name.as_str()` jump on their
+  own.
+- **Chapter 8** — `validate_email` mentions lifetime elision explicitly
+  ("the `&str` in the return type implicitly borrows from `email`"),
+  `parse_percentage` is marked as the harder one rather than letting
+  learners think they're stuck on a warmup, and the doc comment warns
+  that `&'static str` errors can't hold `format!` output — switch to
+  `String` if you want that.
+- **Chapter 10** — `record_login`'s spec is now explicit that
+  `is_verified = true` is intentionally idempotent, and
+  `test_login_tracking` asserts the flag stays on after a second login.
+- **Chapter 14** — the `// TODO:` comments on `calculate`,
+  `create_settings`, and `get_status` are replaced with concrete
+  guidance pointing at the *module side* ("make `add` `pub`", "make
+  `Settings`, `new`, and `get_port` `pub`", "make `State` *and* its
+  variants `pub`"). They also reinforce that `pub struct` doesn't
+  publish fields or methods.
+- **Chapter 15** — `most_common_word` documents the `into_iter`
+  trick that makes returning an owned `(String, usize)` possible;
+  `text_stats` notes that a 3-tuple is awkward in real code and a
+  `struct TextStats` would be the better real-world choice; the
+  float-tolerance assertion in `test_text_statistics` carries a short
+  inline note explaining why direct `==` on `f64` is a bug magnet.
+- **Chapter 16** — `parse_env_line` documents that whitespace around
+  `=` is *trimmed*, not rejected, and a new assertion
+  (`parse_env_line("KEY = value")`) pins that behaviour down. The
+  numbered-step comment swaps to trim-then-validate so you don't reject
+  `KEY = ` for the wrong reason. `parse_env_file` documents the
+  trim-then-comment-check ordering and the "strict: stop on the first
+  bad line" decision. `get_env_var` recommends `.ok()` and explains
+  why `?` doesn't work without an extra `From<T::Err>` bound.
+- **Chapter 17** — `parse_csv_file` points at `str::lines` and
+  reassures the learner that a trailing newline is handled for free;
+  `csv_to_records` ships a worked `headers.iter().cloned().zip(...)`
+  sketch so the chained `.collect()`s aren't a guessing game.

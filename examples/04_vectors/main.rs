@@ -12,7 +12,7 @@
 /// Gets the number of items in the list.
 ///
 /// Start here. The simplest possible operation: ask a `Vec` how long it
-/// is. Notice the parameter is `&Vec<String>` — a borrow, so the caller
+/// is. Notice the parameter is `&Vec<String>`: a borrow, so the caller
 /// keeps ownership.
 /// See: <https://doc.rust-lang.org/std/vec/struct.Vec.html>
 fn count_items(list: &Vec<String>) -> usize {
@@ -22,7 +22,7 @@ fn count_items(list: &Vec<String>) -> usize {
 /// Adds an item to the shopping list.
 ///
 /// Now we modify the list in place. The `&mut Vec<String>` says "I need
-/// exclusive access for a moment" — that's what lets us add to it.
+/// exclusive access for a moment", and that's what lets us add to it.
 fn add_item(list: &mut Vec<String>, item: &str) {
     todo!()
 }
@@ -38,8 +38,23 @@ fn test_add_item() {
 /// Checks if the list contains a specific item.
 ///
 /// A read-only operation again, but this time we have to compare each
-/// element against `item`. You can spell this out with a `for` loop;
-/// `Vec` also has a one-call method that does exactly this.
+/// element against `item`.
+///
+/// Heads-up: you'll want to reach for `Vec::contains`, but its
+/// signature is `fn contains(&self, x: &T) -> bool`, and here that's `&String`,
+/// while we have a `&str`. The most direct fix at this point in the course
+/// is a `for` loop:
+///
+/// ```ignore
+/// for name in list {
+///     if name == item {
+///         return true;
+///     }
+/// }
+/// false
+/// ```
+///
+/// We will cover iterators in chapter 11.
 fn contains_item(list: &Vec<String>, item: &str) -> bool {
     todo!()
 }
@@ -56,7 +71,7 @@ fn test_count_and_contains() {
 ///
 /// The trickiest of the four: each input is a `&str`, but the output is
 /// a `Vec<String>`. Each borrowed slice has to become an owned `String`
-/// somewhere along the way — the `String::from` / `.to_string()` /
+/// somewhere along the way. The `String::from` / `.to_string()` /
 /// `.to_owned()` family all do this.
 fn create_shopping_list(items: &[&str]) -> Vec<String> {
     todo!()
