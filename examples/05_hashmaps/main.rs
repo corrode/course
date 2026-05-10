@@ -1,4 +1,4 @@
-//! # HashMap Basics
+//! # HashMaps
 //!
 //! Hash tables are one of the most important data structures ever invented.
 //! They were first described by Hans Peter Luhn at IBM in the 1950s, and

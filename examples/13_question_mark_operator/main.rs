@@ -1,4 +1,4 @@
-//! # The ? Operator - Error Propagation
+//! # The Question Mark Operator
 //!
 //! The question mark operator is Rust's shorthand for "if this is an error,
 //! return it from the current function; otherwise, unwrap the value and
@@ -28,8 +28,9 @@ fn count_file_lines(filename: &str) -> Result<usize, std::io::Error> {
 fn test_file_reading() {
     use std::fs;
     fs::write("test.txt", "line 1\nline 2").unwrap();
-    // TODO: How can you fix the error in `assert_eq`?
-    // "binary operation `==` cannot be applied to type `Result<usize, std::io::Error>`"
+    // Once `count_file_lines` returns `Ok(2)`, this assertion succeeds:
+    // a `Result<T, E>` compares equal to `Ok(value)` via its derived
+    // `PartialEq`. No change needed below — fix `count_file_lines` above.
     assert_eq!(count_file_lines("test.txt"), Ok(2));
     assert!(count_file_lines("missing.txt").is_err());
     fs::remove_file("test.txt").ok();

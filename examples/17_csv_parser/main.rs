@@ -1,4 +1,4 @@
-//! # CSV Parser - Complex Parsing Challenge
+//! # CSV Parser
 //!
 //! CSV (Comma-Separated Values) has been around since the early days of
 //! computing. It's one of those formats that looks trivial but has surprising
@@ -28,13 +28,28 @@ fn test_simple_csv() {
 /// Parses a CSV line with proper quote handling.
 /// Handles: "field,with,commas", "field with \"quotes\"", etc.
 fn parse_csv_line(line: &str) -> Vec<String> {
-    // This is challenging! Consider these cases:
-    // - Normal fields: a,b,c
-    // - Quoted fields: "a","b","c"
-    // - Quoted with commas: "a,b","c"
-    // - Quoted with quotes: "a""b","c"
-    // - Mixed: a,"b,c",d
+    // This is challenging! Suggested order of attack:
+    //
+    //   1. Handle the easy cases first — plain `a,b,c` and simply quoted
+    //      `"a","b","c"`. The first test below covers exactly this.
+    //   2. Handle commas *inside* quoted fields: `"a,b",c`.
+    //   3. Finally, handle escaped quotes inside a quoted field, where
+    //      `""` means a literal `"`: `"a""b",c` -> [`a"b`, `c`].
+    //
+    // The state-machine skeleton in the chapter intro is your friend.
+    // Walk character by character, keep a small `in_quotes: bool`, and
+    // peek the next char (`chars.peekable()`) to spot the `""` escape.
     todo!()
+}
+
+#[test]
+fn test_quoted_csv_basic() {
+    // Warm-up: every field is quoted, no commas inside, no escapes.
+    // Get this passing first — it forces you to enter and exit a quoted
+    // field, but nothing trickier.
+    let line = r#""a","b","c""#;
+    let fields = parse_csv_line(line);
+    assert_eq!(fields, vec!["a", "b", "c"]);
 }
 
 #[test]

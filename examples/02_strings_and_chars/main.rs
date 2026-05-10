@@ -1,4 +1,4 @@
-//! # Strings, &str, and chars
+//! # Strings and chars
 //!
 //! Now that you've handled numbers, let's meet Rust's text types. In many
 //! languages "a string is a string", but Rust splits the job across a few

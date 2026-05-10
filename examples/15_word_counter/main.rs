@@ -1,4 +1,4 @@
-//! # Word Counter - Combining Concepts
+//! # Word Counter
 //!
 //! Now it's time to put the pieces together. Word counting looks simple, but
 //! it shows up in surprising places: Google's PageRank started with counting

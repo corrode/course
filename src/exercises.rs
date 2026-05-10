@@ -48,6 +48,10 @@ pub struct Exercise {
     /// Optional notes that render before `intro_html` on the web, in
     /// `order` order. Empty for chapters without any `.md` files.
     pub notes: Vec<Note>,
+    /// Optional spoiler-protected hints. Sourced from a sibling note
+    /// whose slug is exactly `hints` (e.g. `2_hints.md`). Renders as a
+    /// closed `<details>` so learners only see them on demand.
+    pub hints: Option<Note>,
 }
 
 impl Exercise {
@@ -124,7 +128,12 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
     // already covers it, no need to repeat it inside the code area.
     let starter_code = strip_inner_doc(&starter_code_full);
 
-    let notes = scan_notes(dir)?;
+    let mut notes = scan_notes(dir)?;
+    // A note named `<n>_hints.md` is special: it gets its own slot on the
+    // exercise page, hidden behind a click. Pull it out of the regular
+    // notes list so it doesn't render inline above the intro prose.
+    let hints_idx = notes.iter().position(|n| n.slug == "hints");
+    let hints = hints_idx.map(|i| notes.remove(i));
 
     Ok(Exercise {
         number,
@@ -134,6 +143,7 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
         intro_html,
         starter_code,
         notes,
+        hints,
     })
 }
 
@@ -367,7 +377,7 @@ mod tests {
             .expect("expected 02_strings_and_chars to be present");
         assert_eq!(strings.number, 2);
         assert_eq!(strings.file_stem, "02_strings_and_chars");
-        assert_eq!(strings.title, "Strings, &str, and chars");
+        assert_eq!(strings.title, "Strings and chars");
         assert!(
             strings.intro_html.contains("<p>"),
             "intro should be rendered HTML, got: {}",

@@ -1,4 +1,4 @@
-//! # Vector Basics
+//! # Vectors
 //!
 //! Arrays and lists have been fundamental to computing since the beginning.
 //! John von Neumann, one of the pioneers of computer science, designed the

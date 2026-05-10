@@ -1,4 +1,4 @@
-//! # Result<T, E> - Error Handling
+//! # Result
 //!
 //! Phil Karlton famously said: "There are only two hard things in computer
 //! science: cache invalidation and naming things." Error handling probably

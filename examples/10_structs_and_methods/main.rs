@@ -1,4 +1,4 @@
-//! # User Account Management
+//! # Structs and Methods
 //!
 //! Structs and methods are how we model the real world in code. The idea
 //! goes back to Simula in the 1960s, when Ole-Johan Dahl and Kristen Nygaard

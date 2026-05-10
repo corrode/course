@@ -98,6 +98,25 @@ Press `?` from any page to bring this up; `Esc` to close.
 | `.collect::<Vec<_>>()` | Drive a lazy chain into a concrete collection. |
 | `.sum()`, `.count()`, `.find(...)`, `.any(...)` | Common eager terminators. |
 
+### What does my closure receive?
+
+`filter` always hands its closure a *reference* to whatever the iterator
+yields, which is why `|x|` is so often actually `&T` or `&&T`. Quick
+lookup table:
+
+| Source | `.iter()` yields | `.filter` closure sees |
+| --- | --- | --- |
+| `Vec<i32>` | `&i32` | `&&i32` (use `**x > 0` or `x > &&0`) |
+| `Vec<String>` | `&String` | `&&String` (auto-derefs for `.starts_with("a")`) |
+| `&[&str]` | `&&str` | `&&&str` (auto-derefs for `.ends_with(".rs")`) |
+| `Vec<i32>` after `.into_iter()` | `i32` | `&i32` |
+
+Method calls like `.starts_with`, `.len`, `.contains` auto-dereference,
+so `|s| s.starts_with("a")` works no matter how many `&`s are in front.
+Direct comparisons (`==`, `<`, `>`) don't, which is why you sometimes
+need `**` or `&&` to make the types meet.
+
+
 ## Error handling with `?`
 
 | Syntax | Meaning |

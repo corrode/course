@@ -1,4 +1,4 @@
-//! # Option<T> - Handling Missing Values
+//! # Option
 //!
 //! Tony Hoare called the invention of null references in 1965 his
 //! "billion-dollar mistake." He said it led to "innumerable errors,

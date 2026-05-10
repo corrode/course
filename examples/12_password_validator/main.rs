@@ -1,4 +1,4 @@
-//! # Password Validator - Open-Ended Exercise
+//! # Password Validator
 //!
 //! You've made it to the creative part. This one is more of a recreational
 //! exercise to celebrate the skills you've picked up so far. From here on
@@ -119,12 +119,21 @@ fn test_strong_passwords() {
 #[test]
 fn test_feedback_quality() {
     let report = PasswordValidator::validate("weak");
-    // Ensure feedback is helpful and specific
+    // The message about length can be phrased many reasonable ways:
+    // "too short", "at least 8 characters", "increase the length", etc.
+    // Accept any of those rather than locking learners into one wording.
+    let mentions_length = report.feedback.iter().any(|msg| {
+        let m = msg.to_lowercase();
+        m.contains("character")
+            || m.contains("length")
+            || m.contains("short")
+            || m.contains("longer")
+            || m.contains("at least")
+    });
     assert!(
-        report
-            .feedback
-            .iter()
-            .any(|msg| msg.contains("characters") || msg.contains("length"))
+        mentions_length,
+        "feedback should mention the password being too short; got {:?}",
+        report.feedback
     );
 }
 

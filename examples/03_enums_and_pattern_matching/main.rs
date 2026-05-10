@@ -1,4 +1,4 @@
-//! # HTTP Status Handling
+//! # Enums and Pattern Matching
 //!
 //! HTTP status codes were introduced by Tim Berners-Lee when he created the
 //! World Wide Web at CERN in 1989. These three-digit codes tell the client
@@ -10,7 +10,12 @@
 //! In this exercise you'll use Rust's `match` expression. Think of it as a
 //! `switch` statement that the compiler forces you to handle exhaustively.
 
-#[derive(Debug, PartialEq)]
+// `Copy` lets you pass the same `HttpStatus` value to multiple
+// functions without it being moved on the first call. Plain enums
+// like this one — no `String`, no `Vec`, no other heap data — are
+// always cheap to copy, so deriving `Copy` (and `Clone`) costs you
+// nothing and removes a borrow-checker speed bump.
+#[derive(Debug, PartialEq, Clone, Copy)]
 enum HttpStatus {
     Ok,
     NotFound,

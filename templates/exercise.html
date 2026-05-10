@@ -138,6 +138,141 @@ with (u) %}
         {{ exercise.intro_html|safe }}
     </div>
 
+    {% match exercise.hints %} {% when Some with (h) %}
+    <details class="hints-disclosure" id="hints-disclosure">
+        <summary>
+            <span class="hints-icon" aria-hidden="true">💡</span>
+            <span class="hints-summary-text">Stuck? Show a hint</span>
+            <span class="hints-hint">No spoilers — just a nudge</span>
+        </summary>
+        <div class="chapter-prose exercise-prose hints-body" id="hints-body">
+            {{ h.html|safe }}
+        </div>
+    </details>
+    <script>
+        // Progressive hint reveal: each ordered list inside the hints body
+        // starts collapsed to its first item, with a "Show next hint" button
+        // that reveals one more `<li>` per click. The whole point of the
+        // section is to nudge, not to spoonfeed; rendering all hints at once
+        // (the default for an `<ol>`) would defeat that.
+        (function () {
+            const details = document.getElementById("hints-disclosure");
+            const body = document.getElementById("hints-body");
+            if (!details || !body) return;
+
+            let initialised = false;
+            function init() {
+                if (initialised) return;
+                initialised = true;
+                const lists = body.querySelectorAll("ol");
+                lists.forEach((ol) => {
+                    const items = Array.from(ol.children).filter(
+                        (el) => el.tagName === "LI",
+                    );
+                    if (items.length <= 1) return;
+                    let revealed = 1;
+                    for (let i = 1; i < items.length; i++) {
+                        items[i].style.display = "none";
+                    }
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "hints-next-btn";
+                    const updateLabel = () => {
+                        const remaining = items.length - revealed;
+                        btn.textContent =
+                            remaining === 1
+                                ? "Show last hint"
+                                : `Show next hint (${remaining} left)`;
+                    };
+                    updateLabel();
+                    btn.addEventListener("click", () => {
+                        if (revealed >= items.length) return;
+                        items[revealed].style.display = "";
+                        revealed += 1;
+                        if (revealed >= items.length) {
+                            btn.remove();
+                        } else {
+                            updateLabel();
+                        }
+                    });
+                    ol.parentNode.insertBefore(btn, ol.nextSibling);
+                });
+                // Code blocks inside hints might have just become visible;
+                // give the prose-copy helper another pass.
+                if (typeof window.attachProseCopyButtons === "function") {
+                    window.attachProseCopyButtons(body);
+                }
+            }
+
+            // Initialise lazily — most learners never open the hints, so
+            // there's no point doing the DOM walk on page load.
+            if (details.open) init();
+            details.addEventListener("toggle", () => {
+                if (details.open) init();
+            });
+        })();
+    </script>
+    {% when None %} {% endmatch %}
+
+    <script>
+        // Add a clipboard button to every prose code block (intro, notes,
+        // hints). Same affordance as the editor's copy button: hover to
+        // reveal, click to copy, brief green flash on success. Idempotent
+        // so we can safely call it again after the hints disclosure opens
+        // and reveals additional <pre> elements.
+        (function () {
+            const ICON_SVG =
+                '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+                '<path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>' +
+                "</svg>";
+
+            window.attachProseCopyButtons = function attachProseCopyButtons(
+                root,
+            ) {
+                const scope = root || document;
+                const blocks = scope.querySelectorAll(".exercise-prose pre");
+                blocks.forEach((pre) => {
+                    if (pre.dataset.copyAttached === "1") return;
+                    pre.dataset.copyAttached = "1";
+
+                    // Wrap the <pre> in a positioned container so the
+                    // absolute-positioned button anchors to it, not to the
+                    // surrounding prose column.
+                    const wrap = document.createElement("div");
+                    wrap.className = "prose-code-wrap";
+                    pre.parentNode.insertBefore(wrap, pre);
+                    wrap.appendChild(pre);
+
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "prose-copy-btn";
+                    btn.title = "Copy code to clipboard";
+                    btn.setAttribute("aria-label", "Copy code");
+                    btn.innerHTML = ICON_SVG;
+                    btn.addEventListener("click", async () => {
+                        const code = pre.querySelector("code");
+                        const text = (code || pre).innerText.replace(/\n$/, "");
+                        try {
+                            await navigator.clipboard.writeText(text);
+                            const prevColor = btn.style.color;
+                            btn.style.color = "var(--color-success, #2e7d32)";
+                            btn.style.opacity = "1";
+                            setTimeout(() => {
+                                btn.style.color = prevColor;
+                                btn.style.opacity = "";
+                            }, 1000);
+                        } catch (err) {
+                            console.error("Copy failed:", err);
+                        }
+                    });
+                    wrap.appendChild(btn);
+                });
+            };
+
+            window.attachProseCopyButtons();
+        })();
+    </script>
+
     <section class="exercise-section">
         <div class="exercise-section-head">
             <div>
@@ -1312,14 +1447,21 @@ with (u) %}
         outputPanel.style.display = "block";
         testList.innerHTML = "";
 
+        const rawOutput = (data.stderr || "") + "\n" + (data.stdout || "");
+        const failureSnippets = extractFailureSnippets(rawOutput);
+
         for (const t of data.test_results) {
             const li = document.createElement("li");
             li.style.padding = "0.35rem 0.5rem";
             li.style.fontFamily = "'SF Mono', Monaco, monospace";
             li.style.fontSize = "0.85rem";
             li.style.display = "flex";
-            li.style.alignItems = "center";
-            li.style.gap = "0.5rem";
+            li.style.flexDirection = "column";
+            li.style.gap = "0.25rem";
+            const row = document.createElement("div");
+            row.style.display = "flex";
+            row.style.alignItems = "center";
+            row.style.gap = "0.5rem";
             const icon = document.createElement("span");
             if (t.passed) {
                 icon.textContent = "✓";
@@ -1332,8 +1474,26 @@ with (u) %}
             }
             const name = document.createElement("span");
             name.textContent = t.name;
-            li.appendChild(icon);
-            li.appendChild(name);
+            row.appendChild(icon);
+            row.appendChild(name);
+            li.appendChild(row);
+
+            if (!t.passed) {
+                const snippet = friendlyFailureSnippet(failureSnippets[t.name]);
+                if (snippet) {
+                    const detail = document.createElement("div");
+                    detail.style.marginLeft = "1.4rem";
+                    detail.style.padding = "0.4rem 0.6rem";
+                    detail.style.background = "var(--color-surface)";
+                    detail.style.border = "1px solid var(--color-border)";
+                    detail.style.borderRadius = "6px";
+                    detail.style.color = "var(--color-text)";
+                    detail.style.whiteSpace = "pre-wrap";
+                    detail.style.fontSize = "0.8rem";
+                    detail.textContent = snippet;
+                    li.appendChild(detail);
+                }
+            }
             testList.appendChild(li);
         }
 
@@ -1355,6 +1515,52 @@ with (u) %}
             behavior: "smooth",
             block: "nearest",
         });
+    }
+
+    // Pull per-test failure blocks out of the raw cargo output. The harness
+    // emits sections like:
+    //
+    //   ---- test_name stdout ----
+    //   thread 'test_name' panicked at examples/foo/main.rs:12:5:
+    //   assertion `left == right` failed
+    //     left: 0
+    //     right: 42
+    //
+    // Capture everything from "---- NAME stdout ----" up to the next
+    // separator (or end-of-string) and key it by test name.
+    function extractFailureSnippets(raw) {
+        const out = {};
+        if (!raw) return out;
+        const re =
+            /----\s+(\S+)\s+stdout\s+----\n([\s\S]*?)(?=\n----|\nfailures:|\ntest result:|$)/g;
+        let m;
+        while ((m = re.exec(raw)) !== null) {
+            out[m[1].trim()] = m[2].trim();
+        }
+        return out;
+    }
+
+    // Turn a panic snippet into something a learner can act on. Catches the
+    // `not yet implemented` (todo!()) panic specifically because it is the
+    // single most common first-time failure and the default copy is rough.
+    function friendlyFailureSnippet(snippet) {
+        if (!snippet) return null;
+        if (/not yet implemented/i.test(snippet)) {
+            return (
+                "This function still has `todo!()` in it.\n" +
+                "Replace `todo!()` with your implementation, then run again."
+            );
+        }
+        // Drop the leading "thread '...' panicked at ..." header so the
+        // assertion message is the first thing the eye lands on.
+        const lines = snippet.split("\n");
+        while (lines.length && /^thread .* panicked at/.test(lines[0])) {
+            lines.shift();
+        }
+        // Cap to a few lines so the test list doesn't become a wall of text.
+        // The full output is still one click away in "Compiler / runtime output".
+        const trimmed = lines.slice(0, 6).join("\n").trim();
+        return trimmed || null;
     }
 </script>
 
@@ -1583,6 +1789,10 @@ with (u) %}
         margin-top: 2.25rem;
         margin-bottom: 1rem;
         line-height: 1.25;
+        /* Notes render their own `# Heading`, which would otherwise pick
+           up the page-title display face. Keep prose headings in the body
+           font so they read as section headings, not page titles. */
+        font-family: inherit;
     }
     .exercise-prose h2 {
         font-size: 1.6rem;
@@ -2024,6 +2234,99 @@ with (u) %}
     }
     .chapter-row.current.perfected {
         background-color: rgba(241, 196, 15, 0.18);
+    }
+    .hints-disclosure {
+        margin: 1.25rem 0 1.5rem;
+        border: 1px dashed var(--color-border);
+        border-radius: 12px;
+        background-color: var(--color-surface);
+        padding: 0.25rem 1rem;
+    }
+    .hints-disclosure[open] {
+        border-style: solid;
+        background-color: var(--color-background);
+    }
+    .hints-disclosure > summary {
+        list-style: none;
+        cursor: pointer;
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        padding: 0.65rem 0;
+        font-size: 0.95rem;
+        color: var(--color-text);
+    }
+    .hints-disclosure > summary::-webkit-details-marker {
+        display: none;
+    }
+    .hints-disclosure .hints-icon {
+        font-size: 1.05rem;
+    }
+    .hints-disclosure .hints-summary-text {
+        font-weight: 600;
+    }
+    .hints-disclosure .hints-hint {
+        color: var(--color-text-muted);
+        font-size: 0.85rem;
+    }
+    .hints-disclosure[open] > summary .hints-summary-text::after {
+        content: " — hide";
+        color: var(--color-text-muted);
+        font-weight: 400;
+    }
+    .hints-disclosure .hints-body {
+        padding: 0.5rem 0 0.75rem;
+    }
+    .hints-next-btn {
+        margin: 0.25rem 0 1rem 1.5rem;
+        padding: 0.35rem 0.75rem;
+        background: var(--color-surface);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition:
+            border-color 0.15s ease,
+            background-color 0.15s ease;
+    }
+    .hints-next-btn:hover,
+    .hints-next-btn:focus-visible {
+        border-color: var(--color-primary, #0969da);
+        background-color: var(--color-background);
+    }
+    .prose-code-wrap {
+        position: relative;
+    }
+    .prose-copy-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 2;
+        background: var(--color-surface);
+        color: var(--color-text-muted);
+        border: 1px solid var(--color-border);
+        border-radius: 3px;
+        padding: 0.25rem 0.4rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        opacity: 0;
+        transition:
+            opacity 0.15s ease,
+            color 0.15s ease;
+    }
+    .prose-code-wrap:hover .prose-copy-btn,
+    .prose-code-wrap:focus-within .prose-copy-btn,
+    .prose-copy-btn:focus-visible {
+        opacity: 0.85;
+    }
+    .prose-copy-btn:hover {
+        opacity: 1;
+    }
+    .prose-copy-btn svg {
+        width: 14px;
+        height: 14px;
     }
     .chapter-row.quiz .chapter-title {
         font-style: italic;

@@ -58,6 +58,22 @@ The compiler needs them to agree. The two common solutions:
 implementation. `Box<dyn Error>` works because nearly every error type
 has `From<E> for Box<dyn Error>`.
 
+## A note on these tests and the filesystem
+
+The tests below write real files (`test.txt`, `numbers.txt`, …) into the
+current working directory before they run. Cargo runs tests in parallel
+by default, so two tests writing to the same path can race each other
+and cause spurious failures. If you see flaky `Err`s here, force the
+harness to run them one at a time:
+
+```sh
+cargo test -- --test-threads=1
+```
+
+Or give each test its own filename if you're feeling tidy. In production
+code you'd reach for [`tempfile::NamedTempFile`](https://docs.rs/tempfile)
+so the OS hands you a guaranteed-unique path and cleans up after itself.
+
 ## Useful from the standard library
 
 - [`std::fs::read_to_string`](https://doc.rust-lang.org/std/fs/fn.read_to_string.html)

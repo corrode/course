@@ -1,4 +1,4 @@
-//! # Data Processing with Iterators
+//! # Iterators
 //!
 //! Iterators were popularised by functional languages like Lisp (created by
 //! John McCarthy in 1958), and today they're a core building block in most
@@ -12,7 +12,14 @@
 //!   1. `sum`        — collapse an iterator down to a single value.
 //!   2. `map`        — transform every element.
 //!   3. `filter`     — keep only the elements you want.
-//!   4. `filter` + `cloned` — same, but with a borrowing twist.
+//!   4. `filter` + `to_string` — same, but with a borrowing twist.
+//!
+//! Heads-up on closure arguments: `.iter()` yields `&T`, but `filter`
+//! gives its closure *another* reference on top, so the closure sees
+//! `&&T`. That's why you'll often see `**c == ...` or `s.starts_with(...)`
+//! (which auto-derefs) instead of plain `c == ...`. Don't be alarmed
+//! when the compiler complains about a missing `&` — see
+//! [the cheatsheet](/cheatsheet) entry on iterators.
 
 /// Calculates total revenue from sales data.
 ///
@@ -67,10 +74,12 @@ fn test_active_users() {
 
 /// Finds all files with ".rs" extension.
 ///
-/// Same shape as the previous one, but the input is a `&[&str]` instead
-/// of an owned `Vec`, so the iterator yields `&&str`. You'll need an
-/// extra step to peel one layer of reference off before collecting.
-fn find_rust_files<'file>(files: &[&'file str]) -> Vec<&'file str> {
+/// Same shape as the previous one, but the input is a `&[&str]` (a
+/// borrowed slice of borrowed strings), so the iterator yields `&&str`.
+/// We sidestep that double-reference by returning owned `String`s — the
+/// lesson here is iterators, not lifetimes. To go from `&&str` to
+/// `String`, reach for [`str::to_string`].
+fn find_rust_files(files: &[&str]) -> Vec<String> {
     todo!()
 }
 
