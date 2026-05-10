@@ -47,7 +47,7 @@ impl User {
 }
 
 #[test]
-fn test_new_user() {
+fn test_new() {
     let user = User::new("alice@example.com".to_string(), "Alice".to_string());
     assert_eq!(user.login_count, 0);
     assert_eq!(user.is_verified, false);
@@ -60,7 +60,7 @@ fn test_display_name() {
 }
 
 #[test]
-fn test_login_tracking() {
+fn test_record_login() {
     let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
 
     user.record_login();
@@ -74,7 +74,7 @@ fn test_login_tracking() {
 }
 
 #[test]
-fn test_premium_access() {
+fn test_can_access_premium() {
     let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
 
     // Not enough logins yet

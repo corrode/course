@@ -907,6 +907,24 @@ in the order they appear in this document.
   no learner progress is lost regardless of which migration state a
   database is currently in.
 
+## Test naming
+
+Test function names were inconsistent: some matched their target
+(`test_count_chars`), others described a scenario (`test_email_validation`,
+`test_quoted_csv`), and a few were ambiguous (`test_parsing`,
+`test_settings`, `test_status`). Renamed every `#[test]` in `examples/`
+to follow `test_<function_under_test>`, with a `_scenario` suffix where
+one target function has multiple tests (chapters 12, 15, 17). The
+`test_count_and_contains` test in chapter 4 was split into
+`test_count_items` and `test_contains_item` so each test still covers a
+single target. Chapter 9's exploration helpers keep their
+`experiment_*` prefix because they exist to be uncommented, not to
+assert behaviour. Chapter 18's vacuous quiz test became
+`test_quiz_placeholder` so it still uses the `test_` prefix. Three
+doc-comment references that named tests by their old names
+(chapter 12's *Suggested order*, chapter 14's `get_port` hint) were
+updated to point at the new names.
+
 ## Per-chapter (second pass)
 
 A second sweep through the per-chapter sharp edges that hadn't yet

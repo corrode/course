@@ -38,7 +38,7 @@ fn get_setting_or_default(setting: Option<u32>, default: u32) -> u32 {
 }
 
 #[test]
-fn test_setting_default() {
+fn test_get_setting_or_default() {
     assert_eq!(get_setting_or_default(Some(42), 100), 42);
     assert_eq!(get_setting_or_default(None, 100), 100);
 }
@@ -55,7 +55,7 @@ fn optional_string_length(maybe_string: Option<&str>) -> usize {
 }
 
 #[test]
-fn test_optional_length() {
+fn test_optional_string_length() {
     assert_eq!(optional_string_length(Some("hello")), 5);
     assert_eq!(optional_string_length(None), 0);
 }
@@ -71,7 +71,7 @@ fn get_first_item(items: &[String]) -> Option<&String> {
 }
 
 #[test]
-fn test_first_item() {
+fn test_get_first_item() {
     let items = vec!["first".to_string(), "second".to_string()];
     assert_eq!(get_first_item(&items), Some(&"first".to_string()));
 
@@ -100,7 +100,7 @@ fn find_user_by_id(users: &[(u32, String)], id: u32) -> Option<&str> {
 }
 
 #[test]
-fn test_find_user() {
+fn test_find_user_by_id() {
     let users = [
         (1, "alice".to_string()),
         (2, "bob".to_string()),

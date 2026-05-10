@@ -49,14 +49,14 @@ fn calculate(x: i32, y: i32) -> i32 {
 }
 
 #[test]
-fn test_calculation() {
+fn test_calculate() {
     assert_eq!(calculate(2, 3), 5);
 }
 
 /// Builds a `config::Settings`. To make this compile, you need to:
 /// - make the `Settings` struct public,
 /// - make `Settings::new` public,
-/// - and (further down, for `test_settings`) make `get_port` public too.
+/// - and (further down, for `test_create_settings`) make `get_port` public too.
 /// Notice: `pub struct Settings` does not automatically make its
 /// fields or methods public.
 fn create_settings() -> config::Settings {
@@ -64,7 +64,7 @@ fn create_settings() -> config::Settings {
 }
 
 #[test]
-fn test_settings() {
+fn test_create_settings() {
     let settings = create_settings();
     assert_eq!(settings.get_port(), 8080);
 }
@@ -76,7 +76,7 @@ fn get_status() -> status::State {
 }
 
 #[test]
-fn test_status() {
+fn test_get_status() {
     let state = get_status();
     // Once you make `State` (and its variants) public, this compiles and
     // pins down the actual return value, not just "it builds".

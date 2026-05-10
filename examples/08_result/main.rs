@@ -26,7 +26,7 @@ fn safe_divide(dividend: f64, divisor: f64) -> Result<f64, &'static str> {
 }
 
 #[test]
-fn test_safe_division() {
+fn test_safe_divide() {
     assert_eq!(safe_divide(10.0, 2.0), Ok(5.0));
     assert_eq!(safe_divide(-9.0, 3.0), Ok(-3.0));
     assert!(safe_divide(10.0, 0.0).is_err());
@@ -43,7 +43,7 @@ fn read_config_file(filename: &str) -> Result<String, &'static str> {
 }
 
 #[test]
-fn test_config_reading() {
+fn test_read_config_file() {
     assert_eq!(
         read_config_file("app.toml"),
         Ok("config content".to_string())
@@ -64,7 +64,7 @@ fn validate_email(email: &str) -> Result<&str, &'static str> {
 }
 
 #[test]
-fn test_email_validation() {
+fn test_validate_email() {
     assert_eq!(validate_email("user@example.com"), Ok("user@example.com"));
     assert!(validate_email("invalid-email").is_err());
 }
@@ -90,7 +90,7 @@ fn parse_percentage(input: &str) -> Result<u8, &'static str> {
 }
 
 #[test]
-fn test_percentage_parsing() {
+fn test_parse_percentage() {
     assert_eq!(parse_percentage("0"), Ok(0));
     assert_eq!(parse_percentage("42"), Ok(42));
     assert_eq!(parse_percentage("100"), Ok(100));

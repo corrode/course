@@ -22,7 +22,7 @@ fn take_ownership(s: String) -> String {
 }
 
 #[test]
-fn test_ownership() {
+fn test_take_ownership() {
     let s = String::from("Rust");
     let result = take_ownership(s);
     // Note: s is no longer valid here! It was moved.
@@ -37,7 +37,7 @@ fn borrow_string(s: &str) -> usize {
 }
 
 #[test]
-fn test_borrowing() {
+fn test_borrow_string() {
     let s = "The Matrix has you";
     let len = borrow_string(s);
     // s is still valid here because we only borrowed it
@@ -53,7 +53,7 @@ fn mutate_string(s: &mut String) {
 }
 
 #[test]
-fn test_mutable_borrow() {
+fn test_mutate_string() {
     let mut s = String::from("Ferris");
     mutate_string(&mut s);
     assert_eq!(s, "Ferris - now with extra crab");

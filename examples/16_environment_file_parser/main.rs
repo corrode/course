@@ -33,7 +33,7 @@ fn parse_env_line(line: &str) -> Result<(String, String), ParseError> {
 }
 
 #[test]
-fn test_parse_line() {
+fn test_parse_env_line() {
     assert_eq!(
         parse_env_line("PORT=8080"),
         Ok(("PORT".to_string(), "8080".to_string()))
@@ -63,7 +63,7 @@ fn parse_env_file(content: &str) -> Result<HashMap<String, String>, ParseError> 
 }
 
 #[test]
-fn test_parse_file() {
+fn test_parse_env_file() {
     let content = r#"
 # Database configuration
 HOST=localhost
@@ -96,7 +96,7 @@ where
 }
 
 #[test]
-fn test_type_conversion() {
+fn test_get_env_var() {
     let mut env = HashMap::new();
     env.insert("PORT".to_string(), "8080".to_string());
     env.insert("DEBUG".to_string(), "true".to_string());
@@ -115,7 +115,7 @@ fn validate_required_vars(env: &HashMap<String, String>, required: &[&str]) -> R
 }
 
 #[test]
-fn test_validation() {
+fn test_validate_required_vars() {
     let mut env = HashMap::new();
     env.insert("HOST".to_string(), "localhost".to_string());
     env.insert("PORT".to_string(), "8080".to_string());

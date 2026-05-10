@@ -13,7 +13,7 @@ fn add_parsed_numbers(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> 
 }
 
 #[test]
-fn test_parsing() {
+fn test_add_parsed_numbers() {
     assert_eq!(add_parsed_numbers("10", "20"), Ok(30));
     assert!(add_parsed_numbers("abc", "10").is_err());
 }
@@ -25,7 +25,7 @@ fn count_file_lines(filename: &str) -> Result<usize, std::io::Error> {
 }
 
 #[test]
-fn test_file_reading() {
+fn test_count_file_lines() {
     use std::fs;
     fs::write("test.txt", "line 1\nline 2").unwrap();
     // Once `count_file_lines` returns `Ok(2)`, this assertion succeeds:
@@ -44,7 +44,7 @@ fn sum_numbers_in_file(filename: &str) -> Result<i32, Box<dyn std::error::Error>
 }
 
 #[test]
-fn test_combined_errors() {
+fn test_sum_numbers_in_file() {
     use std::fs;
     fs::write("numbers.txt", "5\n10\n15").unwrap();
     assert_eq!(sum_numbers_in_file("numbers.txt"), Ok(30));

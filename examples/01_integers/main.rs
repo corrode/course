@@ -14,7 +14,7 @@ fn number_to_string(number: u32) -> String {
 }
 
 #[test]
-fn test_number_formatting() {
+fn test_number_to_string() {
     assert_eq!(number_to_string(1234), "1234");
     assert_eq!(number_to_string(0), "0");
 }
@@ -26,7 +26,7 @@ fn calculate_total_with_tax(price: u32, tax_rate: f64) -> u32 {
 }
 
 #[test]
-fn test_tax_calculation() {
+fn test_calculate_total_with_tax() {
     assert_eq!(calculate_total_with_tax(100, 8.5), 108);
     assert_eq!(calculate_total_with_tax(50, 10.0), 55);
     // Pin down the rounding behaviour: 100 + 8.4% = 108.4, which should
@@ -48,7 +48,7 @@ fn parse_positive_integer(input: &str) -> u32 {
 }
 
 #[test]
-fn test_integer_parsing() {
+fn test_parse_positive_integer() {
     assert_eq!(parse_positive_integer("123"), 123);
     assert_eq!(parse_positive_integer("0"), 0);
     assert_eq!(parse_positive_integer("invalid"), 0);

@@ -33,7 +33,7 @@ fn calculate_total_revenue() -> i32 {
 }
 
 #[test]
-fn test_revenue_calculation() {
+fn test_calculate_total_revenue() {
     let total = calculate_total_revenue();
     assert_eq!(total, 14200); // Sum of all sales
 }
@@ -49,7 +49,7 @@ fn normalize_emails(emails: Vec<String>) -> Vec<String> {
 }
 
 #[test]
-fn test_email_normalization() {
+fn test_normalize_emails() {
     let emails = vec!["Alice@EXAMPLE.COM".to_string(), "BOB@test.ORG".to_string()];
     let normalized = normalize_emails(emails);
     assert_eq!(normalized, vec!["alice@example.com", "bob@test.org"]);
@@ -66,7 +66,7 @@ fn select_usernames_starting_with_a(usernames: Vec<&str>) -> Vec<&str> {
 }
 
 #[test]
-fn test_active_users() {
+fn test_select_usernames_starting_with_a() {
     let users = vec!["alice", "admin", "bob", "anonymous", "charlie"];
     let active = select_usernames_starting_with_a(users);
     assert_eq!(active, vec!["alice", "admin", "anonymous"]);
@@ -84,7 +84,7 @@ fn find_rust_files(files: &[&str]) -> Vec<String> {
 }
 
 #[test]
-fn test_rust_files() {
+fn test_find_rust_files() {
     let files = &[
         "main.rs",
         "README.md",

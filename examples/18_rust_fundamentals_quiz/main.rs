@@ -17,7 +17,7 @@ fn main() {
 }
 
 #[test]
-fn quiz_instructions() {
+fn test_quiz_placeholder() {
     // This test always passes: the quiz is completed externally
     assert!(true, "Quiz instructions are clear!");
 }

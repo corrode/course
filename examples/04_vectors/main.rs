@@ -60,9 +60,14 @@ fn contains_item(list: &Vec<String>, item: &str) -> bool {
 }
 
 #[test]
-fn test_count_and_contains() {
+fn test_count_items() {
     let list = vec!["apple".to_string(), "banana".to_string()];
     assert_eq!(count_items(&list), 2);
+}
+
+#[test]
+fn test_contains_item() {
+    let list = vec!["apple".to_string(), "banana".to_string()];
     assert_eq!(contains_item(&list, "apple"), true);
     assert_eq!(contains_item(&list, "orange"), false);
 }
@@ -78,7 +83,7 @@ fn create_shopping_list(items: &[&str]) -> Vec<String> {
 }
 
 #[test]
-fn test_create_list() {
+fn test_create_shopping_list() {
     let items = ["bread", "milk", "eggs"];
     let list = create_shopping_list(&items);
     assert_eq!(list.len(), 3);

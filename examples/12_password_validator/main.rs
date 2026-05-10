@@ -23,8 +23,8 @@
 //!    and gives you a feel for the data.
 //! 2. `PasswordValidator::validate`, base requirements only. Just the
 //!    length / uppercase / lowercase / digit / special-char checks. Get the
-//!    `test_weak_passwords`, `test_medium_passwords`, `test_strong_passwords`,
-//!    and `test_feedback_quality` tests passing first.
+//!    `test_validate_weak`, `test_validate_medium`, `test_validate_strong`,
+//!    and `test_validate_feedback` tests passing first.
 //! 3. `PasswordGenerator::generate_secure_password`. Only after step 2. A
 //!    simple stdlib-only approach: cycle through your character set based on
 //!    a changing seed (e.g. system time nanoseconds), or pick a deterministic
@@ -96,7 +96,7 @@ impl PasswordValidator {
 }
 
 #[test]
-fn test_weak_passwords() {
+fn test_validate_weak() {
     let weak_password = PasswordValidator::validate("12345");
     assert!(weak_password.score < 30);
     assert!(!weak_password.is_strong());
@@ -104,20 +104,20 @@ fn test_weak_passwords() {
 }
 
 #[test]
-fn test_medium_passwords() {
+fn test_validate_medium() {
     let medium = PasswordValidator::validate("Password1");
     assert!(medium.score >= 30 && medium.score < 70);
 }
 
 #[test]
-fn test_strong_passwords() {
+fn test_validate_strong() {
     let strong = PasswordValidator::validate("MySecure!Password123");
     assert!(strong.score >= 70);
     assert!(strong.is_strong());
 }
 
 #[test]
-fn test_feedback_quality() {
+fn test_validate_feedback() {
     let report = PasswordValidator::validate("weak");
     // The message about length can be phrased many reasonable ways:
     // "too short", "at least 8 characters", "increase the length", etc.
@@ -157,7 +157,7 @@ impl PasswordGenerator {
 }
 
 #[test]
-fn test_password_generation() {
+fn test_generate_secure_password() {
     let password = PasswordGenerator::generate_secure_password(12);
     let report = PasswordValidator::validate(&password);
     assert!(report.is_strong());
@@ -175,7 +175,7 @@ impl PasswordAdvisor {
 }
 
 #[test]
-fn test_advisor_suggestions() {
+fn test_suggest_improvements() {
     let report = PasswordValidator::validate("weak");
     let suggestions = PasswordAdvisor::suggest_improvements(&report);
     assert!(!suggestions.is_empty());

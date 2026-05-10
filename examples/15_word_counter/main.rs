@@ -19,7 +19,7 @@ fn count_words(text: &str) -> HashMap<String, usize> {
 }
 
 #[test]
-fn test_word_counting() {
+fn test_count_words() {
     let text = "hello world hello rust world";
     let counts = count_words(text);
     assert_eq!(counts.get("hello"), Some(&2));
@@ -28,7 +28,7 @@ fn test_word_counting() {
 }
 
 #[test]
-fn test_case_insensitive() {
+fn test_count_words_case_insensitive() {
     let text = "Hello HELLO hello";
     let counts = count_words(text);
     assert_eq!(counts.get("hello"), Some(&3));
@@ -49,7 +49,7 @@ fn most_common_word(text: &str) -> Option<(String, usize)> {
 }
 
 #[test]
-fn test_most_common() {
+fn test_most_common_word() {
     let text = "apple banana apple cherry apple";
     let (word, count) = most_common_word(text).unwrap();
     assert_eq!(word, "apple");
@@ -84,7 +84,7 @@ fn text_stats(text: &str) -> (usize, usize, f64) {
 }
 
 #[test]
-fn test_text_statistics() {
+fn test_text_stats() {
     let text = "hello world rust";
     let (total, unique, avg_len) = text_stats(text);
     assert_eq!(total, 3);

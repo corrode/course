@@ -19,7 +19,7 @@ fn parse_simple_csv_line(line: &str) -> Vec<String> {
 }
 
 #[test]
-fn test_simple_csv() {
+fn test_parse_simple_csv_line() {
     let line = "name, age, city";
     let fields = parse_simple_csv_line(line);
     assert_eq!(fields, vec!["name", "age", "city"]);
@@ -43,7 +43,7 @@ fn parse_csv_line(line: &str) -> Vec<String> {
 }
 
 #[test]
-fn test_quoted_csv_basic() {
+fn test_parse_csv_line_basic() {
     // Warm-up: every field is quoted, no commas inside, no escapes.
     // Get this passing first; it forces you to enter and exit a quoted
     // field, but nothing trickier.
@@ -53,14 +53,14 @@ fn test_quoted_csv_basic() {
 }
 
 #[test]
-fn test_quoted_csv() {
+fn test_parse_csv_line_quoted() {
     let line = r#"name,"age, years","city""#;
     let fields = parse_csv_line(line);
     assert_eq!(fields, vec!["name", "age, years", "city"]);
 }
 
 #[test]
-fn test_csv_with_quotes_inside() {
+fn test_parse_csv_line_escaped_quotes() {
     let line = r#""John ""Johnny"" Doe","25","New York""#;
     let fields = parse_csv_line(line);
     assert_eq!(fields, vec![r#"John "Johnny" Doe"#, "25", "New York"]);
@@ -79,7 +79,7 @@ fn parse_csv_file(content: &str) -> (Vec<String>, Vec<Vec<String>>) {
 }
 
 #[test]
-fn test_complete_csv() {
+fn test_parse_csv_file() {
     let content = "name,age,city\nAlice,30,Boston\nBob,25,Seattle";
     let (headers, rows) = parse_csv_file(content);
     assert_eq!(headers, vec!["name", "age", "city"]);

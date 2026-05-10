@@ -34,7 +34,7 @@ fn status_code(status: HttpStatus) -> u16 {
 }
 
 #[test]
-fn test_status_codes() {
+fn test_status_code() {
     assert_eq!(status_code(HttpStatus::Ok), 200);
     assert_eq!(status_code(HttpStatus::NotFound), 404);
     assert_eq!(status_code(HttpStatus::InternalServerError), 500);
@@ -48,7 +48,7 @@ fn should_retry(status: HttpStatus) -> bool {
 }
 
 #[test]
-fn test_retry_logic() {
+fn test_should_retry() {
     assert_eq!(should_retry(HttpStatus::InternalServerError), true);
     assert_eq!(should_retry(HttpStatus::NotFound), false);
     assert_eq!(should_retry(HttpStatus::BadRequest), false);

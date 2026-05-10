@@ -18,7 +18,7 @@ fn create_default_config() -> HashMap<String, String> {
 }
 
 #[test]
-fn test_default_config() {
+fn test_create_default_config() {
     let config = create_default_config();
     assert_eq!(config.get("host"), Some(&"localhost".to_string()));
     assert_eq!(config.get("port"), Some(&"8080".to_string()));
@@ -34,7 +34,7 @@ fn set_config_value(config: &mut HashMap<String, String>, key: &str, value: &str
 }
 
 #[test]
-fn test_set_config() {
+fn test_set_config_value() {
     let mut config = HashMap::new();
     set_config_value(&mut config, "debug", "true");
     assert_eq!(config.get("debug"), Some(&"true".to_string()));
@@ -51,7 +51,7 @@ fn get_config_value(config: &HashMap<String, String>, key: &str) -> String {
 }
 
 #[test]
-fn test_get_config() {
+fn test_get_config_value() {
     let mut config = HashMap::new();
     config.insert("timeout".to_string(), "30".to_string());
 
@@ -81,7 +81,7 @@ fn count_words(words: &[&str]) -> HashMap<String, usize> {
 }
 
 #[test]
-fn test_word_counting() {
+fn test_count_words() {
     let words = ["hello", "world", "hello", "rust"];
     let counts = count_words(&words);
     assert_eq!(counts.get("hello"), Some(&2));
