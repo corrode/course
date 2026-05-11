@@ -9,7 +9,5 @@ mod _2_count_chars;
 mod _3_shout;
 #[path = "4_has_uppercase.rs"]
 mod _4_has_uppercase;
-#[path = "5_first_char.rs"]
-mod _5_first_char;
 
 fn main() {}

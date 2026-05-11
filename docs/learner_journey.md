@@ -1002,10 +1002,13 @@ step files. Recorded boundaries:
 - **Chapter 01 — `integers`.** Three steps at orders 3-5
   (`number_to_string`, `calculate_total_with_tax`,
   `parse_positive_integer`). Order 2 reserved for `2_hints.md`.
-- **Chapter 02 — `strings_and_chars`.** Four steps: `2_count_chars`,
-  `3_shout`, `4_has_uppercase`, `5_first_char`. The borrowed/owned
-  table stays in `1_intro.md`; per-step intros focus on the one
-  method/concept the step exercises.
+- **Chapter 02 — `strings_and_chars`.** Three steps: `2_count_chars`,
+  `3_shout`, `4_has_uppercase`. (The original fourth function,
+  `first_char`, was moved into chapter 7 — it was always more of an
+  `Option` exercise than a string exercise, and the multi-step split
+  made the mismatch obvious.) The borrowed/owned table stays in
+  `1_intro.md`; per-step intros focus on the one method/concept the
+  step exercises.
 - **Chapter 03 — `enums_and_pattern_matching`.** Two steps:
   `2_status_code`, `3_should_retry`. The `HttpStatus` enum (with the
   `Copy` rationale comment) is duplicated into both step files since
@@ -1021,9 +1024,13 @@ step files. Recorded boundaries:
   `5_swap_values`. The move-semantics note on `get_first_name` is
   preserved and remains the natural cliff before chapter 9.
 - **Chapter 07 — `option`** *(pilot).* Four steps: `2_fallback`,
-  `3_transform`, `4_first_item`, `5_find_user`. The chapter intro
-  (with the closure note) lives in `1_intro.md`. This was the first
-  chapter migrated and locked the convention.
+  `3_transform`, `4_first_char` (relocated from chapter 2),
+  `5_find_user`. The chapter intro (with the closure note) lives in
+  `1_intro.md`. This was the first chapter migrated and locked the
+  convention; a follow-up pass relocated `first_char` from chapter 2
+  (it was always an `Option` exercise) and dropped the original
+  `get_first_item` step (redundant once `first_char` and `find_user`
+  bracketed it on both sides).
 - **Chapter 08 — `result`.** Four steps: `2_safe_divide` (first
   `Result` with `&'static str` errors), `3_read_config` (owning
   `String` in `Ok`), `4_validate_email` (borrowed `&str` in `Ok`,
