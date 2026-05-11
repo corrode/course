@@ -554,7 +554,7 @@ pub fn render_markdown(md: &str) -> String {
     opts.insert(Options::ENABLE_TABLES);
     // GFM unlocks GitHub-style alerts: `> [!NOTE]`, `> [!TIP]`, etc.
     // pulldown-cmark recognizes them as `BlockQuote(Some(BlockQuoteKind))`,
-    // and the default HTML renderer wraps them in `<blockquote class="markdown-alert markdown-alert-note">`.
+    // and the default HTML renderer wraps them in `<blockquote class="markdown-alert-note">`.
     opts.insert(Options::ENABLE_GFM);
 
     // Rewrite outbound links so they open in a new tab. Anything with an
@@ -591,10 +591,12 @@ pub fn render_markdown(md: &str) -> String {
 }
 
 /// Wrap any `<h2>Useful from the standard library</h2>` heading plus its
-/// immediately-following `<ul>...</ul>` in an `<aside class="std-library">`
-/// callout. This is a convention every chapter uses, so we style it
-/// uniformly. If a chapter doesn't have such a heading, the rendered HTML
-/// is returned unchanged.
+/// immediately-following `<ul>...</ul>` in the same
+/// `<blockquote class="markdown-alert-note">` markup that
+/// pulldown-cmark emits for `> [!NOTE]`. That way the section reuses the
+/// existing alert styling instead of needing its own class. The H2 stays
+/// inside the blockquote and acts as the label (the alert CSS hides its
+/// auto-injected "Note" cap when an H2 is the first child).
 fn wrap_std_library_section(html: &str) -> String {
     const HEADING: &str = "<h2>Useful from the standard library</h2>";
     let Some(h_start) = html.find(HEADING) else {
@@ -624,9 +626,9 @@ fn wrap_std_library_section(html: &str) -> String {
 
     let mut out = String::with_capacity(html.len() + 64);
     out.push_str(&html[..h_start]);
-    out.push_str("<aside class=\"std-library\">\n");
+    out.push_str("<blockquote class=\"markdown-alert-note\">\n");
     out.push_str(&html[h_start..ul_end_abs]);
-    out.push_str("\n</aside>");
+    out.push_str("\n</blockquote>");
     out.push_str(&html[ul_end_abs..]);
     out
 }

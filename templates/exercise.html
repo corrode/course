@@ -1701,8 +1701,8 @@ with (u) %}
 
     /* GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, etc). */
     .exercise-prose blockquote[class^="markdown-alert-"] {
-        margin: 1.25rem 0;
-        padding: 0.75rem 1rem 0.5rem;
+        margin: 1.5rem 0;
+        padding: 1rem 1.25rem;
         border-left: 4px solid var(--md-alert-color, var(--color-primary));
         background: color-mix(
             in srgb,
@@ -1727,6 +1727,25 @@ with (u) %}
         text-transform: uppercase;
         color: var(--md-alert-color, var(--color-primary));
         margin-bottom: 0.4rem;
+    }
+    /* If the alert opens with an H2 (e.g. "Useful from the standard
+       library"), let the heading itself be the label and hide the
+       auto-injected one. */
+    .exercise-prose
+        blockquote[class^="markdown-alert-"]:has(> h2:first-child)::before {
+        display: none;
+    }
+    .exercise-prose blockquote[class^="markdown-alert-"] > h2:first-child {
+        margin: 0.15rem 0 0.85rem;
+        padding: 0;
+        border: none;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--md-alert-color, var(--color-primary));
+        font-family: inherit;
+        line-height: 1.2;
     }
     .exercise-prose .markdown-alert-note {
         --md-alert-color: var(--color-primary);
@@ -1759,36 +1778,10 @@ with (u) %}
         content: "Caution";
     }
 
-    /* "Useful from the standard library" callouts at the bottom of every
-       chapter prose page. The renderer wraps the matching heading + ul in
-       `<aside class="std-library">` so we can give them a consistent look
-       without touching the markdown source. */
-    .exercise-prose .std-library {
-        margin: 2rem 0;
-        padding: 1rem 1.25rem 1.25rem;
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: 10px;
-        border-left: 3px solid var(--color-primary);
-    }
-    .exercise-prose .std-library > h2 {
-        margin: 0 0 0.5rem;
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--color-primary);
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-    .exercise-prose .std-library > ul {
-        margin: 0;
-        padding-left: 1.1rem;
-    }
-    .exercise-prose .std-library li {
-        margin: 0.35rem 0;
-        line-height: 1.5;
-    }
+    /* "Useful from the standard library" sections are rewritten by the
+       renderer into the same `markdown-alert-note` blockquote shape used
+       by `> [!NOTE]`, so they pick up the alert styling above with no
+       dedicated class of their own. */
 
     /* Reading column for the chapter prose. */
     .chapter-prose {
@@ -2092,7 +2085,7 @@ with (u) %}
     }
 
     .chapter-list {
-        margin-top: 3rem;
+        margin: 3rem auto 0;
         display: grid;
         grid-template-columns: 1fr;
         gap: 0 2rem;
