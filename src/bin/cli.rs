@@ -571,13 +571,6 @@ fn extract_submission_target(file_path: &str) -> Result<SubmissionTarget> {
     })
 }
 
-/// Backwards-compatible wrapper that just returns the chapter slug.
-/// Kept for any code path that doesn't need step granularity.
-#[allow(dead_code)]
-fn extract_exercise_name(file_path: &str) -> Result<String> {
-    extract_submission_target(file_path).map(|t| t.chapter)
-}
-
 /// Run cargo test for an exercise and return success status and output.
 ///
 /// When `filter` is `Some`, it's passed as a `cargo test` test-name filter

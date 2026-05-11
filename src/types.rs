@@ -9,7 +9,7 @@
 //! - Serializable for JSON API communication
 //! - Ergonomic to use with appropriate conversion traits
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;

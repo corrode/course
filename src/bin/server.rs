@@ -4,13 +4,17 @@ use cargo_course::types::*;
 use anyhow::Result;
 use askama::Template;
 use axum::{
-    debug_handler, extract::{Path as AxumPath, Query, State}, http::StatusCode, response::{Html, IntoResponse, Json}, routing::{delete, get, post}, Router
+    Router, debug_handler,
+    extract::{Path as AxumPath, Query, State},
+    http::StatusCode,
+    response::{Html, IntoResponse, Json},
+    routing::{delete, get, post},
 };
 use dotenvy::dotenv;
-use log::{info, warn, error};
+use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
-use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, SqlitePool, Row, Sqlite};
+use sha2::{Digest, Sha256};
+use sqlx::{Row, Sqlite, SqlitePool, migrate::MigrateDatabase, sqlite::SqlitePoolOptions};
 use std::env;
 use std::sync::Arc;
 use tower_http::services::ServeDir;
@@ -210,10 +214,10 @@ async fn main() -> Result<()> {
         }
     }
     env_logger::init();
-    
+
     // Load environment variables
     dotenv().ok();
-    
+
     info!("Starting corrode course server...");
 
     let admin_token =
@@ -232,7 +236,10 @@ async fn main() -> Result<()> {
 
     // Set up database
     info!("Checking if database exists: {}", database_url);
-    if !Sqlite::database_exists(&database_url).await.unwrap_or(false) {
+    if !Sqlite::database_exists(&database_url)
+        .await
+        .unwrap_or(false)
+    {
         info!("Creating database {}", database_url);
         match Sqlite::create_database(&database_url).await {
             Ok(_) => {
@@ -260,7 +267,7 @@ async fn main() -> Result<()> {
             error!("Database URL: {}", database_url);
             e
         })?;
-    
+
     info!("Database connection established");
 
     // Run migrations
@@ -270,14 +277,17 @@ async fn main() -> Result<()> {
     info!("Database migrations completed");
 
     // Scan exercises once at startup.
-    let exercises = exercises::load(std::path::Path::new("examples"))
-        .map_err(|e| {
-            error!("Failed to scan exercises: {e:#}");
-            e
-        })?;
+    let exercises = exercises::load(std::path::Path::new("examples")).map_err(|e| {
+        error!("Failed to scan exercises: {e:#}");
+        e
+    })?;
     info!("Loaded {} exercises", exercises.len());
 
-    let app_state = AppState { pool, admin_token: admin_token.clone(), exercises };
+    let app_state = AppState {
+        pool,
+        admin_token: admin_token.clone(),
+        exercises,
+    };
 
     // Build API routes
     let api_routes = Router::new()
@@ -299,7 +309,10 @@ async fn main() -> Result<()> {
         .route("/cheatsheet", get(cheatsheet_page))
         .route("/cheatsheet/fragment", get(cheatsheet_fragment))
         .route("/admin", get(admin_dashboard))
-        .route("/admin/remove-participant/{ulid}", delete(admin_remove_participant))
+        .route(
+            "/admin/remove-participant/{ulid}",
+            delete(admin_remove_participant),
+        )
         .nest("/api", api_routes)
         .nest_service("/static", ServeDir::new("static"))
         .with_state(app_state);
@@ -312,7 +325,6 @@ async fn main() -> Result<()> {
     axum::serve(listener, app).await?;
     Ok(())
 }
-
 
 /// Landing page handler
 async fn landing_page() -> impl IntoResponse {
@@ -409,10 +421,11 @@ async fn participant_dashboard(
     State(state): State<AppState>,
 ) -> impl IntoResponse {
     // Get participant info
-    let participant_result = sqlx::query_as("SELECT id, name, created_at FROM participants WHERE id = ?")
-        .bind(&ulid)
-        .fetch_one(&state.pool)
-        .await;
+    let participant_result =
+        sqlx::query_as("SELECT id, name, created_at FROM participants WHERE id = ?")
+            .bind(&ulid)
+            .fetch_one(&state.pool)
+            .await;
 
     let participant: DbParticipant = match participant_result {
         Ok(p) => p,
@@ -422,13 +435,25 @@ async fn participant_dashboard(
     // Get exercise progress
     let exercises = match get_exercise_progress(&state.pool, &ulid, &state.exercises).await {
         Ok(exercises) => exercises,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get exercise progress").into_response(),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get exercise progress",
+            )
+                .into_response();
+        }
     };
 
     // Get user statistics
     let stats = match get_user_stats(&state.pool, &ulid).await {
         Ok(stats) => stats,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get user statistics").into_response(),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get user statistics",
+            )
+                .into_response();
+        }
     };
 
     let template = DashboardTemplate {
@@ -440,7 +465,11 @@ async fn participant_dashboard(
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to render template").into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to render template",
+        )
+            .into_response(),
     }
 }
 
@@ -533,7 +562,10 @@ async fn render_exercise_page(
         .iter()
         .enumerate()
         .map(|(i, e)| {
-            let s = chapter_progress.get(&e.file_stem).cloned().unwrap_or_default();
+            let s = chapter_progress
+                .get(&e.file_stem)
+                .cloned()
+                .unwrap_or_default();
             ProgressDot {
                 slug: e.slug.clone(),
                 number: e.number,
@@ -587,7 +619,10 @@ async fn render_exercise_page(
                     "https://github.dev/corrode/course/blob/main/examples/{}/{}",
                     exercise.file_stem, filename
                 );
-                let status = step_progress.get(&exercise_key).cloned().unwrap_or_default();
+                let status = step_progress
+                    .get(&exercise_key)
+                    .cloned()
+                    .unwrap_or_default();
                 items.push(RenderItem {
                     kind: RenderKind::Code {
                         dom_id,
@@ -617,7 +652,11 @@ async fn render_exercise_page(
         Ok(html) => Html(html).into_response(),
         Err(e) => {
             error!("Failed to render exercise template: {e}");
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to render template").into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to render template",
+            )
+                .into_response()
         }
     }
 }
@@ -680,7 +719,13 @@ async fn admin_dashboard(
 
     let participant_rows = match participant_rows_result {
         Ok(rows) => rows,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch participants").into_response(),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to fetch participants",
+            )
+                .into_response();
+        }
     };
 
     let mut participants = Vec::new();
@@ -716,7 +761,13 @@ async fn admin_dashboard(
 
     let submission_rows = match submission_rows_result {
         Ok(rows) => rows,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch submissions").into_response(),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to fetch submissions",
+            )
+                .into_response();
+        }
     };
 
     let mut recent_submissions = Vec::new();
@@ -736,16 +787,26 @@ async fn admin_dashboard(
     // Get admin statistics with proper SQL queries
     let stats = match get_admin_stats(&state.pool).await {
         Ok(stats) => stats,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get admin statistics").into_response(),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get admin statistics",
+            )
+                .into_response();
+        }
     };
 
     // Get unique exercises from submissions
-    let exercise_rows_result = sqlx::query("SELECT DISTINCT exercise_name FROM submissions ORDER BY exercise_name")
-        .fetch_all(&state.pool)
-        .await;
+    let exercise_rows_result =
+        sqlx::query("SELECT DISTINCT exercise_name FROM submissions ORDER BY exercise_name")
+            .fetch_all(&state.pool)
+            .await;
 
     let exercises = match exercise_rows_result {
-        Ok(rows) => rows.iter().map(|row| row.get::<String, _>("exercise_name")).collect(),
+        Ok(rows) => rows
+            .iter()
+            .map(|row| row.get::<String, _>("exercise_name"))
+            .collect(),
         Err(_) => Vec::new(), // Return empty list if query fails
     };
 
@@ -758,7 +819,11 @@ async fn admin_dashboard(
 
     match template.render() {
         Ok(html) => Html(html).into_response(),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to render template").into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to render template",
+        )
+            .into_response(),
     }
 }
 
@@ -790,8 +855,15 @@ async fn admin_remove_participant(
         .execute(&mut *tx)
         .await
     {
-        error!("Failed to delete submissions for participant {}: {}", participant_id, err);
-        return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete submissions").into_response();
+        error!(
+            "Failed to delete submissions for participant {}: {}",
+            participant_id, err
+        );
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to delete submissions",
+        )
+            .into_response();
     }
 
     // Then, delete the participant
@@ -807,7 +879,11 @@ async fn admin_remove_participant(
         }
         Err(err) => {
             error!("Failed to delete participant {}: {}", participant_id, err);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete participant").into_response();
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to delete participant",
+            )
+                .into_response();
         }
     }
 
@@ -828,8 +904,12 @@ async fn api_register(
     Json(request): Json<RegistrationRequest>,
 ) -> Result<Json<RegistrationResponse>, StatusCode> {
     let ulid = Ulid::new().to_string();
-    
-    info!("New participant registration: name='{}', ulid='{}'", request.name.as_str(), ulid);
+
+    info!(
+        "New participant registration: name='{}', ulid='{}'",
+        request.name.as_str(),
+        ulid
+    );
 
     match sqlx::query("INSERT INTO participants (id, name) VALUES (?, ?)")
         .bind(&ulid)
@@ -840,11 +920,11 @@ async fn api_register(
         Ok(_) => {
             info!("Participant registered successfully: {}", ulid);
             Ok(Json(RegistrationResponse { ulid }))
-        },
+        }
         Err(e) => {
             error!("Failed to register participant: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        },
+        }
     }
 }
 
@@ -854,32 +934,39 @@ async fn api_submit(
     State(state): State<AppState>,
     Json(request): Json<SubmissionRequest>,
 ) -> Result<StatusCode, StatusCode> {
-    info!("Submission attempt: participant_id='{}', exercise='{}'", request.ulid, request.exercise_name);
-    
+    info!(
+        "Submission attempt: participant_id='{}', exercise='{}'",
+        request.ulid, request.exercise_name
+    );
+
     // First, check if the participant exists
     let participant_exists = sqlx::query("SELECT 1 FROM participants WHERE id = ?")
         .bind(&request.ulid)
         .fetch_optional(&state.pool)
         .await;
-        
+
     match participant_exists {
         Ok(Some(_)) => {
             // Participant exists, proceed with submission
             info!("Valid participant found for submission: {}", request.ulid);
-        },
+        }
         Ok(None) => {
-            warn!("Submission attempt with invalid participant ID: {}", request.ulid);
+            warn!(
+                "Submission attempt with invalid participant ID: {}",
+                request.ulid
+            );
             return Err(StatusCode::UNAUTHORIZED);
-        },
+        }
         Err(e) => {
             error!("Database error while checking participant: {}", e);
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     // Calculate content hash for deduplication
-    let content_hash = calculate_submission_hash(&request.ulid, &request.exercise_name, &request.source_code);
-    
+    let content_hash =
+        calculate_submission_hash(&request.ulid, &request.exercise_name, &request.source_code);
+
     // Check if identical submission already exists
     let existing_submission = sqlx::query(
         "SELECT id FROM submissions WHERE participant_id = ? AND exercise_name = ? AND content_hash = ?"
@@ -889,22 +976,27 @@ async fn api_submit(
     .bind(&content_hash)
     .fetch_optional(&state.pool)
     .await;
-    
+
     match existing_submission {
         Ok(Some(_)) => {
-            info!("Duplicate submission detected for participant='{}', exercise='{}' - skipping", 
-                  request.ulid, request.exercise_name);
+            info!(
+                "Duplicate submission detected for participant='{}', exercise='{}' - skipping",
+                request.ulid, request.exercise_name
+            );
             return Ok(StatusCode::OK); // Return success but don't store duplicate
-        },
+        }
         Ok(None) => {
             // No duplicate found, proceed with insertion
-        },
+        }
         Err(e) => {
-            error!("Database error while checking for duplicate submission: {}", e);
+            error!(
+                "Database error while checking for duplicate submission: {}",
+                e
+            );
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     // Insert new submission with hash
     match sqlx::query(
         r#"
@@ -921,7 +1013,7 @@ async fn api_submit(
     .bind(request.fmt_passed)
     .bind(&content_hash)
     .execute(&state.pool)
-    .await 
+    .await
     {
         Ok(_) => {
             info!("Submission successful: participant='{}', exercise='{}', tests_passed={}", 
@@ -942,14 +1034,16 @@ async fn api_status(
     State(state): State<AppState>,
 ) -> Result<Json<ProgressResponse>, StatusCode> {
     info!("Status request for participant: {}", ulid);
-    
+
     match get_exercise_progress(&state.pool, &ulid, &state.exercises).await {
         Ok(exercises) => {
             let completed_count = exercises.iter().filter(|e| e.completed).count();
             let perfected_count = exercises.iter().filter(|e| e.perfected).count();
-            info!("Status response: participant='{}', completed={}, perfected={}", 
-                  ulid, completed_count, perfected_count);
-            
+            info!(
+                "Status response: participant='{}', completed={}, perfected={}",
+                ulid, completed_count, perfected_count
+            );
+
             let exercise_statuses = exercises
                 .into_iter()
                 .map(|e| ExerciseStatus {
@@ -966,7 +1060,7 @@ async fn api_status(
         Err(e) => {
             error!("Failed to get exercise progress for {}: {}", ulid, e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        },
+        }
     }
 }
 
@@ -1094,11 +1188,12 @@ struct FormatResponse {
 /// Proxy handler for play.rust-lang.org's `/format` endpoint. Takes the
 /// editor's source, runs it through `rustfmt` upstream, and returns the
 /// reformatted code so the client can replace its buffer.
-async fn api_format(
-    Json(req): Json<FormatRequest>,
-) -> Result<Json<FormatResponse>, StatusCode> {
+async fn api_format(Json(req): Json<FormatRequest>) -> Result<Json<FormatResponse>, StatusCode> {
     let slug = req.slug.as_deref().unwrap_or("<unknown>");
-    info!("/api/format: forwarding {} bytes for {slug}", req.code.len());
+    info!(
+        "/api/format: forwarding {} bytes for {slug}",
+        req.code.len()
+    );
 
     let body = serde_json::json!({
         "channel": "stable",
@@ -1191,13 +1286,13 @@ fn parse_test_results(stdout: &str) -> Vec<TestResult> {
 async fn get_user_stats(pool: &SqlitePool, participant_id: &str) -> Result<UserStats> {
     // Get completed submissions count
     let completed_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM submissions WHERE participant_id = ? AND tests_passed = 1"
+        "SELECT COUNT(*) FROM submissions WHERE participant_id = ? AND tests_passed = 1",
     )
     .bind(participant_id)
     .fetch_one(pool)
     .await?;
 
-    // Get perfected submissions count  
+    // Get perfected submissions count
     let perfected_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM submissions WHERE participant_id = ? AND tests_passed = 1 AND fmt_passed = 1 AND clippy_passed = 1"
     )
@@ -1206,12 +1301,11 @@ async fn get_user_stats(pool: &SqlitePool, participant_id: &str) -> Result<UserS
     .await?;
 
     // Get total submissions count (including failed ones)
-    let total_submissions: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM submissions WHERE participant_id = ?"
-    )
-    .bind(participant_id)
-    .fetch_one(pool)
-    .await?;
+    let total_submissions: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM submissions WHERE participant_id = ?")
+            .bind(participant_id)
+            .fetch_one(pool)
+            .await?;
 
     Ok(UserStats {
         completed_count,
@@ -1228,11 +1322,10 @@ async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
         .await?;
 
     // Get total submissions across all participants
-    let total_submissions: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM submissions WHERE tests_passed = 1"
-    )
-    .fetch_one(pool)
-    .await?;
+    let total_submissions: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM submissions WHERE tests_passed = 1")
+            .fetch_one(pool)
+            .await?;
 
     // Get total perfected submissions (successful + fmt + clippy)
     let total_perfected: i64 = sqlx::query_scalar(
@@ -1240,7 +1333,6 @@ async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
     )
     .fetch_one(pool)
     .await?;
-
 
     Ok(AdminStats {
         total_participants,
@@ -1306,10 +1398,7 @@ async fn get_exercise_progress<'a>(
                     .iter()
                     .any(|s| s.exercise_name == key && s.tests_passed);
                 let step_perfect = all_submissions.iter().any(|s| {
-                    s.exercise_name == key
-                        && s.tests_passed
-                        && s.fmt_passed
-                        && s.clippy_passed
+                    s.exercise_name == key && s.tests_passed && s.fmt_passed && s.clippy_passed
                 });
                 if !step_done {
                     all_done = false;
@@ -1335,10 +1424,12 @@ async fn get_exercise_progress<'a>(
     Ok(exercises)
 }
 
-
-
 /// Calculate a hash for submission content to detect duplicates
-fn calculate_submission_hash(participant_id: &str, exercise_name: &str, source_code: &str) -> String {
+fn calculate_submission_hash(
+    participant_id: &str,
+    exercise_name: &str,
+    source_code: &str,
+) -> String {
     let mut hasher = Sha256::new();
     hasher.update(participant_id.as_bytes());
     hasher.update(b":");

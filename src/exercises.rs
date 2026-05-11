@@ -599,23 +599,34 @@ mod tests {
             .expect("expected 02_strings_and_chars to be present");
         assert_eq!(strings.number, 2);
         assert_eq!(strings.file_stem, "02_strings_and_chars");
-        assert_eq!(strings.title, "Strings and chars");
+        // Title now comes from the first code step's `# Title` (multi-step
+        // chapter). The chapter intro lives in `1_intro.md` (a Note).
         let primary = strings
             .primary_step()
             .expect("chapter should have at least one code step");
+        assert!(
+            !primary.intro_html.is_empty(),
+            "primary step should have intro HTML"
+        );
         assert!(
             primary.intro_html.contains("<p>"),
             "intro should be rendered HTML, got: {}",
             primary.intro_html
         );
+        // The borrowed/owned table now lives in the chapter-level note.
+        let notes = strings.notes();
+        let intro_note = notes
+            .iter()
+            .find(|n| n.slug == "intro")
+            .expect("chapter should have a 1_intro.md note");
         assert!(
-            primary.intro_html.contains("<table>"),
-            "intro should include the borrowed/owned table, got: {}",
-            primary.intro_html
+            intro_note.html.contains("<p>"),
+            "intro note should be rendered HTML"
         );
         assert!(
-            primary.starter_code.contains("fn first_char"),
-            "starter code should contain function stubs"
+            primary.starter_code.contains("fn count_chars"),
+            "first step's starter code should contain its function stub, got: {}",
+            primary.starter_code
         );
         assert!(
             !primary.starter_code.contains("//!"),
@@ -699,8 +710,8 @@ mod tests {
         // step ordered at 0 (which renders as the chapter's primary step).
         let chapter = exercises
             .iter()
-            .find(|e| e.slug == "hello_rust")
-            .expect("expected 00_hello_rust to be present");
+            .find(|e| e.slug == "rust_fundamentals_quiz")
+            .expect("expected 18_rust_fundamentals_quiz to be present");
         let code_steps = chapter.code_steps();
         assert_eq!(code_steps.len(), 1, "legacy chapter should have one step");
         assert_eq!(code_steps[0].order, 0);
