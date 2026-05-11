@@ -16,7 +16,7 @@ with (u) %}
         aria-controls="chapter-picker-menu"
         data-chapter-picker-toggle
     >
-        <span class="chapter-picker-label">{{ exercise.file_stem }}.rs</span>
+        <span class="chapter-picker-label">{{ exercise.file_stem }}</span>
         <svg
             class="chapter-picker-chevron"
             viewBox="0 0 12 12"
@@ -130,15 +130,202 @@ with (u) %}
         👋 Anyone can read and edit this exercise.
         <a href="/">Register</a> to track your progress.
     </div>
-    {% when Some with (_u) %} {% endmatch %} {% for note in exercise.notes %}
-    <div class="chapter-prose exercise-prose">{{ note.html|safe }}</div>
-    {% endfor %}
+    {% when Some with (_u) %} {% endmatch %} {% for item in items %} {% match
+    item.kind %} {% when cargo_course::exercises::RenderKind::Prose with { html
+    } %}
+    <div class="chapter-prose exercise-prose">{{ html|safe }}</div>
+    {% when cargo_course::exercises::RenderKind::Code with { dom_id,
+    exercise_key, eyebrow, title, intro_html, starter_code, attempted,
+    completed, perfected, github_dev_url } %}
+    <div class="chapter-prose exercise-prose">{{ intro_html|safe }}</div>
 
-    <div class="chapter-prose exercise-prose">
-        {{ exercise.intro_html|safe }}
-    </div>
+    <section
+        class="exercise-section"
+        data-step-id="{{ dom_id }}"
+        data-exercise-key="{{ exercise_key }}"
+    >
+        <div class="exercise-section-head">
+            <div>
+                <div class="section-eyebrow">{{ eyebrow }}</div>
+                <h2 class="section-title">{{ title }}</h2>
+            </div>
+            <div class="exercise-actions">
+                <span
+                    data-role="action-status"
+                    class="action-status"
+                    aria-live="polite"
+                ></span>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-role="vim-btn"
+                    title="Toggle Vim keybindings"
+                    aria-pressed="false"
+                >
+                    Vim: off
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-role="reset-btn"
+                    title="Replace your edits with the original starter code"
+                >
+                    Reset
+                </button>
+                <a
+                    class="btn btn-secondary"
+                    data-role="vscode-btn"
+                    href="{{ github_dev_url }}"
+                    target="_blank"
+                    rel="noopener"
+                    title="Open this file on github.dev (a browser-based VS Code)"
+                >
+                    Open in VS Code
+                </a>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-role="format-btn"
+                    title="Reformat with rustfmt via play.rust-lang.org"
+                >
+                    Format
+                </button>
+                <button type="button" class="btn" data-role="run-btn">
+                    ▶ Run
+                </button>
+                {% match ulid %} {% when Some with (u) %}
+                <button
+                    type="button"
+                    class="btn btn-success"
+                    data-role="submit-btn"
+                    data-ulid="{{ u }}"
+                    title="Save this passing solution as your progress"
+                    style="display: none"
+                >
+                    ✓ Submit
+                </button>
+                {% when None %} {% endmatch %}
+            </div>
+        </div>
+        <noscript>
+            <p style="color: var(--color-text-muted)">
+                JavaScript is disabled — the editor below is a plain textarea.
+            </p>
+        </noscript>
+        <div style="position: relative">
+            <button
+                type="button"
+                data-role="copy-btn"
+                title="Copy current code to clipboard"
+                aria-label="Copy code"
+                style="
+                    position: absolute;
+                    top: 0.5rem;
+                    right: 0.5rem;
+                    z-index: 5;
+                    background: var(--color-surface);
+                    color: var(--color-text-muted);
+                    border: 1px solid var(--color-border);
+                    border-radius: 3px;
+                    padding: 0.25rem 0.4rem;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    opacity: 0.65;
+                    transition: opacity 0.15s ease;
+                "
+            >
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    style="width: 14px; height: 14px"
+                >
+                    <path
+                        d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
+                        fill="currentColor"
+                    />
+                </svg>
+            </button>
+            <textarea
+                data-role="editor-fallback"
+                spellcheck="false"
+                style="
+                    width: 100%;
+                    min-height: 28rem;
+                    font-family: &quot;SF Mono&quot;, Monaco, monospace;
+                    font-size: 0.9rem;
+                    padding: 1rem;
+                    border: 1px solid var(--color-border);
+                    border-radius: 12px;
+                    background-color: var(--color-background);
+                    color: var(--color-text);
+                    resize: vertical;
+                "
+            >
+{{ starter_code }}</textarea
+            >
+            <div data-role="editor-mount" style="display: none"></div>
+        </div>
 
-    {% match exercise.hints %} {% when Some with (h) %}
+        <div
+            data-role="run-status-row"
+            style="
+                margin-top: 0.75rem;
+                min-height: 1.2rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            "
+        >
+            <span
+                data-role="run-spinner"
+                class="run-spinner"
+                aria-hidden="true"
+                style="display: none"
+            ></span>
+            <span
+                data-role="run-status"
+                style="color: var(--color-text-muted); font-size: 0.9rem"
+                aria-live="polite"
+            ></span>
+        </div>
+
+        <div data-role="output-panel" style="display: none; margin-top: 1rem">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem">Results</h3>
+            <ul
+                data-role="test-list"
+                style="list-style: none; padding: 0; margin: 0 0 0.75rem 0"
+            ></ul>
+            <details data-role="output-details">
+                <summary
+                    style="
+                        cursor: pointer;
+                        color: var(--color-text-muted);
+                        font-size: 0.85rem;
+                    "
+                >
+                    Compiler / runtime output
+                </summary>
+                <pre
+                    data-role="output-stderr"
+                    style="
+                        margin: 0.5rem 0 0 0;
+                        padding: 0.85rem 1rem;
+                        background-color: var(--color-background);
+                        border: 1px solid var(--color-border);
+                        border-radius: 12px;
+                        overflow-x: auto;
+                        font-family: &quot;SF Mono&quot;, Monaco, monospace;
+                        font-size: 0.8rem;
+                        white-space: pre-wrap;
+                    "
+                ></pre>
+            </details>
+        </div>
+    </section>
+    {% endmatch %} {% endfor %} {% match exercise.hints %} {% when Some with (h)
+    %}
     <details class="hints-disclosure" id="hints-disclosure">
         <summary>
             <span class="hints-icon" aria-hidden="true">💡</span>
@@ -152,9 +339,7 @@ with (u) %}
     <script>
         // Progressive hint reveal: each ordered list inside the hints body
         // starts collapsed to its first item, with a "Show next hint" button
-        // that reveals one more `<li>` per click. The whole point of the
-        // section is to nudge, not to spoonfeed; rendering all hints at once
-        // (the default for an `<ol>`) would defeat that.
+        // that reveals one more `<li>` per click.
         (function () {
             const details = document.getElementById("hints-disclosure");
             const body = document.getElementById("hints-body");
@@ -197,15 +382,11 @@ with (u) %}
                     });
                     ol.parentNode.insertBefore(btn, ol.nextSibling);
                 });
-                // Code blocks inside hints might have just become visible;
-                // give the prose-copy helper another pass.
                 if (typeof window.attachProseCopyButtons === "function") {
                     window.attachProseCopyButtons(body);
                 }
             }
 
-            // Initialise lazily — most learners never open the hints, so
-            // there's no point doing the DOM walk on page load.
             if (details.open) init();
             details.addEventListener("toggle", () => {
                 if (details.open) init();
@@ -215,11 +396,8 @@ with (u) %}
     {% when None %} {% endmatch %}
 
     <script>
-        // Add a clipboard button to every prose code block (intro, notes,
-        // hints). Same affordance as the editor's copy button: hover to
-        // reveal, click to copy, brief green flash on success. Idempotent
-        // so we can safely call it again after the hints disclosure opens
-        // and reveals additional <pre> elements.
+        // Add a clipboard button to every prose code block. Idempotent so
+        // we can safely call it again after the hints disclosure opens.
         (function () {
             const ICON_SVG =
                 '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
@@ -234,10 +412,6 @@ with (u) %}
                 blocks.forEach((pre) => {
                     if (pre.dataset.copyAttached === "1") return;
                     pre.dataset.copyAttached = "1";
-
-                    // Wrap the <pre> in a positioned container so the
-                    // absolute-positioned button anchors to it, not to the
-                    // surrounding prose column.
                     const wrap = document.createElement("div");
                     wrap.className = "prose-code-wrap";
                     pre.parentNode.insertBefore(wrap, pre);
@@ -272,194 +446,6 @@ with (u) %}
             window.attachProseCopyButtons();
         })();
     </script>
-
-    <section class="exercise-section">
-        <div class="exercise-section-head">
-            <div>
-                <div class="section-eyebrow">Exercise</div>
-                <h2 class="section-title">Try it yourself</h2>
-            </div>
-            <div class="exercise-actions">
-                <span
-                    id="action-status"
-                    class="action-status"
-                    aria-live="polite"
-                ></span>
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    id="vim-btn"
-                    title="Toggle Vim keybindings"
-                    aria-pressed="false"
-                >
-                    Vim: off
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    id="reset-btn"
-                    title="Replace your edits with the original starter code"
-                >
-                    Reset
-                </button>
-                <a
-                    class="btn btn-secondary"
-                    id="vscode-btn"
-                    href="https://github.dev/corrode/course/blob/main/examples/{{ exercise.file_stem }}/main.rs"
-                    target="_blank"
-                    rel="noopener"
-                    title="Open this file on github.dev (a browser-based VS Code)"
-                >
-                    Open in VS Code
-                </a>
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    id="format-btn"
-                    data-slug="{{ exercise.file_stem }}"
-                    title="Reformat with rustfmt via play.rust-lang.org"
-                >
-                    Format
-                </button>
-                <button
-                    type="button"
-                    class="btn"
-                    id="run-btn"
-                    data-slug="{{ exercise.file_stem }}"
-                >
-                    ▶ Run
-                </button>
-                {% match ulid %} {% when Some with (u) %}
-                <button
-                    type="button"
-                    class="btn btn-success"
-                    id="submit-btn"
-                    data-slug="{{ exercise.file_stem }}"
-                    data-ulid="{{ u }}"
-                    title="Save this passing solution as your progress"
-                    style="display: none"
-                >
-                    ✓ Submit
-                </button>
-                {% when None %} {% endmatch %}
-            </div>
-        </div>
-        <noscript>
-            <p style="color: var(--color-text-muted)">
-                JavaScript is disabled — the editor below is a plain textarea.
-            </p>
-        </noscript>
-        <div style="position: relative">
-            <button
-                type="button"
-                id="copy-btn"
-                title="Copy current code to clipboard"
-                aria-label="Copy code"
-                style="
-                    position: absolute;
-                    top: 0.5rem;
-                    right: 0.5rem;
-                    z-index: 5;
-                    background: var(--color-surface);
-                    color: var(--color-text-muted);
-                    border: 1px solid var(--color-border);
-                    border-radius: 3px;
-                    padding: 0.25rem 0.4rem;
-                    cursor: pointer;
-                    display: inline-flex;
-                    align-items: center;
-                    opacity: 0.65;
-                    transition: opacity 0.15s ease;
-                "
-            >
-                <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    style="width: 14px; height: 14px"
-                >
-                    <path
-                        d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
-                        fill="currentColor"
-                    />
-                </svg>
-            </button>
-            <textarea
-                id="editor-fallback"
-                spellcheck="false"
-                style="
-                    width: 100%;
-                    min-height: 28rem;
-                    font-family: &quot;SF Mono&quot;, Monaco, monospace;
-                    font-size: 0.9rem;
-                    padding: 1rem;
-                    border: 1px solid var(--color-border);
-                    border-radius: 12px;
-                    background-color: var(--color-background);
-                    color: var(--color-text);
-                    resize: vertical;
-                "
-            >
-{{ exercise.starter_code }}</textarea
-            >
-            <div id="editor-mount" style="display: none"></div>
-        </div>
-
-        <div
-            id="run-status-row"
-            style="
-                margin-top: 0.75rem;
-                min-height: 1.2rem;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            "
-        >
-            <span
-                id="run-spinner"
-                aria-hidden="true"
-                style="display: none"
-            ></span>
-            <span
-                id="run-status"
-                style="color: var(--color-text-muted); font-size: 0.9rem"
-                aria-live="polite"
-            ></span>
-        </div>
-
-        <div id="output-panel" style="display: none; margin-top: 1rem">
-            <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem">Results</h3>
-            <ul
-                id="test-list"
-                style="list-style: none; padding: 0; margin: 0 0 0.75rem 0"
-            ></ul>
-            <details id="output-details">
-                <summary
-                    style="
-                        cursor: pointer;
-                        color: var(--color-text-muted);
-                        font-size: 0.85rem;
-                    "
-                >
-                    Compiler / runtime output
-                </summary>
-                <pre
-                    id="output-stderr"
-                    style="
-                        margin: 0.5rem 0 0 0;
-                        padding: 0.85rem 1rem;
-                        background-color: var(--color-background);
-                        border: 1px solid var(--color-border);
-                        border-radius: 12px;
-                        overflow-x: auto;
-                        font-family: &quot;SF Mono&quot;, Monaco, monospace;
-                        font-size: 0.8rem;
-                        white-space: pre-wrap;
-                    "
-                ></pre>
-            </details>
-        </div>
-    </section>
 
     <nav
         class="chapter-list"
@@ -525,13 +511,12 @@ with (u) %}
     // CodeMirror 6 via an import map. The leading `*` on each esm.sh URL
     // tells esm.sh to keep its own deps as bare specifiers, so the browser
     // resolves *all* @codemirror/state references through this map and we
-    // end up with a single shared module instance. Without this, esm.sh
-    // would inline its own copy per package and EditorView would reject
-    // the resulting extensions with "Unrecognized extension value".
+    // end up with a single shared module instance.
     //
-    // We assemble our own minimal setup instead of using the `codemirror`
-    // umbrella package, because that package re-bundles all its deps and
-    // would re-introduce the duplication problem.
+    // Multi-step refactor: every `.exercise-section[data-step-id]` on the
+    // page gets its own CodeMirror instance, draft key, and result panel.
+    // All DOM lookups are scoped to the section root so the same template
+    // works for single-step (one section) and multi-step (N sections).
     try {
         const [
             state,
@@ -579,16 +564,9 @@ with (u) %}
             closeBracketsKeymap,
         } = autocomplete;
 
-        // ---- Local-word + Rust-keyword completion ----
-        // No LSP; we just suggest Rust keywords plus identifiers already
-        // present in the buffer. Cheap, never wrong, and stops the editor
-        // from feeling "dumb" on long identifiers.
-        //
-        // Curated rather than exhaustive: covers strict + reserved Rust
-        // keywords, primitive types, and the prelude bits (types, traits,
-        // macros) that show up in nearly every exercise.
+        // Curated keyword list — small enough to be useful, large enough to
+        // cover the prelude bits that show up in nearly every exercise.
         const RUST_KEYWORDS = [
-            // Strict keywords
             "as",
             "async",
             "await",
@@ -627,11 +605,9 @@ with (u) %}
             "use",
             "where",
             "while",
-            // Reserved keywords occasionally useful
             "box",
             "try",
             "union",
-            // Primitive types
             "bool",
             "char",
             "str",
@@ -649,12 +625,10 @@ with (u) %}
             "usize",
             "f32",
             "f64",
-            // Prelude variants
             "Some",
             "None",
             "Ok",
             "Err",
-            // Prelude types
             "Option",
             "Result",
             "Vec",
@@ -668,7 +642,6 @@ with (u) %}
             "HashSet",
             "BTreeMap",
             "BTreeSet",
-            // Prelude traits
             "Clone",
             "Copy",
             "Debug",
@@ -694,7 +667,6 @@ with (u) %}
             "Fn",
             "FnMut",
             "FnOnce",
-            // Common macros
             "println!",
             "print!",
             "eprintln!",
@@ -746,11 +718,6 @@ with (u) %}
             return { from: word.from, options, validFor: /^[A-Za-z0-9_]*$/ };
         }
 
-        // ---- URL linkify plugin ----
-        // Underlines bare http(s) URLs in the editor; Cmd/Ctrl-click
-        // (or middle-click) opens them in a new tab. Matches inside
-        // string literals and doc comments alike, since we're decorating
-        // the raw text.
         const URL_RE = /\bhttps?:\/\/[^\s<>"'`)\]]+/g;
         const urlMark = Decoration.mark({
             class: "cm-url",
@@ -763,8 +730,6 @@ with (u) %}
                 let m;
                 URL_RE.lastIndex = 0;
                 while ((m = URL_RE.exec(text))) {
-                    // Trim trailing punctuation that's almost never part
-                    // of the URL itself.
                     let end = m.index + m[0].length;
                     while (end > m.index && ".,;:!?".includes(text[end - 1])) {
                         end -= 1;
@@ -811,769 +776,749 @@ with (u) %}
                 textUnderlineOffset: "2px",
                 cursor: "pointer",
             },
-            ".cm-url:hover": {
-                textDecorationColor: "currentColor",
-            },
+            ".cm-url:hover": { textDecorationColor: "currentColor" },
         });
 
-        const fallback = document.getElementById("editor-fallback");
-        const starter = fallback.value;
-        const mount = document.getElementById("editor-mount");
-
-        // Per-exercise draft persistence. Keyed by slug so each exercise
-        // keeps its own buffer; the starter is always recoverable from the
-        // textarea fallback (or the Reset button).
-        const slugForDraft = document.getElementById("run-btn").dataset.slug;
-        const DRAFT_KEY = `corrode:draft:${slugForDraft}`;
-        const savedDraft = localStorage.getItem(DRAFT_KEY);
-        const initialDoc =
-            savedDraft != null && savedDraft !== "" ? savedDraft : starter;
-
-        // Pick light/dark based on the site's current theme. The choice
-        // lives in a compartment so the theme toggle can swap it without
-        // rebuilding the editor (see the MutationObserver further down).
-        const themeCompartment = new Compartment();
-        const isDark = (
-            document.documentElement.getAttribute("data-theme") || ""
-        ).startsWith("dark");
-
-        // Vim mode lives in a compartment so the toggle button can swap it
-        // in/out without rebuilding the editor. Persisted in localStorage so
-        // the choice survives reloads and follows learners across exercises.
+        // Vim preference is a single global toggle (it would be jarring to
+        // have one section in vim mode and another not). The compartment
+        // sits in every section's editor so toggling propagates to all.
         const VIM_PREF_KEY = "corrode:editor:vim";
-        const vimCompartment = new Compartment();
-        const vimEnabledInitial = localStorage.getItem(VIM_PREF_KEY) === "1";
+        let vimEnabledGlobal = localStorage.getItem(VIM_PREF_KEY) === "1";
+        const themeObservers = [];
+        const allEditors = [];
 
-        const extensions = [
-            vimCompartment.of(vimEnabledInitial ? vimMod.vim() : []),
-            lineNumbers(),
-            highlightActiveLineGutter(),
-            highlightActiveLine(),
-            history(),
-            drawSelection(),
-            indentOnInput(),
-            bracketMatching(),
-            syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-            closeBrackets(),
-            autocompletion({ override: [localCompletions] }),
-            keymap.of([
-                ...closeBracketsKeymap,
-                ...defaultKeymap,
-                ...historyKeymap,
-                ...completionKeymap,
-                indentWithTab,
-            ]),
-            langRust.rust(),
-            EditorView.lineWrapping,
-            urlPlugin,
-            urlTheme,
-            themeCompartment.of(isDark ? oneDark.oneDark : []),
-        ];
+        function initSection(section) {
+            const stepId = section.dataset.stepId;
+            const exerciseKey = section.dataset.exerciseKey;
+            const $ = (role) => section.querySelector(`[data-role="${role}"]`);
 
-        // Persist the buffer on every change (debounced) so navigating
-        // away or accidental reloads don't blow away the learner's work.
-        let saveTimer = null;
-        const persistDraft = (text) => {
-            try {
-                if (text === starter) {
-                    localStorage.removeItem(DRAFT_KEY);
-                } else {
-                    localStorage.setItem(DRAFT_KEY, text);
+            const fallback = $("editor-fallback");
+            const mount = $("editor-mount");
+            const runBtn = $("run-btn");
+            const runStatus = $("run-status");
+            const runSpinner = $("run-spinner");
+            const outputPanel = $("output-panel");
+            const testList = $("test-list");
+            const outputStderr = $("output-stderr");
+            const outputDetails = $("output-details");
+            const submitBtn = $("submit-btn");
+            const actionStatus = $("action-status");
+            const formatBtn = $("format-btn");
+            const resetBtn = $("reset-btn");
+            const copyBtn = $("copy-btn");
+            const vimBtn = $("vim-btn");
+
+            const starter = fallback.value;
+            const DRAFT_KEY = `corrode:draft:${stepId}`;
+            const savedDraft = localStorage.getItem(DRAFT_KEY);
+            const initialDoc =
+                savedDraft != null && savedDraft !== "" ? savedDraft : starter;
+
+            const themeCompartment = new Compartment();
+            const isDark = (
+                document.documentElement.getAttribute("data-theme") || ""
+            ).startsWith("dark");
+            const vimCompartment = new Compartment();
+
+            const persistDraft = (text) => {
+                try {
+                    if (text === starter) localStorage.removeItem(DRAFT_KEY);
+                    else localStorage.setItem(DRAFT_KEY, text);
+                } catch (_) {}
+            };
+
+            let saveTimer = null;
+            const persistExt = EditorView.updateListener.of((u) => {
+                if (!u.docChanged) return;
+                // Any edit invalidates Run result: swap Submit back to Run.
+                if (submitBtn && submitBtn.style.display !== "none") {
+                    submitBtn.style.display = "none";
+                    if (runBtn) runBtn.style.display = "";
                 }
-            } catch (_) {
-                // Quota or private-mode failure: ignore; draft just won't persist.
+                if (
+                    actionStatus &&
+                    actionStatus.classList.contains("is-visible")
+                ) {
+                    actionStatus.classList.remove(
+                        "is-visible",
+                        "is-pass",
+                        "is-fail",
+                        "celebrate",
+                    );
+                    actionStatus.textContent = "";
+                }
+                clearTimeout(saveTimer);
+                saveTimer = setTimeout(
+                    () => persistDraft(u.state.doc.toString()),
+                    300,
+                );
+            });
+
+            const extensions = [
+                vimCompartment.of(vimEnabledGlobal ? vimMod.vim() : []),
+                lineNumbers(),
+                highlightActiveLineGutter(),
+                highlightActiveLine(),
+                history(),
+                drawSelection(),
+                indentOnInput(),
+                bracketMatching(),
+                syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+                closeBrackets(),
+                autocompletion({ override: [localCompletions] }),
+                keymap.of([
+                    ...closeBracketsKeymap,
+                    ...defaultKeymap,
+                    ...historyKeymap,
+                    ...completionKeymap,
+                    indentWithTab,
+                ]),
+                langRust.rust(),
+                EditorView.lineWrapping,
+                urlPlugin,
+                urlTheme,
+                themeCompartment.of(isDark ? oneDark.oneDark : []),
+                persistExt,
+            ];
+
+            const editor = new EditorView({
+                state: EditorState.create({ doc: initialDoc, extensions }),
+                parent: mount,
+            });
+            editor.dom.style.border = "1px solid var(--color-border)";
+            editor.dom.style.borderRadius = "12px";
+            editor.dom.style.overflow = "hidden";
+            editor.dom.style.minHeight = "28rem";
+            editor.dom.style.fontSize = "0.9rem";
+
+            fallback.style.display = "none";
+            mount.style.display = "block";
+
+            const api = {
+                getValue: () => editor.state.doc.toString(),
+                setValue: (text) => {
+                    editor.dispatch({
+                        changes: {
+                            from: 0,
+                            to: editor.state.doc.length,
+                            insert: text,
+                        },
+                    });
+                },
+                setVim: (enabled) => {
+                    editor.dispatch({
+                        effects: vimCompartment.reconfigure(
+                            enabled ? vimMod.vim() : [],
+                        ),
+                    });
+                },
+                setTheme: (dark) => {
+                    editor.dispatch({
+                        effects: themeCompartment.reconfigure(
+                            dark ? oneDark.oneDark : [],
+                        ),
+                    });
+                },
+            };
+            allEditors.push(api);
+
+            // ---- Vim toggle (per-button but mirrors global state) ----
+            if (vimBtn) {
+                const renderVim = (on) => {
+                    vimBtn.textContent = on ? "Vim: on" : "Vim: off";
+                    vimBtn.setAttribute("aria-pressed", on ? "true" : "false");
+                };
+                renderVim(vimEnabledGlobal);
+                vimBtn.addEventListener("click", () => {
+                    vimEnabledGlobal = !vimEnabledGlobal;
+                    localStorage.setItem(
+                        VIM_PREF_KEY,
+                        vimEnabledGlobal ? "1" : "0",
+                    );
+                    allEditors.forEach((e) => e.setVim(vimEnabledGlobal));
+                    document
+                        .querySelectorAll('[data-role="vim-btn"]')
+                        .forEach((b) => {
+                            b.textContent = vimEnabledGlobal
+                                ? "Vim: on"
+                                : "Vim: off";
+                            b.setAttribute(
+                                "aria-pressed",
+                                vimEnabledGlobal ? "true" : "false",
+                            );
+                        });
+                    editor.focus();
+                });
             }
-        };
-        const persistExt = EditorView.updateListener.of((u) => {
-            if (!u.docChanged) return;
-            // Any edit invalidates the previous Run result, so flip the
-            // primary action back to Run if Submit is currently showing.
-            const runEl = document.getElementById("run-btn");
-            const submitEl = document.getElementById("submit-btn");
-            if (submitEl && submitEl.style.display !== "none") {
-                submitEl.style.display = "none";
-                if (runEl) runEl.style.display = "";
+
+            // ---- Reset ----
+            if (resetBtn) {
+                resetBtn.addEventListener("click", () => {
+                    if (
+                        !confirm(
+                            "Replace your edits with the original starter code?",
+                        )
+                    )
+                        return;
+                    api.setValue(starter);
+                    try {
+                        localStorage.removeItem(DRAFT_KEY);
+                    } catch (_) {}
+                });
             }
-            // Stale pass/fail pill no longer reflects current code.
-            const pill = document.getElementById("action-status");
-            if (pill && pill.classList.contains("is-visible")) {
-                pill.classList.remove(
-                    "is-visible",
+
+            // ---- Copy ----
+            if (copyBtn) {
+                const reveal = () => (copyBtn.style.opacity = "1");
+                const hide = () => (copyBtn.style.opacity = "");
+                copyBtn.addEventListener("mouseenter", reveal);
+                copyBtn.addEventListener("mouseleave", hide);
+                copyBtn.addEventListener("focus", reveal);
+                copyBtn.addEventListener("blur", hide);
+                copyBtn.addEventListener("click", async () => {
+                    try {
+                        await navigator.clipboard.writeText(api.getValue());
+                        const prevColor = copyBtn.style.color;
+                        copyBtn.style.color = "var(--color-success, #2e7d32)";
+                        copyBtn.style.opacity = "1";
+                        setTimeout(() => {
+                            copyBtn.style.color = prevColor;
+                            copyBtn.style.opacity = "";
+                        }, 1000);
+                    } catch (err) {
+                        console.warn("Clipboard write failed", err);
+                    }
+                });
+            }
+
+            // ---- Read-only CM6 view for the result output ----
+            let outputView = null;
+            const outputThemeCompartment = new Compartment();
+            const renderCargoOutput = (text) => {
+                const dark = (
+                    document.documentElement.getAttribute("data-theme") || ""
+                ).startsWith("dark");
+                if (!outputView) {
+                    outputStderr.textContent = "";
+                    outputStderr.style.padding = "0";
+                    outputStderr.style.fontFamily = "";
+                    outputStderr.style.fontSize = "";
+                    const exts = [
+                        EditorView.editable.of(false),
+                        EditorState.readOnly.of(true),
+                        EditorView.lineWrapping,
+                        langRust.rust(),
+                        syntaxHighlighting(defaultHighlightStyle, {
+                            fallback: true,
+                        }),
+                        outputThemeCompartment.of(dark ? oneDark.oneDark : []),
+                        EditorView.theme({
+                            "&": {
+                                backgroundColor: "transparent",
+                                fontSize: "0.8rem",
+                            },
+                            ".cm-content": {
+                                fontFamily: '"SF Mono", Monaco, monospace',
+                                padding: "0.85rem 1rem",
+                            },
+                            ".cm-scroller": { overflow: "auto" },
+                            "&.cm-focused": { outline: "none" },
+                        }),
+                    ];
+                    outputView = new EditorView({
+                        state: EditorState.create({
+                            doc: text,
+                            extensions: exts,
+                        }),
+                        parent: outputStderr,
+                    });
+                } else {
+                    outputView.dispatch({
+                        changes: {
+                            from: 0,
+                            to: outputView.state.doc.length,
+                            insert: text,
+                        },
+                        effects: outputThemeCompartment.reconfigure(
+                            dark ? oneDark.oneDark : [],
+                        ),
+                    });
+                }
+            };
+
+            // ---- Theme syncing ----
+            const themeObserver = new MutationObserver(() => {
+                const dark = (
+                    document.documentElement.getAttribute("data-theme") || ""
+                ).startsWith("dark");
+                api.setTheme(dark);
+                if (outputView) {
+                    outputView.dispatch({
+                        effects: outputThemeCompartment.reconfigure(
+                            dark ? oneDark.oneDark : [],
+                        ),
+                    });
+                }
+            });
+            themeObserver.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["data-theme"],
+            });
+            themeObservers.push(themeObserver);
+
+            // ---- Result rendering ----
+            function setActionStatus(text, tone) {
+                if (!actionStatus) return;
+                actionStatus.textContent = text;
+                actionStatus.classList.remove(
                     "is-pass",
                     "is-fail",
                     "celebrate",
                 );
-                pill.textContent = "";
+                if (!text) {
+                    actionStatus.classList.remove("is-visible");
+                    return;
+                }
+                actionStatus.classList.add("is-visible");
+                if (tone === "pass") {
+                    actionStatus.classList.add("is-pass");
+                    void actionStatus.offsetWidth;
+                    actionStatus.classList.add("celebrate");
+                } else if (tone === "fail") {
+                    actionStatus.classList.add("is-fail");
+                }
             }
-            clearTimeout(saveTimer);
-            saveTimer = setTimeout(
-                () => persistDraft(u.state.doc.toString()),
-                300,
-            );
-        });
-        extensions.push(persistExt);
+            function clearActionStatus() {
+                setActionStatus("", "neutral");
+            }
 
-        const editor = new EditorView({
-            state: EditorState.create({ doc: initialDoc, extensions }),
-            parent: mount,
-        });
-        // Style the editor wrapper so it matches our other panels.
-        editor.dom.style.border = "1px solid var(--color-border)";
-        editor.dom.style.borderRadius = "12px";
-        editor.dom.style.overflow = "hidden";
-        editor.dom.style.minHeight = "28rem";
-        editor.dom.style.fontSize = "0.9rem";
+            function extractFailureSnippets(raw) {
+                const out = {};
+                if (!raw) return out;
+                const re =
+                    /----\s+(\S+)\s+stdout\s+----\n([\s\S]*?)(?=\n----|\nfailures:|\ntest result:|$)/g;
+                let m;
+                while ((m = re.exec(raw)) !== null) {
+                    out[m[1].trim()] = m[2].trim();
+                }
+                return out;
+            }
+            function friendlyFailureSnippet(snippet) {
+                if (!snippet) return null;
+                if (/not yet implemented/i.test(snippet)) {
+                    return (
+                        "This function still has `todo!()` in it.\n" +
+                        "Replace `todo!()` with your implementation, then run again."
+                    );
+                }
+                const lines = snippet.split("\n");
+                while (
+                    lines.length &&
+                    /^thread .* panicked at/.test(lines[0])
+                ) {
+                    lines.shift();
+                }
+                const trimmed = lines.slice(0, 6).join("\n").trim();
+                return trimmed || null;
+            }
 
-        fallback.style.display = "none";
-        mount.style.display = "block";
+            function renderResults(data) {
+                outputPanel.style.display = "block";
+                testList.innerHTML = "";
+                const rawOutput =
+                    (data.stderr || "") + "\n" + (data.stdout || "");
+                const failureSnippets = extractFailureSnippets(rawOutput);
 
-        // Expose for future Run/Submit wiring.
-        window.exerciseEditor = {
-            getValue: () => editor.state.doc.toString(),
-            setValue: (text) => {
-                editor.dispatch({
-                    changes: {
-                        from: 0,
-                        to: editor.state.doc.length,
-                        insert: text,
-                    },
+                for (const t of data.test_results) {
+                    const li = document.createElement("li");
+                    li.style.padding = "0.35rem 0.5rem";
+                    li.style.fontFamily = "'SF Mono', Monaco, monospace";
+                    li.style.fontSize = "0.85rem";
+                    li.style.display = "flex";
+                    li.style.flexDirection = "column";
+                    li.style.gap = "0.25rem";
+                    const row = document.createElement("div");
+                    row.style.display = "flex";
+                    row.style.alignItems = "center";
+                    row.style.gap = "0.5rem";
+                    const icon = document.createElement("span");
+                    if (t.passed) {
+                        icon.textContent = "✓";
+                        icon.style.color = "var(--color-success, #2e7d32)";
+                        icon.style.fontWeight = "700";
+                    } else {
+                        icon.textContent = "✗";
+                        icon.style.color = "var(--color-error, #c62828)";
+                        icon.style.fontWeight = "700";
+                    }
+                    const name = document.createElement("span");
+                    name.textContent = t.name;
+                    row.appendChild(icon);
+                    row.appendChild(name);
+                    li.appendChild(row);
+
+                    if (!t.passed) {
+                        const snippet = friendlyFailureSnippet(
+                            failureSnippets[t.name],
+                        );
+                        if (snippet) {
+                            const detail = document.createElement("div");
+                            detail.style.marginLeft = "1.4rem";
+                            detail.style.padding = "0.4rem 0.6rem";
+                            detail.style.background = "var(--color-surface)";
+                            detail.style.border =
+                                "1px solid var(--color-border)";
+                            detail.style.borderRadius = "6px";
+                            detail.style.color = "var(--color-text)";
+                            detail.style.whiteSpace = "pre-wrap";
+                            detail.style.fontSize = "0.8rem";
+                            detail.textContent = snippet;
+                            li.appendChild(detail);
+                        }
+                    }
+                    testList.appendChild(li);
+                }
+
+                const failed = data.test_results.some((t) => !t.passed);
+                const compileFailed =
+                    !data.success && data.test_results.length === 0;
+                outputDetails.open = failed || compileFailed;
+                const raw = data.stderr || data.stdout || "(no output)";
+                renderCargoOutput(raw);
+                outputPanel.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
                 });
-            },
-            isCodeMirror: true,
-            setVim: (enabled) => {
-                editor.dispatch({
-                    effects: vimCompartment.reconfigure(
-                        enabled ? vimMod.vim() : [],
-                    ),
-                });
-                localStorage.setItem(VIM_PREF_KEY, enabled ? "1" : "0");
-                editor.focus();
-            },
-        };
+            }
 
-        // Sync the toggle button with the (possibly persisted) initial state.
-        const vimBtn = document.getElementById("vim-btn");
-        if (vimBtn) {
-            const renderVim = (on) => {
-                vimBtn.textContent = on ? "Vim: on" : "Vim: off";
-                vimBtn.setAttribute("aria-pressed", on ? "true" : "false");
-            };
-            let vimOn = vimEnabledInitial;
-            renderVim(vimOn);
-            vimBtn.addEventListener("click", () => {
-                vimOn = !vimOn;
-                window.exerciseEditor.setVim(vimOn);
-                renderVim(vimOn);
+            function updateRunStatus(data) {
+                const passed = data.test_results.filter((t) => t.passed).length;
+                const total = data.test_results.length;
+                if (total === 0) {
+                    runStatus.textContent = data.success
+                        ? "Compiled. No tests ran."
+                        : "Did not compile.";
+                    runStatus.style.color = data.success
+                        ? "var(--color-text-muted)"
+                        : "var(--color-error, #c62828)";
+                    setActionStatus(
+                        data.success ? "Compiled" : "Did not compile",
+                        data.success ? "neutral" : "fail",
+                    );
+                } else if (passed === total) {
+                    runStatus.textContent = `All ${total} tests passed.`;
+                    runStatus.style.color = "var(--color-success, #2e7d32)";
+                    setActionStatus(
+                        total === 1
+                            ? "✓ 1 test passed"
+                            : `✓ ${total} tests passed`,
+                        "pass",
+                    );
+                } else {
+                    runStatus.textContent = `${passed} / ${total} tests passed.`;
+                    runStatus.style.color = "var(--color-error, #c62828)";
+                    const failed = total - passed;
+                    setActionStatus(
+                        failed === 1
+                            ? `✗ 1 test failed (${passed}/${total})`
+                            : `✗ ${failed} tests failed (${passed}/${total})`,
+                        "fail",
+                    );
+                }
+            }
+
+            // ---- Run via /api/run ----
+            let lastRunAt = 0;
+            let inFlight = false;
+            async function runOnce(code) {
+                runStatus.textContent = "Running on play.rust-lang.org…";
+                runStatus.style.color = "var(--color-text-muted)";
+                runSpinner.style.display = "inline-block";
+                clearActionStatus();
+                try {
+                    const resp = await fetch("/api/run", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ code, slug: exerciseKey }),
+                    });
+                    if (!resp.ok) {
+                        if (resp.status === 429) {
+                            runStatus.textContent =
+                                "Playground rate-limited us. Try again in a moment.";
+                        } else if (resp.status === 502) {
+                            runStatus.textContent =
+                                "Playground unreachable. Check your connection or try again.";
+                        } else {
+                            runStatus.textContent = `Run failed (HTTP ${resp.status}).`;
+                        }
+                        runStatus.style.color = "var(--color-error, #c62828)";
+                        return null;
+                    }
+                    const data = await resp.json();
+                    renderResults(data);
+                    return data;
+                } catch (err) {
+                    console.error(err);
+                    runStatus.textContent = "Run failed: " + err.message;
+                    runStatus.style.color = "var(--color-error, #c62828)";
+                    return null;
+                } finally {
+                    runSpinner.style.display = "none";
+                }
+            }
+
+            function showSubmit() {
+                if (!submitBtn) return;
+                runBtn.style.display = "none";
+                submitBtn.style.display = "";
+                submitBtn.focus();
+            }
+            function showRun() {
+                if (!submitBtn) return;
+                runBtn.style.display = "";
+                submitBtn.style.display = "none";
+            }
+
+            runBtn.addEventListener("click", async () => {
+                const now = Date.now();
+                if (inFlight || now - lastRunAt < 750) return;
+                lastRunAt = now;
+                inFlight = true;
+                runBtn.disabled = true;
+                try {
+                    const data = await runOnce(api.getValue());
+                    if (!data) return;
+                    updateRunStatus(data);
+                    if (submitBtn) {
+                        const total = data.test_results.length;
+                        const passed = data.test_results.filter(
+                            (t) => t.passed,
+                        ).length;
+                        if (total > 0 && passed === total) {
+                            showSubmit();
+                            runStatus.textContent +=
+                                " — click Submit to save your progress.";
+                        } else {
+                            showRun();
+                        }
+                    }
+                } finally {
+                    inFlight = false;
+                    setTimeout(() => {
+                        runBtn.disabled = false;
+                    }, 250);
+                }
             });
+
+            // ---- Format via /api/format ----
+            if (formatBtn) {
+                let formatInFlight = false;
+                formatBtn.addEventListener("click", async () => {
+                    if (formatInFlight) return;
+                    formatInFlight = true;
+                    formatBtn.disabled = true;
+                    runStatus.textContent = "Formatting…";
+                    runStatus.style.color = "var(--color-text-muted)";
+                    try {
+                        const resp = await fetch("/api/format", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                code: api.getValue(),
+                                slug: exerciseKey,
+                            }),
+                        });
+                        if (!resp.ok) {
+                            runStatus.textContent =
+                                resp.status === 429
+                                    ? "Formatter rate-limited; try again in a moment."
+                                    : resp.status === 502
+                                      ? "Formatter unreachable."
+                                      : `Format failed (HTTP ${resp.status}).`;
+                            runStatus.style.color =
+                                "var(--color-error, #c62828)";
+                            return;
+                        }
+                        const data = await resp.json();
+                        if (!data.success) {
+                            runStatus.textContent =
+                                "rustfmt couldn't parse the code — fix the syntax error first.";
+                            runStatus.style.color =
+                                "var(--color-error, #c62828)";
+                            return;
+                        }
+                        if (data.code && data.code !== api.getValue()) {
+                            api.setValue(data.code);
+                            runStatus.textContent = "Formatted.";
+                            runStatus.style.color =
+                                "var(--color-success, #2e7d32)";
+                        } else {
+                            runStatus.textContent = "Already formatted.";
+                            runStatus.style.color = "var(--color-text-muted)";
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        runStatus.textContent = "Format failed: " + e.message;
+                        runStatus.style.color = "var(--color-error, #c62828)";
+                    } finally {
+                        formatInFlight = false;
+                        setTimeout(() => {
+                            formatBtn.disabled = false;
+                        }, 250);
+                    }
+                });
+            }
+
+            // ---- Submit ----
+            function markAsCompleted() {
+                const meta = document.getElementById("exercise-meta");
+                if (meta) {
+                    const hasPassed = meta.querySelector(
+                        ".status-perfected, .status-completed",
+                    );
+                    if (!hasPassed) {
+                        meta.innerHTML =
+                            '<span class="status-badge status-completed" title="Tests passed">✓ Passed</span>';
+                    }
+                }
+                const row = document.getElementById("current-chapter-row");
+                if (row && !row.classList.contains("completed")) {
+                    row.classList.add("attempted", "completed");
+                }
+            }
+
+            async function submitOnce(code, passed, total) {
+                const ulid = submitBtn.dataset.ulid;
+                try {
+                    const submitResp = await fetch("/api/submit", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            ulid,
+                            exercise_name: exerciseKey,
+                            source_code: code,
+                            tests_passed: true,
+                            clippy_passed: false,
+                            fmt_passed: false,
+                        }),
+                    });
+                    if (submitResp.ok) {
+                        runStatus.textContent = `✓ Saved progress — ${passed}/${total} tests passed.`;
+                        runStatus.style.color = "var(--color-success, #2e7d32)";
+                        markAsCompleted();
+                        return true;
+                    } else if (submitResp.status === 401) {
+                        runStatus.textContent =
+                            "Submit rejected: your session is unknown. Try registering again.";
+                    } else {
+                        runStatus.textContent = `Submit failed (HTTP ${submitResp.status}).`;
+                    }
+                    runStatus.style.color = "var(--color-error, #c62828)";
+                } catch (err) {
+                    console.error(err);
+                    runStatus.textContent = "Submit failed: " + err.message;
+                    runStatus.style.color = "var(--color-error, #c62828)";
+                }
+                return false;
+            }
+
+            if (submitBtn) {
+                submitBtn.addEventListener("click", async () => {
+                    submitBtn.disabled = true;
+                    runBtn.disabled = true;
+                    try {
+                        const code = api.getValue();
+                        const data = await runOnce(code);
+                        if (!data) return;
+                        updateRunStatus(data);
+                        const total = data.test_results.length;
+                        const passed = data.test_results.filter(
+                            (t) => t.passed,
+                        ).length;
+                        const tests_passed = total > 0 && passed === total;
+                        if (!tests_passed) {
+                            runStatus.textContent +=
+                                " — not saving progress (tests must pass first).";
+                            runStatus.style.color =
+                                "var(--color-error, #c62828)";
+                            return;
+                        }
+                        await submitOnce(code, passed, total);
+                    } finally {
+                        submitBtn.disabled = false;
+                        runBtn.disabled = false;
+                    }
+                });
+            }
         }
 
-        // React to the site-wide light/dark toggle. The toggle just flips
-        // `data-theme` on `<html>`; we watch that attribute and reconfigure
-        // the theme compartment so the editor swaps palettes immediately,
-        // no reload needed. Same handle the prose CSS uses, so editor and
-        // prose stay in sync.
-        const themeObserver = new MutationObserver(() => {
-            const dark = (
-                document.documentElement.getAttribute("data-theme") || ""
-            ).startsWith("dark");
-            editor.dispatch({
-                effects: themeCompartment.reconfigure(
-                    dark ? oneDark.oneDark : [],
-                ),
+        // Initialise every section on the page.
+        document
+            .querySelectorAll(".exercise-section[data-step-id]")
+            .forEach((section) => {
+                try {
+                    initSection(section);
+                } catch (err) {
+                    console.error(
+                        "Failed to initialise section",
+                        section.dataset.stepId,
+                        err,
+                    );
+                }
             });
-        });
-        themeObserver.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ["data-theme"],
-        });
-
-        // Read-only CM6 instance for the "Compiler / runtime output" pane.
-        // Reusing the Rust grammar (and the same theme compartment trick)
-        // gives us syntax-highlighted snippets inside the diagnostic
-        // output without inventing our own ANSI replacement. Everything
-        // that isn't recognized as Rust falls back to plain monospace,
-        // which matches what a terminal would show anyway.
-        let outputView = null;
-        const outputThemeCompartment = new Compartment();
-        const outputMount = document.getElementById("output-stderr");
-        window.renderCargoOutput = (text) => {
-            if (!outputMount) return;
-            const dark = (
-                document.documentElement.getAttribute("data-theme") || ""
-            ).startsWith("dark");
-            if (!outputView) {
-                // First render: replace the <pre> contents with a CM6 view.
-                outputMount.textContent = "";
-                outputMount.style.padding = "0";
-                outputMount.style.fontFamily = "";
-                outputMount.style.fontSize = "";
-                const extensions = [
-                    EditorView.editable.of(false),
-                    EditorState.readOnly.of(true),
-                    EditorView.lineWrapping,
-                    langRust.rust(),
-                    syntaxHighlighting(defaultHighlightStyle, {
-                        fallback: true,
-                    }),
-                    outputThemeCompartment.of(dark ? oneDark.oneDark : []),
-                    EditorView.theme({
-                        "&": {
-                            backgroundColor: "transparent",
-                            fontSize: "0.8rem",
-                        },
-                        ".cm-content": {
-                            fontFamily: '"SF Mono", Monaco, monospace',
-                            padding: "0.85rem 1rem",
-                        },
-                        ".cm-scroller": { overflow: "auto" },
-                        "&.cm-focused": { outline: "none" },
-                    }),
-                ];
-                outputView = new EditorView({
-                    state: EditorState.create({ doc: text, extensions }),
-                    parent: outputMount,
-                });
-            } else {
-                outputView.dispatch({
-                    changes: {
-                        from: 0,
-                        to: outputView.state.doc.length,
-                        insert: text,
-                    },
-                    effects: outputThemeCompartment.reconfigure(
-                        dark ? oneDark.oneDark : [],
-                    ),
-                });
-            }
-        };
     } catch (err) {
         console.warn(
             "CodeMirror failed to load, keeping textarea fallback:",
             err,
         );
-        const vimBtn = document.getElementById("vim-btn");
+        // Plain-text fallback: wire Run/Submit/Format against the textareas.
+        document
+            .querySelectorAll(".exercise-section[data-step-id]")
+            .forEach((section) => initFallbackSection(section));
+    }
+
+    // Plain-textarea fallback when CodeMirror fails to load. The Run /
+    // Submit / Format buttons still work; just no syntax highlighting or
+    // vim mode. Intentionally compact since this path is rare.
+    function initFallbackSection(section) {
+        const $ = (role) => section.querySelector(`[data-role="${role}"]`);
+        const fallback = $("editor-fallback");
+        const runBtn = $("run-btn");
+        const runStatus = $("run-status");
+        const exerciseKey = section.dataset.exerciseKey;
+        const vimBtn = $("vim-btn");
         if (vimBtn) vimBtn.style.display = "none";
-        const fallback = document.getElementById("editor-fallback");
-        window.exerciseEditor = {
-            getValue: () => fallback.value,
-            setValue: (text) => {
-                fallback.value = text;
-            },
-            isCodeMirror: false,
-        };
-    }
-</script>
-
-<script>
-    // Reset and Copy work against whichever editor is active (CM6 or textarea).
-    document.getElementById("reset-btn").addEventListener("click", () => {
-        if (!window.exerciseEditor) return;
-        if (!confirm("Replace your edits with the original starter code?"))
-            return;
-        // The textarea fallback always holds the unmodified starter code
-        // because we never write back to it once CodeMirror takes over.
-        const starter = document.getElementById("editor-fallback").value;
-        window.exerciseEditor.setValue(starter);
-        // Drop the persisted draft so a reload re-shows the starter.
-        try {
-            const slug = document.getElementById("run-btn").dataset.slug;
-            localStorage.removeItem(`corrode:draft:${slug}`);
-        } catch (_) {}
-    });
-
-    document.getElementById("copy-btn").addEventListener("click", async (e) => {
-        if (!window.exerciseEditor) return;
-        const btn = e.currentTarget;
-        const text = window.exerciseEditor.getValue();
-        try {
-            await navigator.clipboard.writeText(text);
-            // Brief visual confirmation (no permanent class change).
-            const prevColor = btn.style.color;
-            btn.style.color = "var(--color-success, #2e7d32)";
-            btn.style.opacity = "1";
-            setTimeout(() => {
-                btn.style.color = prevColor;
-                btn.style.opacity = "";
-            }, 1000);
-        } catch (err) {
-            console.warn("Clipboard write failed", err);
-        }
-    });
-
-    // Hover/focus reveals the icon-only Copy button more clearly.
-    {
-        const copyBtn = document.getElementById("copy-btn");
-        const reveal = () => (copyBtn.style.opacity = "1");
-        const hide = () => (copyBtn.style.opacity = "");
-        copyBtn.addEventListener("mouseenter", reveal);
-        copyBtn.addEventListener("mouseleave", hide);
-        copyBtn.addEventListener("focus", reveal);
-        copyBtn.addEventListener("blur", hide);
-    }
-
-    // Format via /api/format. Replaces the buffer on success; surfaces
-    // rustfmt's stderr in the run-status row on parse failure.
-    {
-        const formatBtn = document.getElementById("format-btn");
-        if (formatBtn) {
-            let formatInFlight = false;
-            formatBtn.addEventListener("click", async () => {
-                if (formatInFlight) return;
-                if (!window.exerciseEditor) return;
-                formatInFlight = true;
-                formatBtn.disabled = true;
-                const status = document.getElementById("run-status");
-                status.textContent = "Formatting\u2026";
-                status.style.color = "var(--color-text-muted)";
-                try {
-                    const resp = await fetch("/api/format", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            code: window.exerciseEditor.getValue(),
-                            slug: formatBtn.dataset.slug,
-                        }),
-                    });
-                    if (!resp.ok) {
-                        status.textContent =
-                            resp.status === 429
-                                ? "Formatter rate-limited; try again in a moment."
-                                : resp.status === 502
-                                  ? "Formatter unreachable."
-                                  : `Format failed (HTTP ${resp.status}).`;
-                        status.style.color = "var(--color-error, #c62828)";
-                        return;
-                    }
-                    const data = await resp.json();
-                    if (!data.success) {
-                        status.textContent =
-                            "rustfmt couldn't parse the code \u2014 fix the syntax error first.";
-                        status.style.color = "var(--color-error, #c62828)";
-                        return;
-                    }
-                    const current = window.exerciseEditor.getValue();
-                    if (data.code && data.code !== current) {
-                        window.exerciseEditor.setValue(data.code);
-                        status.textContent = "Formatted.";
-                        status.style.color = "var(--color-success, #2e7d32)";
-                    } else {
-                        status.textContent = "Already formatted.";
-                        status.style.color = "var(--color-text-muted)";
-                    }
-                } catch (e) {
-                    console.error(e);
-                    status.textContent = "Format failed: " + e.message;
-                    status.style.color = "var(--color-error, #c62828)";
-                } finally {
-                    formatInFlight = false;
-                    setTimeout(() => {
-                        formatBtn.disabled = false;
-                    }, 250);
-                }
-            });
-        }
-    }
-
-    // Run tests via the /api/run proxy and render results.
-    const runBtn = document.getElementById("run-btn");
-    const runStatus = document.getElementById("run-status");
-    const outputPanel = document.getElementById("output-panel");
-    const testList = document.getElementById("test-list");
-    const outputStderr = document.getElementById("output-stderr");
-    const outputDetails = document.getElementById("output-details");
-
-    // Debounce + reentrancy guard for the Run button. The async handler
-    // already disables the button while a request is in flight, but a
-    // burst of clicks fired before `disabled = true` takes effect can
-    // still queue multiple `/api/run` calls. The timestamp check below
-    // hard-rejects any click within 750ms of the last one, and `inFlight`
-    // covers the slower "already running" case.
-    let lastRunAt = 0;
-    let inFlight = false;
-
-    runBtn.addEventListener("click", async () => {
-        if (!window.exerciseEditor) return;
-        const now = Date.now();
-        if (inFlight || now - lastRunAt < 750) return;
-        lastRunAt = now;
-        inFlight = true;
-        runBtn.disabled = true;
-        try {
-            const code = window.exerciseEditor.getValue();
-            const data = await runOnce(code, runBtn.dataset.slug);
-            if (!data) return;
-            updateRunStatus(data);
-
-            // When tests pass on the participant route, hide Run and reveal
-            // Submit in its place. Submitting always stores a version, so
-            // we keep it as an explicit click — but make it the obvious
-            // next action so passing tests can't be mistaken for "saved".
-            if (submitBtn) {
-                const total = data.test_results.length;
-                const passed = data.test_results.filter((t) => t.passed).length;
-                if (total > 0 && passed === total) {
-                    showSubmit();
-                    runStatus.textContent +=
-                        " — click Submit to save your progress.";
-                } else {
-                    showRun();
-                }
-            }
-        } finally {
-            inFlight = false;
-            // Hold the disabled state briefly past the request to swallow
-            // double-clicks that landed during the in-flight window.
-            setTimeout(() => {
-                runBtn.disabled = false;
-            }, 250);
-        }
-    });
-
-    // Submit: only present on the participant route. Run first, then POST
-    // to /api/submit with the parsed flags. We trust the client — same
-    // model as the CLI — since this is a self-directed learning platform.
-    const submitBtn = document.getElementById("submit-btn");
-
-    // Two-step UX: Run is the primary action until tests pass, then it's
-    // swapped out for Submit. Any subsequent edit puts Run back so the
-    // learner re-validates before saving a new version.
-    function showSubmit() {
-        if (!submitBtn) return;
-        runBtn.style.display = "none";
-        submitBtn.style.display = "";
-        submitBtn.focus();
-    }
-    function showRun() {
-        if (!submitBtn) return;
-        runBtn.style.display = "";
-        submitBtn.style.display = "none";
-    }
-
-    // The textarea fallback dispatches native input events; the CodeMirror
-    // path handles the swap from inside its updateListener (see above).
-    const fallbackEl = document.getElementById("editor-fallback");
-    if (fallbackEl) fallbackEl.addEventListener("input", showRun);
-
-    async function submitOnce(code, passed, total) {
-        const slug = submitBtn.dataset.slug;
-        const ulid = submitBtn.dataset.ulid;
-        try {
-            const submitResp = await fetch("/api/submit", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ulid,
-                    exercise_name: slug,
-                    source_code: code,
-                    tests_passed: true,
-                    clippy_passed: false,
-                    fmt_passed: false,
-                }),
-            });
-            if (submitResp.ok) {
-                runStatus.textContent = `✓ Saved progress — ${passed}/${total} tests passed.`;
-                runStatus.style.color = "var(--color-success, #2e7d32)";
-                markAsCompleted();
-                return true;
-            } else if (submitResp.status === 401) {
-                runStatus.textContent =
-                    "Submit rejected: your session is unknown. Try registering again.";
-            } else {
-                runStatus.textContent = `Submit failed (HTTP ${submitResp.status}).`;
-            }
-            runStatus.style.color = "var(--color-error, #c62828)";
-        } catch (err) {
-            console.error(err);
-            runStatus.textContent = "Submit failed: " + err.message;
-            runStatus.style.color = "var(--color-error, #c62828)";
-        }
-        return false;
-    }
-
-    // Optimistically reflect a successful submission in the page chrome:
-    // the status badge in the header and the current row in the sidebar.
-    // Avoids the "I passed but nothing changed" confusion until next
-    // navigation triggers a fresh server render.
-    function markAsCompleted() {
-        const meta = document.getElementById("exercise-meta");
-        if (meta) {
-            const hasPassed = meta.querySelector(
-                ".status-perfected, .status-completed",
-            );
-            if (!hasPassed) {
-                meta.innerHTML =
-                    '<span class="status-badge status-completed" title="Tests passed">✓ Passed</span>';
-            }
-        }
-        const row = document.getElementById("current-chapter-row");
-        if (row && !row.classList.contains("completed")) {
-            row.classList.add("attempted", "completed");
-        }
-    }
-
-    if (submitBtn) {
-        submitBtn.addEventListener("click", async () => {
-            if (!window.exerciseEditor) return;
-            submitBtn.disabled = true;
-            runBtn.disabled = true;
-            try {
-                const code = window.exerciseEditor.getValue();
-                const data = await runOnce(code, submitBtn.dataset.slug);
-                if (!data) return;
-                updateRunStatus(data);
-
-                const total = data.test_results.length;
-                const passed = data.test_results.filter((t) => t.passed).length;
-                const tests_passed = total > 0 && passed === total;
-
-                if (!tests_passed) {
-                    runStatus.textContent +=
-                        " — not saving progress (tests must pass first).";
-                    runStatus.style.color = "var(--color-error, #c62828)";
-                    return;
-                }
-
-                await submitOnce(code, passed, total);
-            } finally {
-                submitBtn.disabled = false;
-                runBtn.disabled = false;
-            }
-        });
-    }
-
-    const runSpinner = document.getElementById("run-spinner");
-    const actionStatus = document.getElementById("action-status");
-
-    // Render the inline pill that lives next to the buttons. `tone` is
-    // "pass" | "fail" | "neutral"; passing the same pass tone twice
-    // re-triggers the celebratory pulse via animation restart.
-    function setActionStatus(text, tone) {
-        if (!actionStatus) return;
-        actionStatus.textContent = text;
-        actionStatus.classList.remove("is-pass", "is-fail", "celebrate");
-        if (!text) {
-            actionStatus.classList.remove("is-visible");
-            return;
-        }
-        actionStatus.classList.add("is-visible");
-        if (tone === "pass") {
-            actionStatus.classList.add("is-pass");
-            // Force a reflow so the keyframes restart even when the same
-            // class is re-applied (e.g. two passing Runs in a row).
-            void actionStatus.offsetWidth;
-            actionStatus.classList.add("celebrate");
-        } else if (tone === "fail") {
-            actionStatus.classList.add("is-fail");
-        }
-    }
-    function clearActionStatus() {
-        setActionStatus("", "neutral");
-    }
-
-    // Run on play.rust-lang.org via /api/run. Returns the parsed JSON, or
-    // null if the request failed (status text is updated either way).
-    async function runOnce(code, slug) {
-        runStatus.textContent = "Running on play.rust-lang.org…";
-        runStatus.style.color = "var(--color-text-muted)";
-        runSpinner.style.display = "inline-block";
-        clearActionStatus();
-        try {
+        if (!runBtn || !fallback) return;
+        runBtn.addEventListener("click", async () => {
+            runStatus.textContent = "Running on play.rust-lang.org…";
             const resp = await fetch("/api/run", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code, slug }),
+                body: JSON.stringify({
+                    code: fallback.value,
+                    slug: exerciseKey,
+                }),
             });
             if (!resp.ok) {
-                if (resp.status === 429) {
-                    runStatus.textContent =
-                        "Playground rate-limited us. Try again in a moment.";
-                } else if (resp.status === 502) {
-                    runStatus.textContent =
-                        "Playground unreachable. Check your connection or try again.";
-                } else {
-                    runStatus.textContent = `Run failed (HTTP ${resp.status}).`;
-                }
-                runStatus.style.color = "var(--color-error, #c62828)";
-                return null;
+                runStatus.textContent = `Run failed (HTTP ${resp.status}).`;
+                return;
             }
             const data = await resp.json();
-            renderResults(data);
-            return data;
-        } catch (err) {
-            console.error(err);
-            runStatus.textContent = "Run failed: " + err.message;
-            runStatus.style.color = "var(--color-error, #c62828)";
-            return null;
-        } finally {
-            runSpinner.style.display = "none";
-        }
-    }
-
-    function updateRunStatus(data) {
-        const passed = data.test_results.filter((t) => t.passed).length;
-        const total = data.test_results.length;
-        if (total === 0) {
-            runStatus.textContent = data.success
-                ? "Compiled. No tests ran."
-                : "Did not compile.";
-            runStatus.style.color = data.success
-                ? "var(--color-text-muted)"
-                : "var(--color-error, #c62828)";
-            setActionStatus(
-                data.success ? "Compiled" : "Did not compile",
-                data.success ? "neutral" : "fail",
-            );
-        } else if (passed === total) {
-            runStatus.textContent = `All ${total} tests passed.`;
-            runStatus.style.color = "var(--color-success, #2e7d32)";
-            setActionStatus(
-                total === 1 ? "✓ 1 test passed" : `✓ ${total} tests passed`,
-                "pass",
-            );
-        } else {
-            runStatus.textContent = `${passed} / ${total} tests passed.`;
-            runStatus.style.color = "var(--color-error, #c62828)";
-            const failed = total - passed;
-            setActionStatus(
-                failed === 1
-                    ? `✗ 1 test failed (${passed}/${total})`
-                    : `✗ ${failed} tests failed (${passed}/${total})`,
-                "fail",
-            );
-        }
-    }
-
-    function renderResults(data) {
-        outputPanel.style.display = "block";
-        testList.innerHTML = "";
-
-        const rawOutput = (data.stderr || "") + "\n" + (data.stdout || "");
-        const failureSnippets = extractFailureSnippets(rawOutput);
-
-        for (const t of data.test_results) {
-            const li = document.createElement("li");
-            li.style.padding = "0.35rem 0.5rem";
-            li.style.fontFamily = "'SF Mono', Monaco, monospace";
-            li.style.fontSize = "0.85rem";
-            li.style.display = "flex";
-            li.style.flexDirection = "column";
-            li.style.gap = "0.25rem";
-            const row = document.createElement("div");
-            row.style.display = "flex";
-            row.style.alignItems = "center";
-            row.style.gap = "0.5rem";
-            const icon = document.createElement("span");
-            if (t.passed) {
-                icon.textContent = "✓";
-                icon.style.color = "var(--color-success, #2e7d32)";
-                icon.style.fontWeight = "700";
-            } else {
-                icon.textContent = "✗";
-                icon.style.color = "var(--color-error, #c62828)";
-                icon.style.fontWeight = "700";
-            }
-            const name = document.createElement("span");
-            name.textContent = t.name;
-            row.appendChild(icon);
-            row.appendChild(name);
-            li.appendChild(row);
-
-            if (!t.passed) {
-                const snippet = friendlyFailureSnippet(failureSnippets[t.name]);
-                if (snippet) {
-                    const detail = document.createElement("div");
-                    detail.style.marginLeft = "1.4rem";
-                    detail.style.padding = "0.4rem 0.6rem";
-                    detail.style.background = "var(--color-surface)";
-                    detail.style.border = "1px solid var(--color-border)";
-                    detail.style.borderRadius = "6px";
-                    detail.style.color = "var(--color-text)";
-                    detail.style.whiteSpace = "pre-wrap";
-                    detail.style.fontSize = "0.8rem";
-                    detail.textContent = snippet;
-                    li.appendChild(detail);
-                }
-            }
-            testList.appendChild(li);
-        }
-
-        // If something went wrong, expand the details so the error is visible.
-        const failed = data.test_results.some((t) => !t.passed);
-        const compileFailed = !data.success && data.test_results.length === 0;
-        outputDetails.open = failed || compileFailed;
-        const raw = data.stderr || data.stdout || "(no output)";
-        if (typeof window.renderCargoOutput === "function") {
-            window.renderCargoOutput(raw);
-        } else {
-            outputStderr.textContent = raw;
-        }
-
-        // Make sure the panel is visible without forcing a jump if it
-        // already is. `block: "nearest"` only scrolls when needed, so a
-        // user looking at the results stays put on subsequent runs.
-        outputPanel.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
+            const total = data.test_results.length;
+            const passed = data.test_results.filter((t) => t.passed).length;
+            runStatus.textContent =
+                total === 0
+                    ? data.success
+                        ? "Compiled."
+                        : "Did not compile."
+                    : `${passed} / ${total} tests passed.`;
         });
-    }
-
-    // Pull per-test failure blocks out of the raw cargo output. The harness
-    // emits sections like:
-    //
-    //   ---- test_name stdout ----
-    //   thread 'test_name' panicked at examples/foo/main.rs:12:5:
-    //   assertion `left == right` failed
-    //     left: 0
-    //     right: 42
-    //
-    // Capture everything from "---- NAME stdout ----" up to the next
-    // separator (or end-of-string) and key it by test name.
-    function extractFailureSnippets(raw) {
-        const out = {};
-        if (!raw) return out;
-        const re =
-            /----\s+(\S+)\s+stdout\s+----\n([\s\S]*?)(?=\n----|\nfailures:|\ntest result:|$)/g;
-        let m;
-        while ((m = re.exec(raw)) !== null) {
-            out[m[1].trim()] = m[2].trim();
-        }
-        return out;
-    }
-
-    // Turn a panic snippet into something a learner can act on. Catches the
-    // `not yet implemented` (todo!()) panic specifically because it is the
-    // single most common first-time failure and the default copy is rough.
-    function friendlyFailureSnippet(snippet) {
-        if (!snippet) return null;
-        if (/not yet implemented/i.test(snippet)) {
-            return (
-                "This function still has `todo!()` in it.\n" +
-                "Replace `todo!()` with your implementation, then run again."
-            );
-        }
-        // Drop the leading "thread '...' panicked at ..." header so the
-        // assertion message is the first thing the eye lands on.
-        const lines = snippet.split("\n");
-        while (lines.length && /^thread .* panicked at/.test(lines[0])) {
-            lines.shift();
-        }
-        // Cap to a few lines so the test list doesn't become a wall of text.
-        // The full output is still one click away in "Compiler / runtime output".
-        const trimmed = lines.slice(0, 6).join("\n").trim();
-        return trimmed || null;
     }
 </script>
 
 <script type="module">
     // Syntax-highlight code blocks in chapter prose (notes + intro)
-    // using the same Lezer Rust grammar that powers the editor. No
-    // extra dependency — everything below is already in the import map
-    // for CodeMirror, so the parser is shared between editor and prose.
-    //
-    // We use `classHighlighter` so the resulting `<span class="tok-...">`
-    // markup is themed by plain CSS (see the `.tok-*` rules in the style
-    // block below), which keeps the prose colors decoupled from whichever
-    // CodeMirror theme the editor is running.
+    // using the same Lezer Rust grammar that powers the editor.
     try {
         const [{ parser }, { highlightTree, classHighlighter }] =
             await Promise.all([
@@ -1599,10 +1544,6 @@ with (u) %}
             return out;
         };
 
-        // Most prose snippets in this course are Rust, and pulldown-cmark
-        // won't tag fences that didn't specify a language. Treat both
-        // unmarked blocks and explicit `rust`/`rs` fences as Rust; leave
-        // other languages alone (they stay in the base prose color).
         document
             .querySelectorAll(".exercise-prose pre > code")
             .forEach((el) => {
@@ -1616,14 +1557,12 @@ with (u) %}
                 el.innerHTML = highlightRust(el.textContent);
             });
     } catch (err) {
-        // Highlighting is non-essential; fall back silently to plain text.
         console.warn("prose syntax highlighting failed to load", err);
     }
 </script>
 
 <style>
-    /* Inline pill next to the Run/Submit buttons. Empty until a Run
-       finishes; then mirrors the result count in compact form. */
+    /* Inline pill next to the Run/Submit buttons. */
     .action-status {
         display: inline-flex;
         align-items: center;
@@ -1658,9 +1597,6 @@ with (u) %}
         background: color-mix(in srgb, var(--color-success) 14%, transparent);
         border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
     }
-    /* One-shot celebratory pulse on first pass of a Run. Subtle: a soft
-       green glow that fades out, plus a tiny scale bump. Respect users
-       who'd rather not see motion. */
     .action-status.celebrate {
         animation: action-pass-pulse 0.9s ease-out;
     }
@@ -1688,7 +1624,7 @@ with (u) %}
     }
 
     /* Inline spinner shown while a Run is in flight. */
-    #run-spinner {
+    .run-spinner {
         width: 0.9rem;
         height: 0.9rem;
         border: 2px solid var(--color-border);
@@ -1703,17 +1639,12 @@ with (u) %}
         }
     }
     @media (prefers-reduced-motion: reduce) {
-        #run-spinner {
+        .run-spinner {
             animation-duration: 2s;
         }
     }
 
-    /* GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, etc). pulldown-cmark
-       0.12 with `ENABLE_GFM` emits a single class on the blockquote, e.g.
-       `<blockquote class="markdown-alert-note">`, with no title element.
-       We attach the colored bar/background via the class, then synthesize
-       a small uppercase "NOTE" / "TIP" / etc. label via `::before` content
-       so notes don't have to write the label themselves. */
+    /* GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, etc). */
     .exercise-prose blockquote[class^="markdown-alert-"] {
         margin: 1.25rem 0;
         padding: 0.75rem 1rem 0.5rem;
@@ -1725,7 +1656,6 @@ with (u) %}
         );
         border-radius: 0 6px 6px 0;
         color: var(--color-text);
-        /* Override the generic blockquote styling further down. */
         font-style: normal;
     }
     .exercise-prose blockquote[class^="markdown-alert-"] > :first-child {
@@ -1789,9 +1719,6 @@ with (u) %}
         margin-top: 2.25rem;
         margin-bottom: 1rem;
         line-height: 1.25;
-        /* Notes render their own `# Heading`, which would otherwise pick
-           up the page-title display face. Keep prose headings in the body
-           font so they read as section headings, not page titles. */
         font-family: inherit;
     }
     .exercise-prose h2 {
@@ -1818,7 +1745,6 @@ with (u) %}
     .exercise-prose li {
         margin: 0.35rem 0;
     }
-    /* Inline code: subtle pill, never a full block. */
     .exercise-prose :not(pre) > code {
         background-color: var(--color-surface);
         padding: 0.1rem 0.4rem;
@@ -1827,9 +1753,6 @@ with (u) %}
         font-size: 0.88em;
         color: var(--color-text);
     }
-    /* Block code: rounded panel that follows the active theme. The dark
-       palette is Catppuccin Mocha; the light palette is GitHub-ish so it
-       sits naturally on the GitHub Primer light theme used elsewhere. */
     .exercise-prose pre {
         background-color: #f6f8fa;
         border: 1px solid var(--color-border);
@@ -1854,10 +1777,6 @@ with (u) %}
     [data-theme="dark"] .exercise-prose pre code {
         color: #cdd6f4;
     }
-    /* Lezer `classHighlighter` token classes. Same parser the editor uses,
-       so identifiers tokenize identically in prose and code. Two palettes:
-       a GitHub-Primer-flavored set for light, Catppuccin Mocha for dark.
-       Anything not listed falls back to the base prose code color. */
     .exercise-prose .tok-keyword {
         color: #cf222e;
     }
@@ -1900,43 +1819,40 @@ with (u) %}
     .exercise-prose .tok-strong {
         font-weight: 700;
     }
-    /* Dark-theme overrides — Catppuccin Mocha. Scoped under
-       `[data-theme="dark"]` so flipping the toggle re-themes the prose
-       code blocks immediately without a reload. */
     [data-theme="dark"] .exercise-prose .tok-keyword {
-        color: #cba6f7; /* mauve */
+        color: #cba6f7;
     }
     [data-theme="dark"] .exercise-prose .tok-typeName,
     [data-theme="dark"] .exercise-prose .tok-className {
-        color: #f9e2af; /* yellow */
+        color: #f9e2af;
     }
     [data-theme="dark"] .exercise-prose .tok-string,
     [data-theme="dark"] .exercise-prose .tok-string2 {
-        color: #a6e3a1; /* green */
+        color: #a6e3a1;
     }
     [data-theme="dark"] .exercise-prose .tok-number,
     [data-theme="dark"] .exercise-prose .tok-bool,
     [data-theme="dark"] .exercise-prose .tok-atom,
     [data-theme="dark"] .exercise-prose .tok-literal {
-        color: #fab387; /* peach */
+        color: #fab387;
     }
     [data-theme="dark"] .exercise-prose .tok-variableName.tok-definition,
     [data-theme="dark"] .exercise-prose .tok-propertyName.tok-definition {
-        color: #89b4fa; /* blue */
+        color: #89b4fa;
     }
     [data-theme="dark"] .exercise-prose .tok-macroName,
     [data-theme="dark"] .exercise-prose .tok-meta {
-        color: #f5c2e7; /* pink */
+        color: #f5c2e7;
     }
     [data-theme="dark"] .exercise-prose .tok-comment {
-        color: #6c7086; /* overlay0 */
+        color: #6c7086;
     }
     [data-theme="dark"] .exercise-prose .tok-operator,
     [data-theme="dark"] .exercise-prose .tok-punctuation {
         color: #94a3b8;
     }
     [data-theme="dark"] .exercise-prose .tok-invalid {
-        color: #f38ba8; /* red */
+        color: #f38ba8;
     }
     .exercise-prose blockquote {
         margin: 1.25rem 0;
@@ -1962,9 +1878,6 @@ with (u) %}
     .exercise-prose a {
         color: var(--color-primary, #0969da);
     }
-    /* External link affordance: a tiny up-right arrow nudged after the
-       link text. The SVG is encoded inline so it inherits no asset path,
-       and `currentColor` makes it pick up the link color in any theme. */
     .exercise-prose a.external-link::after {
         content: "";
         display: inline-block;
@@ -1973,7 +1886,6 @@ with (u) %}
         margin-left: 0.2em;
         vertical-align: 0.05em;
         background-color: currentColor;
-        /* arrow icon (Lucide "arrow-up-right"): two paths combined */
         -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M7 17L17 7'/><path d='M8 7h9v9'/></svg>")
             no-repeat center / contain;
         mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M7 17L17 7'/><path d='M8 7h9v9'/></svg>")
@@ -1990,7 +1902,7 @@ with (u) %}
         margin: 2rem 0;
     }
 
-    /* The exercise ("try it yourself") section: no card, just typography. */
+    /* The exercise ("try it yourself") section. */
     .exercise-section {
         max-width: 100%;
         margin: 0 0 2rem;
@@ -2088,7 +2000,6 @@ with (u) %}
         color: #f1c40f;
     }
 
-    /* ---------- Breadcrumb above the line ---------- */
     .crumbs {
         display: flex;
         align-items: center;
@@ -2115,7 +2026,6 @@ with (u) %}
         color: var(--color-text);
     }
 
-    /* ---------- Register banner (public route only) ---------- */
     .register-banner {
         margin-bottom: 1.5rem;
         padding: 0.6rem 0.9rem;
@@ -2138,10 +2048,6 @@ with (u) %}
         max-width: 60rem;
     }
     @media (min-width: 720px) {
-        /* Two-column layout where numbers increment top-to-bottom inside
-           each column (column 1 = first half, column 2 = second half),
-           rather than left-to-right across rows. The row count is set per
-           page via the `--chapter-rows` custom property on .chapter-list. */
         .chapter-list {
             grid-template-columns: 1fr 1fr;
             grid-auto-flow: column;
@@ -2177,7 +2083,6 @@ with (u) %}
     .chapter-row .chapter-title {
         font-weight: 500;
     }
-    /* The mark cell is always present so columns line up; styled per state. */
     .chapter-row .chapter-mark {
         width: 0.6rem;
         height: 0.6rem;
@@ -2185,8 +2090,6 @@ with (u) %}
         background: transparent;
         border: 1px solid var(--color-border);
     }
-
-    /* Three shades of progress — subtle, accumulating. */
     .chapter-row.attempted {
         background-color: rgba(125, 125, 125, 0.06);
     }
@@ -2218,7 +2121,6 @@ with (u) %}
     .chapter-row.perfected:focus-visible {
         background-color: rgba(241, 196, 15, 0.18);
     }
-
     .chapter-row.current {
         background-color: var(--color-background);
         color: var(--color-text);

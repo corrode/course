@@ -1,4 +1,4 @@
-use cargo_course::exercises::{self, Exercise};
+use cargo_course::exercises::{self, Exercise, RenderItem, RenderKind, Step};
 use cargo_course::types::*;
 
 use anyhow::Result;
@@ -73,12 +73,16 @@ struct ExerciseTemplate {
     exercise: Exercise,
     /// `Some` when the page is rendered with participant context.
     ulid: Option<String>,
-    /// Status for the *current* exercise (attempted/completed/perfected).
+    /// Rollup status for the chapter as a whole (all code steps).
     /// All `false` on the public route.
     current_status: UiExerciseStatus,
     /// One entry per exercise in the catalog, ordered by `number`.
     /// Used to render the bottom "chapter list" navigation.
     dots: Vec<ProgressDot>,
+    /// Ordered render plan: prose blocks and code sections in display
+    /// order. Each `Code` carries the per-step status and the database
+    /// key (`<chapter>/<step_key>` or just `<chapter>` for legacy).
+    items: Vec<RenderItem>,
 }
 
 /// One row in the bottom chapter list.
@@ -483,8 +487,8 @@ async fn render_exercise_page(
     };
     let exercise = state.exercises[idx].clone();
 
-    // Per-exercise status — empty when no participant.
-    let progress: std::collections::HashMap<String, UiExerciseStatus> = match &ulid {
+    // Per-chapter rollup status for the header badge and chapter list.
+    let chapter_progress: std::collections::HashMap<String, UiExerciseStatus> = match &ulid {
         Some(u) => match get_exercise_progress(&state.pool, u, &state.exercises).await {
             Ok(rows) => rows
                 .into_iter()
@@ -507,7 +511,19 @@ async fn render_exercise_page(
         None => std::collections::HashMap::new(),
     };
 
-    let current_status = progress
+    // Per-step status (`<chapter>/<step_key>`). For legacy single-step
+    // chapters the step status is just the chapter status.
+    let step_progress: std::collections::HashMap<String, UiExerciseStatus> = match &ulid {
+        Some(u) => load_step_progress(&state.pool, u)
+            .await
+            .unwrap_or_else(|e| {
+                warn!("Failed to load per-step progress: {e}");
+                std::collections::HashMap::new()
+            }),
+        None => std::collections::HashMap::new(),
+    };
+
+    let current_status = chapter_progress
         .get(&exercise.file_stem)
         .cloned()
         .unwrap_or_default();
@@ -517,7 +533,7 @@ async fn render_exercise_page(
         .iter()
         .enumerate()
         .map(|(i, e)| {
-            let s = progress.get(&e.file_stem).cloned().unwrap_or_default();
+            let s = chapter_progress.get(&e.file_stem).cloned().unwrap_or_default();
             ProgressDot {
                 slug: e.slug.clone(),
                 number: e.number,
@@ -531,11 +547,71 @@ async fn render_exercise_page(
         })
         .collect();
 
+    // Build the ordered render plan from the chapter's steps.
+    let total_code_steps = exercise.code_steps().len();
+    let mut current_code_index: usize = 0;
+    let mut items: Vec<RenderItem> = Vec::with_capacity(exercise.steps.len());
+    for step in &exercise.steps {
+        match step {
+            Step::Prose(note) => {
+                items.push(RenderItem {
+                    kind: RenderKind::Prose {
+                        html: note.html.clone(),
+                    },
+                });
+            }
+            Step::Code(code) => {
+                current_code_index += 1;
+                let step_key = code.key();
+                let exercise_key = if step_key.is_empty() {
+                    exercise.file_stem.clone()
+                } else {
+                    format!("{}/{}", exercise.file_stem, step_key)
+                };
+                let dom_id = if step_key.is_empty() {
+                    exercise.file_stem.clone()
+                } else {
+                    format!("{}__{}", exercise.file_stem, step_key)
+                };
+                let eyebrow = if total_code_steps > 1 {
+                    format!("Exercise {current_code_index} of {total_code_steps}")
+                } else {
+                    "Exercise".to_string()
+                };
+                let filename = if step_key.is_empty() {
+                    "main.rs".to_string()
+                } else {
+                    format!("{step_key}.rs")
+                };
+                let github_dev_url = format!(
+                    "https://github.dev/corrode/course/blob/main/examples/{}/{}",
+                    exercise.file_stem, filename
+                );
+                let status = step_progress.get(&exercise_key).cloned().unwrap_or_default();
+                items.push(RenderItem {
+                    kind: RenderKind::Code {
+                        dom_id,
+                        exercise_key,
+                        eyebrow,
+                        title: code.title.clone(),
+                        intro_html: code.intro_html.clone(),
+                        starter_code: code.starter_code.clone(),
+                        attempted: status.attempted,
+                        completed: status.completed,
+                        perfected: status.perfected,
+                        github_dev_url,
+                    },
+                });
+            }
+        }
+    }
+
     let template = ExerciseTemplate {
         exercise,
         ulid,
         current_status,
         dots,
+        items,
     };
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -544,6 +620,36 @@ async fn render_exercise_page(
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to render template").into_response()
         }
     }
+}
+
+/// Load per-step submission status for a participant.
+///
+/// Keys are the full `submissions.exercise_name` value (`<chapter>` for
+/// legacy single-step chapters or `<chapter>/<step_key>` for multi-step).
+async fn load_step_progress(
+    pool: &SqlitePool,
+    ulid: &str,
+) -> Result<std::collections::HashMap<String, UiExerciseStatus>> {
+    let rows: Vec<DbSubmission> = sqlx::query_as(
+        "SELECT * FROM submissions WHERE participant_id = ? ORDER BY exercise_name, submitted_at DESC",
+    )
+    .bind(ulid)
+    .fetch_all(pool)
+    .await?;
+
+    let mut by_key: std::collections::HashMap<String, UiExerciseStatus> =
+        std::collections::HashMap::new();
+    for row in rows {
+        let entry = by_key.entry(row.exercise_name.clone()).or_default();
+        entry.attempted = true;
+        if row.tests_passed {
+            entry.completed = true;
+        }
+        if row.tests_passed && row.fmt_passed && row.clippy_passed {
+            entry.perfected = true;
+        }
+    }
+    Ok(by_key)
 }
 async fn admin_dashboard(
     Query(query): Query<AdminQuery>,
@@ -1159,9 +1265,15 @@ async fn get_exercise_progress<'a>(
 
     let mut exercises = Vec::with_capacity(catalog.len());
     for ex in catalog {
+        // A chapter's submissions live under `<chapter_file_stem>` (legacy
+        // single-step) or `<chapter_file_stem>/<step_key>` (multi-step).
+        // Match both shapes so chapter-level progress aggregates correctly.
+        let chapter_prefix = format!("{}/", ex.file_stem);
         let exercise_submissions: Vec<ExerciseSubmission> = all_submissions
             .iter()
-            .filter(|s| s.exercise_name == ex.file_stem)
+            .filter(|s| {
+                s.exercise_name == ex.file_stem || s.exercise_name.starts_with(&chapter_prefix)
+            })
             .map(|s| ExerciseSubmission {
                 id: s.id.clone(),
                 source_code: s.source_code.clone(),
@@ -1173,11 +1285,41 @@ async fn get_exercise_progress<'a>(
             .collect();
 
         let is_quiz = ex.is_quiz();
-        let completed = !is_quiz && exercise_submissions.iter().any(|s| s.tests_passed);
-        let perfected = !is_quiz
-            && exercise_submissions
-                .iter()
-                .any(|s| s.tests_passed && s.fmt_passed && s.clippy_passed);
+
+        // Chapter is "completed" when every code step has at least one
+        // passing submission. "Perfected" requires tests + fmt + clippy
+        // green on the same submission for every step.
+        let code_steps = ex.code_steps();
+        let (completed, perfected) = if is_quiz || code_steps.is_empty() {
+            (false, false)
+        } else {
+            let mut all_done = true;
+            let mut all_perfect = true;
+            for step in &code_steps {
+                let step_key = step.key();
+                let key = if step_key.is_empty() {
+                    ex.file_stem.clone()
+                } else {
+                    format!("{}/{}", ex.file_stem, step_key)
+                };
+                let step_done = all_submissions
+                    .iter()
+                    .any(|s| s.exercise_name == key && s.tests_passed);
+                let step_perfect = all_submissions.iter().any(|s| {
+                    s.exercise_name == key
+                        && s.tests_passed
+                        && s.fmt_passed
+                        && s.clippy_passed
+                });
+                if !step_done {
+                    all_done = false;
+                }
+                if !step_perfect {
+                    all_perfect = false;
+                }
+            }
+            (all_done, all_perfect)
+        };
 
         exercises.push(ExerciseProgress {
             name: ex.file_stem.clone(),
