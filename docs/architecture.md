@@ -95,11 +95,7 @@ are `<chapter>/<step_key>` (e.g. `07_option/2_fallback`).
 In either shape, inside a chapter directory:
 
 - Every `.rs` exercise file (whether `main.rs` for legacy or
-  `<n>_<slug>.rs` for multi-step) starts with:
-  - A `//!` inner doc block. Its first `# H1` becomes that step's
-    title; the rest is rendered to HTML and shown above that step's
-    editor pane. The doc block is stripped from the in-editor starter
-    code so the learner doesn't see it twice.
+  `<n>_<slug>.rs` for multi-step) contains:
   - The exercise functions with `todo!()` bodies.
   - `#[test]` functions, typically inside a `#[cfg(test)] mod tests {
     use super::*; … }` block in multi-step files so each step's tests
@@ -108,11 +104,20 @@ In either shape, inside a chapter directory:
     target has multiple tests. Chapter 9 uses `experiment_*` for
     intentionally-commented-out borrow-checker demos; those are not
     assertions.
+
+  `.rs` files no longer carry browser-rendered `//!` prose; their
+  framing lives in the paired `<n>_<slug>.md` (see below). A legacy
+  `//!` block on a `.rs` file is still parsed for a fallback title,
+  but its body is not rendered.
 - Optional `<n>_<slug>.md` notes. Sorted by `<n>`, rendered as HTML
   in the chapter at their numbered position (so prose can appear
-  *between* steps in a multi-step chapter, not just at the top). The
-  slug `hints` is special: a note named `<n>_hints.md` is pulled out
-  of the regular notes list into `Exercise.hints` and rendered as a
+  *between* steps in a multi-step chapter, not just at the top). When
+  a note's order/slug matches a `.rs` step (e.g. `2_fallback.md` next
+  to `2_fallback.rs`), the note renders immediately above the
+  matching editor section and its H1 acts as the section heading.
+  The slug `hints` is special: a note named `<n>_hints.md` is pulled
+  out of the regular notes list into `Exercise.hints` and rendered
+  as a
   closed `<details>` "Stuck?" disclosure under the last step. Within
   each function in a hints file, only the first bullet is shown
   initially; a "Show next hint" button reveals the rest one at a time.

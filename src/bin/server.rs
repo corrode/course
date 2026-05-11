@@ -500,6 +500,22 @@ async fn participant_exercise_page(
     render_exercise_page(&state, &slug, ulid).await
 }
 
+/// Minimal HTML escape for arbitrary text we splice into a template.
+fn html_escape(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&#39;"),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
 async fn render_exercise_page(
     state: &AppState,
     slug: &str,
@@ -582,14 +598,29 @@ async fn render_exercise_page(
     // Build the ordered render plan from the chapter's steps.
     let total_code_steps = exercise.code_steps().len();
     let mut current_code_index: usize = 0;
+    let mut seen_first_note = false;
+    let mut prev_was_note = false;
     let mut items: Vec<RenderItem> = Vec::with_capacity(exercise.steps.len());
     for step in &exercise.steps {
         match step {
             Step::Prose(note) => {
+                // The first note's title is also the chapter title (rendered
+                // as the page <h1>), so we only show the title on subsequent
+                // notes. Otherwise the heading would appear twice on chapter
+                // index pages.
+                let html = if seen_first_note {
+                    format!(
+                        "<h2 class=\"note-title\">{}</h2>\n{}",
+                        html_escape(&note.title),
+                        note.html
+                    )
+                } else {
+                    note.html.clone()
+                };
+                seen_first_note = true;
+                prev_was_note = true;
                 items.push(RenderItem {
-                    kind: RenderKind::Prose {
-                        html: note.html.clone(),
-                    },
+                    kind: RenderKind::Prose { html },
                 });
             }
             Step::Code(code) => {
@@ -629,7 +660,7 @@ async fn render_exercise_page(
                         exercise_key,
                         eyebrow,
                         title: code.title.clone(),
-                        intro_html: code.intro_html.clone(),
+                        show_title: !prev_was_note,
                         starter_code: code.starter_code.clone(),
                         attempted: status.attempted,
                         completed: status.completed,
@@ -637,6 +668,7 @@ async fn render_exercise_page(
                         github_dev_url,
                     },
                 });
+                prev_was_note = false;
             }
         }
     }

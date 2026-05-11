@@ -49,11 +49,11 @@ pub struct CodeStep {
     /// Slug after the leading number, e.g. `unwrap` for `2_unwrap.rs`.
     /// For the legacy single-step shape, this is the chapter slug itself.
     pub slug: String,
-    /// Step title, taken from the first H1 of the file's `//!` block.
-    /// Falls back to the slug if there is no H1.
+    /// Step title. Source priority: paired `<N>_<slug>.md` H1 (if it
+    /// exists) > first H1 in the file's `//!` block > slug. Used as
+    /// the section heading above the editor when there is no paired
+    /// note rendered immediately above.
     pub title: String,
-    /// Remainder of the `//!` block, rendered to HTML.
-    pub intro_html: String,
     /// File contents with the `//!` block stripped, used as the editor's
     /// starter content.
     pub starter_code: String,
@@ -200,10 +200,15 @@ pub enum RenderKind {
         /// Section eyebrow text, e.g. `"Exercise"` or
         /// `"Exercise 2 of 4"`.
         eyebrow: String,
-        /// Step title shown above the editor.
+        /// Step title shown above the editor. Suppressed by the
+        /// template when `show_title` is false, which happens when an
+        /// immediately-preceding note already shows the same heading.
         title: String,
-        /// Rendered prose for this step (the file's `//!` body).
-        intro_html: String,
+        /// Whether the template should render `title` above the editor.
+        /// False whenever a paired note is rendered directly above this
+        /// step (its H2 acts as the section heading instead, avoiding a
+        /// duplicate).
+        show_title: bool,
         /// Editor starter content (file with `//!` stripped).
         starter_code: String,
         /// True if at least one submission exists for this step.
@@ -284,28 +289,38 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
         if !main_rs.exists() {
             return Err(anyhow!("missing main.rs in {}", dir.display()));
         }
-        let (step, chapter_title) = parse_code_file(&main_rs, 0, &slug, &file_stem)?;
+        let (step, step_title) = parse_code_file(&main_rs, 0, &slug, &file_stem)?;
+        // Title priority: first note H1 > step's own //! H1 > file_stem.
+        let chapter_title = notes.first().map(|n| n.title.clone()).unwrap_or(step_title);
         let mut steps: Vec<Step> = notes.into_iter().map(Step::Prose).collect();
         steps.push(Step::Code(step));
         (steps, chapter_title)
     } else {
         // Multi-step chapter: interleave prose and code by order.
         let mut code_steps = Vec::with_capacity(step_files.len());
-        let mut chapter_title: Option<String> = None;
+        let mut step_title_fallback: Option<String> = None;
         for (order, path, step_slug) in step_files {
             let (step, step_title) = parse_code_file(&path, order, &step_slug, &file_stem)?;
-            if chapter_title.is_none() {
-                chapter_title = Some(step_title);
+            if step_title_fallback.is_none() {
+                step_title_fallback = Some(step_title);
             }
             code_steps.push(step);
         }
 
         let mut combined: Vec<Step> = Vec::with_capacity(notes.len() + code_steps.len());
-        combined.extend(notes.into_iter().map(Step::Prose));
+        combined.extend(notes.iter().cloned().map(Step::Prose));
         combined.extend(code_steps.into_iter().map(Step::Code));
         combined.sort_by_key(Step::order);
 
-        (combined, chapter_title.unwrap_or_else(|| file_stem.clone()))
+        // Title priority for multi-step: first note H1 > first step H1
+        // > file_stem.
+        let chapter_title = notes
+            .first()
+            .map(|n| n.title.clone())
+            .or(step_title_fallback)
+            .unwrap_or_else(|| file_stem.clone());
+
+        (combined, chapter_title)
     };
 
     Ok(Exercise {
@@ -319,8 +334,8 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
 }
 
 /// Parse a single `.rs` file (`main.rs` or a step file) into a `CodeStep`.
-/// Returns the step plus its parsed title (which the caller may promote
-/// to the chapter title for legacy single-step chapters).
+/// Returns the step plus the title we parsed from any leading `//!`
+/// block (used as a fallback when there is no paired note).
 fn parse_code_file(
     path: &Path,
     order: u8,
@@ -330,21 +345,29 @@ fn parse_code_file(
     let starter_code_full =
         std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
     let intro_md = extract_inner_doc(&starter_code_full)?;
-    let (title_opt, body_md) = split_title(&intro_md);
+    let (title_opt, _body_md) = split_title(&intro_md);
     let title = title_opt.unwrap_or_else(|| fallback_title.to_string());
-    let intro_html = render_markdown(&body_md);
-    let starter_code = strip_inner_doc(&starter_code_full);
+    let starter_code = trim_trailing_blank_lines(&strip_inner_doc(&starter_code_full));
 
     Ok((
         CodeStep {
             order,
             slug: slug.to_string(),
             title: title.clone(),
-            intro_html,
             starter_code,
         },
         title,
     ))
+}
+
+/// Collapse trailing whitespace-only lines down to a single newline so
+/// the editor doesn't show empty padding below short step files.
+fn trim_trailing_blank_lines(s: &str) -> String {
+    let trimmed_end = s.trim_end_matches(|c: char| c == '\n' || c == '\r' || c == ' ' || c == '\t');
+    let mut out = String::with_capacity(trimmed_end.len() + 1);
+    out.push_str(trimmed_end);
+    out.push('\n');
+    out
 }
 
 /// Discover `<n>_<slug>.rs` step files in a chapter dir.
@@ -407,10 +430,13 @@ fn parse_note(path: &Path) -> Result<Note> {
 
     let md =
         std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
-    // Notes render as ordinary chapter prose. Keep the leading H1 so it
-    // appears as a real heading instead of being demoted into metadata.
-    let title = split_title(&md).0.unwrap_or_else(|| slug.clone());
-    let html = render_markdown(&md);
+    // The leading H1 is consumed as the note's `title`; the rendered
+    // HTML body excludes it. Chapter pages render the title separately
+    // (as the chapter heading for the first note, or as a section
+    // heading for subsequent notes) so the H1 doesn't appear twice.
+    let (title_opt, body_md) = split_title(&md);
+    let title = title_opt.unwrap_or_else(|| slug.clone());
+    let html = render_markdown(&body_md);
 
     Ok(Note {
         order,
@@ -561,6 +587,47 @@ pub fn render_markdown(md: &str) -> String {
 
     let mut out = String::with_capacity(md.len() * 2);
     html::push_html(&mut out, parser);
+    wrap_std_library_section(&out)
+}
+
+/// Wrap any `<h2>Useful from the standard library</h2>` heading plus its
+/// immediately-following `<ul>...</ul>` in an `<aside class="std-library">`
+/// callout. This is a convention every chapter uses, so we style it
+/// uniformly. If a chapter doesn't have such a heading, the rendered HTML
+/// is returned unchanged.
+fn wrap_std_library_section(html: &str) -> String {
+    const HEADING: &str = "<h2>Useful from the standard library</h2>";
+    let Some(h_start) = html.find(HEADING) else {
+        return html.to_string();
+    };
+    // Find the matching closing `</ul>` after the heading. The list may
+    // contain nested HTML, but pulldown-cmark doesn't emit nested `<ul>`
+    // here (each item is its own `<li>` with no sub-list), so the next
+    // `</ul>` is the one we want.
+    let after_h = h_start + HEADING.len();
+    let rest = &html[after_h..];
+    // Skip whitespace, expect `<ul>`.
+    let ul_offset = rest
+        .char_indices()
+        .find(|(_, c)| !c.is_whitespace())
+        .map(|(i, _)| i);
+    let Some(ul_off) = ul_offset else {
+        return html.to_string();
+    };
+    if !rest[ul_off..].starts_with("<ul>") {
+        return html.to_string();
+    }
+    let Some(ul_end_rel) = rest[ul_off..].find("</ul>") else {
+        return html.to_string();
+    };
+    let ul_end_abs = after_h + ul_off + ul_end_rel + "</ul>".len();
+
+    let mut out = String::with_capacity(html.len() + 64);
+    out.push_str(&html[..h_start]);
+    out.push_str("<aside class=\"std-library\">\n");
+    out.push_str(&html[h_start..ul_end_abs]);
+    out.push_str("\n</aside>");
+    out.push_str(&html[ul_end_abs..]);
     out
 }
 
@@ -604,15 +671,6 @@ mod tests {
         let primary = strings
             .primary_step()
             .expect("chapter should have at least one code step");
-        assert!(
-            !primary.intro_html.is_empty(),
-            "primary step should have intro HTML"
-        );
-        assert!(
-            primary.intro_html.contains("<p>"),
-            "intro should be rendered HTML, got: {}",
-            primary.intro_html
-        );
         // The borrowed/owned table now lives in the chapter-level note.
         let notes = strings.notes();
         let intro_note = notes

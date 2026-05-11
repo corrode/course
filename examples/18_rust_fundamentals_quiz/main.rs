@@ -1,12 +1,3 @@
-//! # Rust Fundamentals Quiz
-//!
-//! Test your understanding of the key Rust concepts covered in this course!
-//! This interactive quiz covers ownership, borrowing, types, pattern matching,
-//! and other fundamental Rust principles.
-//!
-//! Click the link below to take the quiz in a new tab. The quiz includes
-//! 20 questions with immediate feedback and explanations.
-
 // This is a special quiz "exercise": no actual Rust code is needed here.
 // The quiz is an interactive HTML page that tests fundamental Rust concepts.
 

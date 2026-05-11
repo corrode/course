@@ -1,9 +1,3 @@
-//! # Mapping variants to values
-//!
-//! Your first `match`: turn each `HttpStatus` variant into the numeric
-//! code it represents. The compiler will complain if you forget a
-//! variant, which is exactly what you want.
-
 // `Copy` lets you pass the same `HttpStatus` value to multiple
 // functions without it being moved on the first call. Plain enums
 // like this one (no `String`, no `Vec`, no other heap data) are

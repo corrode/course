@@ -135,9 +135,8 @@ with (u) %}
     } %}
     <div class="chapter-prose exercise-prose">{{ html|safe }}</div>
     {% when cargo_course::exercises::RenderKind::Code with { dom_id,
-    exercise_key, eyebrow, title, intro_html, starter_code, attempted,
+    exercise_key, eyebrow, title, show_title, starter_code, attempted,
     completed, perfected, github_dev_url } %}
-    <div class="chapter-prose exercise-prose">{{ intro_html|safe }}</div>
 
     <section
         class="exercise-section"
@@ -147,7 +146,9 @@ with (u) %}
         <div class="exercise-section-head">
             <div>
                 <div class="section-eyebrow">{{ eyebrow }}</div>
+                {% if *show_title %}
                 <h2 class="section-title">{{ title }}</h2>
+                {% endif %}
             </div>
             <div class="exercise-actions">
                 <span
@@ -190,7 +191,12 @@ with (u) %}
                 >
                     Format
                 </button>
-                <button type="button" class="btn" data-role="run-btn">
+                <button
+                    type="button"
+                    class="btn"
+                    data-role="run-btn"
+                    title="Run on play.rust-lang.org (⌘/Ctrl+Enter)"
+                >
                     ▶ Run
                 </button>
                 {% match ulid %} {% when Some with (u) %}
@@ -494,7 +500,6 @@ with (u) %}
             "@codemirror/lang-rust": "https://esm.sh/*@codemirror/lang-rust@6.0.1",
             "@codemirror/autocomplete": "https://esm.sh/*@codemirror/autocomplete@6.18.0",
             "@codemirror/search": "https://esm.sh/*@codemirror/search@6.5.6",
-            "@codemirror/theme-one-dark": "https://esm.sh/*@codemirror/theme-one-dark@6.1.2",
             "@replit/codemirror-vim": "https://esm.sh/*@replit/codemirror-vim@6.2.1",
             "@lezer/common": "https://esm.sh/*@lezer/common@1.2.1",
             "@lezer/highlight": "https://esm.sh/*@lezer/highlight@1.2.0",
@@ -525,8 +530,8 @@ with (u) %}
             commands,
             langRust,
             autocomplete,
-            oneDark,
             vimMod,
+            lezerHighlight,
         ] = await Promise.all([
             import("@codemirror/state"),
             import("@codemirror/view"),
@@ -534,8 +539,8 @@ with (u) %}
             import("@codemirror/commands"),
             import("@codemirror/lang-rust"),
             import("@codemirror/autocomplete"),
-            import("@codemirror/theme-one-dark"),
             import("@replit/codemirror-vim"),
+            import("@lezer/highlight"),
         ]);
 
         const { EditorState, Compartment } = state;
@@ -551,10 +556,11 @@ with (u) %}
         } = view;
         const {
             syntaxHighlighting,
-            defaultHighlightStyle,
+            HighlightStyle,
             bracketMatching,
             indentOnInput,
         } = lang;
+        const { tags: t } = lezerHighlight;
         const { defaultKeymap, history, historyKeymap, indentWithTab } =
             commands;
         const {
@@ -784,8 +790,77 @@ with (u) %}
         // sits in every section's editor so toggling propagates to all.
         const VIM_PREF_KEY = "corrode:editor:vim";
         let vimEnabledGlobal = localStorage.getItem(VIM_PREF_KEY) === "1";
-        const themeObservers = [];
         const allEditors = [];
+
+        // Shared highlight style that maps Lezer tags onto the same CSS
+        // variables the prose tok-* classes use. Anything you change in the
+        // `:root { --syn-* }` block of base.html now updates both the
+        // chapter prose code blocks and the in-page editor in lockstep.
+        const proseHighlightStyle = HighlightStyle.define([
+            { tag: t.keyword, color: "var(--syn-keyword)" },
+            { tag: t.controlKeyword, color: "var(--syn-keyword)" },
+            { tag: t.moduleKeyword, color: "var(--syn-keyword)" },
+            {
+                tag: [t.typeName, t.className, t.namespace],
+                color: "var(--syn-type)",
+            },
+            {
+                tag: [t.string, t.special(t.string), t.regexp],
+                color: "var(--syn-string)",
+            },
+            {
+                tag: [t.number, t.bool, t.atom, t.literal],
+                color: "var(--syn-number)",
+            },
+            {
+                tag: [
+                    t.function(t.definition(t.variableName)),
+                    t.definition(t.variableName),
+                    t.definition(t.propertyName),
+                ],
+                color: "var(--syn-definition)",
+            },
+            {
+                tag: [t.macroName, t.meta, t.annotation],
+                color: "var(--syn-macro)",
+            },
+            {
+                tag: [t.comment, t.lineComment, t.blockComment, t.docComment],
+                color: "var(--syn-comment)",
+                fontStyle: "italic",
+            },
+            {
+                tag: [t.operator, t.punctuation, t.separator, t.bracket],
+                color: "var(--syn-punctuation)",
+            },
+            { tag: t.invalid, color: "var(--syn-invalid)" },
+        ]);
+
+        // Base theme — reads the same --syn-* vars, so light/dark just
+        // swap when [data-theme] flips on the document element.
+        const proseEditorTheme = EditorView.theme({
+            "&": {
+                color: "var(--syn-fg)",
+                backgroundColor: "var(--syn-bg)",
+            },
+            ".cm-content": { caretColor: "var(--syn-cursor)" },
+            ".cm-cursor, .cm-dropCursor": {
+                borderLeftColor: "var(--syn-cursor)",
+            },
+            "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
+                {
+                    backgroundColor: "var(--syn-selection-bg)",
+                },
+            ".cm-activeLine": { backgroundColor: "var(--syn-active-line)" },
+            ".cm-gutters": {
+                backgroundColor: "var(--syn-gutter-bg)",
+                color: "var(--syn-gutter-fg)",
+                border: "none",
+            },
+            ".cm-activeLineGutter": {
+                backgroundColor: "var(--syn-active-line)",
+            },
+        });
 
         function initSection(section) {
             const stepId = section.dataset.stepId;
@@ -815,9 +890,6 @@ with (u) %}
                 savedDraft != null && savedDraft !== "" ? savedDraft : starter;
 
             const themeCompartment = new Compartment();
-            const isDark = (
-                document.documentElement.getAttribute("data-theme") || ""
-            ).startsWith("dark");
             const vimCompartment = new Compartment();
 
             const persistDraft = (text) => {
@@ -863,10 +935,21 @@ with (u) %}
                 drawSelection(),
                 indentOnInput(),
                 bracketMatching(),
-                syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+                syntaxHighlighting(proseHighlightStyle, { fallback: true }),
                 closeBrackets(),
                 autocompletion({ override: [localCompletions] }),
                 keymap.of([
+                    {
+                        key: "Mod-Enter",
+                        run: () => {
+                            // Mirror clicking Run. If a fresh Run is already
+                            // in flight the click handler ignores it, so
+                            // hammering the shortcut is safe.
+                            if (runBtn && !runBtn.disabled) runBtn.click();
+                            return true;
+                        },
+                        preventDefault: true,
+                    },
                     ...closeBracketsKeymap,
                     ...defaultKeymap,
                     ...historyKeymap,
@@ -877,7 +960,7 @@ with (u) %}
                 EditorView.lineWrapping,
                 urlPlugin,
                 urlTheme,
-                themeCompartment.of(isDark ? oneDark.oneDark : []),
+                themeCompartment.of(proseEditorTheme),
                 persistExt,
             ];
 
@@ -912,12 +995,9 @@ with (u) %}
                         ),
                     });
                 },
-                setTheme: (dark) => {
-                    editor.dispatch({
-                        effects: themeCompartment.reconfigure(
-                            dark ? oneDark.oneDark : [],
-                        ),
-                    });
+                setTheme: (_dark) => {
+                    // Editor theme is now driven entirely by CSS variables
+                    // declared in base.html; nothing to do here.
                 },
             };
             allEditors.push(api);
@@ -993,11 +1073,7 @@ with (u) %}
 
             // ---- Read-only CM6 view for the result output ----
             let outputView = null;
-            const outputThemeCompartment = new Compartment();
             const renderCargoOutput = (text) => {
-                const dark = (
-                    document.documentElement.getAttribute("data-theme") || ""
-                ).startsWith("dark");
                 if (!outputView) {
                     outputStderr.textContent = "";
                     outputStderr.style.padding = "0";
@@ -1008,10 +1084,10 @@ with (u) %}
                         EditorState.readOnly.of(true),
                         EditorView.lineWrapping,
                         langRust.rust(),
-                        syntaxHighlighting(defaultHighlightStyle, {
+                        syntaxHighlighting(proseHighlightStyle, {
                             fallback: true,
                         }),
-                        outputThemeCompartment.of(dark ? oneDark.oneDark : []),
+                        proseEditorTheme,
                         EditorView.theme({
                             "&": {
                                 backgroundColor: "transparent",
@@ -1039,32 +1115,13 @@ with (u) %}
                             to: outputView.state.doc.length,
                             insert: text,
                         },
-                        effects: outputThemeCompartment.reconfigure(
-                            dark ? oneDark.oneDark : [],
-                        ),
                     });
                 }
             };
 
             // ---- Theme syncing ----
-            const themeObserver = new MutationObserver(() => {
-                const dark = (
-                    document.documentElement.getAttribute("data-theme") || ""
-                ).startsWith("dark");
-                api.setTheme(dark);
-                if (outputView) {
-                    outputView.dispatch({
-                        effects: outputThemeCompartment.reconfigure(
-                            dark ? oneDark.oneDark : [],
-                        ),
-                    });
-                }
-            });
-            themeObserver.observe(document.documentElement, {
-                attributes: true,
-                attributeFilter: ["data-theme"],
-            });
-            themeObservers.push(themeObserver);
+            // CSS variables in base.html flip when [data-theme] does, so the
+            // editor reflects light/dark immediately without any JS work.
 
             // ---- Result rendering ----
             function setActionStatus(text, tone) {
@@ -1704,6 +1761,37 @@ with (u) %}
         content: "Caution";
     }
 
+    /* "Useful from the standard library" callouts at the bottom of every
+       chapter prose page. The renderer wraps the matching heading + ul in
+       `<aside class="std-library">` so we can give them a consistent look
+       without touching the markdown source. */
+    .exercise-prose .std-library {
+        margin: 2rem 0;
+        padding: 1rem 1.25rem 1.25rem;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        border-left: 3px solid var(--color-primary);
+    }
+    .exercise-prose .std-library > h2 {
+        margin: 0 0 0.5rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-primary);
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    .exercise-prose .std-library > ul {
+        margin: 0;
+        padding-left: 1.1rem;
+    }
+    .exercise-prose .std-library li {
+        margin: 0.35rem 0;
+        line-height: 1.5;
+    }
+
     /* Reading column for the chapter prose. */
     .chapter-prose {
         max-width: 100%;
@@ -1778,81 +1866,46 @@ with (u) %}
         color: #cdd6f4;
     }
     .exercise-prose .tok-keyword {
-        color: #cf222e;
+        color: var(--syn-keyword);
     }
     .exercise-prose .tok-typeName,
     .exercise-prose .tok-className {
-        color: #953800;
+        color: var(--syn-type);
     }
     .exercise-prose .tok-string,
     .exercise-prose .tok-string2 {
-        color: #0a3069;
+        color: var(--syn-string);
     }
     .exercise-prose .tok-number,
     .exercise-prose .tok-bool,
     .exercise-prose .tok-atom,
     .exercise-prose .tok-literal {
-        color: #0550ae;
+        color: var(--syn-number);
     }
     .exercise-prose .tok-variableName.tok-definition,
     .exercise-prose .tok-propertyName.tok-definition {
-        color: #8250df;
+        color: var(--syn-definition);
     }
     .exercise-prose .tok-macroName,
     .exercise-prose .tok-meta {
-        color: #116329;
+        color: var(--syn-macro);
     }
     .exercise-prose .tok-comment {
-        color: #6e7781;
+        color: var(--syn-comment);
         font-style: italic;
     }
     .exercise-prose .tok-operator,
     .exercise-prose .tok-punctuation {
-        color: #57606a;
+        color: var(--syn-punctuation);
     }
     .exercise-prose .tok-invalid {
-        color: #cf222e;
+        color: var(--syn-invalid);
     }
     .exercise-prose .tok-emphasis {
         font-style: italic;
     }
     .exercise-prose .tok-strong {
         font-weight: 700;
-    }
-    [data-theme="dark"] .exercise-prose .tok-keyword {
-        color: #cba6f7;
-    }
-    [data-theme="dark"] .exercise-prose .tok-typeName,
-    [data-theme="dark"] .exercise-prose .tok-className {
-        color: #f9e2af;
-    }
-    [data-theme="dark"] .exercise-prose .tok-string,
-    [data-theme="dark"] .exercise-prose .tok-string2 {
-        color: #a6e3a1;
-    }
-    [data-theme="dark"] .exercise-prose .tok-number,
-    [data-theme="dark"] .exercise-prose .tok-bool,
-    [data-theme="dark"] .exercise-prose .tok-atom,
-    [data-theme="dark"] .exercise-prose .tok-literal {
-        color: #fab387;
-    }
-    [data-theme="dark"] .exercise-prose .tok-variableName.tok-definition,
-    [data-theme="dark"] .exercise-prose .tok-propertyName.tok-definition {
-        color: #89b4fa;
-    }
-    [data-theme="dark"] .exercise-prose .tok-macroName,
-    [data-theme="dark"] .exercise-prose .tok-meta {
-        color: #f5c2e7;
-    }
-    [data-theme="dark"] .exercise-prose .tok-comment {
-        color: #6c7086;
-    }
-    [data-theme="dark"] .exercise-prose .tok-operator,
-    [data-theme="dark"] .exercise-prose .tok-punctuation {
-        color: #94a3b8;
-    }
-    [data-theme="dark"] .exercise-prose .tok-invalid {
-        color: #f38ba8;
     }
     .exercise-prose blockquote {
         margin: 1.25rem 0;

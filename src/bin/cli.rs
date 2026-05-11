@@ -668,6 +668,14 @@ async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
                 "Invalid submission data. Please check your exercise file and try again."
                     .to_string()
             }
+            reqwest::StatusCode::SERVICE_UNAVAILABLE => {
+                format!(
+                    "Server at {} is up but reported 503 Service Unavailable. \
+                     The course server might be restarting or out of capacity. \
+                     Try again in a moment.",
+                    get_server_url()
+                )
+            }
             status => {
                 format!("Submission failed: {}", status)
             }
