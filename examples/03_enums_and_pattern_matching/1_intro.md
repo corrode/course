@@ -1,6 +1,15 @@
 # Enums and pattern matching
 
-An `enum` is a type whose value is one of a fixed set of variants. Think
+*— Dad, why is my sister’s name Rose?  
+— Because your mother loves roses.  
+— Thanks, dad!  
+— No problem, Rust enums.*
+
+Dad is right, enums are the best.
+If you know the crippled form of enums in other languages (*cough* C), I'm so sorry for you.
+In Rust, they are a pure delight to work with.
+
+But first things first: an `enum` is a type whose value is one of a fixed set of variants. Think
 of it as a "this or that or that" type.
 
 ```rust

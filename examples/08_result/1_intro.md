@@ -1,5 +1,7 @@
 # Result<T, E>: when an operation might fail
 
+*Failure is not an `Option<T>`, but a `Result<T, E>`.*
+
 `Result` is the sibling of `Option`. Where `Option` says "maybe a value,
 maybe nothing", `Result` says "maybe a value, maybe an error":
 

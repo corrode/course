@@ -165,11 +165,17 @@ async fn handle_submit(file: Option<&str>, pedantic: bool, all: bool) -> Result<
     let source_code =
         fs::read_to_string(file).map_err(|_| anyhow!("Failed to read file: {file}"))?;
 
-    // 2. Extract exercise name from filename
-    let exercise_name = extract_exercise_name(file)?;
+    // 2. Extract chapter + optional step from the path. For legacy
+    //    single-step chapters the step is `None`, and `exercise_name`
+    //    is just the chapter slug. For multi-step (`<chapter>/<n>_<slug>.rs`)
+    //    the exercise key is `<chapter>/<n>_<slug>` and the test filter
+    //    is `_<n>_<slug>::`.
+    let target = extract_submission_target(file)?;
+    let exercise_name = target.exercise_key();
 
-    // 3. Run tests
-    let (tests_passed, test_output) = run_cargo_test(&exercise_name).await?;
+    // 3. Run tests scoped to the right chapter (and step, if any).
+    let (tests_passed, test_output) =
+        run_cargo_test(&target.chapter, target.test_filter.as_deref()).await?;
 
     // 4. If pedantic flag, also run fmt + clippy
     let (fmt_passed, clippy_passed) = if pedantic {
@@ -290,25 +296,27 @@ async fn process_single_exercise(
     pedantic: bool,
     token: &Token,
 ) -> Result<String, String> {
-    let exercise_name = match extract_exercise_name(&file_path) {
-        Ok(name) => name,
+    let target = match extract_submission_target(&file_path) {
+        Ok(t) => t,
         Err(_) => {
             println!("⚠️  Skipping {}: invalid filename format", file_path);
             return Err(file_path);
         }
     };
+    let exercise_name = target.exercise_key();
 
     print!("🧪 Testing {exercise_name}... ");
     std::io::stdout().flush().unwrap();
 
     // Run tests for this exercise
-    let (tests_passed, _test_output) = match run_cargo_test(&exercise_name).await {
-        Ok(result) => result,
-        Err(_) => {
-            println!("❌ Error running tests");
-            return Err(exercise_name);
-        }
-    };
+    let (tests_passed, _test_output) =
+        match run_cargo_test(&target.chapter, target.test_filter.as_deref()).await {
+            Ok(result) => result,
+            Err(_) => {
+                println!("❌ Error running tests");
+                return Err(exercise_name);
+            }
+        };
 
     if !tests_passed {
         println!("❌ Tests failed");
@@ -366,8 +374,10 @@ async fn process_single_exercise(
 
 /// Find all exercise files in the examples directory.
 ///
-/// Each chapter is a directory `examples/NN_slug/` containing a `main.rs`.
-/// Returns the path to each chapter's `main.rs`.
+/// For legacy single-step chapters, returns the chapter's `main.rs`.
+/// For multi-step chapters (those with `<n>_<slug>.rs` step files
+/// alongside the generated `main.rs`), returns one entry per step file
+/// instead so `--all` submits each step individually.
 fn find_exercise_files() -> Result<Vec<String>> {
     let examples_dir = Path::new("examples");
     if !examples_dir.exists() {
@@ -388,10 +398,47 @@ fn find_exercise_files() -> Result<Vec<String>> {
         if dir_name.starts_with('_') || dir_name.starts_with('.') {
             continue;
         }
-        let main_rs = path.join("main.rs");
-        if main_rs.exists() {
-            if let Some(p) = main_rs.to_str() {
-                exercise_files.push(p.to_string());
+
+        // Collect sibling `<n>_<slug>.rs` step files first.
+        let mut step_files: Vec<String> = Vec::new();
+        if let Ok(rd) = fs::read_dir(&path) {
+            for sub in rd.flatten() {
+                let p = sub.path();
+                if p.extension().and_then(|s| s.to_str()) != Some("rs") {
+                    continue;
+                }
+                let Some(name) = p.file_name().and_then(|s| s.to_str()) else {
+                    continue;
+                };
+                if name == "main.rs" {
+                    continue;
+                }
+                // Only count files starting with `<n>_`.
+                let stem = match p.file_stem().and_then(|s| s.to_str()) {
+                    Some(s) => s,
+                    None => continue,
+                };
+                let Some((num, _)) = stem.split_once('_') else {
+                    continue;
+                };
+                if num.parse::<u32>().is_err() {
+                    continue;
+                }
+                if let Some(s) = p.to_str() {
+                    step_files.push(s.to_string());
+                }
+            }
+        }
+
+        if !step_files.is_empty() {
+            step_files.sort();
+            exercise_files.extend(step_files);
+        } else {
+            let main_rs = path.join("main.rs");
+            if main_rs.exists() {
+                if let Some(p) = main_rs.to_str() {
+                    exercise_files.push(p.to_string());
+                }
             }
         }
     }
@@ -425,51 +472,116 @@ async fn handle_status() -> Result<()> {
     Ok(())
 }
 
-/// Extract exercise name from a file or chapter path.
+/// A submission target derived from a file or chapter path.
 ///
-/// Examples:
-/// - `examples/00_hello_rust/main.rs` → `00_hello_rust`
-/// - `examples/00_hello_rust/`        → `00_hello_rust`
-/// - `examples/00_hello_rust`         → `00_hello_rust`
-/// - `00_hello_rust`                  → `00_hello_rust`
-/// - `examples/01_strings.rs`         → `01_strings` (legacy flat layout)
-fn extract_exercise_name(file_path: &str) -> Result<String> {
-    let path = Path::new(file_path);
+/// For legacy single-step chapters this is just a chapter name; for
+/// multi-step chapters it also carries a `cargo test` filter so we
+/// only run the relevant step's tests.
+struct SubmissionTarget {
+    /// Chapter directory name (the `--example <chapter>` argument).
+    chapter: String,
+    /// `Some("<n>_<slug>")` for a step file; `None` for legacy chapters.
+    step_key: Option<String>,
+    /// `Some("_<n>_<slug>::")` filter passed to `cargo test`; `None` to
+    /// run every test in the chapter.
+    test_filter: Option<String>,
+}
 
-    // Chapter-directory layout: a path ending in `main.rs` belongs to the
-    // parent chapter directory.
-    if path.file_name().and_then(|n| n.to_str()) == Some("main.rs") {
-        if let Some(parent) = path
+impl SubmissionTarget {
+    /// Full `submissions.exercise_name` value: `<chapter>` for legacy,
+    /// `<chapter>/<step_key>` for multi-step.
+    fn exercise_key(&self) -> String {
+        match &self.step_key {
+            Some(k) => format!("{}/{}", self.chapter, k),
+            None => self.chapter.clone(),
+        }
+    }
+}
+
+/// Derive the submission target from a path the user passed to
+/// `cargo course submit`.
+///
+/// Recognised shapes:
+///
+/// * `examples/<chapter>/main.rs`       — legacy single-step chapter.
+/// * `examples/<chapter>/<n>_<slug>.rs` — multi-step file (step `n_slug`).
+/// * `examples/<chapter>/` (or bare)    — legacy single-step chapter.
+/// * `<chapter>` (bare slug)            — legacy single-step chapter.
+/// * `examples/<chapter>.rs`            — legacy flat layout.
+fn extract_submission_target(file_path: &str) -> Result<SubmissionTarget> {
+    let path = Path::new(file_path);
+    let filename = path.file_name().and_then(|n| n.to_str());
+
+    // `<chapter>/main.rs` — legacy aggregator file.
+    if filename == Some("main.rs") {
+        let chapter = path
             .parent()
             .and_then(|p| p.file_name())
             .and_then(|s| s.to_str())
-        {
-            return Ok(parent.to_string());
+            .ok_or_else(|| anyhow!("main.rs has no parent chapter directory"))?
+            .to_string();
+        return Ok(SubmissionTarget {
+            chapter,
+            step_key: None,
+            test_filter: None,
+        });
+    }
+
+    // `<chapter>/<n>_<slug>.rs` — multi-step file.
+    if let Some(name) = filename {
+        if let Some(stem) = name.strip_suffix(".rs") {
+            if stem != "main" {
+                if let Some(parent_name) = path
+                    .parent()
+                    .and_then(|p| p.file_name())
+                    .and_then(|s| s.to_str())
+                {
+                    // Verify the stem starts with `<n>_` so we don't
+                    // mis-classify a bare `examples/foo.rs`.
+                    if let Some((num, _rest)) = stem.split_once('_') {
+                        if num.parse::<u32>().is_ok() {
+                            return Ok(SubmissionTarget {
+                                chapter: parent_name.to_string(),
+                                step_key: Some(stem.to_string()),
+                                test_filter: Some(format!("_{stem}::")),
+                            });
+                        }
+                    }
+                }
+                // Bare `examples/<name>.rs` — legacy flat layout.
+                return Ok(SubmissionTarget {
+                    chapter: stem.to_string(),
+                    step_key: None,
+                    test_filter: None,
+                });
+            }
         }
     }
 
-    // Bare directory or chapter slug — use the last path component as-is
-    // (works for `examples/00_hello_rust/`, `examples/00_hello_rust`, and
-    // a bare `00_hello_rust`).
+    // Bare directory or chapter slug.
     let last = path
         .file_name()
         .ok_or_else(|| anyhow!("Invalid file path"))?
         .to_str()
         .ok_or_else(|| anyhow!("Invalid filename"))?;
-
-    // Legacy flat layout: still strip a trailing `.rs` if present.
-    if let Some(name) = last.strip_suffix(".rs") {
-        Ok(name.to_string())
-    } else {
-        Ok(last.to_string())
-    }
+    Ok(SubmissionTarget {
+        chapter: last.to_string(),
+        step_key: None,
+        test_filter: None,
+    })
 }
 
 /// Run cargo test for an exercise and return success status and output.
-async fn run_cargo_test(exercise_name: &str) -> Result<(bool, String)> {
-    let output = Command::new("cargo")
-        .args(["test", "--example", exercise_name])
-        .output()?;
+///
+/// When `filter` is `Some`, it's passed as a `cargo test` test-name filter
+/// (e.g. `_2_fallback::`) so only one step's tests run.
+async fn run_cargo_test(chapter: &str, filter: Option<&str>) -> Result<(bool, String)> {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("test").arg("--example").arg(chapter);
+    if let Some(f) = filter {
+        cmd.arg("--").arg(f);
+    }
+    let output = cmd.output()?;
 
     let success = output.status.success();
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -555,6 +667,14 @@ async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
             reqwest::StatusCode::BAD_REQUEST => {
                 "Invalid submission data. Please check your exercise file and try again."
                     .to_string()
+            }
+            reqwest::StatusCode::SERVICE_UNAVAILABLE => {
+                format!(
+                    "Server at {} is up but reported 503 Service Unavailable. \
+                     The course server might be restarting or out of capacity. \
+                     Try again in a moment.",
+                    get_server_url()
+                )
             }
             status => {
                 format!("Submission failed: {}", status)

@@ -27,19 +27,41 @@ cd course
 ```
 
 Each chapter lives in its own directory under `examples/`. Inside, you'll
-find a `main.rs` (the exercise itself) and, occasionally, one or more
-`*.md` notes with extra context. Open the chapter, read the comment at the
-top of `main.rs` plus any notes, fill in the `todo!()` bodies, and run the
-tests:
+find one or more exercise files (`*.rs`) and, optionally, markdown notes
+(`*.md`) that introduce or break up the exercises. Files are ordered by a
+leading number (`1_intro.md`, `2_fallback.rs`, `3_transform.rs`, …) so
+prose and code can interleave naturally.
+
+Two shapes show up in the wild:
+
+- **Single-file chapters** have just a `main.rs` (plus optional notes).
+  This is the original layout and most chapters still use it.
+- **Multi-step chapters** have several `<n>_<slug>.rs` files alongside
+  the notes. Each step is self-contained: its own functions, its own
+  tests. A small `main.rs` is generated automatically (by `build.rs`)
+  so `cargo test --example <chapter>` still runs every step at once.
+
+Open a chapter, read the comment at the top of each `.rs` file plus any
+notes, fill in the `todo!()` bodies, and run the tests:
 
 ```bash
+# Run all tests in a chapter (single-step or multi-step):
 cargo test --example 00_hello_rust
+cargo test --example 07_option
+
+# Run just one step's tests inside a multi-step chapter:
+cargo test --example 07_option _2_fallback::
 ```
 
-When the tests pass, move on to the next chapter. That's it.
+The `_2_fallback::` filter matches the module `build.rs` generates for
+the `2_fallback.rs` step file. The leading underscore is just to make
+the module name a legal Rust identifier (file names can start with a
+digit, identifiers can't).
 
-If you want to try an exercise without installing anything, paste
-`examples/<chapter>/main.rs` into the
+When the tests pass, move on to the next step or chapter. That's it.
+
+If you want to try an exercise without installing anything, paste any
+`examples/<chapter>/<step>.rs` file into the
 [Rust Playground](https://play.rust-lang.org/) and click "Test".
 
 ### Optional: progress tracking with the CLI
@@ -51,11 +73,16 @@ you can skip this section entirely.
 ```bash
 cargo install --path .
 
-cargo course init                                            # register
-cargo course submit examples/00_hello_rust/main.rs           # submit
-cargo course submit examples/00_hello_rust/main.rs --pedantic # earn a star with fmt + clippy
-cargo course status                                          # see your progress
+cargo course init                                              # register
+cargo course submit examples/00_hello_rust/main.rs             # legacy chapter
+cargo course submit examples/07_option/2_fallback.rs           # one step
+cargo course submit examples/00_hello_rust/main.rs --pedantic  # earn a star with fmt + clippy
+cargo course status                                            # see your progress
 ```
+
+For multi-step chapters, `cargo course submit <step.rs>` automatically
+works out which chapter and step you're submitting; just point it at the
+file you're editing.
 
 ## The exercises
 
@@ -90,15 +117,21 @@ ship a short note (`*.md`) with preliminary context.
 
 ## How to work through an exercise
 
-1. Read the `//!` comment at the top of `main.rs`. It tells you what's
-   going on and links to relevant standard library docs. If the chapter
-   directory contains a `*.md` note, read that first.
-2. Look at the test cases at the bottom. They show exactly what the
-   functions should do.
+1. Read the `//!` comment at the top of each `.rs` file. It tells you
+   what's going on and links to relevant standard library docs. If the
+   chapter directory contains `*.md` notes, read those at the points
+   where they appear in the numbered ordering.
+2. Look at the test cases at the bottom of each file. They show exactly
+   what the functions should do.
 3. Replace each `todo!()` with real code, one at a time.
-4. Run `cargo test --example <name>` until everything passes.
+4. Run `cargo test --example <chapter>` (or the step-scoped variant)
+   until everything passes.
 5. Try a variation. Change a test, break the code, see what the compiler
    says. The compiler is the best teacher you'll get.
+
+For multi-step chapters, work through the files in numeric order. Each
+step stands on its own — don't reach into another step's code from
+yours.
 
 A few habits that help:
 

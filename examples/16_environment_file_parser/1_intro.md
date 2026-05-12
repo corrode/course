@@ -1,5 +1,7 @@
 # Parsing structured text and generics
 
+*You have a problem. You decide to use generics. Now you have a `Problem<T> where T: Clone + Send + Sync + 'static`.*
+
 This chapter parses `.env`-style configuration files. Two new things show
 up:
 

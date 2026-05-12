@@ -64,6 +64,14 @@ The loop variable is `_` here because the body doesn't need it — we
 just want "do this thing five times." Ranges are useful as iterators
 but also work as slice indices (`v[0..3]`).
 
+> [!TIP]
+> From this chapter onward the files get longer, and the in-browser
+> editor starts feeling cramped. The **Open in VS Code** button above
+> each editor opens this file on [github.dev](https://github.dev) — a
+> full browser-based VS Code with proper find-in-file, multi-cursor,
+> and the rest of the keyboard shortcuts you'd expect. Clone the repo
+> locally if you want `rust-analyzer` and on-save formatting.
+
 ## Useful from the standard library
 
 - [`std::fmt::Debug`](https://doc.rust-lang.org/std/fmt/trait.Debug.html)

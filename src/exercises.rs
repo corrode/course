@@ -1,12 +1,24 @@
 //! Startup-time scan and parse of `examples/NN_slug/` chapter directories.
 //!
-//! Each chapter is a directory `examples/NN_slug/` containing exactly one
-//! `main.rs` (the exercise) and zero or more `<n>_<slug>.md` notes that
-//! render before the exercise prose on the web. The chapter directory name
-//! matches the historical `file_stem`, so database keys (`exercise_name`)
-//! are preserved across the migration.
+//! Each chapter is a directory `examples/NN_slug/` containing one or more
+//! exercise files (`.rs`) and zero or more notes (`.md`), interleaved by a
+//! leading `<n>_` ordering prefix. The chapter is exposed to the rest of
+//! the application as an ordered list of [`Step`]s, where each step is
+//! either a [`Note`] (prose) or a [`CodeStep`] (an exercise with its own
+//! editor and tests).
 //!
-//! See `docs/in_browser_exercises.md` for the original design.
+//! Two shapes are supported:
+//!
+//! * **Single-step (legacy):** only a `main.rs` and (optionally) one or
+//!   more `<n>_<slug>.md` notes. The chapter is treated as a single code
+//!   step whose source is `main.rs`; notes render before its prose.
+//! * **Multi-step:** sibling `<n>_<slug>.rs` files alongside (or instead
+//!   of) `main.rs`. Each `.rs` file becomes a `CodeStep`, ordered with
+//!   the notes by its leading number. A generated `main.rs` (built by
+//!   `build.rs`) aggregates the step files as `mod _N_slug;` so
+//!   `cargo test --example <chapter>` still runs every step's tests.
+//!
+//! See `docs/multi_step_chapters_plan.md` for the rollout plan.
 
 use anyhow::{Context, Result, anyhow};
 use std::path::{Path, PathBuf};
@@ -27,7 +39,66 @@ pub struct Note {
     pub html: String,
 }
 
-/// A single exercise, parsed from one `examples/NN_slug/` chapter directory.
+/// An exercise file: prose + starter code + tests, rendered as one
+/// editable section on the web.
+#[derive(Debug, Clone)]
+pub struct CodeStep {
+    /// In-chapter ordering taken from the leading `<n>_` of the filename.
+    /// Single-step (legacy) chapters use order `0`.
+    pub order: u8,
+    /// Slug after the leading number, e.g. `unwrap` for `2_unwrap.rs`.
+    /// For the legacy single-step shape, this is the chapter slug itself.
+    pub slug: String,
+    /// Step title. Source priority: paired `<N>_<slug>.md` H1 (if it
+    /// exists) > first H1 in the file's `//!` block > slug. Used as
+    /// the section heading above the editor when there is no paired
+    /// note rendered immediately above.
+    pub title: String,
+    /// File contents with the `//!` block stripped, used as the editor's
+    /// starter content.
+    pub starter_code: String,
+}
+
+impl CodeStep {
+    /// Stable identifier for a step within its chapter, used in URLs and
+    /// in `submissions.exercise_name` as `<chapter>/<step_key>`.
+    ///
+    /// For multi-step chapters this is `<order>_<slug>` (e.g. `2_unwrap`)
+    /// so the on-disk filename is recoverable from the key. For the
+    /// legacy single-step shape the key is the empty string, so the
+    /// chapter slug alone identifies the step.
+    #[must_use]
+    pub fn key(&self) -> String {
+        if self.order == 0 {
+            String::new()
+        } else {
+            format!("{}_{}", self.order, self.slug)
+        }
+    }
+}
+
+/// One position in a chapter's ordered sequence of content: either a
+/// prose note or a code step.
+#[derive(Debug, Clone)]
+pub enum Step {
+    /// A markdown note rendered as-is.
+    Prose(Note),
+    /// An exercise file with its own editor and tests.
+    Code(CodeStep),
+}
+
+impl Step {
+    /// Ordering key (the leading `<n>_` prefix of the source filename).
+    #[must_use]
+    pub const fn order(&self) -> u8 {
+        match self {
+            Self::Prose(n) => n.order,
+            Self::Code(c) => c.order,
+        }
+    }
+}
+
+/// A single chapter, parsed from one `examples/NN_slug/` directory.
 #[derive(Debug, Clone)]
 pub struct Exercise {
     /// Numeric prefix from the directory name, e.g. `2` for `02_strings_and_chars`.
@@ -35,31 +106,120 @@ pub struct Exercise {
     /// Slug without the numeric prefix, e.g. `strings_and_chars`.
     pub slug: String,
     /// Directory name including the prefix, e.g. `02_strings_and_chars`.
-    /// Doubles as the key used in the `submissions.exercise_name` column.
+    /// Doubles as the chapter half of `submissions.exercise_name`.
     pub file_stem: String,
-    /// Title, taken from the first H1 of the `//!` block. Falls back to
-    /// `file_stem` if no H1 is present.
+    /// Chapter title, taken from the first code step's `//!` H1 (legacy
+    /// shape) or from a top-level `0_chapter.md` (future). Falls back to
+    /// `file_stem`.
     pub title: String,
-    /// Remainder of the `//!` block (everything after the first H1),
-    /// rendered to HTML at startup.
-    pub intro_html: String,
-    /// Verbatim file contents — what the editor is seeded with.
-    pub starter_code: String,
-    /// Optional notes that render before `intro_html` on the web, in
-    /// `order` order. Empty for chapters without any `.md` files.
-    pub notes: Vec<Note>,
-    /// Optional spoiler-protected hints. Sourced from a sibling note
-    /// whose slug is exactly `hints` (e.g. `2_hints.md`). Renders as a
-    /// closed `<details>` so learners only see them on demand.
+    /// Ordered prose + code steps as they should render top-to-bottom.
+    pub steps: Vec<Step>,
+    /// Optional spoiler-protected hints, surfaced once per chapter as a
+    /// closed `<details>` below the last step. Sourced from a sibling
+    /// note whose slug is exactly `hints`.
     pub hints: Option<Note>,
 }
 
 impl Exercise {
-    /// True for files whose slug contains "quiz".
+    /// True for chapters whose slug contains "quiz".
     #[must_use]
     pub fn is_quiz(&self) -> bool {
         self.slug.contains("quiz")
     }
+
+    /// All code steps in render order. Useful for progress calculations.
+    #[must_use]
+    pub fn code_steps(&self) -> Vec<&CodeStep> {
+        self.steps
+            .iter()
+            .filter_map(|s| match s {
+                Step::Code(c) => Some(c),
+                Step::Prose(_) => None,
+            })
+            .collect()
+    }
+
+    /// Prose-only notes, in render order. Convenience for legacy callers.
+    #[must_use]
+    pub fn notes(&self) -> Vec<&Note> {
+        self.steps
+            .iter()
+            .filter_map(|s| match s {
+                Step::Prose(n) => Some(n),
+                Step::Code(_) => None,
+            })
+            .collect()
+    }
+
+    /// The single code step for legacy single-step chapters. Returns
+    /// the first code step for multi-step chapters; callers that need
+    /// to render every step should use [`Self::code_steps`] instead.
+    #[must_use]
+    pub fn primary_step(&self) -> Option<&CodeStep> {
+        self.code_steps().into_iter().next()
+    }
+
+    /// True if the chapter has more than one code step.
+    #[must_use]
+    pub fn is_multi_step(&self) -> bool {
+        self.code_steps().len() > 1
+    }
+}
+
+/// One position in a chapter's rendered output: prose or an editable
+/// code section. Built per-request by the server from a chapter's
+/// `steps` plus the participant's progress; rendered by the
+/// `exercise.html` template.
+///
+/// Lives in this module (rather than in the server binary) so that
+/// `templates/exercise.html` can pattern-match on it through Askama's
+/// fully-qualified path syntax.
+#[derive(Debug, Clone)]
+pub struct RenderItem {
+    pub kind: RenderKind,
+}
+
+/// Either a prose block or a code section with all the per-step state
+/// the editor JS needs.
+#[derive(Debug, Clone)]
+pub enum RenderKind {
+    /// A markdown note rendered as raw HTML.
+    Prose { html: String },
+    /// An editable code step. Carries every per-step value the template
+    /// needs so the editor JS can stay scoped to one `<section>`.
+    Code {
+        /// Stable per-step id used for DOM ids and the draft
+        /// localStorage key. Equal to the chapter `file_stem` for
+        /// legacy single-step chapters, or
+        /// `<chapter_file_stem>__<n>_<step_slug>` for multi-step.
+        dom_id: String,
+        /// Full `submissions.exercise_name` value the editor will
+        /// post back. `<chapter>` for legacy, `<chapter>/<step_key>`
+        /// for multi-step.
+        exercise_key: String,
+        /// Section eyebrow text, e.g. `"Exercise"` or
+        /// `"Exercise 2 of 4"`.
+        eyebrow: String,
+        /// Step title shown above the editor. Suppressed by the
+        /// template when `show_title` is false, which happens when an
+        /// immediately-preceding note already shows the same heading.
+        title: String,
+        /// Whether the template should render `title` above the editor.
+        /// False whenever a paired note is rendered directly above this
+        /// step (its H2 acts as the section heading instead, avoiding a
+        /// duplicate).
+        show_title: bool,
+        /// Editor starter content (file with `//!` stripped).
+        starter_code: String,
+        /// True if at least one submission exists for this step.
+        attempted: bool,
+        /// True if a submission has `tests_passed`.
+        completed: bool,
+        /// True if a submission has tests + fmt + clippy all green.
+        perfected: bool,
+        /// github.dev URL pointing at the right file in this chapter.
+        github_dev_url: String,
+    },
 }
 
 /// Scan a directory for `NN_slug/` chapter dirs and parse each one.
@@ -113,43 +273,128 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
     let (number, slug) = split_numeric_prefix(&file_stem)
         .ok_or_else(|| anyhow!("directory does not start with NN_: {file_stem}"))?;
 
-    let main_rs = dir.join("main.rs");
-    if !main_rs.exists() {
-        return Err(anyhow!("missing main.rs in {}", dir.display()));
-    }
-    let starter_code_full = std::fs::read_to_string(&main_rs)
-        .with_context(|| format!("reading {}", main_rs.display()))?;
-
-    let intro_md = extract_inner_doc(&starter_code_full)?;
-    let (title, body_md) = split_title(&intro_md);
-    let title = title.unwrap_or_else(|| file_stem.clone());
-    let intro_html = render_markdown(&body_md);
-    // Editor sees the file *without* the inner doc-comment; the prose above
-    // already covers it, no need to repeat it inside the code area.
-    let starter_code = strip_inner_doc(&starter_code_full);
-
+    // Discover sibling step files (`<n>_<slug>.rs`) before deciding the
+    // shape. The presence of any such file flips us into multi-step mode,
+    // even if there's also a `main.rs` (which in that case is generated).
+    let step_files = scan_step_files(dir)?;
     let mut notes = scan_notes(dir)?;
-    // A note named `<n>_hints.md` is special: it gets its own slot on the
-    // exercise page, hidden behind a click. Pull it out of the regular
-    // notes list so it doesn't render inline above the intro prose.
-    let hints_idx = notes.iter().position(|n| n.slug == "hints");
-    let hints = hints_idx.map(|i| notes.remove(i));
+    let hints = notes
+        .iter()
+        .position(|n| n.slug == "hints")
+        .map(|i| notes.remove(i));
+
+    let (steps, title) = if step_files.is_empty() {
+        // Legacy single-step chapter: parse `main.rs` as the lone step.
+        let main_rs = dir.join("main.rs");
+        if !main_rs.exists() {
+            return Err(anyhow!("missing main.rs in {}", dir.display()));
+        }
+        let (step, step_title) = parse_code_file(&main_rs, 0, &slug, &file_stem)?;
+        // Title priority: first note H1 > step's own //! H1 > file_stem.
+        let chapter_title = notes.first().map(|n| n.title.clone()).unwrap_or(step_title);
+        let mut steps: Vec<Step> = notes.into_iter().map(Step::Prose).collect();
+        steps.push(Step::Code(step));
+        (steps, chapter_title)
+    } else {
+        // Multi-step chapter: interleave prose and code by order.
+        let mut code_steps = Vec::with_capacity(step_files.len());
+        let mut step_title_fallback: Option<String> = None;
+        for (order, path, step_slug) in step_files {
+            let (step, step_title) = parse_code_file(&path, order, &step_slug, &file_stem)?;
+            if step_title_fallback.is_none() {
+                step_title_fallback = Some(step_title);
+            }
+            code_steps.push(step);
+        }
+
+        let mut combined: Vec<Step> = Vec::with_capacity(notes.len() + code_steps.len());
+        combined.extend(notes.iter().cloned().map(Step::Prose));
+        combined.extend(code_steps.into_iter().map(Step::Code));
+        combined.sort_by_key(Step::order);
+
+        // Title priority for multi-step: first note H1 > first step H1
+        // > file_stem.
+        let chapter_title = notes
+            .first()
+            .map(|n| n.title.clone())
+            .or(step_title_fallback)
+            .unwrap_or_else(|| file_stem.clone());
+
+        (combined, chapter_title)
+    };
 
     Ok(Exercise {
         number,
         slug,
         file_stem,
         title,
-        intro_html,
-        starter_code,
-        notes,
+        steps,
         hints,
     })
 }
 
-/// Find `<n>_<slug>.md` notes alongside the chapter's `main.rs` and parse
-/// each into a `Note`. Sorted by the leading number so chapter authors
-/// can interleave notes with code in any order they like.
+/// Parse a single `.rs` file (`main.rs` or a step file) into a `CodeStep`.
+/// Returns the step plus the title we parsed from any leading `//!`
+/// block (used as a fallback when there is no paired note).
+fn parse_code_file(
+    path: &Path,
+    order: u8,
+    slug: &str,
+    fallback_title: &str,
+) -> Result<(CodeStep, String)> {
+    let starter_code_full =
+        std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    let intro_md = extract_inner_doc(&starter_code_full)?;
+    let (title_opt, _body_md) = split_title(&intro_md);
+    let title = title_opt.unwrap_or_else(|| fallback_title.to_string());
+    let starter_code = trim_trailing_blank_lines(&strip_inner_doc(&starter_code_full));
+
+    Ok((
+        CodeStep {
+            order,
+            slug: slug.to_string(),
+            title: title.clone(),
+            starter_code,
+        },
+        title,
+    ))
+}
+
+/// Collapse trailing whitespace-only lines down to a single newline so
+/// the editor doesn't show empty padding below short step files.
+fn trim_trailing_blank_lines(s: &str) -> String {
+    let trimmed_end = s.trim_end_matches(|c: char| c == '\n' || c == '\r' || c == ' ' || c == '\t');
+    let mut out = String::with_capacity(trimmed_end.len() + 1);
+    out.push_str(trimmed_end);
+    out.push('\n');
+    out
+}
+
+/// Discover `<n>_<slug>.rs` step files in a chapter dir.
+///
+/// `main.rs` is excluded: in multi-step chapters it's an auto-generated
+/// aggregator (`build.rs`), and in single-step chapters it's the only
+/// file and is handled separately by [`parse_chapter`].
+fn scan_step_files(chapter_dir: &Path) -> Result<Vec<(u8, PathBuf, String)>> {
+    let mut out: Vec<(u8, PathBuf, String)> = std::fs::read_dir(chapter_dir)
+        .with_context(|| format!("reading {}", chapter_dir.display()))?
+        .filter_map(std::result::Result::ok)
+        .map(|e| e.path())
+        .filter(|p| p.extension().and_then(|s| s.to_str()) == Some("rs"))
+        .filter(|p| p.file_name().and_then(|s| s.to_str()) != Some("main.rs"))
+        .filter_map(|p| {
+            let stem = p.file_stem().and_then(|s| s.to_str())?.to_string();
+            let (n, slug) = split_numeric_prefix(&stem)?;
+            Some((n, p, slug))
+        })
+        .collect();
+    out.sort_by_key(|(n, _, _)| *n);
+    Ok(out)
+}
+
+/// Find `<n>_<slug>.md` notes in a chapter dir and parse each into a
+/// `Note`. Sorted by the leading number so chapter authors can
+/// interleave notes with code steps in any order they like.
 fn scan_notes(chapter_dir: &Path) -> Result<Vec<Note>> {
     let mut paths: Vec<PathBuf> = std::fs::read_dir(chapter_dir)
         .with_context(|| format!("reading {}", chapter_dir.display()))?
@@ -185,10 +430,13 @@ fn parse_note(path: &Path) -> Result<Note> {
 
     let md =
         std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
-    // Notes render as ordinary chapter prose. Keep the leading H1 so it
-    // appears as a real heading instead of being demoted into metadata.
-    let title = split_title(&md).0.unwrap_or_else(|| slug.clone());
-    let html = render_markdown(&md);
+    // The leading H1 is consumed as the note's `title`; the rendered
+    // HTML body excludes it. Chapter pages render the title separately
+    // (as the chapter heading for the first note, or as a section
+    // heading for subsequent notes) so the H1 doesn't appear twice.
+    let (title_opt, body_md) = split_title(&md);
+    let title = title_opt.unwrap_or_else(|| slug.clone());
+    let html = render_markdown(&body_md);
 
     Ok(Note {
         order,
@@ -306,7 +554,7 @@ pub fn render_markdown(md: &str) -> String {
     opts.insert(Options::ENABLE_TABLES);
     // GFM unlocks GitHub-style alerts: `> [!NOTE]`, `> [!TIP]`, etc.
     // pulldown-cmark recognizes them as `BlockQuote(Some(BlockQuoteKind))`,
-    // and the default HTML renderer wraps them in `<blockquote class="markdown-alert markdown-alert-note">`.
+    // and the default HTML renderer wraps them in `<blockquote class="markdown-alert-note">`.
     opts.insert(Options::ENABLE_GFM);
 
     // Rewrite outbound links so they open in a new tab. Anything with an
@@ -339,6 +587,49 @@ pub fn render_markdown(md: &str) -> String {
 
     let mut out = String::with_capacity(md.len() * 2);
     html::push_html(&mut out, parser);
+    wrap_std_library_section(&out)
+}
+
+/// Wrap any `<h2>Useful from the standard library</h2>` heading plus its
+/// immediately-following `<ul>...</ul>` in the same
+/// `<blockquote class="markdown-alert-note">` markup that
+/// pulldown-cmark emits for `> [!NOTE]`. That way the section reuses the
+/// existing alert styling instead of needing its own class. The H2 stays
+/// inside the blockquote and acts as the label (the alert CSS hides its
+/// auto-injected "Note" cap when an H2 is the first child).
+fn wrap_std_library_section(html: &str) -> String {
+    const HEADING: &str = "<h2>Useful from the standard library</h2>";
+    let Some(h_start) = html.find(HEADING) else {
+        return html.to_string();
+    };
+    // Find the matching closing `</ul>` after the heading. The list may
+    // contain nested HTML, but pulldown-cmark doesn't emit nested `<ul>`
+    // here (each item is its own `<li>` with no sub-list), so the next
+    // `</ul>` is the one we want.
+    let after_h = h_start + HEADING.len();
+    let rest = &html[after_h..];
+    // Skip whitespace, expect `<ul>`.
+    let ul_offset = rest
+        .char_indices()
+        .find(|(_, c)| !c.is_whitespace())
+        .map(|(i, _)| i);
+    let Some(ul_off) = ul_offset else {
+        return html.to_string();
+    };
+    if !rest[ul_off..].starts_with("<ul>") {
+        return html.to_string();
+    }
+    let Some(ul_end_rel) = rest[ul_off..].find("</ul>") else {
+        return html.to_string();
+    };
+    let ul_end_abs = after_h + ul_off + ul_end_rel + "</ul>".len();
+
+    let mut out = String::with_capacity(html.len() + 64);
+    out.push_str(&html[..h_start]);
+    out.push_str("<blockquote class=\"markdown-alert-note\">\n");
+    out.push_str(&html[h_start..ul_end_abs]);
+    out.push_str("\n</blockquote>");
+    out.push_str(&html[ul_end_abs..]);
     out
 }
 
@@ -377,32 +668,36 @@ mod tests {
             .expect("expected 02_strings_and_chars to be present");
         assert_eq!(strings.number, 2);
         assert_eq!(strings.file_stem, "02_strings_and_chars");
-        assert_eq!(strings.title, "Strings and chars");
+        // Title now comes from the first code step's `# Title` (multi-step
+        // chapter). The chapter intro lives in `1_intro.md` (a Note).
+        let primary = strings
+            .primary_step()
+            .expect("chapter should have at least one code step");
+        // The borrowed/owned table now lives in the chapter-level note.
+        let notes = strings.notes();
+        let intro_note = notes
+            .iter()
+            .find(|n| n.slug == "intro")
+            .expect("chapter should have a 1_intro.md note");
         assert!(
-            strings.intro_html.contains("<p>"),
-            "intro should be rendered HTML, got: {}",
-            strings.intro_html
+            intro_note.html.contains("<p>"),
+            "intro note should be rendered HTML"
         );
         assert!(
-            strings.intro_html.contains("<table>"),
-            "intro should include the borrowed/owned table, got: {}",
-            strings.intro_html
+            primary.starter_code.contains("fn count_chars"),
+            "first step's starter code should contain its function stub, got: {}",
+            primary.starter_code
         );
         assert!(
-            strings.starter_code.contains("fn first_char"),
-            "starter code should contain function stubs"
-        );
-        assert!(
-            !strings.starter_code.contains("//!"),
+            !primary.starter_code.contains("//!"),
             "editor starter code should have the inner doc comment stripped"
         );
         assert!(
-            strings.starter_code.starts_with("///")
-                || strings.starter_code.starts_with("fn")
-                || strings.starter_code.starts_with("use ")
-                || strings.starter_code.starts_with("#["),
+            primary.starter_code.starts_with("///")
+                || primary.starter_code.starts_with("fn")
+                || primary.starter_code.starts_with("use "),
             "starter code should begin with code, not blank lines: {:?}",
-            &strings.starter_code[..40.min(strings.starter_code.len())]
+            &primary.starter_code[..40.min(primary.starter_code.len())]
         );
     }
 
@@ -416,11 +711,12 @@ mod tests {
             .iter()
             .find(|e| e.slug == "hello_rust")
             .expect("expected 00_hello_rust to be present");
+        let notes = chapter.notes();
         assert!(
-            !chapter.notes.is_empty(),
+            !notes.is_empty(),
             "expected at least one note in 00_hello_rust"
         );
-        let first = &chapter.notes[0];
+        let first = notes[0];
         assert_eq!(first.order, 1);
         assert!(
             first.html.contains("<p>"),
@@ -437,6 +733,51 @@ mod tests {
             first.html.contains("class=\"external-link\""),
             "external links should be tagged for the icon affordance, got: {}",
             first.html
+        );
+    }
+
+    #[test]
+    fn multi_step_chapter_exposes_each_step() {
+        // 07_option is the pilot multi-step chapter (four step files).
+        let exercises =
+            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let chapter = exercises
+            .iter()
+            .find(|e| e.slug == "option")
+            .expect("expected 07_option to be present");
+        let code_steps = chapter.code_steps();
+        assert!(
+            code_steps.len() >= 2,
+            "expected multiple code steps, got {}",
+            code_steps.len()
+        );
+        assert!(
+            chapter.is_multi_step(),
+            "chapter with sibling .rs files should report multi-step"
+        );
+        // Step keys must be `<n>_<slug>` so the DB key becomes
+        // `07_option/<n>_<slug>`.
+        let first = code_steps[0];
+        assert_eq!(first.order, 2, "first step should be ordered 2_*");
+        assert!(first.key().starts_with("2_"));
+    }
+
+    #[test]
+    fn legacy_single_step_chapter_has_one_code_step() {
+        let exercises =
+            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        // Any chapter with only `main.rs` should produce exactly one code
+        // step ordered at 0 (which renders as the chapter's primary step).
+        let chapter = exercises
+            .iter()
+            .find(|e| e.slug == "rust_fundamentals_quiz")
+            .expect("expected 18_rust_fundamentals_quiz to be present");
+        let code_steps = chapter.code_steps();
+        assert_eq!(code_steps.len(), 1, "legacy chapter should have one step");
+        assert_eq!(code_steps[0].order, 0);
+        assert!(
+            !chapter.is_multi_step(),
+            "legacy chapter should report as single-step"
         );
     }
 

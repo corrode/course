@@ -1,5 +1,7 @@
 # Numbers in Rust
 
+*I tried to write a joke about integers — it was pointless.*
+
 Rust has many integer types. The most common ones are `i32` (signed,
 32-bit) and `u32` (unsigned, 32-bit). The `u` versions can't be negative.
 For sizes and indices you'll usually see `usize`. Floating-point comes in

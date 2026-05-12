@@ -1,5 +1,7 @@
 # Ownership and borrowing
 
+*Why are Rust developers so frugal? They prefer to borrow.*
+
 Ownership is the rule that makes Rust feel different from other
 languages. The short version:
 
