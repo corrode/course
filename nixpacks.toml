@@ -1,0 +1,24 @@
+# Nixpacks build config for Coolify / Hetzner deploys.
+#
+# The repo has two binaries:
+#   * `cargo-course` (src/bin/cli.rs) - the learner-facing CLI, not used on the server
+#   * `server`       (src/bin/server.rs) - what we deploy
+#
+# Nixpacks' default Rust provider derives binary names from filenames in
+# `src/bin/`, which doesn't match our `[[bin]] name = "..."` overrides.
+# We define the build phases explicitly so only the server gets built and
+# copied into place.
+
+providers = ["rust"]
+
+[phases.build]
+cmds = ["cargo build --release --bin server"]
+
+[phases.install]
+cmds = [
+  "mkdir -p bin",
+  "cp target/release/server bin/server",
+]
+
+[start]
+cmd = "./bin/server"
