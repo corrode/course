@@ -5,9 +5,9 @@
 .env
 
 # SQLite database
-playground.db
-playground.db-wal
-playground.db-shm
+course.db
+course.db-wal
+course.db-shm
 
 # Rust build artifacts
 /target/

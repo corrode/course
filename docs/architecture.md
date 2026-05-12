@@ -27,7 +27,7 @@ course/
 ├── README.md              # learner-facing README
 ├── build.rs               # generates aggregator main.rs for multi-step chapters
 ├── .env / .env.example    # CORRODE_ADMIN_TOKEN, DATABASE_URL, PORT
-├── playground.db*         # local SQLite (gitignored in practice)
+├── course.db*             # local SQLite (gitignored in practice)
 ├── docs/                  # design + reference docs (this file lives here)
 ├── examples/              # the course content
 │   └── NN_<slug>/

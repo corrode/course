@@ -226,7 +226,7 @@ async fn main() -> Result<()> {
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
         // Create the database in the current working directory
         let current_dir = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
-        let db_path = current_dir.join("playground.db");
+        let db_path = current_dir.join("course.db");
         info!("📁 Database will be created at: {}", db_path.display());
         format!("sqlite:{}", db_path.display())
     });

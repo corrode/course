@@ -209,7 +209,7 @@ documenting the chosen step boundaries.
 
 ### Step 7 - Database reset
 
-- Delete `playground.db` from local dev.
+- Delete `course.db` from local dev.
 - Add a new migration `006_multi_step_submissions.sql` that does
   whatever is needed for the new `exercise_name` shape. Since
   existing data is meaningless, the simplest path is:
