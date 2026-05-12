@@ -120,15 +120,14 @@ struct DashboardTemplate {
     participant_name: String,
     ulid: String,
     exercises: Vec<ExerciseProgress>,
-    stats: UserStats,
-}
-
-/// User dashboard statistics
-#[derive(Serialize)]
-struct UserStats {
-    completed_count: i64,
-    perfected_count: i64,
-    total_submissions: i64,
+    /// Slug of the first chapter the participant hasn't completed yet,
+    /// or the first chapter overall if they're brand new / fully done.
+    /// Used by the "Start" call-to-action.
+    next_slug: String,
+    /// Display label for the CTA ("Start with chapter 1" or
+    /// "Resume chapter 5" depending on whether anything has been
+    /// completed yet).
+    next_label: String,
 }
 
 /// Template for admin dashboard
@@ -152,6 +151,8 @@ struct AdminStats {
 /// Exercise progress for dashboard display
 #[derive(Serialize, Clone)]
 struct ExerciseProgress {
+    /// Display number, 1-based (chapter 0 on disk -> `1.` in the TOC).
+    number: u8,
     name: String,
     completed: bool,
     perfected: bool,
@@ -444,23 +445,25 @@ async fn participant_dashboard(
         }
     };
 
-    // Get user statistics
-    let stats = match get_user_stats(&state.pool, &ulid).await {
-        Ok(stats) => stats,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to get user statistics",
-            )
-                .into_response();
-        }
+    // CTA: jump to the first unfinished, non-quiz chapter. If everything
+    // is done, point back to chapter 1 as a graceful default.
+    let first_unfinished = exercises
+        .iter()
+        .find(|e| !e.completed && !e.is_quiz)
+        .or_else(|| exercises.first());
+    let any_completed = exercises.iter().any(|e| e.completed);
+    let (next_slug, next_label) = match first_unfinished {
+        Some(e) if any_completed => (e.name.clone(), format!("Resume chapter {}", e.number)),
+        Some(e) => (e.name.clone(), format!("Start with chapter {}", e.number)),
+        None => (String::new(), "Start the course".to_string()),
     };
 
     let template = DashboardTemplate {
         participant_name: participant.name,
         ulid: ulid.clone(),
         exercises,
-        stats,
+        next_slug,
+        next_label,
     };
 
     match template.render() {
@@ -1314,38 +1317,6 @@ fn parse_test_results(stdout: &str) -> Vec<TestResult> {
     out
 }
 
-/// Get user statistics for a specific participant
-async fn get_user_stats(pool: &SqlitePool, participant_id: &str) -> Result<UserStats> {
-    // Get completed submissions count
-    let completed_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM submissions WHERE participant_id = ? AND tests_passed = 1",
-    )
-    .bind(participant_id)
-    .fetch_one(pool)
-    .await?;
-
-    // Get perfected submissions count
-    let perfected_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM submissions WHERE participant_id = ? AND tests_passed = 1 AND fmt_passed = 1 AND clippy_passed = 1"
-    )
-    .bind(participant_id)
-    .fetch_one(pool)
-    .await?;
-
-    // Get total submissions count (including failed ones)
-    let total_submissions: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM submissions WHERE participant_id = ?")
-            .bind(participant_id)
-            .fetch_one(pool)
-            .await?;
-
-    Ok(UserStats {
-        completed_count,
-        perfected_count,
-        total_submissions,
-    })
-}
-
 /// Get admin statistics
 async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
     // Get total participants
@@ -1443,6 +1414,7 @@ async fn get_exercise_progress<'a>(
         };
 
         exercises.push(ExerciseProgress {
+            number: ex.number + 1,
             name: ex.file_stem.clone(),
             completed,
             perfected,

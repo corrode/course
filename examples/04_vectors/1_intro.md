@@ -1,6 +1,9 @@
 # Vectors
 
-`Vec<T>` is Rust's growable, heap-allocated array. The `<T>` is a generic
+If you stare at a problem for long enough, it starts turn into a vector.
+`Vec<T>` is the workhorse of Rust's collection types.
+
+Vectors in Rust are growable, heap-allocated arrays. The `<T>` in `Vec<T>` is a generic
 parameter: it works with any type, but a single `Vec` only holds one
 type at a time. So `Vec<i32>` is a vector of 32-bit integers, `Vec<String>`
 is a vector of owned strings.
@@ -30,6 +33,7 @@ A few rules of thumb that will save you trouble:
 
 Index access (`list[0]`) panics if out of bounds. `list.get(0)` returns
 `Option<&T>` instead, which is the safer default.
+Use this unless you like panics.
 
 ## Useful from the standard library
 

@@ -1,5 +1,7 @@
 # Iterators
 
+*Rust iterators are the best thing since `&[bread]`.*
+
 Iterators turn "loop over a collection and do something" into a pipeline.
 They're lazy: nothing actually runs until you ask for a result. The
 compiler usually fuses chained iterator calls into a single tight loop,

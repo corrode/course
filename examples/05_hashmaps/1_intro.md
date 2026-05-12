@@ -1,11 +1,11 @@
 # HashMaps
 
 A `HashMap<K, V>` stores key-value pairs and lets you look up a value by
-its key in (on average) constant time. It's the workhorse for caches,
+its key in (on average) constant time. Nobody ever got fired for using it for caches,
 indexes, counters, configuration, and anything else where "given X, find
 Y" is the question.
 
-`HashMap` lives in `std::collections`, so you need to import it:
+Contrary to `Vec<T>`, `HashMap` is not in scope by default, so you have to import it first:
 
 ```rust
 use std::collections::HashMap;

@@ -1,5 +1,7 @@
 # Strings, &str, and chars
 
+*An `i32` walks up to a `String` and asks for its number. The `String` replies: “Sorry, you’re not my type.”*
+
 Rust splits "string" across three cooperating types:
 
 - `char` is one Unicode scalar value (always 4 bytes).

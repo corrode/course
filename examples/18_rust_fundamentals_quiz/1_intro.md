@@ -1,5 +1,7 @@
 # Rust Fundamentals Quiz
 
+*Rust: the language where even a mere compiler is smarter than you.*
+
 Test your understanding of the key Rust concepts covered in this course!
 This interactive quiz covers ownership, borrowing, types, pattern matching,
 and other fundamental Rust principles.

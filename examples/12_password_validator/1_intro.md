@@ -1,5 +1,9 @@
 # A creative break
 
+You might not have noticed yet, but, quietly, like a beautiful magpie collecting
+shiny things, you've acquired the skills to write a lot of helpful Rust programs
+by now!
+
 This chapter is an open-ended project rather than a focused lesson. You
 already have the tools you need: structs, enums, iterators, `Option`,
 `Result`, vectors, and strings. The fun part is putting them together.
