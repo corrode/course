@@ -1,0 +1,12 @@
+# Files not needed in the Docker build context.
+target/
+.git/
+.env
+*.db
+*.db-shm
+*.db-wal
+docs/
+TODO/
+README.md
+.gitignore
+.github/
