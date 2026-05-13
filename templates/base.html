@@ -90,7 +90,10 @@
                 --syn-bg: #1e1e2e;
                 --syn-fg: #cdd6f4;
                 --syn-cursor: #cdd6f4;
-                --syn-selection-bg: #45475a;
+                /* Selection bg has to stay readable against every syntax
+                   token color (yellows, greens, reds), so we pick a
+                   saturated blue instead of a muted surface tone. */
+                --syn-selection-bg: #3c5a80;
                 --syn-gutter-bg: #1e1e2e;
                 --syn-gutter-fg: #6c7086;
                 --syn-active-line: #2a2b3c;
@@ -155,6 +158,15 @@
                 font-family:
                     "JetBrains Mono", "SF Mono", Monaco, Menlo, Consolas,
                     monospace;
+            }
+
+            /* CodeMirror selection. We pin this in static CSS (rather than
+               via EditorView.theme) so it always reflects the current
+               --syn-selection-bg, even after a theme toggle. */
+            .cm-editor .cm-selectionBackground,
+            .cm-editor.cm-focused .cm-selectionBackground,
+            .cm-editor .cm-content ::selection {
+                background-color: var(--syn-selection-bg) !important;
             }
 
             /* ---------- Layout ---------- */
@@ -437,8 +449,21 @@
                 border-color: var(--color-border);
             }
             .chapter-picker-label {
-                font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
-                font-size: 0.85rem;
+                font-size: 0.875rem;
+                font-weight: 500;
+                display: inline-flex;
+                align-items: baseline;
+                gap: 0.5rem;
+                line-height: 1.2;
+            }
+            .chapter-picker-label .chapter-picker-num {
+                font-family:
+                    "JetBrains Mono", "SF Mono", Monaco, Menlo, Consolas,
+                    monospace;
+                font-size: 0.8rem;
+                font-weight: 600;
+                color: var(--color-primary, #0969da);
+                font-variant-numeric: tabular-nums;
             }
             .chapter-picker-chevron {
                 color: var(--color-text-muted);
@@ -700,22 +725,48 @@
             /* ---------- Footer ---------- */
             .site-footer {
                 border-top: 1px solid var(--color-border);
-                padding: 1.5rem;
+                padding: 2.5rem 1.5rem 1.5rem;
                 background: var(--color-surface);
                 color: var(--color-text-muted);
-                font-size: 0.85rem;
+                font-size: 0.9rem;
             }
             .site-footer-inner {
                 max-width: 1100px;
                 margin: 0 auto;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 1rem;
-                flex-wrap: wrap;
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 2.5rem;
+                align-items: start;
             }
-            .site-footer .brand-logo {
-                height: 22px;
+            @media (max-width: 720px) {
+                .site-footer-inner {
+                    grid-template-columns: 1fr;
+                    gap: 2rem;
+                }
+            }
+            .site-footer-brand .brand-logo {
+                height: 26px;
+                margin-bottom: 0.75rem;
+            }
+            .site-footer-brand p {
+                margin: 0;
+                line-height: 1.55;
+            }
+            .site-footer-col h3 {
+                font-size: 0.72rem;
+                font-weight: 700;
+                letter-spacing: 0.18em;
+                text-transform: uppercase;
+                color: var(--color-text);
+                margin: 0 0 0.85rem;
+            }
+            .site-footer-col ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
             }
             .site-footer a {
                 color: var(--color-text-muted);
@@ -1085,25 +1136,48 @@
 
         <footer class="site-footer">
             <div class="site-footer-inner">
-                <a href="/" aria-label="corrode home">
-                    <img
-                        src="/static/assets/corrode-logo.svg"
-                        alt="corrode"
-                        class="brand-logo"
-                    />
-                </a>
-                <div>
-                    Hands-on Rust exercises &middot;
-                    <a href="https://corrode.dev" target="_blank" rel="noopener"
-                        >corrode.dev</a
-                    >
-                    &middot;
-                    <a
-                        href="https://github.com/corrode/course"
-                        target="_blank"
-                        rel="noopener"
-                        >source</a
-                    >
+                <div class="site-footer-brand">
+                    <a href="/" aria-label="corrode home">
+                        <img
+                            src="/static/assets/corrode-logo.svg"
+                            alt="corrode"
+                            class="brand-logo"
+                        />
+                    </a>
+                    <p>
+                        <strong>A Beginner's Guide To Rust</strong>, a hands-on,
+                        browser-based course by
+                        <a
+                            href="https://corrode.dev"
+                            target="_blank"
+                            rel="noopener"
+                            >corrode</a
+                        >.
+                    </p>
+                </div>
+
+                <div class="site-footer-col">
+                    <h3>Course</h3>
+                    <ul>
+                        <li><a href="/cheatsheet">Cheatsheet</a></li>
+                        <li><a href="/playground">Playground</a></li>
+                        <li>
+                            <a
+                                href="https://github.com/corrode/course"
+                                target="_blank"
+                                rel="noopener"
+                                >Source on GitHub</a
+                            >
+                        </li>
+                        <li>
+                            <a
+                                href="https://github.com/corrode/course/issues/new"
+                                target="_blank"
+                                rel="noopener"
+                                >Send feedback</a
+                            >
+                        </li>
+                    </ul>
                 </div>
             </div>
         </footer>

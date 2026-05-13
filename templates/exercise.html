@@ -15,7 +15,8 @@ with (u) %}
         data-chapter-picker-toggle
     >
         <span class="chapter-picker-label"
-            >{{ exercise.number }} {{ exercise.title }}</span
+            ><span class="chapter-picker-num">{{ exercise.number }}</span>{{
+            exercise.title }}</span
         >
         <svg
             class="chapter-picker-chevron"
@@ -1987,7 +1988,7 @@ with (u) %}
         margin: 0 0 2rem;
     }
     .exercise-section:has(+ .hints-disclosure-step) {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0;
     }
     .exercise-section-head {
         display: flex;
@@ -2227,9 +2228,11 @@ with (u) %}
         padding: 0.25rem 1rem;
     }
     /* When the hints disclosure belongs to a specific exercise step, sit
-       it right under the card so the visual grouping is obvious. */
+       it right under the card so the visual grouping is obvious. The
+       negative top margin pulls it up against the card's bottom border
+       even in browsers without :has() support. */
     .exercise-section + .hints-disclosure-step {
-        margin-top: 0;
+        margin-top: -0.75rem;
         margin-bottom: 2rem;
     }
     .hints-disclosure[open] {
