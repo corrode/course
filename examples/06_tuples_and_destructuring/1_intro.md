@@ -40,15 +40,4 @@ Tuples are great for short-lived "two or three values that belong
 together" situations. When the tuple grows or you find yourself passing
 it around a lot, that's a hint to define a `struct` instead (chapter 10).
 
-## Useful from the standard library
 
-- [The Rust Book on tuples](https://doc.rust-lang.org/book/ch03-02-data-types.html#the-tuple-type)
-  for the basics of declaration and access.
-- [Rust by Example: destructuring tuples](https://doc.rust-lang.org/rust-by-example/flow_control/match/destructuring/destructure_tuple.html)
-  shows how patterns work inside `match` arms too.
-- [`std::mem::swap`](https://doc.rust-lang.org/std/mem/fn.swap.html)
-  swaps two values without a temporary. Worth knowing about, though
-  destructuring + a re-binding is usually cleaner.
-- The unit type [`()`](https://doc.rust-lang.org/std/primitive.unit.html)
-  is the empty tuple. Functions that return "nothing meaningful" actually
-  return `()`.
