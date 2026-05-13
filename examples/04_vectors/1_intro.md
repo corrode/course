@@ -35,20 +35,4 @@ Index access (`list[0]`) panics if out of bounds. `list.get(0)` returns
 `Option<&T>` instead, which is the safer default.
 Use this unless you like panics.
 
-## Useful from the standard library
 
-- [`Vec::new`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.new)
-  and the [`vec!`](https://doc.rust-lang.org/std/macro.vec.html) macro
-  create vectors. `vec!` is more common in code.
-- [`Vec::push`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.push)
-  appends one item. [`Vec::pop`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.pop)
-  removes the last one and returns `Option<T>`.
-- [`Vec::len`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.len)
-  is the item count. [`Vec::is_empty`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.is_empty)
-  reads better than `len() == 0`.
-- [`<[T]>::contains`](https://doc.rust-lang.org/std/primitive.slice.html#method.contains)
-  checks for membership: `list.contains(&"apple")`. The `&` matters; it
-  compares by reference.
-- [`Iterator::collect`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.collect)
-  turns any iterator back into a `Vec` (or other collection). You'll use
-  it constantly once chapter 11 introduces iterators.
