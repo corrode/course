@@ -309,6 +309,7 @@ async fn main() -> Result<()> {
         .route("/playground", get(playground_page))
         .route("/cheatsheet", get(cheatsheet_page))
         .route("/cheatsheet/fragment", get(cheatsheet_fragment))
+        .route("/health", get(health_check))
         .route("/admin", get(admin_dashboard))
         .route(
             "/admin/remove-participant/{ulid}",
@@ -319,12 +320,27 @@ async fn main() -> Result<()> {
         .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind(&format!("0.0.0.0:{port}")).await?;
-    info!("🚀 Server running on http://localhost:{port}");
-    info!("📊 Admin dashboard: http://localhost:{port}/admin?token={admin_token}");
+    info!("🚀 Server listening on 0.0.0.0:{port} (open http://localhost:{port} locally)");
+    info!("📊 Admin dashboard path: /admin?token={admin_token}");
     info!("🗃️  Database: {database_url}");
 
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+/// Liveness + readiness probe.
+///
+/// Returns 200 if the process is up *and* the database accepts a
+/// trivial query, 503 otherwise. Cheap enough to hit every few seconds
+/// from uptime monitors.
+async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
+    match sqlx::query("SELECT 1").execute(&state.pool).await {
+        Ok(_) => (StatusCode::OK, "ok"),
+        Err(e) => {
+            error!("health check failed: {e}");
+            (StatusCode::SERVICE_UNAVAILABLE, "db unavailable")
+        }
+    }
 }
 
 /// Landing page handler
