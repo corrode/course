@@ -27,7 +27,7 @@ character can take more than one byte.
 
 You'll also meet `.chars()` a lot. It returns an iterator of `char`, and
 iterators have many useful adapters like `.next()`, `.count()`, and
-`.any(...)` (more on iterators in chapter 11).
+`.any(...)` (more on iterators in chapter 13).
 
 ## A note on `for` loops
 

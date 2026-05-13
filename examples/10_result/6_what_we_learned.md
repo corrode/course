@@ -21,5 +21,5 @@ into a real validating parser.
   at the call site when the type isn't clear from context.
 - Match guards (`Ok(n) if n > 0 => ...`) attach a boolean condition
   to a pattern. The arm only fires when both hold.
-- The `?` operator (chapter 13) will let you chain fallible calls
+- The `?` operator (chapter 15) will let you chain fallible calls
   without writing `match` every time. For now, `match` is fine.

@@ -21,4 +21,4 @@ then walk the resulting iterator and bump a counter in the map. The
   `hello` collapse together.
 - [`HashMap::entry`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.entry)
   + [`Entry::or_insert`](https://doc.rust-lang.org/std/collections/hash_map/enum.Entry.html#method.or_insert)
-  is the "look up; insert default; mutate" pattern from chapter 5.
+  is the "look up; insert default; mutate" pattern from chapter 7.

@@ -14,7 +14,7 @@ method that formatted fields into a `String`, mutated state with
   `self`, it's a method (called as `user.method()`).
 - The three flavors of `self` say what the method intends to do:
   `&self` reads, `&mut self` mutates in place, plain `self`
-  consumes. The same ownership rules from chapter 9 apply.
+  consumes. The same ownership rules from chapter 11 apply.
 - `Self` (capital S) inside an `impl` block is shorthand for the
   type. Returning `Self` keeps the constructor signature stable if
   the type is later renamed.

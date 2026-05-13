@@ -14,7 +14,7 @@ differently for `Copy` and non-`Copy` element types.
 - Tuples are the lightest-weight way to return more than one value
   from a function. When the same tuple shape shows up in many places
   or grows past two or three fields, switch to a `struct`
-  (chapter 10).
+  (chapter 12).
 - Use `_` in a pattern to ignore a field: `let (first, _) = pair;`.
 - Move vs. copy still applies: a tuple of `String`s moves on
   destructure, a tuple of integers copies. The element types decide.

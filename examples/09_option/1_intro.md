@@ -54,7 +54,7 @@ let greet = |name: &str| {
 };
 ```
 
-Closures show up properly in chapter 11. For this chapter, just read
+Closures show up properly in chapter 13. For this chapter, just read
 `|s| s.len()` as "a tiny one-shot function that takes `s` and returns
 `s.len()`."
 

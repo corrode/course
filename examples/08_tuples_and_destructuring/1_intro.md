@@ -38,6 +38,6 @@ let (first, _) = ("Alice", "Smith");
 
 Tuples are great for short-lived "two or three values that belong
 together" situations. When the tuple grows or you find yourself passing
-it around a lot, that's a hint to define a `struct` instead (chapter 10).
+it around a lot, that's a hint to define a `struct` instead (chapter 12).
 
 

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 ///
 /// Looking up a key returns an `Option<&V>`, because the key might not
 /// be there. Collapse it into a concrete value with a fallback for
-/// the missing case (`Option` is covered properly in chapter 7).
+/// the missing case (`Option` is covered properly in chapter 9).
 fn get_config_value(config: &HashMap<String, String>, key: &str) -> String {
     todo!()
 }

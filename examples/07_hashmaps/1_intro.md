@@ -49,7 +49,7 @@ let r: &mut i32 = &mut n;
 ```
 
 Without the `*`, you'd be trying to add `1` to a reference, which the
-compiler won't let you do. References show up properly in chapter 9; for
+compiler won't let you do. References show up properly in chapter 11; for
 now it's enough to know that when a function returns `&mut T`, you reach
 the `T` through `*`.
 

@@ -21,5 +21,5 @@
    You'll need a type annotation so it knows which one.
 2. `.parse::<u32>()` returns a `Result<u32, _>`. The exercise asks for
    `0` on failure, so reach for `.unwrap_or(0)`.
-3. (Forward reference: in chapter 8 you'll learn why returning `Result`
+3. (Forward reference: in chapter 10 you'll learn why returning `Result`
    directly is the better signature.)

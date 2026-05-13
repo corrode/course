@@ -5,7 +5,7 @@
 /// aren't `Copy`). After the call, the original `full_name` is no longer
 /// valid; try using it after calling this function and read the error.
 /// `swap_values` below takes `(i32, i32)`, which is `Copy`, so the
-/// original is still usable. Chapter 9 covers this properly.
+/// original is still usable. Chapter 11 covers this properly.
 ///
 /// Hint: Use [tuple destructuring](https://doc.rust-lang.org/rust-by-example/flow_control/match/destructuring/destructure_tuple.html)
 fn get_first_name(full_name: (String, String)) -> String {

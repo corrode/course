@@ -22,4 +22,4 @@ line.
   one lookup instead of two and sidesteps the borrow checker.
 - Reach through a `&mut T` with `*` to update the value it points
   at: `*map.entry(k).or_insert(0) += 1`. References get a proper
-  treatment in chapter 9.
+  treatment in chapter 11.

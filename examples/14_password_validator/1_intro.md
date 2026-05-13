@@ -53,7 +53,7 @@ let strength = match score {
 ```
 
 The `0..30` here is a *range pattern*. It's the same `..` syntax you saw
-in chapter 10 for ranges as values, but used inside a `match` arm to
+in chapter 12 for ranges as values, but used inside a `match` arm to
 mean "any value in `0..30`." `..=` (inclusive) works in patterns too.
 
 **Cycling through characters for the generator.** If you want to avoid

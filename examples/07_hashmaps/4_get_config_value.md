@@ -3,7 +3,7 @@
 Looking up a key in a `HashMap` returns an `Option<&V>`, because the
 key might not be there. There's no null. To collapse the `Option`
 into a concrete value you supply a fallback for the missing case.
-We'll cover `Option` properly in chapter 7; here you only need one
+We'll cover `Option` properly in chapter 9; here you only need one
 combinator.
 
 ## Useful from the standard library

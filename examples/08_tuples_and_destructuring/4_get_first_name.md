@@ -17,4 +17,4 @@ has more on this.
   with a meaningful name like `first` reads better at the call site.
 - Anything that isn't `Copy` (like `String`) is moved when bound by
   destructuring. After this function returns, the caller's tuple is
-  gone. Chapter 9 covers move semantics in depth.
+  gone. Chapter 11 covers move semantics in depth.
