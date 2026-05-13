@@ -30,7 +30,6 @@ COPY examples ./examples
 COPY templates ./templates
 COPY migrations ./migrations
 COPY static ./static
-COPY docs ./docs
 
 # Bust cargo's incremental cache for our own crate so the real source
 # actually gets compiled (the dummy-main step above leaves stale
@@ -52,7 +51,6 @@ COPY --from=builder /app/target/release/server /app/server
 COPY --from=builder /app/migrations /app/migrations
 COPY --from=builder /app/examples   /app/examples
 COPY --from=builder /app/static     /app/static
-COPY --from=builder /app/docs       /app/docs
 
 # Persistent data lives here; Coolify mounts a host directory over it.
 RUN mkdir -p /app/data
