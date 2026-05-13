@@ -22,30 +22,6 @@ pull out whenever someone asked "where do I start with Rust?" Over the
 years it grew into a structured path through the language. This site is
 that path, with an editor attached.
 
-## Why Rust
-
-There are a lot of programming languages. Here's why I keep coming back
-to this one.
-
-**It goes everywhere.** Embedded firmware, command-line tools, web
-backends, browser frontends via WebAssembly, kernel modules. One
-language, one toolchain, one mental model. That breadth is rare and
-quietly empowering.
-
-**The pieces fit.** Every type and method in Rust feels deliberately
-placed. Once a few core ideas click (ownership, traits, the type
-system), the rest of the language stops surprising you. Code starts to
-*snap* into place.
-
-**The compiler is on your side.** Rust's strictness gets a bad rap, but
-in practice it means the program you finally get past the borrow
-checker tends to work, including the cases you didn't think to test.
-The error messages are some of the best in the industry.
-
-**It teaches you about computers.** Even if you never write Rust at
-work, the time spent here will change how you think about memory,
-concurrency, and what your other languages are doing under the hood.
-
 ## How to keep going
 
 The course covers the core mechanics. Real fluency comes from using

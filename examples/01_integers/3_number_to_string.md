@@ -6,3 +6,7 @@ this on every primitive integer type, and the `format!` macro from
 chapter 0 works too. Either is fine.
 
 See: <https://doc.rust-lang.org/std/primitive.u32.html#method.to_string>
+
+> [!TIP]
+> Press `Ctrl/Cmd + Enter` to run the tests without leaving the
+> keyboard. The **Run** button does the same thing.

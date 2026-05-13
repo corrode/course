@@ -8,12 +8,19 @@ This chapter is an open-ended project rather than a focused lesson. You
 already have the tools you need: structs, enums, iterators, `Option`,
 `Result`, vectors, and strings. The fun part is putting them together.
 
-From this chapter onward the files get longer, and the in-browser editor
-starts feeling cramped. The **Open in  Web Editor** button above the editor
-opens this file on [github.dev](https://github.dev/): a full
-browser-based VS Code with proper find-in-file, multi-cursor, and the
-rest of the keyboard shortcuts you'd expect. Clone the repo locally if
-you want `rust-analyzer` and on-save formatting.
+From this chapter onward the files get longer, and the in-browser
+editor starts feeling cramped. You have two upgrades available:
+
+- **Open in Web Editor** (the button above each editor) opens the
+  current file on [github.dev](https://github.dev/corrode/course):
+  a full browser-based VS Code with proper find-in-file, multi-cursor,
+  and the keyboard shortcuts you'd expect. No install, no clone.
+- **Run it locally.** Clone
+  [the repo](https://github.com/corrode/course), open a chapter under
+  `examples/NN_slug/`, and run `cargo test --example NN_slug` (or
+  `cargo check` for a faster compile-only loop). Local gets you
+  `rust-analyzer`, on-save formatting, and the proper Rust workflow
+  you'll want once you start writing real projects.
 
 ## A few patterns that come up
 
@@ -75,7 +82,7 @@ standard answer; out of scope here, but worth knowing it exists.
 - [`str::contains`](https://doc.rust-lang.org/std/primitive.str.html#method.contains)
   for substring checks (common-password lookups, keyboard patterns).
 - [`Iterator::filter`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.filter)
-  + [`Iterator::count`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.count)
+- [`Iterator::count`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.count)
   for "how many characters of type X are in this string?"
 - [`std::time::SystemTime`](https://doc.rust-lang.org/std/time/struct.SystemTime.html)
   if you decide to seed your generator with the clock.
