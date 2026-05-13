@@ -76,22 +76,6 @@ to the state-machine version for the harder cases. Failing tests give you
 concrete examples to think against, instead of trying to imagine every
 edge case up front.
 
-## Useful from the standard library
-
-- [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars)
-  is the entry point for character-level iteration.
-- [`Iterator::peekable`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.peekable)
-  wraps any iterator so you can `.peek()` at the next item.
-- [`Peekable::peek`](https://doc.rust-lang.org/std/iter/struct.Peekable.html#method.peek)
-  returns `Option<&Item>` without advancing.
-- [`std::mem::take`](https://doc.rust-lang.org/std/mem/fn.take.html)
-  swaps a value with its `Default`. Used here to "harvest" the current
-  field and start a fresh one.
-- [`str::split`](https://doc.rust-lang.org/std/primitive.str.html#method.split)
-  is the simple-case answer for the warm-up function.
-- [`str::trim`](https://doc.rust-lang.org/std/primitive.str.html#method.trim)
-  for cleaning up whitespace around fields.
-
 For real CSV in production code, reach for the
 [`csv` crate](https://docs.rs/csv); it handles all the corners that this
 exercise glosses over. But knowing how to write a state machine yourself
