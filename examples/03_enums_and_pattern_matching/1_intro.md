@@ -1,9 +1,9 @@
 # Enums and pattern matching
 
-*— Dad, why is my sister’s name Rose?  
-— Because your mother loves roses.  
-— Thanks, dad!  
-— No problem, Rust enums.*
+*“Dad, why is my sister’s name Rose?”  
+“Because your mother loves roses.”  
+“Thanks, dad!”  
+“No problem, Rust enums.”*
 
 Dad is right, enums are the best.
 If you know the crippled form of enums in other languages (*cough* C), I'm so sorry for you.

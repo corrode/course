@@ -66,7 +66,7 @@ but also work as slice indices (`v[0..3]`).
 
 > [!TIP]
 > From this chapter onward the files get longer, and the in-browser
-> editor starts feeling cramped. The **Open in VS Code** button above
+> editor starts feeling cramped. The **Open in Web Editor** button above
 > each editor opens this file on [github.dev](https://github.dev) — a
 > full browser-based VS Code with proper find-in-file, multi-cursor,
 > and the rest of the keyboard shortcuts you'd expect. Clone the repo

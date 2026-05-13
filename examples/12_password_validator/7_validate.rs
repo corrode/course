@@ -79,7 +79,7 @@ mod tests {
     fn test_validate_feedback_mentions_length() {
         let report = PasswordValidator::validate("weak");
         // "too short", "at least 8 characters", "increase the length", etc.
-        // are all reasonable phrasings — accept any of them.
+        // are all reasonable phrasings; accept any of them.
         let mentions_length = report.feedback.iter().any(|msg| {
             let m = msg.to_lowercase();
             m.contains("character")

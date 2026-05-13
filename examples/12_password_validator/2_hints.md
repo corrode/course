@@ -1,7 +1,7 @@
 # Hints
 
 This chapter is open-ended. The hints below are scaffolding, not a
-solution — they're here to keep you moving when you're stuck on *where
+solution. They're here to keep you moving when you're stuck on *where
 to start*, not on *which trick to use*.
 
 ## Where to start

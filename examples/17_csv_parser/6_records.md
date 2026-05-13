@@ -1,7 +1,7 @@
 # From rows to records
 
 Parallel `Vec`s of headers and row values are awkward to consume.
-Most code wants to ask "what's the `name` for this row?" — a job for
+Most code wants to ask "what's the `name` for this row?" A job for
 a `HashMap<String, String>` per row.
 
 Pair headers with each row using

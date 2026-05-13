@@ -7,7 +7,7 @@ digits, and special characters so it would pass a strict validator.
 For variability without pulling in `rand`, you can use
 `std::time::SystemTime::now().duration_since(UNIX_EPOCH)?.subsec_nanos()`
 as a seed and cycle through your character sets. This is **not**
-cryptographically secure — it's plenty for this exercise. In real code,
+cryptographically secure, but it's plenty for this exercise. In real code,
 use the `rand` crate.
 
 Tips:

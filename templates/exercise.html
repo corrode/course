@@ -136,7 +136,7 @@ with (u) %}
     <div class="chapter-prose exercise-prose">{{ html|safe }}</div>
     {% when cargo_course::exercises::RenderKind::Code with { dom_id,
     exercise_key, eyebrow, title, show_title, starter_code, attempted,
-    completed, perfected, github_dev_url } %}
+    completed, perfected, github_dev_url, hints_html } %}
 
     <section
         class="exercise-section"
@@ -181,7 +181,7 @@ with (u) %}
                     rel="noopener"
                     title="Open this file on github.dev (a browser-based VS Code)"
                 >
-                    Open in VS Code
+                    Open in Web Editor
                 </a>
                 <button
                     type="button"
@@ -215,7 +215,7 @@ with (u) %}
         </div>
         <noscript>
             <p style="color: var(--color-text-muted)">
-                JavaScript is disabled — the editor below is a plain textarea.
+                JavaScript is disabled. The editor below is a plain textarea.
             </p>
         </noscript>
         <div style="position: relative">
@@ -329,76 +329,83 @@ with (u) %}
             </details>
         </div>
     </section>
-    {% endmatch %} {% endfor %} {% match exercise.hints %} {% when Some with (h)
-    %}
+    {% match hints_html %} {% when Some with (h) %}
+    <details class="hints-disclosure hints-disclosure-step">
+        <summary>
+            <span class="hints-icon" aria-hidden="true">💡</span>
+            <span class="hints-summary-text">Stuck? Show a hint</span>
+            <span class="hints-hint">No spoilers, just a nudge</span>
+        </summary>
+        <div class="chapter-prose exercise-prose hints-body">{{ h|safe }}</div>
+    </details>
+    {% when None %} {% endmatch %} {% endmatch %} {% endfor %} {% match
+    exercise.hints %} {% when Some with (h) %}
     <details class="hints-disclosure" id="hints-disclosure">
         <summary>
             <span class="hints-icon" aria-hidden="true">💡</span>
             <span class="hints-summary-text">Stuck? Show a hint</span>
-            <span class="hints-hint">No spoilers — just a nudge</span>
+            <span class="hints-hint">No spoilers, just a nudge</span>
         </summary>
         <div class="chapter-prose exercise-prose hints-body" id="hints-body">
             {{ h.html|safe }}
         </div>
     </details>
+    {% when None %} {% endmatch %}
     <script>
-        // Progressive hint reveal: each ordered list inside the hints body
-        // starts collapsed to its first item, with a "Show next hint" button
-        // that reveals one more `<li>` per click.
+        // Progressive hint reveal: each ordered list inside a hints body
+        // starts collapsed to its first item, with a "Show next hint"
+        // button that reveals one more `<li>` per click. Runs against
+        // every `.hints-disclosure` on the page so the per-step inline
+        // disclosures and the optional bottom-of-page chapter-wide
+        // disclosure share the same behaviour.
         (function () {
-            const details = document.getElementById("hints-disclosure");
-            const body = document.getElementById("hints-body");
-            if (!details || !body) return;
+            const setup = (details) => {
+                const body = details.querySelector(".hints-body");
+                if (!body || details.dataset.hintsBound === "1") return;
+                details.dataset.hintsBound = "1";
 
-            let initialised = false;
-            function init() {
-                if (initialised) return;
-                initialised = true;
-                const lists = body.querySelectorAll("ol");
-                lists.forEach((ol) => {
-                    const items = Array.from(ol.children).filter(
-                        (el) => el.tagName === "LI",
-                    );
-                    if (items.length <= 1) return;
-                    let revealed = 1;
-                    for (let i = 1; i < items.length; i++) {
-                        items[i].style.display = "none";
-                    }
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.className = "hints-next-btn";
-                    const updateLabel = () => {
-                        const remaining = items.length - revealed;
-                        btn.textContent =
-                            remaining === 1
-                                ? "Show last hint"
-                                : `Show next hint (${remaining} left)`;
-                    };
-                    updateLabel();
-                    btn.addEventListener("click", () => {
-                        if (revealed >= items.length) return;
-                        items[revealed].style.display = "";
-                        revealed += 1;
-                        if (revealed >= items.length) {
-                            btn.remove();
-                        } else {
-                            updateLabel();
+                let initialised = false;
+                function init() {
+                    if (initialised) return;
+                    initialised = true;
+                    const lists = body.querySelectorAll("ol");
+                    lists.forEach((ol) => {
+                        const items = Array.from(ol.children).filter(
+                            (el) => el.tagName === "LI",
+                        );
+                        if (items.length <= 1) return;
+                        let revealed = 1;
+                        for (let i = 1; i < items.length; i++) {
+                            items[i].style.display = "none";
                         }
+                        const btn = document.createElement("button");
+                        btn.type = "button";
+                        btn.className = "hints-next-btn";
+                        btn.textContent = "Show next hint";
+                        btn.addEventListener("click", () => {
+                            if (revealed >= items.length) return;
+                            items[revealed].style.display = "";
+                            revealed += 1;
+                            if (revealed >= items.length) {
+                                btn.remove();
+                            }
+                        });
+                        ol.parentNode.insertBefore(btn, ol.nextSibling);
                     });
-                    ol.parentNode.insertBefore(btn, ol.nextSibling);
-                });
-                if (typeof window.attachProseCopyButtons === "function") {
-                    window.attachProseCopyButtons(body);
+                    if (typeof window.attachProseCopyButtons === "function") {
+                        window.attachProseCopyButtons(body);
+                    }
                 }
-            }
 
-            if (details.open) init();
-            details.addEventListener("toggle", () => {
                 if (details.open) init();
-            });
+                details.addEventListener("toggle", () => {
+                    if (details.open) init();
+                });
+            };
+
+            document.querySelectorAll(".hints-disclosure").forEach(setup);
         })();
     </script>
-    {% when None %} {% endmatch %}
 
     <script>
         // Add a clipboard button to every prose code block. Idempotent so
@@ -569,7 +576,7 @@ with (u) %}
             closeBracketsKeymap,
         } = autocomplete;
 
-        // Curated keyword list — small enough to be useful, large enough to
+        // Curated keyword list: small enough to be useful, large enough to
         // cover the prelude bits that show up in nearly every exercise.
         const RUST_KEYWORDS = [
             "as",
@@ -835,7 +842,7 @@ with (u) %}
             { tag: t.invalid, color: "var(--syn-invalid)" },
         ]);
 
-        // Base theme — reads the same --syn-* vars, so light/dark just
+        // Base theme: reads the same --syn-* vars, so light/dark just
         // swap when [data-theme] flips on the document element.
         const proseEditorTheme = EditorView.theme({
             "&": {
@@ -1380,7 +1387,7 @@ with (u) %}
                         if (total > 0 && passed === total) {
                             showSubmit();
                             runStatus.textContent +=
-                                " — click Submit to save your progress.";
+                                ". Click Submit to save your progress.";
                         } else {
                             showRun();
                         }
@@ -1425,7 +1432,7 @@ with (u) %}
                         const data = await resp.json();
                         if (!data.success) {
                             runStatus.textContent =
-                                "rustfmt couldn't parse the code — fix the syntax error first.";
+                                "rustfmt couldn't parse the code. Fix the syntax error first.";
                             runStatus.style.color =
                                 "var(--color-error, #c62828)";
                             return;
@@ -1486,7 +1493,7 @@ with (u) %}
                         }),
                     });
                     if (submitResp.ok) {
-                        runStatus.textContent = `✓ Saved progress — ${passed}/${total} tests passed.`;
+                        runStatus.textContent = `✓ Saved progress (${passed}/${total} tests passed).`;
                         runStatus.style.color = "var(--color-success, #2e7d32)";
                         markAsCompleted();
                         return true;
@@ -1521,7 +1528,7 @@ with (u) %}
                         const tests_passed = total > 0 && passed === total;
                         if (!tests_passed) {
                             runStatus.textContent +=
-                                " — not saving progress (tests must pass first).";
+                                ". Not saving progress (tests must pass first).";
                             runStatus.style.color =
                                 "var(--color-error, #c62828)";
                             return;
@@ -2244,7 +2251,7 @@ with (u) %}
         font-size: 0.85rem;
     }
     .hints-disclosure[open] > summary .hints-summary-text::after {
-        content: " — hide";
+        content: " · hide";
         color: var(--color-text-muted);
         font-weight: 400;
     }

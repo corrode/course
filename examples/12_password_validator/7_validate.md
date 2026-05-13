@@ -6,11 +6,11 @@ messages, and a `PasswordStrength` label.
 
 Because each step in this chapter stands on its own, you'll re-implement
 the helpers from earlier steps here so this step can stand on its own.
-The shared types and the four `has_*` helpers are stubbed below — fill
+The shared types and the four `has_*` helpers are stubbed below. Fill
 them in (or copy your earlier solutions) and then write `validate` on
 top of them.
 
-Suggested scoring (feel free to tweak — the tests only check broad
+Suggested scoring (feel free to tweak; the tests only check broad
 ranges):
 
 - At least 8 characters: +20
@@ -26,7 +26,7 @@ Map the final score to `PasswordStrength`:
 - `30..70` → `Medium`
 - `>= 70` → `Strong`
 
-Push a short message into `feedback` for every rule that *fails* — that
+Push a short message into `feedback` for every rule that *fails*. That
 way [`PasswordAdvisor`](super) (or your own future code) has something
 to react to. The length-related complaint should mention "characters",
 "length", "short", "longer", or "at least" so the test below can

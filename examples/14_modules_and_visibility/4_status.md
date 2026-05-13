@@ -2,7 +2,7 @@
 
 Enums follow the same rule: a `pub enum` exposes the type, but the
 **variants** stay private until you opt them in. The shortcut is
-`pub enum`, then list the variants — they inherit visibility from
+`pub enum`, then list the variants. They inherit visibility from
 the enum itself, *unlike* struct fields.
 
 Wait, did I just contradict myself? Yes and no: `pub enum` makes the

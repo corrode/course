@@ -57,6 +57,13 @@ pub struct CodeStep {
     /// File contents with the `//!` block stripped, used as the editor's
     /// starter content.
     pub starter_code: String,
+    /// Rendered HTML for this step's slice of `hints.md`, if the chapter
+    /// has a hints note with a `## <slug>` subsection matching this
+    /// step. Wired up in [`parse_chapter`] after both the steps and the
+    /// hints note have been parsed. `None` means "no per-step hint":
+    /// either the chapter has no hints at all, or the hints file has no
+    /// section matching this step's slug."
+    pub hints_html: Option<String>,
 }
 
 impl CodeStep {
@@ -219,6 +226,10 @@ pub enum RenderKind {
         perfected: bool,
         /// github.dev URL pointing at the right file in this chapter.
         github_dev_url: String,
+        /// Optional rendered HTML for this step's slice of `hints.md`,
+        /// surfaced as an inline `<details>` immediately under the
+        /// editor section.
+        hints_html: Option<String>,
     },
 }
 
@@ -282,6 +293,7 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
         .iter()
         .position(|n| n.slug == "hints")
         .map(|i| notes.remove(i));
+    let hints_path = hints.as_ref().and_then(|_| find_hints_path(dir));
 
     let (steps, title) = if step_files.is_empty() {
         // Legacy single-step chapter: parse `main.rs` as the lone step.
@@ -323,6 +335,8 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
         (combined, chapter_title)
     };
 
+    let (steps, hints) = apply_hints(steps, hints, hints_path.as_deref());
+
     Ok(Exercise {
         number,
         slug,
@@ -331,6 +345,149 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
         steps,
         hints,
     })
+}
+
+/// Distribute the chapter's `hints.md` over its code steps and rebuild
+/// the chapter-wide leftover block in one pass.
+///
+/// Sections whose heading contains a backticked token matching a code
+/// step's slug are attached to that step. For example,
+/// `` ## `quoted_line`, the state machine `` matches the `quoted_line`
+/// step. Anything that
+/// doesn't match stays in the chapter-wide leftover, which falls back
+/// to the old "all hints in one block at the bottom" behaviour.
+///
+/// On any I/O failure we log and pass through unchanged.
+fn apply_hints(
+    mut steps: Vec<Step>,
+    original: Option<Note>,
+    hints_path: Option<&Path>,
+) -> (Vec<Step>, Option<Note>) {
+    let Some(path) = hints_path else {
+        return (steps, original);
+    };
+    let Some(mut note) = original else {
+        return (steps, None);
+    };
+    let md = match std::fs::read_to_string(path) {
+        Ok(s) => s,
+        Err(e) => {
+            log::warn!(
+                "reading {} for per-step split failed: {e:#}",
+                path.display()
+            );
+            return (steps, Some(note));
+        }
+    };
+    // Drop the H1 the same way `parse_note` does so titles aren't doubled.
+    let (_title, body_md) = split_title(&md);
+    let (intro, sections) = split_hints_markdown(&body_md);
+    if sections.is_empty() {
+        return (steps, Some(note));
+    }
+
+    let mut consumed = vec![false; sections.len()];
+    for step in &mut steps {
+        let Step::Code(code) = step else { continue };
+        if let Some((sec_idx, (_, body))) = sections
+            .iter()
+            .enumerate()
+            .find(|(i, (heading, _))| !consumed[*i] && heading_matches_slug(heading, &code.slug))
+        {
+            code.hints_html = Some(render_markdown(body));
+            consumed[sec_idx] = true;
+        }
+    }
+
+    // Rebuild the leftover block from the intro plus any unconsumed
+    // sections. If everything got consumed and the intro is just
+    // whitespace, drop the bottom block entirely.
+    let mut leftover = intro.trim_end().to_string();
+    for (i, (heading, body)) in sections.iter().enumerate() {
+        if consumed[i] {
+            continue;
+        }
+        if !leftover.is_empty() && !leftover.ends_with("\n\n") {
+            leftover.push_str("\n\n");
+        }
+        leftover.push_str("## ");
+        leftover.push_str(heading);
+        leftover.push('\n');
+        leftover.push_str(body);
+    }
+
+    if leftover.trim().is_empty() {
+        (steps, None)
+    } else {
+        note.html = render_markdown(&leftover);
+        (steps, Some(note))
+    }
+}
+
+/// Locate the `<n>_hints.md` file in a chapter dir, if present.
+fn find_hints_path(chapter_dir: &Path) -> Option<PathBuf> {
+    std::fs::read_dir(chapter_dir)
+        .ok()?
+        .filter_map(std::result::Result::ok)
+        .map(|e| e.path())
+        .find(|p| {
+            p.extension().and_then(|s| s.to_str()) == Some("md")
+                && p.file_stem()
+                    .and_then(|s| s.to_str())
+                    .and_then(|s| split_numeric_prefix(s).map(|(_, slug)| slug))
+                    .as_deref()
+                    == Some("hints")
+        })
+}
+
+/// Split a `hints.md` markdown source into an intro chunk (everything
+/// before the first `## ` heading) and a sequence of `(heading_text,
+/// body)` sections. Heading text is returned verbatim minus the
+/// trailing newline so it can be inspected by [`heading_matches_slug`].
+///
+/// This is a deliberately tiny line-based scan rather than a full
+/// markdown re-parse: the hints files only ever use H2 dividers, and
+/// keeping the splitter dumb means we can hand each section back to
+/// [`render_markdown`] unchanged.
+fn split_hints_markdown(md: &str) -> (String, Vec<(String, String)>) {
+    let mut intro = String::new();
+    let mut sections: Vec<(String, String)> = Vec::new();
+    let mut current: Option<(String, String)> = None;
+    for line in md.split_inclusive('\n') {
+        if let Some(rest) = line.strip_prefix("## ") {
+            if let Some(prev) = current.take() {
+                sections.push(prev);
+            }
+            let heading = rest.trim_end_matches(['\n', '\r']).to_string();
+            current = Some((heading, String::new()));
+        } else if let Some((_, body)) = current.as_mut() {
+            body.push_str(line);
+        } else {
+            intro.push_str(line);
+        }
+    }
+    if let Some(prev) = current.take() {
+        sections.push(prev);
+    }
+    (intro, sections)
+}
+
+/// Match a hints H2 heading against a step slug. The first backticked
+/// token in the heading (if any) is treated as the key, otherwise the
+/// whole heading text is used. This lets authors write descriptive
+/// headings like `` `quoted_line`, the state machine `` while still
+/// keying off the file slug.
+fn heading_matches_slug(heading: &str, step_slug: &str) -> bool {
+    let key = if let Some(start) = heading.find('`') {
+        let after = &heading[start + 1..];
+        match after.find('`') {
+            Some(end) => &after[..end],
+            None => heading.trim(),
+        }
+    } else {
+        heading.trim()
+    };
+    key.eq_ignore_ascii_case(step_slug)
 }
 
 /// Parse a single `.rs` file (`main.rs` or a step file) into a `CodeStep`.
@@ -355,6 +512,7 @@ fn parse_code_file(
             slug: slug.to_string(),
             title: title.clone(),
             starter_code,
+            hints_html: None,
         },
         title,
     ))
@@ -509,7 +667,7 @@ fn extract_inner_doc(source: &str) -> Result<String> {
             }) = &nv.value
             {
                 // syn gives us the doc string with the leading space stripped
-                // by rustc, but keep it verbatim — Markdown handles whitespace.
+                // by rustc, but keep it verbatim. Markdown handles whitespace.
                 let raw = s.value();
                 // Each `//! foo` becomes a single line; strip a single leading
                 // space if present (matches the convention in our examples).
@@ -821,5 +979,83 @@ mod tests {
         let (title, body) = split_title(md);
         assert_eq!(title, None);
         assert_eq!(body, md);
+    }
+
+    #[test]
+    fn split_hints_markdown_separates_h2_sections() {
+        let md = "intro line\n\n## `foo`\n\nbody of foo\n\n## bar\n\nbody of bar\n";
+        let (intro, sections) = split_hints_markdown(md);
+        assert!(intro.contains("intro line"));
+        assert_eq!(sections.len(), 2);
+        assert_eq!(sections[0].0, "`foo`");
+        assert!(sections[0].1.contains("body of foo"));
+        assert_eq!(sections[1].0, "bar");
+        assert!(sections[1].1.contains("body of bar"));
+    }
+
+    #[test]
+    fn heading_matches_slug_uses_first_backticked_token() {
+        assert!(heading_matches_slug(
+            "`quoted_line`, the state machine",
+            "quoted_line"
+        ));
+        assert!(heading_matches_slug("`sum`", "sum"));
+        assert!(heading_matches_slug("plain heading", "plain heading"));
+        assert!(!heading_matches_slug("`other`, prose", "sum"));
+    }
+
+    #[test]
+    fn integers_chapter_distributes_hints_per_step() {
+        let exercises =
+            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let chapter = exercises
+            .iter()
+            .find(|e| e.slug == "integers")
+            .expect("expected 01_integers to be present");
+        // Every code step in this chapter has a `## <slug>` section in
+        // hints.md, so each step should now carry its own rendered HTML.
+        for code in chapter.code_steps() {
+            assert!(
+                code.hints_html.is_some(),
+                "step {} should have per-step hints attached",
+                code.slug
+            );
+        }
+        // And because every section was claimed by a step, the
+        // chapter-wide leftover hints should collapse to None (only the
+        // tiny intro paragraph remains, but it's pure prose with no
+        // unmatched H2s, so we still expect Some, just shorter).
+        if let Some(leftover) = &chapter.hints {
+            assert!(
+                !leftover.html.contains("number_to_string"),
+                "per-step section should no longer appear in the leftover"
+            );
+        }
+    }
+
+    #[test]
+    fn renamed_chapters_distribute_hints_per_step() {
+        // 11_iterators and 17_csv_parser were renamed so each hints H2
+        // is keyed by the file slug (e.g. `` ## `quoted_line`, the
+        // state machine ``). Every code step should receive its slice.
+        let exercises =
+            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        for slug in ["iterators", "csv_parser"] {
+            let chapter = exercises
+                .iter()
+                .find(|e| e.slug == slug)
+                .unwrap_or_else(|| panic!("expected chapter `{slug}` to be present"));
+            for code in chapter.code_steps() {
+                assert!(
+                    code.hints_html.is_some(),
+                    "{slug}: step {} should have hints attached",
+                    code.slug
+                );
+            }
+            assert!(
+                chapter.hints.is_none(),
+                "{slug}: leftover hints block should collapse when every section is consumed"
+            );
+        }
     }
 }

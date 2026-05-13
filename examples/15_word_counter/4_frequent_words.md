@@ -6,4 +6,4 @@ every word whose count meets some threshold. The natural pipeline is
 the `collect` infers `Vec<String>` from the return type.
 
 As before, `count_words` is stubbed with `todo!()` so this step
-compiles standalone — your work is in `frequent_words`.
+compiles standalone. Your work is in `frequent_words`.

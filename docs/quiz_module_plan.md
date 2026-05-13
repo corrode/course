@@ -1,4 +1,4 @@
-# Quiz module — plan
+# Quiz module: plan
 
 A short post-chapter quiz turns the "I followed along" feeling into "I
 can recall this without the editor in front of me." This document
@@ -35,7 +35,7 @@ examples/02_strings_and_chars/
 The format is a small front-matter-free markdown dialect:
 
 ```markdown
-# Strings and chars — quiz
+# Strings and chars: quiz
 
 ## Question
 What does `"café".len()` return?

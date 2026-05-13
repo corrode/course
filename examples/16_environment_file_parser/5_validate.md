@@ -1,6 +1,6 @@
 # Validating required variables
 
-Most apps need *some* configuration to be present at startup —
+Most apps need *some* configuration to be present at startup:
 a database URL, a port, an API key. This last helper takes a list of
 required keys and reports the first one that's missing.
 

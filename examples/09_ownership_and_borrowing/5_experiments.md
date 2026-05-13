@@ -7,7 +7,7 @@ chapter 13, …) instead of like a brick wall.
 
 Each test below is paired with a commented-out line. Uncomment one
 at a time, run the tests, read the error carefully, then comment it
-out again before moving on. The errors *are* the lesson here — the
+out again before moving on. The errors *are* the lesson here. The
 tests themselves don't assert anything interesting.
 
 The three errors you'll trigger correspond to the three rules of

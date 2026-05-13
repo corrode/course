@@ -31,7 +31,7 @@ own chapter, so it's worth pausing on each:
 
 ### `&'static str`
 
-This is a `&str` whose lifetime is `'static` — a fancy way of saying
+This is a `&str` whose lifetime is `'static`: a fancy way of saying
 "this string lives for the entire duration of the program." String
 literals like `"port must be greater than 0"` are baked into the
 binary, so they qualify. For now, treat `&'static str` as the right

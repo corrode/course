@@ -1,15 +1,13 @@
 # Hints
 
-Tap a hint at a time. Each one is one notch more specific.
-
-## `calculate_total_revenue`
+## `sum`
 
 1. The whole function body is one chained call. Start with `sales.iter()`.
 2. There is a single-call consumer that adds up a numeric iterator.
-3. `sales.iter().sum()` — and you'll need a type annotation
+3. `sales.iter().sum()`. And you'll need a type annotation
    (`let total: i32 = …`, or `.sum::<i32>()`) because `sum` is generic.
 
-## `normalize_emails`
+## `map`
 
 1. `into_iter()` (consume the input vec) → `map(...)` → `collect()`.
 2. The closure receives an owned `String`. Call `.to_lowercase()` on it.
@@ -17,7 +15,7 @@ Tap a hint at a time. Each one is one notch more specific.
    emails.into_iter().map(|e| e.to_lowercase()).collect()
    ```
 
-## `select_usernames_starting_with_a`
+## `filter`
 
 1. `into_iter()` → `filter(...)` → `collect()`.
 2. **Gotcha:** `filter`'s closure takes a *reference* to each item. Since
@@ -27,7 +25,7 @@ Tap a hint at a time. Each one is one notch more specific.
    usernames.into_iter().filter(|s| s.starts_with('a')).collect()
    ```
 
-## `find_rust_files`
+## `filter_to_string`
 
 1. Same shape as the previous one, but the closure now sees `&&&str`.
    Auto-deref still saves you for `.ends_with(".rs")`.

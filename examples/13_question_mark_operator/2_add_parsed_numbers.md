@@ -7,7 +7,7 @@ compresses a lot of `match` boilerplate into one character.
 Here both calls to `parse()` return the *same* error type
 ([`ParseIntError`](https://doc.rust-lang.org/std/num/struct.ParseIntError.html)),
 so `?` works directly without any conversion. Compare to writing this
-out with a `match` on each `parse()` result — that's the boilerplate
+out with a `match` on each `parse()` result. That's the boilerplate
 `?` is replacing.
 
 See: <https://doc.rust-lang.org/std/primitive.str.html#method.parse>

@@ -3,13 +3,13 @@
 A chapter-by-chapter pass through every exercise from the perspective of
 someone who has *just* finished the previous one. Each entry has:
 
-- **State of mind** — what they're carrying in (energy, fears, prior
+- **State of mind**: what they're carrying in (energy, fears, prior
   context).
-- **Inner monologue** — stream-of-consciousness as they read the file.
-- **Wins** — the tiny "ah!" moments to engineer for.
-- **Sharp edges** — what's likely to actually trip them up, with
+- **Inner monologue**: stream-of-consciousness as they read the file.
+- **Wins**: the tiny "ah!" moments to engineer for.
+- **Sharp edges**: what's likely to actually trip them up, with
   concrete suggestions.
-- **Complexity** — `Trivial`, `Easy`, `Moderate`, `Hard`, `Spike`.
+- **Complexity**: `Trivial`, `Easy`, `Moderate`, `Hard`, `Spike`.
   "Spike" means the chapter introduces a real difficulty cliff
   compared to the one before it.
 
@@ -19,7 +19,7 @@ relative to its predecessor it's a bigger leap.
 
 ---
 
-## 00 — Hello, Rust!  ·  *Trivial*
+## 00: Hello, Rust!  ·  *Trivial*
 
 **State of mind.** Excited, slightly nervous. They've installed the
 toolchain, the website worked, they hit Run on something for the first
@@ -48,10 +48,10 @@ That was nice."
 
 ---
 
-## 01 — Integer handling  ·  *Easy*
+## 01: Integer handling  ·  *Easy*
 
 **State of mind.** Confident from chapter 0. Three functions instead
-of one — they read it as "three of the same thing".
+of one. They read it as "three of the same thing".
 
 **Inner monologue.** "Number to string, just `n.to_string()`. Tax: cast
 to `f64`, multiply, cast back. Wait, do I round or truncate? The test
@@ -84,41 +84,41 @@ positive `f64` truncates, so `108.5 as u32 = 108`. Phew, lucky."
 
 ---
 
-## 02 — Strings and chars  ·  *Easy*
+## 02: Strings and chars  ·  *Easy*
 
 **State of mind.** Still riding the wave. The intro table
-("borrowed/owned") feels reassuring — there's a *system* here.
+("borrowed/owned") feels reassuring. There's a *system* here.
 
-**Inner monologue.** "`count_chars` — the comment literally says
+**Inner monologue.** "`count_chars`: the comment literally says
 `.len()` is bytes, use `.chars()`. Easy: `text.chars().count()`.
-`shout` — `to_uppercase()` returns... `String`? Yes. Done.
-`has_uppercase` — `.any()`, the doc link is right there.
-`first_char` — `chars().next()` returns `Option<char>` already, so
+`shout`: `to_uppercase()` returns... `String`? Yes. Done.
+`has_uppercase`: `.any()`, the doc link is right there.
+`first_char`: `chars().next()` returns `Option<char>` already, so
 literally one line."
 
 **Wins.**
 - The doc-link hints land perfectly. The learner *uses* the docs,
   which is the real skill.
 - They get a sneak peek of `Option` (`first_char`) without it being
-  scary — the iterator already produces one.
+  scary; the iterator already produces one.
 
 **Sharp edges.**
 - `text.chars().count()` is `O(n)`. Some learners will worry about
   performance. A throwaway sentence in the prose ("yes, this walks the
-  string — that's the cost of UTF-8") settles it.
+  string; that's the cost of UTF-8") settles it.
 - The `has_uppercase` exercise quietly assumes ASCII. That's why it
   says "ASCII uppercase" in the comment. Good.
 
 ---
 
-## 03 — Enums and matching  ·  *Easy*
+## 03: Enums and matching  ·  *Easy*
 
 **State of mind.** First proper Rust idiom. The intro mentions
-"exhaustive matching" — they're curious whether the compiler really
+"exhaustive matching", and they're curious whether the compiler really
 will yell at them.
 
 **Inner monologue.** "Five variants, five arms. Done. `should_retry`:
-only `InternalServerError` retries — I can either match all five and
+only `InternalServerError` retries. I can either match all five and
 return `false` for four of them, or... use `_`. The intro said
 'exhaustive', so the compiler is OK with `_`? Let me try. Yep. So
 `_` *counts as* exhaustive. Got it."
@@ -127,7 +127,7 @@ return `false` for four of them, or... use `_`. The intro said
 - Triggering an exhaustiveness error on purpose (omit one variant)
   and seeing the compiler complain is a great experience. Worth
   suggesting in the prose: *"Try deleting one of the arms and
-  hitting Format — the compiler will tell you exactly which case
+  hitting Format. The compiler will tell you exactly which case
   you missed."*
 
 **Sharp edges.**
@@ -140,12 +140,12 @@ return `false` for four of them, or... use `_`. The intro said
   `Copy` here. The first time they call `status_code(s)` then
   `should_retry(s)` they'll hit a move error. Either derive `Copy` on
   the enum, or *intentionally* leave it off and add an exercise prompt
-  *"Try calling both functions on the same value — what does the
+  *"Try calling both functions on the same value. What does the
   compiler say?"*
 
 ---
 
-## 04 — Vectors basics  ·  *Easy*
+## 04: Vectors basics  ·  *Easy*
 
 **State of mind.** Comfortable. They've been waiting for "a list".
 
@@ -170,7 +170,7 @@ but that allocates."
   acknowledge this: *"You'll find that `Vec::contains` doesn't quite
   fit; a `for` loop with `if name == item { return true; }` is the
   most direct way at this point."*
-- `&Vec<String>` vs `&[String]` — clippy will eventually nag about
+- `&Vec<String>` vs `&[String]`: clippy will eventually nag about
   this. Worth a single sentence in the intro: *"`&Vec<String>` is
   fine here for clarity; `&[String]` is the more idiomatic
   signature, and you'll see it in chapter 11."*
@@ -181,15 +181,15 @@ but that allocates."
 
 ---
 
-## 05 — HashMaps  ·  *Easy*  (with one moderate function)
+## 05: HashMaps  ·  *Easy*  (with one moderate function)
 
 **State of mind.** They feel like they know "real" Rust now. `Vec`
 and `HashMap` are the two collections every working program uses.
 
-**Inner monologue.** "`create_default_config` — fine, two inserts.
-`set_config_value` — one insert, same call. `get_config_value` —
+**Inner monologue.** "`create_default_config`: fine, two inserts.
+`set_config_value`: one insert, same call. `get_config_value`:
 match on `Option`, return `value.clone()` or `'default'.to_string()`.
-`count_words` — oh, `.entry().or_insert(0)` is the canonical move,
+`count_words`: oh, `.entry().or_insert(0)` is the canonical move,
 but I don't know that yet. Let me do `if contains_key { ... } else { ... }`."
 
 **Wins.**
@@ -210,7 +210,7 @@ but I don't know that yet. Let me do `if contains_key { ... } else { ... }`."
   and it doesn't, because `get` returns a reference that conflicts
   with the next `insert`. The intro should warn that "fetching a
   reference into the map and then mutating the map can't both happen
-  at once — `entry` exists exactly because of that."
+  at once; `entry` exists exactly because of that."
 - `get_config_value` returning `String` forces a clone or
   `to_string()`. Some learners will return `&str` and hit a lifetime
   error. Worth a sentence: *"Returning `String` here costs a clone
@@ -219,7 +219,7 @@ but I don't know that yet. Let me do `if contains_key { ... } else { ... }`."
 
 ---
 
-## 06 — Tuples  ·  *Trivial*
+## 06: Tuples  ·  *Trivial*
 
 **State of mind.** Refreshing palate-cleanser after `HashMap`.
 
@@ -234,8 +234,8 @@ but I don't know that yet. Let me do `if contains_key { ... } else { ... }`."
 
 **Sharp edges.**
 - `get_first_name(full_name: (String, String))` *moves* the tuple.
-  After the call, the original is gone. Probably fine — they haven't
-  met ownership formally yet — but a learner who reuses `full_name`
+  After the call, the original is gone. Probably fine (they haven't
+  met ownership formally yet), but a learner who reuses `full_name`
   later in a print statement will get their first move error here. A
   one-line note in the chapter intro ("we cover what 'moved' means
   in chapter 9") softens the surprise.
@@ -246,16 +246,16 @@ but I don't know that yet. Let me do `if contains_key { ... } else { ... }`."
 
 ---
 
-## 07 — Option handling  ·  *Moderate*
+## 07: Option handling  ·  *Moderate*
 
 **State of mind.** They know the *shape* of `Option` from chapter 2
 (`first_char`). Now they're being asked to actually *manipulate*
 one.
 
-**Inner monologue.** "`get_setting_or_default` — that's literally
-`unwrap_or`. `optional_string_length` — `.map(|s| s.len()).unwrap_or(0)`.
-Or a `match`. `get_first_item` — `slice::first()`, the comment
-basically says so. `find_user_by_id` — iter, find, map. The find
+**Inner monologue.** "`get_setting_or_default`: that's literally
+`unwrap_or`. `optional_string_length`: `.map(|s| s.len()).unwrap_or(0)`.
+Or a `match`. `get_first_item`: `slice::first()`, the comment
+basically says so. `find_user_by_id`: iter, find, map. The find
 returns `Option<&(u32, String)>`. Then I `.map(|(_, name)| name.as_str())`?
 Or `name.as_ref()`? Wait, what's the difference?"
 
@@ -275,18 +275,18 @@ Or `name.as_ref()`? Wait, what's the difference?"
   *with the type annotations*.
 - `get_first_item` returning `Option<&String>` (not
   `Option<&str>`) is technically a slightly worse signature than the
-  more idiomatic `Option<&str>` — but going to `&str` requires
+  more idiomatic `Option<&str>`. But going to `&str` requires
   `.map(String::as_str)`, which the chapter hasn't taught yet. Fine
   to leave, but call out in the prose: *"`Option<&String>` is fine
   here; chapter 11 shows how `.map(String::as_str)` would let you
   return the more idiomatic `Option<&str>`."*
 - This is the first chapter where they'll seriously want closures
   (`.map(|x| ...)`). The intro should formally introduce the
-  `|x| body` syntax — right now it's relying on osmosis.
+  `|x| body` syntax; right now it's relying on osmosis.
 
 ---
 
-## 08 — Result handling  ·  *Moderate*
+## 08: Result handling  ·  *Moderate*
 
 **State of mind.** "Oh, like Option but with an error." They
 *think* they know what they're in for.
@@ -311,13 +311,13 @@ OK, nested `match`."
   *implicit lifetime elision*. They won't know that's what's
   happening; they'll just notice the function compiles and not ask.
   A two-sentence note: *"The `&str` in the return type borrows from
-  `email` — the compiler infers the lifetime. Chapter 9 makes this
+  `email`; the compiler infers the lifetime. Chapter 9 makes this
   explicit."*
 - `parse_percentage` is genuinely the hardest function in the
   chapter and lives at the bottom. A learner who blasts through the
   first three and then stalls here may feel like they're stupid
   rather than tackling the deliberately harder one. Worth a tiny
-  marker in the doc comment ("This one's the harder one — the
+  marker in the doc comment ("This one's the harder one; the
   previous three are warmups").
 - The error type `&'static str` is fine for now, but learners who
   try to put a `format!`-built message in there will hit the
@@ -327,14 +327,14 @@ OK, nested `match`."
 
 ---
 
-## 09 — Ownership basics  ·  *Spike*
+## 09: Ownership basics  ·  *Spike*
 
 **State of mind.** They've heard ownership is the hard part. They're
 nervous. They want it to make sense, not just memorise it.
 
 **Inner monologue.** "`take_ownership`: append `' - owned by Rust!'`
 and return. So `s + ' - owned by Rust!'`? Hmm, `+` on `String` takes
-`String` + `&str`. Try `s + ' - owned by Rust!'` — works. Test passes.
+`String` + `&str`. Try `s + ' - owned by Rust!'`. Works. Test passes.
 `borrow_string`: `.len()`. `mutate_string`: `s.push_str(...)`. All
 green. ...is that it?"
 
@@ -358,11 +358,11 @@ green. ...is that it?"
      the learner sees the canonical error message.
   3. The `mutate_string` test passes a `&mut String`. Have them try
      to call it twice in a row with two separate `&mut` borrows and
-     see what happens — actually that already works because the
+     see what happens. Actually that already works because the
      borrows don't overlap. Show them what *doesn't* work:
      `let r1 = &mut s; let r2 = &mut s; r1.push_str("x"); r2.push_str("y");`.
 - `borrow_string(s: &str)` taking `&str`, but the test calls it with
-  a `&'static str` literal — they don't see the difference between
+  a `&'static str` literal, so they don't see the difference between
   `&String` and `&str` until later. Could be deliberate (deref
   coercion does the right thing); worth one sentence in the prose.
 - This chapter is rated **Spike** for state-of-mind reasons: the
@@ -371,7 +371,7 @@ green. ...is that it?"
 
 ---
 
-## 10 — Structs and methods  ·  *Moderate*
+## 10: Structs and methods  ·  *Moderate*
 
 **State of mind.** Comfortable territory. Most languages have a
 flavour of this.
@@ -407,7 +407,7 @@ self.is_verified = true;`. `can_access_premium`: `self.is_verified
 
 ---
 
-## 11 — Iterator patterns  ·  *Hard*
+## 11: Iterator patterns  ·  *Hard*
 
 **State of mind.** This is the chapter that converts "I write Rust
 loops" into "I write Rust." Mixed feelings: excitement at the
@@ -447,7 +447,7 @@ difference?"
 - `find_rust_files` has an *explicit lifetime annotation* (`<'file>`).
   This is the first time they see one. The intro doesn't prepare
   them for it. **Either remove the lifetime annotation (the compiler
-  can elide it if you write `fn find_rust_files<'a>(files: &'a [&'a str]) -> Vec<&'a str>` — actually no, it can't here, it needs the binding)** or add a paragraph in the intro
+  can elide it if you write `fn find_rust_files<'a>(files: &'a [&'a str]) -> Vec<&'a str>`; actually no, it can't here, it needs the binding)** or add a paragraph in the intro
   explaining what `<'file>` does.
   - Honestly the cleanest fix is to take `Vec<&'static str>` or just
     `Vec<String>` so the lifetime ceremony goes away. The lifetime
@@ -461,9 +461,9 @@ difference?"
 
 ---
 
-## 12 — Password validator  ·  *Hard* (open-ended)
+## 12: Password validator  ·  *Hard* (open-ended)
 
-**State of mind.** Tired but proud — they've completed 11 chapters.
+**State of mind.** Tired but proud: they've completed 11 chapters.
 Now they get a "build something" exercise. The intro explicitly
 celebrates this.
 
@@ -504,20 +504,20 @@ Done. ...now `generate_secure_password`. The hint about
 - `PasswordAdvisor::suggest_improvements` mostly duplicates
   `feedback`. The doc says "actionable suggestions" but the test
   only asserts non-empty. Some learners will return `report.feedback.clone()`
-  and pass. Honest: *that's a fine first solution* — the chapter
+  and pass. Honest: *that's a fine first solution*; the chapter
   could explicitly say "returning `report.feedback.clone()` passes
   the test; the goal is to think about what *more* you'd want."
 
 ---
 
-## 13 — The `?` operator  ·  *Moderate*
+## 13: The `?` operator  ·  *Moderate*
 
 **State of mind.** Glad to be back in tutorial-mode after the
 open-ended chapter 12.
 
 **Inner monologue.** "`add_parsed_numbers`: `let a = a.parse::<i32>()?;
 let b = b.parse::<i32>()?; Ok(a + b)`. Beautiful. `count_file_lines`:
-`fs::read_to_string(filename)?.lines().count()` — wait, that returns
+`fs::read_to_string(filename)?.lines().count()`. Wait, that returns
 `usize` but the function returns `Result<usize, ...>`. Need `Ok(...)`
 around it. `sum_numbers_in_file`: this needs both error types. Use
 `Box<dyn Error>`. `?` does the conversion automatically? Yes."
@@ -537,7 +537,7 @@ around it. `sum_numbers_in_file`: this needs both error types. Use
   // "binary operation `==` cannot be applied to type `Result<usize, std::io::Error>`"
   ```
   But the test as written *will* pass once the implementation is
-  correct. The TODO is misleading — it sounds like the *learner*
+  correct. The TODO is misleading. It sounds like the *learner*
   has to fix the assertion, but actually they need to make their
   function return the right thing. Reword: *"This test pretends to
   be broken until your implementation returns `Ok(2)`. The error
@@ -564,7 +564,7 @@ around it. `sum_numbers_in_file`: this needs both error types. Use
 
 ---
 
-## 14 — Modules and visibility  ·  *Easy* (but with a sharp landing)
+## 14: Modules and visibility  ·  *Easy* (but with a sharp landing)
 
 **State of mind.** They expect a lecture-flavoured chapter. The
 intro markdown is solid.
@@ -573,7 +573,7 @@ intro markdown is solid.
 `port` `pub`. Make `new` and `get_port` `pub`. Make `State`
 `pub` and its variants `pub`. Done. Wait, the test for `get_status`
 has `let state = ...; // Once you make State public, this will compile`
-— no assertion?"
+, no assertion?"
 
 **Wins.**
 - The "make this `pub`, then this, then this" cascade is a great
@@ -585,7 +585,7 @@ has `let state = ...; // Once you make State public, this will compile`
   `state` and ends. As long as it compiles, it passes. A learner
   who just makes `State` public (without making the variants
   public) gets a *compile error*, not a test failure. That might
-  be intentional but it's confusing — the test runner output will
+  be intentional but it's confusing. The test runner output will
   say "test_status passed" once it builds, even though the body is
   vacuous. Add `assert!(matches!(state, status::State::Running));`
   or similar so the test actually exercises something.
@@ -602,7 +602,7 @@ has `let state = ...; // Once you make State public, this will compile`
 
 ---
 
-## 15 — Word counter  ·  *Moderate* (synthesis)
+## 15: Word counter  ·  *Moderate* (synthesis)
 
 **State of mind.** "I've done all the building blocks. Now I'm
 combining them." Confident, slightly self-conscious about whether
@@ -631,18 +631,18 @@ avg = total chars / total words as f64. Done."
   by value; that's what makes returning `(String, usize)` possible
   here."*
 - `text_stats` with a `(usize, usize, f64)` return type is mildly
-  awkward — a `struct TextStats` would be cleaner. The chapter
+  awkward: a `struct TextStats` would be cleaner. The chapter
   intro could acknowledge: *"In real code you'd reach for a
   struct here; we're using a tuple to keep the focus on the
   iterator chain."*
 - The "average word length" assertion uses
-  `(avg_len - 4.33).abs() < 0.1` — float comparison done correctly,
+  `(avg_len - 4.33).abs() < 0.1`, float comparison done correctly,
   *but* without explanation. A one-line aside: *"Floats don't
   compare exactly; we check that the value is *close enough*."*
 
 ---
 
-## 16 — Env parser  ·  *Moderate-to-Hard*
+## 16: Env parser  ·  *Moderate-to-Hard*
 
 **State of mind.** "I'm parsing real files now." Feels professional.
 
@@ -656,7 +656,7 @@ first missing."
 
 **Wins.**
 - The intro markdown is unusually thorough for this chapter and it
-  pays off. `split_once`, the generic function, raw strings — all
+  pays off. `split_once`, the generic function, raw strings: all
   introduced *before* they're needed.
 - `get_env_var<T: FromStr>` is the first generic the learner
   *writes*. Big deal.
@@ -670,24 +670,23 @@ first missing."
   encourages it) will pass anyway. **Either drop the "no spaces"
   language or add a test like `parse_env_line("KEY = value")`
   with an explicit expected behaviour (probably "trim, accept").**
-- `parse_env_file` returning `Result<HashMap, ParseError>` —
-  what should it do when *one* line is malformed? Stop and return
+- `parse_env_file` returning `Result<HashMap, ParseError>`: what should it do when *one* line is malformed? Stop and return
   `Err`? Skip it? The function signature implies "stop", but real
   `.env` parsers are usually lenient. Worth a doc-comment line:
-  *"Stop and return `Err` on the first malformed line — strict
+  *"Stop and return `Err` on the first malformed line; strict
   parsing is easier to debug."*
 - `get_env_var<T: FromStr>` doesn't bound `T::Err`, which is fine
   here, but a learner who tries to `?` the parse instead of `.ok()`
   will hit a baffling error about `T::Err: From<ParseError>`. The
   intro should explicitly recommend `.ok()` for this exercise.
 - **Order-of-operations gotcha:** `line.trim()` *then* check for
-  `#`, not the other way around — a `   # comment` line is a
+  `#`, not the other way around. A `   # comment` line is a
   valid comment and should be skipped. The intro shows the right
   order; just call it out.
 
 ---
 
-## 17 — CSV parser  ·  *Hard*
+## 17: CSV parser  ·  *Hard*
 
 **State of mind.** Last "real" chapter. They want to feel they've
 graduated. The doc-comment "Good luck." doesn't help the nerves.
@@ -725,7 +724,7 @@ I'm decoding doubled quotes wrong."
          else: append to current field
      flush last field
      ```
-     This isn't spoonfeeding the implementation — they still have
+     This isn't spoonfeeding the implementation; they still have
      to write it in Rust, deal with `chars().peekable()`, and
      handle the iterator borrowing. But it removes the "I have no
      idea how to even start" wall.
@@ -745,7 +744,7 @@ I'm decoding doubled quotes wrong."
 
 ---
 
-## 18 — Quiz  ·  *Trivial* (by design)
+## 18: Quiz  ·  *Trivial* (by design)
 
 **State of mind.** Reflective. They want to know whether all this
 stuck.
@@ -806,80 +805,79 @@ don't have to be repeated in every entry.
 
 ---
 
-# Changelog — fixes applied from this audit
+# Changelog: fixes applied from this audit
 
 The items below have landed in the course repository. They are listed
 in the order they appear in this document.
 
 ## Per-chapter
 
-- **Chapter 1** — `test_tax_calculation` now also asserts
+- **Chapter 1**: `test_tax_calculation` now also asserts
   `calculate_total_with_tax(100, 8.4) == 108`, which pins down
   rounding (the original two cases passed under either truncation or
   rounding). The doc-comment on `parse_positive_integer` now
   explicitly forward-references chapter 7/8: returning `0` on failure
   is a bad pattern, kept here only because `Result` hasn't been
   introduced yet.
-- **Chapter 3** — `HttpStatus` now derives `Copy` (and `Clone`) and
+- **Chapter 3**: `HttpStatus` now derives `Copy` (and `Clone`) and
   has a comment explaining why that's fine for variant-only enums, so
   calling two functions on the same value no longer trips the borrow
   checker.
-- **Chapter 9** — added an *Experiments* section with three
+- **Chapter 9**: added an *Experiments* section with three
   `#[test]` functions that have commented-out lines for the canonical
   ownership errors (use-after-move, two `&mut`, mixing `&` and
   `&mut`). The lesson is the error message; uncomment one at a time.
-- **Chapter 11** — `find_rust_files` now returns `Vec<String>` and the
+- **Chapter 11**: `find_rust_files` now returns `Vec<String>` and the
   explicit `<'file>` lifetime is gone; the focus stays on iterators.
   The chapter-level `//!` block now warns up front about `&&T` in
   closure arguments and links to the cheatsheet.
-- **Chapter 12** — `test_feedback_quality` accepts any of `character`,
+- **Chapter 12**: `test_feedback_quality` accepts any of `character`,
   `length`, `short`, `longer`, or `at least` (case-insensitive), and
   prints the actual feedback on failure so a learner who wrote
   "Password too short" no longer fails for the wrong reason.
-- **Chapter 13** — the misleading `// TODO:` in `test_file_reading`
+- **Chapter 13**: the misleading `// TODO:` in `test_file_reading`
   is replaced with a one-line note explaining that the assertion is
   already correct; the work is in `count_file_lines`. A new prose
   section in `1_intro.md` warns about parallel tests writing to disk
   and shows `cargo test -- --test-threads=1`.
-- **Chapter 14** — `test_status` now actually asserts
+- **Chapter 14**: `test_status` now actually asserts
   `state == status::State::Running`, and the `State` enum derives
   `PartialEq` so the assertion compiles once the learner makes the
   variants public.
-- **Chapter 17** — the `parse_csv_line` body now contains a
+- **Chapter 17**: the `parse_csv_line` body now contains a
   three-step pseudocode skeleton, and a new `test_quoted_csv_basic`
   with `r#""a","b","c""#` sits *between* the simple-split case and
   the doubled-quote one.
 
 ## Cross-cutting
 
-- **Cheatsheet** — added a *What does my closure receive?* table to
+- **Cheatsheet**: added a *What does my closure receive?* table to
   the iterators section, covering the four common shapes
   (`Vec<i32>`, `Vec<String>`, `&[&str]`, `into_iter`). Plus a note
   that method calls auto-deref but `==`/`<`/`>` do not.
-- **Hint system** — chapters can now ship a sibling note named
+- **Hint system**: chapters can now ship a sibling note named
   `<n>_hints.md` whose slug is `hints`. The startup parser pulls it
   out of the regular notes list into a dedicated `Exercise.hints`
   field, and the exercise template renders it as a closed `<details>`
-  disclosure between the intro and the editor ("Stuck? Show a hint —
-  no spoilers, just a nudge"). Within each function's hint list, only
+  disclosure between the intro and the editor ("Stuck? Show a hint, no spoilers, just a nudge"). Within each function's hint list, only
   the first item is shown initially; a *Show next hint (N left)*
   button reveals one more `<li>` per click, so a learner who only
   needs the first nudge isn't shown the answer. Hints written for
   chapters 1, 11, 12, and 17.
-- **Failing-test output** — when a test fails, the test list now
+- **Failing-test output**: when a test fails, the test list now
   shows the trimmed assertion / panic snippet inline under the test
   name (the leading `thread '...' panicked at ...` header is
   stripped, capped at 6 lines). The full output remains one click
   away in *Compiler / runtime output*.
-- **`todo!()` copy** — a panic with `not yet implemented` is
+- **`todo!()` copy**: a panic with `not yet implemented` is
   rewritten to *“This function still has `todo!()` in it. Replace
   `todo!()` with your implementation, then run again.”* before being
   shown in the test list.
-- **Pacing heads-up** — the dashboard now has a one-paragraph note
+- **Pacing heads-up**: the dashboard now has a one-paragraph note
   above the exercise list flagging chapters 11 and 17 as the two
   intentional difficulty spikes and pointing to the per-chapter
   hints disclosure.
-- **Title alignment** — several H1s lost their meta-suffixes
+- **Title alignment**: several H1s lost their meta-suffixes
   ("Open-Ended Exercise", "Combining Concepts", "Complex Parsing
   Challenge"), and seven chapter directories were renamed so the
   on-disk slug matches the H1 the learner sees in the dashboard:
@@ -892,7 +890,7 @@ in the order they appear in this document.
   `16_env_parser` → `16_environment_file_parser`. SQL migration
   `004_rename_chapter_slugs.sql` rewrites `submissions.exercise_name`
   for the seven old keys so existing learner progress survives.
-- **Concept-first titles (round 2)** — a follow-up pass on the same
+- **Concept-first titles (round 2)**: a follow-up pass on the same
   observation: titles should foreground the *Rust idea*, not the
   example domain. "HTTP Status Handling" became **Enums and Pattern
   Matching**, "User Account Management" reverted to **Structs and
@@ -930,51 +928,51 @@ updated to point at the new names.
 A second sweep through the per-chapter sharp edges that hadn't yet
 been addressed in code:
 
-- **Chapter 0** — the doc comment on `format_welcome_message` now
+- **Chapter 0**: the doc comment on `format_welcome_message` now
   spells out that the function must *return* a `String`, calls out
   that `println!` is not the right macro here, and links
   [`format!`](https://doc.rust-lang.org/std/macro.format.html).
-- **Chapter 4** — the `contains_item` doc comment no longer hints at
+- **Chapter 4**: the `contains_item` doc comment no longer hints at
   "a one-call method on `Vec` that does this" (which would lead the
   learner straight into the `Vec::contains` / `&str` mismatch). It
   now shows the explicit `for` loop appropriate at this point in the
   course, plus a forward-pointer to the chapter-11 `iter().any(...)`
   one-liner.
-- **Chapter 5** — `count_words` documents the `*map.entry(k).or_insert(0)
+- **Chapter 5**: `count_words` documents the `*map.entry(k).or_insert(0)
   += 1` idiom directly and explains why the naive
   `contains_key`/`get_mut`/`insert` approach fights the borrow checker.
-- **Chapter 6** — `get_first_name` notes that the `(String, String)`
+- **Chapter 6**: `get_first_name` notes that the `(String, String)`
   parameter is moved (not `Copy`) and contrasts it with `swap_values`,
   which works on `(i32, i32)` precisely because tuples of `Copy` types
   are themselves `Copy`.
-- **Chapter 7** — the chapter-level `//!` block now formally introduces
+- **Chapter 7**: the chapter-level `//!` block now formally introduces
   closure syntax (`|args| body`) with two worked examples, and
   `find_user_by_id` ships a step-by-step type walk-through
   (`&(u32, String)` → `Option<&(u32, String)>` → `Option<&str>`) so
   the learner doesn't have to invent the `name.as_str()` jump on their
   own.
-- **Chapter 8** — `validate_email` mentions lifetime elision explicitly
+- **Chapter 8**: `validate_email` mentions lifetime elision explicitly
   ("the `&str` in the return type implicitly borrows from `email`"),
   `parse_percentage` is marked as the harder one rather than letting
   learners think they're stuck on a warmup, and the doc comment warns
-  that `&'static str` errors can't hold `format!` output — switch to
+  that `&'static str` errors can't hold `format!` output; switch to
   `String` if you want that.
-- **Chapter 10** — `record_login`'s spec is now explicit that
+- **Chapter 10**: `record_login`'s spec is now explicit that
   `is_verified = true` is intentionally idempotent, and
   `test_login_tracking` asserts the flag stays on after a second login.
-- **Chapter 14** — the `// TODO:` comments on `calculate`,
+- **Chapter 14**: the `// TODO:` comments on `calculate`,
   `create_settings`, and `get_status` are replaced with concrete
   guidance pointing at the *module side* ("make `add` `pub`", "make
   `Settings`, `new`, and `get_port` `pub`", "make `State` *and* its
   variants `pub`"). They also reinforce that `pub struct` doesn't
   publish fields or methods.
-- **Chapter 15** — `most_common_word` documents the `into_iter`
+- **Chapter 15**: `most_common_word` documents the `into_iter`
   trick that makes returning an owned `(String, usize)` possible;
   `text_stats` notes that a 3-tuple is awkward in real code and a
   `struct TextStats` would be the better real-world choice; the
   float-tolerance assertion in `test_text_statistics` carries a short
   inline note explaining why direct `==` on `f64` is a bug magnet.
-- **Chapter 16** — `parse_env_line` documents that whitespace around
+- **Chapter 16**: `parse_env_line` documents that whitespace around
   `=` is *trimmed*, not rejected, and a new assertion
   (`parse_env_line("KEY = value")`) pins that behaviour down. The
   numbered-step comment swaps to trim-then-validate so you don't reject
@@ -982,7 +980,7 @@ been addressed in code:
   trim-then-comment-check ordering and the "strict: stop on the first
   bad line" decision. `get_env_var` recommends `.ok()` and explains
   why `?` doesn't work without an extra `From<T::Err>` bound.
-- **Chapter 17** — `parse_csv_file` points at `str::lines` and
+- **Chapter 17**: `parse_csv_file` points at `str::lines` and
   reassures the learner that a trailing newline is handled for free;
   `csv_to_records` ships a worked `headers.iter().cloned().zip(...)`
   sketch so the chained `.collect()`s aren't a guessing game.
@@ -995,35 +993,35 @@ holds the chapter prose, `2_hints.md` holds the chapter-wide hints
 (when present), and `main.rs` is generated by `build.rs` from the
 step files. Recorded boundaries:
 
-- **Chapter 00 — `hello_rust`.** Single code step `4_welcome.rs`
+- **Chapter 00, `hello_rust`.** Single code step `4_welcome.rs`
   (`format_welcome_message`). Order 4 because the chapter ships notes
   at orders 1, 2, 3 (`1_intro.md`, `2_getting_unstuck.md`,
   `3_concepts.md`).
-- **Chapter 01 — `integers`.** Three steps at orders 3-5
+- **Chapter 01, `integers`.** Three steps at orders 3-5
   (`number_to_string`, `calculate_total_with_tax`,
   `parse_positive_integer`). Order 2 reserved for `2_hints.md`.
-- **Chapter 02 — `strings_and_chars`.** Three steps: `2_count_chars`,
+- **Chapter 02, `strings_and_chars`.** Three steps: `2_count_chars`,
   `3_shout`, `4_has_uppercase`. (The original fourth function,
-  `first_char`, was moved into chapter 7 — it was always more of an
+  `first_char`, was moved into chapter 7. It was always more of an
   `Option` exercise than a string exercise, and the multi-step split
   made the mismatch obvious.) The borrowed/owned table stays in
   `1_intro.md`; per-step intros focus on the one method/concept the
   step exercises.
-- **Chapter 03 — `enums_and_pattern_matching`.** Two steps:
+- **Chapter 03, `enums_and_pattern_matching`.** Two steps:
   `2_status_code`, `3_should_retry`. The `HttpStatus` enum (with the
   `Copy` rationale comment) is duplicated into both step files since
   step modules are compiled independently in the generated aggregator.
-- **Chapter 04 — `vectors`.** Four steps: `2_count_items`,
+- **Chapter 04, `vectors`.** Four steps: `2_count_items`,
   `3_add_item`, `4_contains_item`, `5_create_shopping_list`. Tests
   moved next to their respective functions.
-- **Chapter 05 — `hashmaps`.** Four steps: `2_create_default_config`,
+- **Chapter 05, `hashmaps`.** Four steps: `2_create_default_config`,
   `3_set_config_value`, `4_get_config_value`, `5_count_words`. Each
   step file carries its own `use std::collections::HashMap;`.
-- **Chapter 06 — `tuples_and_destructuring`.** Four steps:
+- **Chapter 06, `tuples_and_destructuring`.** Four steps:
   `2_get_user_info`, `3_rectangle_measurements`, `4_get_first_name`,
   `5_swap_values`. The move-semantics note on `get_first_name` is
   preserved and remains the natural cliff before chapter 9.
-- **Chapter 07 — `option`** *(pilot).* Four steps: `2_fallback`,
+- **Chapter 07, `option`** *(pilot).* Four steps: `2_fallback`,
   `3_transform`, `4_first_char` (relocated from chapter 2),
   `5_find_user`. The chapter intro (with the closure note) lives in
   `1_intro.md`. This was the first chapter migrated and locked the
@@ -1031,32 +1029,32 @@ step files. Recorded boundaries:
   (it was always an `Option` exercise) and dropped the original
   `get_first_item` step (redundant once `first_char` and `find_user`
   bracketed it on both sides).
-- **Chapter 08 — `result`.** Four steps: `2_safe_divide` (first
+- **Chapter 08, `result`.** Four steps: `2_safe_divide` (first
   `Result` with `&'static str` errors), `3_read_config` (owning
   `String` in `Ok`), `4_validate_email` (borrowed `&str` in `Ok`,
   lifetime elision preview), `5_parse_percentage` (multi-stage parse
   with distinct errors).
-- **Chapter 09 — `ownership_and_borrowing`** *(spike).* Four steps:
+- **Chapter 09, `ownership_and_borrowing`** *(spike).* Four steps:
   `2_take_ownership` (move + mutation without `&mut`),
   `3_borrow_string` (`&str` shared borrow), `4_mutate_string`
   (`&mut String`), `5_experiments` (the three borrow-check
   trip-wires). The two earlier helpers are pre-filled inside step 5
   so the experiments stand alone.
-- **Chapter 10 — `structs_and_methods`.** Four steps: `2_new`
+- **Chapter 10, `structs_and_methods`.** Four steps: `2_new`
   (associated `new` returning `Self`), `3_display_name` (`&self`
   borrow + `format!`), `4_record_login` (`&mut self` mutation,
   idempotent flag), `5_can_access_premium` (predicate over two
   fields). The `User` struct is duplicated in every step; each step's
   `impl` carries the constructor plus whatever earlier-step helpers
   the test needs.
-- **Chapter 11 — `iterators`** *(hard).* Four steps starting at
+- **Chapter 11, `iterators`** *(hard).* Four steps starting at
   order 3 (since `2_hints.md` exists): `3_sum`
   (`calculate_total_revenue`, collapse via `sum`), `4_map`
   (`normalize_emails`), `5_filter`
   (`select_usernames_starting_with_a`, including the `&&T` gotcha),
   `6_filter_to_string` (`find_rust_files`, filter `&[&str]` and own
   with `to_string`).
-- **Chapter 12 — `password_validator`** *(spike, open-ended).* Five
+- **Chapter 12, `password_validator`** *(spike, open-ended).* Five
   steps starting at order 3 (since `2_hints.md` exists):
   `3_is_strong` (warm-up, introduces shared `PasswordReport` /
   `PasswordStrength`), `4_char_classes` (the four `has_*` predicates),
@@ -1064,35 +1062,35 @@ step files. Recorded boundaries:
   `6_advisor` (`PasswordAdvisor::suggest_improvements`), `7_validate`
   (orchestrator that re-stubs the shared types and the four `has_*`
   helpers as `todo!()` bodies, so the step compiles standalone).
-- **Chapter 13 — `question_mark_operator`.** Three steps:
+- **Chapter 13, `question_mark_operator`.** Three steps:
   `2_add_parsed_numbers` (`?` with one error type),
-  `3_count_file_lines` (`?` with `io::Error` — still hits the
+  `3_count_file_lines` (`?` with `io::Error`, still hits the
   intentional `Result<_, io::Error>: !PartialEq` lesson when
   unsolved), `4_sum_numbers_in_file` (`?` across multiple error
   types via `Box<dyn Error>`).
-- **Chapter 14 — `modules_and_visibility`.** Three steps:
+- **Chapter 14, `modules_and_visibility`.** Three steps:
   `2_calculate` (`pub fn`), `3_settings` (`pub struct` and that
   fields and methods stay private until individually `pub`),
   `4_status` (`pub enum` and its variants). Each step is intentionally
-  a compile error in its starter form — that's the lesson.
-- **Chapter 15 — `word_counter`.** Four steps: `2_count_words`
+  a compile error in its starter form. That's the lesson.
+- **Chapter 15, `word_counter`.** Four steps: `2_count_words`
   (split + lowercase + `entry().or_insert()`), `3_most_common_word`
   (`into_iter().max_by_key`), `4_frequent_words` (filter-and-collect),
   `5_text_stats` (orchestrator returning `(usize, usize, f64)`).
   Steps 3-5 each re-stub `count_words` so they compile standalone.
-- **Chapter 16 — `environment_file_parser`.** Four steps:
+- **Chapter 16, `environment_file_parser`.** Four steps:
   `2_parse_line` (`parse_env_line` + `ParseError`),
   `3_parse_file` (`parse_env_file`, re-stubs the helper),
   `4_get_var` (generic `get_env_var<T: FromStr>`),
   `5_validate` (`validate_required_vars` via `Iterator::find`).
-- **Chapter 17 — `csv_parser`** *(spike).* Four steps starting at
+- **Chapter 17, `csv_parser`** *(spike).* Four steps starting at
   order 3 (since `2_hints.md` exists): `3_simple_line`
   (`parse_simple_csv_line`), `4_quoted_line` (`parse_csv_line`,
   state machine with quote escapes), `5_parse_file`
   (`parse_csv_file`, re-stubs the previous helper),
   `6_records` (`csv_to_records`, zip headers with rows into
   `HashMap`).
-- **Chapter 18 — `rust_fundamentals_quiz`.** Stays single-step. The
+- **Chapter 18, `rust_fundamentals_quiz`.** Stays single-step. The
   whole "chapter" is just a pointer to `static/quiz.html`; there's
   nothing to split.
 
@@ -1115,7 +1113,7 @@ step files. Recorded boundaries:
   `cargo test --example NN_chapter _<n>_<slug>::` filter exactly one
   step's tests.
 - **Order numbers.** The leading number on a step file is purely for
-  ordering — collisions with note files (`1_intro.md`, `2_hints.md`)
+  ordering; collisions with note files (`1_intro.md`, `2_hints.md`)
   are avoided by starting code steps at order 2, 3, or 4 depending on
   what notes the chapter ships with. The leading number ends up in
   the generated module name (`_2_unwrap`) but never in the visible

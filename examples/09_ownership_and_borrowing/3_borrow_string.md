@@ -10,6 +10,6 @@ a `&'static str`, and `&String` automatically coerces to `&str`, so
 `&str` parameters accept both without forcing the caller to convert.
 Reach for `&str` by default when you're just reading.
 
-The body is a one-liner — call `.len()` on the slice. The point of
+The body is a one-liner: call `.len()` on the slice. The point of
 the exercise is the signature: notice that after the call, the
 caller's `s` is still usable in the test below.

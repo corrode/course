@@ -503,16 +503,16 @@ impl SubmissionTarget {
 ///
 /// Recognised shapes:
 ///
-/// * `examples/<chapter>/main.rs`       — legacy single-step chapter.
-/// * `examples/<chapter>/<n>_<slug>.rs` — multi-step file (step `n_slug`).
-/// * `examples/<chapter>/` (or bare)    — legacy single-step chapter.
-/// * `<chapter>` (bare slug)            — legacy single-step chapter.
-/// * `examples/<chapter>.rs`            — legacy flat layout.
+/// * `examples/<chapter>/main.rs`       (legacy single-step chapter)
+/// * `examples/<chapter>/<n>_<slug>.rs` (multi-step file: step `n_slug`)
+/// * `examples/<chapter>/` (or bare)    (legacy single-step chapter)
+/// * `<chapter>` (bare slug)            (legacy single-step chapter)
+/// * `examples/<chapter>.rs`            (legacy flat layout)
 fn extract_submission_target(file_path: &str) -> Result<SubmissionTarget> {
     let path = Path::new(file_path);
     let filename = path.file_name().and_then(|n| n.to_str());
 
-    // `<chapter>/main.rs` — legacy aggregator file.
+    // `<chapter>/main.rs`: legacy aggregator file.
     if filename == Some("main.rs") {
         let chapter = path
             .parent()
@@ -527,7 +527,7 @@ fn extract_submission_target(file_path: &str) -> Result<SubmissionTarget> {
         });
     }
 
-    // `<chapter>/<n>_<slug>.rs` — multi-step file.
+    // `<chapter>/<n>_<slug>.rs`: multi-step file.
     if let Some(name) = filename {
         if let Some(stem) = name.strip_suffix(".rs") {
             if stem != "main" {
@@ -548,7 +548,7 @@ fn extract_submission_target(file_path: &str) -> Result<SubmissionTarget> {
                         }
                     }
                 }
-                // Bare `examples/<name>.rs` — legacy flat layout.
+                // Bare `examples/<name>.rs`: legacy flat layout.
                 return Ok(SubmissionTarget {
                     chapter: stem.to_string(),
                     step_key: None,

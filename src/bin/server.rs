@@ -62,7 +62,7 @@ struct PlaygroundTemplate {
     starter: String,
 }
 
-/// Template for the cheatsheet page — just renders pre-built HTML
+/// Template for the cheatsheet page. Just renders pre-built HTML
 /// produced from `docs/cheatsheet.md` at startup.
 #[derive(Template)]
 #[template(path = "cheatsheet.html")]
@@ -685,6 +685,7 @@ async fn render_exercise_page(
                         completed: status.completed,
                         perfected: status.perfected,
                         github_dev_url,
+                        hints_html: code.hints_html.clone(),
                     },
                 });
                 prev_was_note = false;
@@ -1141,7 +1142,7 @@ struct TestResult {
 }
 
 /// Proxy handler: forwards the editor's source to play.rust-lang.org and
-/// returns the JSON. We intentionally keep this thin — the upstream
+/// returns the JSON. We intentionally keep this thin: the upstream
 /// already runs untrusted code in a sandbox and enforces its own rate
 /// limits, so we just pass status codes back through.
 async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, StatusCode> {
@@ -1302,7 +1303,7 @@ async fn api_format(Json(req): Json<FormatRequest>) -> Result<Json<FormatRespons
 }
 
 /// Parse `test some::name ... ok` / `... FAILED` lines from cargo test
-/// output. Anything we don't recognise is ignored, which is fine — the
+/// output. Anything we don't recognise is ignored, which is fine: the
 /// raw stdout is forwarded too, so the UI can still show it.
 fn parse_test_results(stdout: &str) -> Vec<TestResult> {
     let mut out = Vec::new();
@@ -1322,7 +1323,7 @@ fn parse_test_results(stdout: &str) -> Vec<TestResult> {
         let passed = match status.trim() {
             "ok" => true,
             "FAILED" => false,
-            // "ignored", "bench", etc. — skip.
+            // "ignored", "bench", etc.: skip.
             _ => continue,
         };
         out.push(TestResult {

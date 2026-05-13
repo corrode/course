@@ -81,7 +81,7 @@ PORT=5432
 
 A raw string starts with `r` and zero or more `#`s, then a quote. It
 ends with the matching closing quote and `#`s. Inside, backslashes and
-quotes are literal — no escape sequences. Use more `#`s on each side if
+quotes are literal: no escape sequences. Use more `#`s on each side if
 the content itself contains `"#`.
 
 ## Useful from the standard library

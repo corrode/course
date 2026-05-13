@@ -9,8 +9,8 @@ already have the tools you need: structs, enums, iterators, `Option`,
 `Result`, vectors, and strings. The fun part is putting them together.
 
 From this chapter onward the files get longer, and the in-browser editor
-starts feeling cramped. The **Open in VS Code** button above the editor
-opens this file on [github.dev](https://github.dev/) — a full
+starts feeling cramped. The **Open in  Web Editor** button above the editor
+opens this file on [github.dev](https://github.dev/): a full
 browser-based VS Code with proper find-in-file, multi-cursor, and the
 rest of the keyboard shortcuts you'd expect. Clone the repo locally if
 you want `rust-analyzer` and on-save formatting.

@@ -36,7 +36,7 @@ let len = maybe_str.map_or(0, |s| s.len());   // transform-or-default
 
 ### A note on `|x| ...` (closures)
 
-Those `|s| s.to_uppercase()` and `|s| s.len()` bits are *closures* —
+Those `|s| s.to_uppercase()` and `|s| s.len()` bits are *closures*:
 anonymous functions you can pass as arguments. The pipes hold the
 parameters; everything after them is the body:
 

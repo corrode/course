@@ -1,7 +1,5 @@
 # Hints
 
-Tap a hint at a time. Each one is one notch more specific.
-
 ## `number_to_string`
 
 1. Every type that implements `Display` (and `u32` does) can be turned into
@@ -12,7 +10,7 @@ Tap a hint at a time. Each one is one notch more specific.
 
 1. The maths is `price + price * (tax_rate / 100.0)`.
 2. `price` is `u32` and `tax_rate` is `f64`. You can't multiply them
-   directly — cast `price` with `as f64` first.
+   directly. Cast `price` with `as f64` first.
 3. To go back to `u32` for the return value, *round* (don't truncate).
    `f64::round` then `as u32` gives you the rounded integer that the
    `108` test expects.

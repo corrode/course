@@ -9,7 +9,7 @@ renamed module, etc.).
 
 Two things in one crate:
 
-1. **A course** — `examples/NN_<slug>/` chapters that learners read,
+1. **A course**: `examples/NN_<slug>/` chapters that learners read,
    edit, and run. This is what most edits target.
 2. **A small Axum server + CLI** that hosts the same exercises in a
    browser and tracks per-participant progress against a SQLite
@@ -59,7 +59,7 @@ course/
 Each chapter is a directory `NN_<slug>/`. The leading `NN_` is the
 chapter number (zero-padded), the slug is concept-first
 (`07_option`, `11_iterators`). The directory name is the *canonical
-key* — it's what the database stores as the chapter half of
+key*. It's what the database stores as the chapter half of
 `submissions.exercise_name` and what the CLI prints. Renaming a chapter
 requires a SQL migration that rewrites `submissions.exercise_name` (see
 `migrations/004_*.sql` and `migrations/005_*.sql` for the chained
@@ -154,7 +154,7 @@ Axum 0.8, askama 0.13, sqlx 0.8 (SQLite). One `AppState` holds:
 
 - `pool: SqlitePool`
 - `admin_token: String` (from `CORRODE_ADMIN_TOKEN` env var)
-- `exercises: Arc<Vec<Exercise>>` — parsed once at startup by
+- `exercises: Arc<Vec<Exercise>>`, parsed once at startup by
   `exercises::load("examples/")`. Hot-reload is not implemented;
   restart the server after editing chapter content.
 
@@ -162,24 +162,24 @@ Axum 0.8, askama 0.13, sqlx 0.8 (SQLite). One `AppState` holds:
 
 Web (HTML, Askama):
 
-- `GET  /`                                 — landing + registration form
-- `POST /register`                         — web registration, redirects to `/dashboard/{ulid}`
-- `GET  /dashboard/{ulid}`                 — participant dashboard
-- `GET  /exercise/{slug}`                  — public, no progress
-- `GET  /exercise/{ulid}/{slug}`           — participant view (with progress)
-- `GET  /playground`                       — standalone scratchpad
-- `GET  /cheatsheet`                       — renders `docs/cheatsheet.md`
-- `GET  /cheatsheet/fragment`              — same body without the chrome (for the modal)
-- `GET  /admin?token=…`                    — admin dashboard
+- `GET  /`: landing + registration form
+- `POST /register`: web registration, redirects to `/dashboard/{ulid}`
+- `GET  /dashboard/{ulid}`: participant dashboard
+- `GET  /exercise/{slug}`: public, no progress
+- `GET  /exercise/{ulid}/{slug}`: participant view (with progress)
+- `GET  /playground`: standalone scratchpad
+- `GET  /cheatsheet`: renders `docs/cheatsheet.md`
+- `GET  /cheatsheet/fragment`: same body without the chrome (for the modal)
+- `GET  /admin?token=…`: admin dashboard
 - `DELETE /admin/remove-participant/{ulid}?token=…`
 
 JSON API (consumed by the CLI):
 
-- `POST /api/register`                     — `RegistrationRequest` → `RegistrationResponse`
-- `POST /api/submit`                       — `SubmissionRequest` → status code
-- `GET  /api/status/{ulid}`                — `ProgressResponse`
-- `POST /api/run`                          — proxies to play.rust-lang.org
-- `POST /api/format`                       — proxies to play.rust-lang.org
+- `POST /api/register`: `RegistrationRequest` → `RegistrationResponse`
+- `POST /api/submit`: `SubmissionRequest` → status code
+- `GET  /api/status/{ulid}`: `ProgressResponse`
+- `POST /api/run`: proxies to play.rust-lang.org
+- `POST /api/format`: proxies to play.rust-lang.org
 
 `exercise.html` looks up by either `slug` or `file_stem`, so both
 `/exercise/strings_and_chars` and `/exercise/02_strings_and_chars`
@@ -198,13 +198,13 @@ are rewritten to a friendlier message before being shown to learners.
 
 Invoked as `cargo course …` (cargo's `cargo-<name>` shim):
 
-- `init [--token T]` — register and save the token to a local file.
-- `submit [FILE] [--pedantic] [--all]` — run `cargo test --example`,
+- `init [--token T]`: register and save the token to a local file.
+- `submit [FILE] [--pedantic] [--all]`: run `cargo test --example`,
   optionally `cargo fmt --check` and `cargo clippy -- -Dwarnings`,
   POST to `/api/submit`.
-- `status` — `GET /api/status/{token}`, print a small table.
-- `open` — open the dashboard in the browser.
-- `token` — print the saved token.
+- `status`: `GET /api/status/{token}`, print a small table.
+- `open`: open the dashboard in the browser.
+- `token`: print the saved token.
 
 Server URL comes from `CORRODE_SERVER_URL` (default
 `http://localhost:3000`).
@@ -213,10 +213,10 @@ Server URL comes from `CORRODE_SERVER_URL` (default
 
 Two modules:
 
-- `types` — `Name` and `Token` newtypes (validated at construction),
+- `types`: `Name` and `Token` newtypes (validated at construction),
   plus the API DTOs (`RegistrationRequest`, `SubmissionRequest`,
   `ProgressResponse`, etc.). Shared between server and CLI.
-- `exercises` — startup-time scan of `examples/`:
+- `exercises`: startup-time scan of `examples/`:
   - `scan_dir(&Path) -> Vec<Exercise>` walks `NN_<slug>/` directories,
     detects single-step vs. multi-step shape, parses each code file
     (`extract_inner_doc`, `split_title`, `strip_inner_doc`), scans
@@ -226,7 +226,7 @@ Two modules:
   - `RenderItem` / `RenderKind` types live here too (rather than in
     the server binary) so the `exercise.html` template can
     pattern-match on them via Askama's fully-qualified path syntax.
-  - `render_markdown` — pulldown-cmark with the html feature enabled.
+  - `render_markdown`: pulldown-cmark with the html feature enabled.
   - Tests at the bottom verify scanning against the real `examples/`
     directory for both single-step and multi-step shapes.
 
@@ -288,16 +288,16 @@ perfected" means every step has a perfected submission.
 
 Applied in order at startup by `sqlx::migrate!`:
 
-1. `001_initial.sql` — initial schema.
-2. `002_allow_multiple_submissions.sql` — drop `UNIQUE` constraint.
-3. `003_add_submission_hash.sql` — `content_hash` column + index.
-4. `004_rename_chapter_slugs.sql` — seven chapter directory renames
+1. `001_initial.sql`: initial schema.
+2. `002_allow_multiple_submissions.sql`: drop `UNIQUE` constraint.
+3. `003_add_submission_hash.sql`: `content_hash` column + index.
+4. `004_rename_chapter_slugs.sql`: seven chapter directory renames
    in the first audit pass.
-5. `005_concept_first_chapter_slugs.sql` — eight more renames in the
+5. `005_concept_first_chapter_slugs.sql`: eight more renames in the
    "titles foreground the Rust idea" pass. Chained off both the
    original keys *and* the migration-004 intermediate names so any
    database state ends up consistent.
-6. `006_multi_step_submissions.sql` — wipes `submissions` for the
+6. `006_multi_step_submissions.sql`: wipes `submissions` for the
    multi-step refactor. The `exercise_name` column shape now varies
    (chapter slug vs. `<chapter>/<step>`); since existing data was
    throwaway, we delete instead of backfilling.
@@ -310,14 +310,14 @@ existing ones.
 Askama 0.13. Each `.html` file maps to one of the structs in
 `server.rs`:
 
-- `base.html`              — shared layout (topbar, footer)
-- `landing.html`           — registration form
-- `dashboard.html`         — participant view, exercise list, stats
-- `exercise.html`          — prose + editor + run/test panels +
-                            chapter list at the bottom
-- `playground.html`        — standalone scratchpad
-- `cheatsheet.html`        — renders the cheatsheet markdown
-- `admin.html`             — admin dashboard
+- `base.html`: shared layout (topbar, footer)
+- `landing.html`: registration form
+- `dashboard.html`: participant view, exercise list, stats
+- `exercise.html`: prose + editor + run/test panels +
+  chapter list at the bottom
+- `playground.html`: standalone scratchpad
+- `cheatsheet.html`: renders the cheatsheet markdown
+- `admin.html`: admin dashboard
 
 The chapter picker / "next chapter" navigation is driven by the
 `dots: Vec<ProgressDot>` field on `ExerciseTemplate`, which is built
@@ -328,21 +328,20 @@ submissions.
 
 Served by `tower-http` `ServeDir` at `/static/*`. Notable:
 
-- `static/quiz.html` — the chapter 18 quiz. Self-contained HTML/JS;
+- `static/quiz.html`: the chapter 18 quiz. Self-contained HTML/JS;
   no backend involvement. The chapter's `main.rs` is essentially a
   pointer to this file.
-- `static/assets/` — logos, screenshots.
-- `static/fonts/` — bundled webfonts.
+- `static/assets/`: logos, screenshots.
+- `static/fonts/`: bundled webfonts.
 
 ## Documentation (`docs/`)
 
-- `architecture.md`        — this file.
-- `learner_journey.md`     — chapter-by-chapter audit + cumulative
-                            changelog. The canonical record of
-                            "what's been fixed and why." Append new
-                            audit passes; don't rewrite history.
-- `cheatsheet.md`          — rendered by the server at `/cheatsheet`.
-- `quiz_module_plan.md`    — design notes for chapter 18's quiz.
+- `architecture.md`: this file.
+- `learner_journey.md`: chapter-by-chapter audit + cumulative
+  changelog. The canonical record of "what's been fixed and why."
+  Append new audit passes; don't rewrite history.
+- `cheatsheet.md`: rendered by the server at `/cheatsheet`.
+- `quiz_module_plan.md`: design notes for chapter 18's quiz.
 
 ## Conventions for future edits
 

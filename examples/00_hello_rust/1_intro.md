@@ -48,7 +48,7 @@ All exercises can be completed by using the **standard library only**, no extern
 
 You can use the inline editor or your own IDE to complete the exercises.
 There are three roughly equivalent ways to work through the course, and
-they mix freely — most people end up doing all three at some point:
+they mix freely. Most people end up doing all three at some point:
 
 - **Right here in the browser.** Each chapter has a built-in editor with
   Rust syntax highlighting and a run button. Just type and hit "Run."
@@ -62,7 +62,7 @@ they mix freely — most people end up doing all three at some point:
 If you want the server to remember your progress across exercises
 (passes, perfect runs, the lot), there's a small `cargo course` CLI in
 the repo for submitting solutions from the command line. It's strictly
-optional — the in-browser flow already tracks progress for you, and if
+optional. The in-browser flow already tracks progress for you, and if
 you're working through this on your own you can ignore the CLI
 entirely. The [`README`](https://github.com/corrode/course#optional-progress-tracking-with-the-cli)
 has the details.
@@ -84,7 +84,7 @@ And finally, a few habits worth carrying through:
   about type errors without running anything. Catching one mistake at
   a time is much easier than catching ten.
 - **Read the error messages slowly.** Rust's compiler is unusually
-  helpful — the `help:` and `note:` lines often tell you exactly what
+  helpful: the `help:` and `note:` lines often tell you exactly what
   to change. A failing test is a friendly nudge, not an obstacle.
 - **It's fine to look things up.**
   [`std` docs](https://doc.rust-lang.org/std/) and
@@ -95,9 +95,9 @@ And finally, a few habits worth carrying through:
   Press `?` from any page to open it as a modal, `Esc` to close. The
   Cheatsheet button in the top bar does the same thing.
 - **Use the [Playground](/playground) for side experiments.** Anything
-  you don't want to clutter an exercise file with — a `println!` to
+  you don't want to clutter an exercise file with (a `println!` to
   check what `"café".len()` returns, a quick `match` to make sure you
-  remember the syntax — belongs there. The contents are saved to your
+  remember the syntax) belongs there. The contents are saved to your
   browser and survive reloads.
 
 And now, without further ado, let's jump right in. 

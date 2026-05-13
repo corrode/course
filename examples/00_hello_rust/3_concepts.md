@@ -36,7 +36,7 @@ let greeting: String = format!("Hello, {name}!");
 
 A few things worth noticing:
 
-- The `{name}` inside the string is a **captured identifier** — Rust
+- The `{name}` inside the string is a **captured identifier**. Rust
   pulls the variable from the surrounding scope. (Pre-2021 code uses
   `format!("Hello, {}!", name)` instead; both still work.)
 - The macro returns a `String`, ready to return from your function.
@@ -49,8 +49,8 @@ A few things worth noticing:
 You won't memorize Rust's `std` library, and you don't need to. 
 Two things you can open in separate tabs right now:
 
-- [`std::fmt`](https://doc.rust-lang.org/std/fmt/) — contains everything the
+- [`std::fmt`](https://doc.rust-lang.org/std/fmt/) contains everything the
   formatting macros can do (padding, precision, hex, debug output…).
-- [`str`](https://doc.rust-lang.org/std/primitive.str.html) —
+- [`str`](https://doc.rust-lang.org/std/primitive.str.html):
   the inventory of operations available on any `&str`.
 
