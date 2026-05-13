@@ -93,18 +93,4 @@ if let Ok(n) = safe_divide(10.0, 2.0) {
 `?` operator (chapter 13) will let you chain fallible operations without
 the boilerplate.
 
-## Useful from the standard library
 
-- [`Result::is_ok`](https://doc.rust-lang.org/std/result/enum.Result.html#method.is_ok)
-  and [`Result::is_err`](https://doc.rust-lang.org/std/result/enum.Result.html#method.is_err)
-  for quick boolean checks (handy in tests).
-- [`Result::unwrap_or`](https://doc.rust-lang.org/std/result/enum.Result.html#method.unwrap_or)
-  returns the value or a fallback, ignoring the error.
-- [`Result::map`](https://doc.rust-lang.org/std/result/enum.Result.html#method.map)
-  transforms the `Ok` value while leaving `Err` alone.
-- [`Result::map_err`](https://doc.rust-lang.org/std/result/enum.Result.html#method.map_err)
-  transforms the error type. Useful when bubbling errors up across layers.
-- [`Result::ok`](https://doc.rust-lang.org/std/result/enum.Result.html#method.ok)
-  converts `Result<T, E>` to `Option<T>`, throwing away the error info.
-- [`str::parse`](https://doc.rust-lang.org/std/primitive.str.html#method.parse)
-  is the canonical "may fail to parse" function. Returns `Result`.
