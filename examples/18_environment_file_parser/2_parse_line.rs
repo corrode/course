@@ -17,27 +17,22 @@ fn parse_env_line(line: &str) -> Result<(String, String), ParseError> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_env_line() {
-        assert_eq!(
-            parse_env_line("PORT=8080"),
-            Ok(("PORT".to_string(), "8080".to_string()))
-        );
-        assert_eq!(
-            parse_env_line("HOST=localhost"),
-            Ok(("HOST".to_string(), "localhost".to_string()))
-        );
-        assert!(parse_env_line("INVALID").is_err());
-        assert!(parse_env_line("=value").is_err());
-        assert!(parse_env_line("KEY=").is_err());
-        // Surrounding whitespace is trimmed, not rejected.
-        assert_eq!(
-            parse_env_line("KEY = value"),
-            Ok(("KEY".to_string(), "value".to_string()))
-        );
-    }
+#[test]
+fn test_parse_env_line() {
+    assert_eq!(
+        parse_env_line("PORT=8080"),
+        Ok(("PORT".to_string(), "8080".to_string()))
+    );
+    assert_eq!(
+        parse_env_line("HOST=localhost"),
+        Ok(("HOST".to_string(), "localhost".to_string()))
+    );
+    assert!(parse_env_line("INVALID").is_err());
+    assert!(parse_env_line("=value").is_err());
+    assert!(parse_env_line("KEY=").is_err());
+    // Surrounding whitespace is trimmed, not rejected.
+    assert_eq!(
+        parse_env_line("KEY = value"),
+        Ok(("KEY".to_string(), "value".to_string()))
+    );
 }

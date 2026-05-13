@@ -23,13 +23,8 @@ impl User {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_display_name() {
-        let user = User::new("alice@example.com".to_string(), "Alice".to_string());
-        assert_eq!(user.display_name(), "Alice (alice@example.com)");
-    }
+#[test]
+fn test_display_name() {
+    let user = User::new("alice@example.com".to_string(), "Alice".to_string());
+    assert_eq!(user.display_name(), "Alice (alice@example.com)");
 }

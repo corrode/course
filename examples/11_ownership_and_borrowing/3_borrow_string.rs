@@ -5,16 +5,11 @@ fn borrow_string(s: &str) -> usize {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_borrow_string() {
-        let s = "The Matrix has you";
-        let len = borrow_string(s);
-        // s is still valid here because we only borrowed it
-        assert_eq!(len, 18);
-        assert_eq!(s, "The Matrix has you"); // Still here!
-    }
+#[test]
+fn test_borrow_string() {
+    let s = "The Matrix has you";
+    let len = borrow_string(s);
+    // s is still valid here because we only borrowed it
+    assert_eq!(len, 18);
+    assert_eq!(s, "The Matrix has you"); // Still here!
 }

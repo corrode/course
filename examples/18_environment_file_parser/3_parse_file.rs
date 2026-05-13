@@ -25,13 +25,9 @@ fn parse_env_file(content: &str) -> Result<HashMap<String, String>, ParseError> 
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_env_file() {
-        let content = r#"
+#[test]
+fn test_parse_env_file() {
+    let content = r#"
 # Database configuration
 HOST=localhost
 PORT=5432
@@ -40,10 +36,9 @@ DATABASE=myapp
 # Empty line above should be ignored
 DEBUG=true
 "#;
-        let env = parse_env_file(content).unwrap();
-        assert_eq!(env.get("HOST"), Some(&"localhost".to_string()));
-        assert_eq!(env.get("PORT"), Some(&"5432".to_string()));
-        assert_eq!(env.get("DEBUG"), Some(&"true".to_string()));
-        assert_eq!(env.len(), 4);
-    }
+    let env = parse_env_file(content).unwrap();
+    assert_eq!(env.get("HOST"), Some(&"localhost".to_string()));
+    assert_eq!(env.get("PORT"), Some(&"5432".to_string()));
+    assert_eq!(env.get("DEBUG"), Some(&"true".to_string()));
+    assert_eq!(env.len(), 4);
 }

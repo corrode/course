@@ -4,17 +4,12 @@ fn calculate_total_with_tax(price: u32, tax_rate: f64) -> u32 {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_calculate_total_with_tax() {
-        assert_eq!(calculate_total_with_tax(100, 8.5), 108);
-        assert_eq!(calculate_total_with_tax(50, 10.0), 55);
-        // Pin down the rounding behaviour: 100 + 8.4% = 108.4, which should
-        // round to 108 (not truncate to anything else). If you used `as u32`
-        // alone, this case may surprise you; try `.round()` first.
-        assert_eq!(calculate_total_with_tax(100, 8.4), 108);
-    }
+#[test]
+fn test_calculate_total_with_tax() {
+    assert_eq!(calculate_total_with_tax(100, 8.5), 108);
+    assert_eq!(calculate_total_with_tax(50, 10.0), 55);
+    // Pin down the rounding behaviour: 100 + 8.4% = 108.4, which should
+    // round to 108 (not truncate to anything else). If you used `as u32`
+    // alone, this case may surprise you; try `.round()` first.
+    assert_eq!(calculate_total_with_tax(100, 8.4), 108);
 }

@@ -28,23 +28,18 @@ impl User {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_can_access_premium() {
+    let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
 
-    #[test]
-    fn test_can_access_premium() {
-        let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
+    // Not enough logins yet
+    assert_eq!(user.can_access_premium(), false);
 
-        // Not enough logins yet
-        assert_eq!(user.can_access_premium(), false);
-
-        // Record enough logins
-        for _ in 0..5 {
-            user.record_login();
-        }
-
-        // Now has premium access
-        assert_eq!(user.can_access_premium(), true);
+    // Record enough logins
+    for _ in 0..5 {
+        user.record_login();
     }
+
+    // Now has premium access
+    assert_eq!(user.can_access_premium(), true);
 }

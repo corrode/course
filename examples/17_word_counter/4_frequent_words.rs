@@ -13,16 +13,11 @@ fn frequent_words(text: &str, min_count: usize) -> Vec<String> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_frequent_words() {
-        let text = "one two two three three three";
-        let frequent = frequent_words(text, 2);
-        assert!(frequent.contains(&"two".to_string()));
-        assert!(frequent.contains(&"three".to_string()));
-        assert!(!frequent.contains(&"one".to_string()));
-    }
+#[test]
+fn test_frequent_words() {
+    let text = "one two two three three three";
+    let frequent = frequent_words(text, 2);
+    assert!(frequent.contains(&"two".to_string()));
+    assert!(frequent.contains(&"three".to_string()));
+    assert!(!frequent.contains(&"one".to_string()));
 }

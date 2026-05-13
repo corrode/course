@@ -20,14 +20,9 @@ fn status_code(status: HttpStatus) -> u16 {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_status_code() {
-        assert_eq!(status_code(HttpStatus::Ok), 200);
-        assert_eq!(status_code(HttpStatus::NotFound), 404);
-        assert_eq!(status_code(HttpStatus::InternalServerError), 500);
-    }
+#[test]
+fn test_status_code() {
+    assert_eq!(status_code(HttpStatus::Ok), 200);
+    assert_eq!(status_code(HttpStatus::NotFound), 404);
+    assert_eq!(status_code(HttpStatus::InternalServerError), 500);
 }

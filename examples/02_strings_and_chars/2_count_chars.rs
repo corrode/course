@@ -7,14 +7,9 @@ fn count_chars(text: &str) -> usize {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_count_chars() {
-        assert_eq!(count_chars("hello"), 5);
-        assert_eq!(count_chars("rust"), 4);
-        assert_eq!(count_chars(""), 0);
-    }
+#[test]
+fn test_count_chars() {
+    assert_eq!(count_chars("hello"), 5);
+    assert_eq!(count_chars("rust"), 4);
+    assert_eq!(count_chars(""), 0);
 }

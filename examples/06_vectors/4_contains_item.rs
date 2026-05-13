@@ -11,14 +11,9 @@ fn contains_item(list: &Vec<String>, item: &str) -> bool {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_contains_item() {
-        let list = vec!["apple".to_string(), "banana".to_string()];
-        assert_eq!(contains_item(&list, "apple"), true);
-        assert_eq!(contains_item(&list, "orange"), false);
-    }
+#[test]
+fn test_contains_item() {
+    let list = vec!["apple".to_string(), "banana".to_string()];
+    assert_eq!(contains_item(&list, "apple"), true);
+    assert_eq!(contains_item(&list, "orange"), false);
 }

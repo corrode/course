@@ -6,14 +6,9 @@ fn create_default_config() -> HashMap<String, String> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_create_default_config() {
-        let config = create_default_config();
-        assert_eq!(config.get("host"), Some(&"localhost".to_string()));
-        assert_eq!(config.get("port"), Some(&"8080".to_string()));
-    }
+#[test]
+fn test_create_default_config() {
+    let config = create_default_config();
+    assert_eq!(config.get("host"), Some(&"localhost".to_string()));
+    assert_eq!(config.get("port"), Some(&"8080".to_string()));
 }

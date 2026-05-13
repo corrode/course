@@ -9,22 +9,17 @@ impl PasswordGenerator {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_generate_length() {
+    let password = PasswordGenerator::generate_secure_password(12);
+    assert_eq!(password.chars().count(), 12);
+}
 
-    #[test]
-    fn test_generate_length() {
-        let password = PasswordGenerator::generate_secure_password(12);
-        assert_eq!(password.chars().count(), 12);
-    }
-
-    #[test]
-    fn test_generate_has_all_classes() {
-        let password = PasswordGenerator::generate_secure_password(16);
-        assert!(password.chars().any(|c| c.is_ascii_uppercase()));
-        assert!(password.chars().any(|c| c.is_ascii_lowercase()));
-        assert!(password.chars().any(|c| c.is_ascii_digit()));
-        assert!(password.chars().any(|c| "!@#$%^&*".contains(c)));
-    }
+#[test]
+fn test_generate_has_all_classes() {
+    let password = PasswordGenerator::generate_secure_password(16);
+    assert!(password.chars().any(|c| c.is_ascii_uppercase()));
+    assert!(password.chars().any(|c| c.is_ascii_lowercase()));
+    assert!(password.chars().any(|c| c.is_ascii_digit()));
+    assert!(password.chars().any(|c| "!@#$%^&*".contains(c)));
 }

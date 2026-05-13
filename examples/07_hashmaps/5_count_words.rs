@@ -21,16 +21,11 @@ fn count_words(words: &[&str]) -> HashMap<String, usize> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_count_words() {
-        let words = ["hello", "world", "hello", "rust"];
-        let counts = count_words(&words);
-        assert_eq!(counts.get("hello"), Some(&2));
-        assert_eq!(counts.get("world"), Some(&1));
-        assert_eq!(counts.get("rust"), Some(&1));
-    }
+#[test]
+fn test_count_words() {
+    let words = ["hello", "world", "hello", "rust"];
+    let counts = count_words(&words);
+    assert_eq!(counts.get("hello"), Some(&2));
+    assert_eq!(counts.get("world"), Some(&1));
+    assert_eq!(counts.get("rust"), Some(&1));
 }

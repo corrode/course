@@ -5,14 +5,9 @@ fn get_user_info() -> (String, u32) {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_user_info() {
-        let (name, age) = get_user_info();
-        assert_eq!(name, "Alice");
-        assert_eq!(age, 25);
-    }
+#[test]
+fn test_get_user_info() {
+    let (name, age) = get_user_info();
+    assert_eq!(name, "Alice");
+    assert_eq!(age, 25);
 }

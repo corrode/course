@@ -27,21 +27,16 @@ impl User {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_record_login() {
+    let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
 
-    #[test]
-    fn test_record_login() {
-        let mut user = User::new("alice@example.com".to_string(), "Alice".to_string());
+    user.record_login();
+    assert_eq!(user.login_count, 1);
+    assert_eq!(user.is_verified, true);
 
-        user.record_login();
-        assert_eq!(user.login_count, 1);
-        assert_eq!(user.is_verified, true);
-
-        user.record_login();
-        assert_eq!(user.login_count, 2);
-        // Verification stays on across subsequent logins (idempotent).
-        assert!(user.is_verified);
-    }
+    user.record_login();
+    assert_eq!(user.login_count, 2);
+    // Verification stays on across subsequent logins (idempotent).
+    assert!(user.is_verified);
 }

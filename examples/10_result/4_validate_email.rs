@@ -10,13 +10,8 @@ fn validate_email(email: &str) -> Result<&str, &'static str> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_validate_email() {
-        assert_eq!(validate_email("user@example.com"), Ok("user@example.com"));
-        assert!(validate_email("invalid-email").is_err());
-    }
+#[test]
+fn test_validate_email() {
+    assert_eq!(validate_email("user@example.com"), Ok("user@example.com"));
+    assert!(validate_email("invalid-email").is_err());
 }

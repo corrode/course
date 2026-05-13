@@ -3,18 +3,13 @@ fn find_user_by_id(users: &[(u32, String)], id: u32) -> Option<&str> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_find_user_by_id() {
-        let users = [
-            (1, "alice".to_string()),
-            (2, "bob".to_string()),
-            (3, "charlie".to_string()),
-        ];
-        assert_eq!(find_user_by_id(&users, 2), Some("bob"));
-        assert_eq!(find_user_by_id(&users, 99), None);
-    }
+#[test]
+fn test_find_user_by_id() {
+    let users = [
+        (1, "alice".to_string()),
+        (2, "bob".to_string()),
+        (3, "charlie".to_string()),
+    ];
+    assert_eq!(find_user_by_id(&users, 2), Some("bob"));
+    assert_eq!(find_user_by_id(&users, 99), None);
 }

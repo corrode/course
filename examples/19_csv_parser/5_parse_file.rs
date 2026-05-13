@@ -16,16 +16,11 @@ fn parse_csv_file(content: &str) -> (Vec<String>, Vec<Vec<String>>) {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_csv_file() {
-        let content = "name,age,city\nAlice,30,Boston\nBob,25,Seattle";
-        let (headers, rows) = parse_csv_file(content);
-        assert_eq!(headers, vec!["name", "age", "city"]);
-        assert_eq!(rows.len(), 2);
-        assert_eq!(rows[0], vec!["Alice", "30", "Boston"]);
-    }
+#[test]
+fn test_parse_csv_file() {
+    let content = "name,age,city\nAlice,30,Boston\nBob,25,Seattle";
+    let (headers, rows) = parse_csv_file(content);
+    assert_eq!(headers, vec!["name", "age", "city"]);
+    assert_eq!(rows.len(), 2);
+    assert_eq!(rows[0], vec!["Alice", "30", "Boston"]);
 }

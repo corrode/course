@@ -14,14 +14,9 @@ impl User {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_new() {
-        let user = User::new("alice@example.com".to_string(), "Alice".to_string());
-        assert_eq!(user.login_count, 0);
-        assert_eq!(user.is_verified, false);
-    }
+#[test]
+fn test_new() {
+    let user = User::new("alice@example.com".to_string(), "Alice".to_string());
+    assert_eq!(user.login_count, 0);
+    assert_eq!(user.is_verified, false);
 }

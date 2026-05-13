@@ -8,14 +8,9 @@ fn select_usernames_starting_with_a(usernames: Vec<&str>) -> Vec<&str> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_select_usernames_starting_with_a() {
-        let users = vec!["alice", "admin", "bob", "anonymous", "charlie"];
-        let active = select_usernames_starting_with_a(users);
-        assert_eq!(active, vec!["alice", "admin", "anonymous"]);
-    }
+#[test]
+fn test_select_usernames_starting_with_a() {
+    let users = vec!["alice", "admin", "bob", "anonymous", "charlie"];
+    let active = select_usernames_starting_with_a(users);
+    assert_eq!(active, vec!["alice", "admin", "anonymous"]);
 }

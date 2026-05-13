@@ -3,11 +3,11 @@
 // To change it, edit (or add/remove) those step files and re-run `cargo build`.
 #![allow(dead_code, unused_imports)]
 
-#[path = "2_calculate.rs"]
-mod _2_calculate;
-#[path = "3_settings.rs"]
-mod _3_settings;
+#[path = "3_calculate.rs"]
+mod _3_calculate;
 #[path = "4_status.rs"]
 mod _4_status;
+#[path = "5_settings.rs"]
+mod _5_settings;
 
 fn main() {}

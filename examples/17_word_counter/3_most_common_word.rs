@@ -20,15 +20,10 @@ fn most_common_word(text: &str) -> Option<(String, usize)> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_most_common_word() {
-        let text = "apple banana apple cherry apple";
-        let (word, count) = most_common_word(text).unwrap();
-        assert_eq!(word, "apple");
-        assert_eq!(count, 3);
-    }
+#[test]
+fn test_most_common_word() {
+    let text = "apple banana apple cherry apple";
+    let (word, count) = most_common_word(text).unwrap();
+    assert_eq!(word, "apple");
+    assert_eq!(count, 3);
 }

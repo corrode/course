@@ -9,20 +9,15 @@ fn find_rust_files(files: &[&str]) -> Vec<String> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_find_rust_files() {
-        let files = &[
-            "main.rs",
-            "README.md",
-            "lib.rs",
-            "package.json",
-            "config.rs",
-        ];
-        let rust_files = find_rust_files(files);
-        assert_eq!(rust_files, vec!["main.rs", "lib.rs", "config.rs"]);
-    }
+#[test]
+fn test_find_rust_files() {
+    let files = &[
+        "main.rs",
+        "README.md",
+        "lib.rs",
+        "package.json",
+        "config.rs",
+    ];
+    let rust_files = find_rust_files(files);
+    assert_eq!(rust_files, vec!["main.rs", "lib.rs", "config.rs"]);
 }

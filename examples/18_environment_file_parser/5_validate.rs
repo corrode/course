@@ -6,17 +6,12 @@ fn validate_required_vars(env: &HashMap<String, String>, required: &[&str]) -> R
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_validate_required_vars() {
+    let mut env = HashMap::new();
+    env.insert("HOST".to_string(), "localhost".to_string());
+    env.insert("PORT".to_string(), "8080".to_string());
 
-    #[test]
-    fn test_validate_required_vars() {
-        let mut env = HashMap::new();
-        env.insert("HOST".to_string(), "localhost".to_string());
-        env.insert("PORT".to_string(), "8080".to_string());
-
-        assert!(validate_required_vars(&env, &["HOST", "PORT"]).is_ok());
-        assert!(validate_required_vars(&env, &["HOST", "MISSING"]).is_err());
-    }
+    assert!(validate_required_vars(&env, &["HOST", "PORT"]).is_ok());
+    assert!(validate_required_vars(&env, &["HOST", "MISSING"]).is_err());
 }

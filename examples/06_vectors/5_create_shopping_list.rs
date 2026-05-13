@@ -8,15 +8,10 @@ fn create_shopping_list(items: &[&str]) -> Vec<String> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_create_shopping_list() {
-        let items = ["bread", "milk", "eggs"];
-        let list = create_shopping_list(&items);
-        assert_eq!(list.len(), 3);
-        assert_eq!(list[0], "bread");
-    }
+#[test]
+fn test_create_shopping_list() {
+    let items = ["bread", "milk", "eggs"];
+    let list = create_shopping_list(&items);
+    assert_eq!(list.len(), 3);
+    assert_eq!(list[0], "bread");
 }

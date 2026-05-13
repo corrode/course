@@ -3,13 +3,13 @@
 // To change it, edit (or add/remove) those step files and re-run `cargo build`.
 #![allow(dead_code, unused_imports)]
 
-#[path = "2_ferris_mood.rs"]
-mod _2_ferris_mood;
-#[path = "3_factorial.rs"]
-mod _3_factorial;
-#[path = "4_count_evens.rs"]
-mod _4_count_evens;
-#[path = "5_digit_count.rs"]
-mod _5_digit_count;
+#[path = "3_ferris_mood.rs"]
+mod _3_ferris_mood;
+#[path = "4_factorial.rs"]
+mod _4_factorial;
+#[path = "5_count_evens.rs"]
+mod _5_count_evens;
+#[path = "6_digit_count.rs"]
+mod _6_digit_count;
 
 fn main() {}

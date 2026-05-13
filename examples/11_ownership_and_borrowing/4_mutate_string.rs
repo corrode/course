@@ -5,14 +5,9 @@ fn mutate_string(s: &mut String) {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_mutate_string() {
-        let mut s = String::from("Ferris");
-        mutate_string(&mut s);
-        assert_eq!(s, "Ferris - now with extra crab");
-    }
+#[test]
+fn test_mutate_string() {
+    let mut s = String::from("Ferris");
+    mutate_string(&mut s);
+    assert_eq!(s, "Ferris - now with extra crab");
 }

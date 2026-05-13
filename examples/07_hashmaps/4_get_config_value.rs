@@ -10,16 +10,11 @@ fn get_config_value(config: &HashMap<String, String>, key: &str) -> String {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_get_config_value() {
+    let mut config = HashMap::new();
+    config.insert("timeout".to_string(), "30".to_string());
 
-    #[test]
-    fn test_get_config_value() {
-        let mut config = HashMap::new();
-        config.insert("timeout".to_string(), "30".to_string());
-
-        assert_eq!(get_config_value(&config, "timeout"), "30");
-        assert_eq!(get_config_value(&config, "missing"), "default");
-    }
+    assert_eq!(get_config_value(&config, "timeout"), "30");
+    assert_eq!(get_config_value(&config, "missing"), "default");
 }

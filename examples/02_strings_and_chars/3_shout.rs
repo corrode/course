@@ -8,14 +8,9 @@ fn shout(text: &str) -> String {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_shout() {
-        assert_eq!(shout("hello"), "HELLO");
-        assert_eq!(shout("Rust"), "RUST");
-        assert_eq!(shout(""), "");
-    }
+#[test]
+fn test_shout() {
+    assert_eq!(shout("hello"), "HELLO");
+    assert_eq!(shout("Rust"), "RUST");
+    assert_eq!(shout(""), "");
 }

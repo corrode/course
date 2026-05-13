@@ -3,13 +3,13 @@
 // To change it, edit (or add/remove) those step files and re-run `cargo build`.
 #![allow(dead_code, unused_imports)]
 
-#[path = "2_stray_semicolon.rs"]
-mod _2_stray_semicolon;
-#[path = "3_countdown.rs"]
-mod _3_countdown;
-#[path = "4_sum_to.rs"]
-mod _4_sum_to;
-#[path = "5_cap_at.rs"]
-mod _5_cap_at;
+#[path = "3_stray_semicolon.rs"]
+mod _3_stray_semicolon;
+#[path = "4_countdown.rs"]
+mod _4_countdown;
+#[path = "5_sum_to.rs"]
+mod _5_sum_to;
+#[path = "6_cap_at.rs"]
+mod _6_cap_at;
 
 fn main() {}

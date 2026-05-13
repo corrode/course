@@ -5,15 +5,10 @@ fn take_ownership(s: String) -> String {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_take_ownership() {
-        let s = String::from("Rust");
-        let result = take_ownership(s);
-        // Note: s is no longer valid here! It was moved.
-        assert_eq!(result, "Rust - owned by Rust!");
-    }
+#[test]
+fn test_take_ownership() {
+    let s = String::from("Rust");
+    let result = take_ownership(s);
+    // Note: s is no longer valid here! It was moved.
+    assert_eq!(result, "Rust - owned by Rust!");
 }

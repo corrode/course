@@ -29,10 +29,13 @@ Conventions:
 - `.rs` step files start with a `//!` inner doc whose first `# H1`
   becomes the step title; the rest is rendered as prose above that
   step's editor pane. Same convention as today's chapter `main.rs`.
-- Each `.rs` step's tests live in a `#[cfg(test)] mod tests` block
-  inside that file. Step files are self-contained: no
-  `use super::<other_step>::*` between steps. Tests in step N only
-  exercise items defined in step N.
+- Each `.rs` step's tests live as bare `#[test]` functions at the
+  top level of the file, alongside the function under test. The
+  `#[cfg(test)] mod tests { use super::*; ... }` wrapper is only
+  used when the step needs test-only helper items (functions,
+  types) that shouldn't leak into the binary. Step files are
+  self-contained: no `use super::<other_step>::*` between steps.
+  Tests in step N only exercise items defined in step N.
 - The chapter's `main.rs` is generated; contributors never edit it.
   It contains `mod _2_unwrap; mod _4_combinators; fn main() {}` plus
   a `// @generated` header.

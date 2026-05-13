@@ -8,16 +8,11 @@ fn read_config_file(filename: &str) -> Result<String, &'static str> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_read_config_file() {
-        assert_eq!(
-            read_config_file("app.toml"),
-            Ok("config content".to_string())
-        );
-        assert!(read_config_file("").is_err());
-    }
+#[test]
+fn test_read_config_file() {
+    assert_eq!(
+        read_config_file("app.toml"),
+        Ok("config content".to_string())
+    );
+    assert!(read_config_file("").is_err());
 }

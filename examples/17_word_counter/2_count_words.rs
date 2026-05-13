@@ -9,23 +9,18 @@ fn count_words(text: &str) -> HashMap<String, usize> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_count_words() {
+    let text = "hello world hello rust world";
+    let counts = count_words(text);
+    assert_eq!(counts.get("hello"), Some(&2));
+    assert_eq!(counts.get("world"), Some(&2));
+    assert_eq!(counts.get("rust"), Some(&1));
+}
 
-    #[test]
-    fn test_count_words() {
-        let text = "hello world hello rust world";
-        let counts = count_words(text);
-        assert_eq!(counts.get("hello"), Some(&2));
-        assert_eq!(counts.get("world"), Some(&2));
-        assert_eq!(counts.get("rust"), Some(&1));
-    }
-
-    #[test]
-    fn test_count_words_case_insensitive() {
-        let text = "Hello HELLO hello";
-        let counts = count_words(text);
-        assert_eq!(counts.get("hello"), Some(&3));
-    }
+#[test]
+fn test_count_words_case_insensitive() {
+    let text = "Hello HELLO hello";
+    let counts = count_words(text);
+    assert_eq!(counts.get("hello"), Some(&3));
 }

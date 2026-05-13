@@ -8,14 +8,9 @@ fn normalize_emails(emails: Vec<String>) -> Vec<String> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_normalize_emails() {
-        let emails = vec!["Alice@EXAMPLE.COM".to_string(), "BOB@test.ORG".to_string()];
-        let normalized = normalize_emails(emails);
-        assert_eq!(normalized, vec!["alice@example.com", "bob@test.org"]);
-    }
+#[test]
+fn test_normalize_emails() {
+    let emails = vec!["Alice@EXAMPLE.COM".to_string(), "BOB@test.ORG".to_string()];
+    let normalized = normalize_emails(emails);
+    assert_eq!(normalized, vec!["alice@example.com", "bob@test.org"]);
 }

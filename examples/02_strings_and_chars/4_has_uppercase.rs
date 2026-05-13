@@ -8,15 +8,10 @@ fn has_uppercase(text: &str) -> bool {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_has_uppercase() {
-        assert!(has_uppercase("Hello"));
-        assert!(has_uppercase("rustY"));
-        assert!(!has_uppercase("hello"));
-        assert!(!has_uppercase(""));
-    }
+#[test]
+fn test_has_uppercase() {
+    assert!(has_uppercase("Hello"));
+    assert!(has_uppercase("rustY"));
+    assert!(!has_uppercase("hello"));
+    assert!(!has_uppercase(""));
 }

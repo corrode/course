@@ -9,14 +9,9 @@ fn set_config_value(config: &mut HashMap<String, String>, key: &str, value: &str
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_set_config_value() {
-        let mut config = HashMap::new();
-        set_config_value(&mut config, "debug", "true");
-        assert_eq!(config.get("debug"), Some(&"true".to_string()));
-    }
+#[test]
+fn test_set_config_value() {
+    let mut config = HashMap::new();
+    set_config_value(&mut config, "debug", "true");
+    assert_eq!(config.get("debug"), Some(&"true".to_string()));
 }

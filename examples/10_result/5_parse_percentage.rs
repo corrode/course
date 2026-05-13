@@ -18,19 +18,14 @@ fn parse_percentage(input: &str) -> Result<u8, &'static str> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_percentage() {
-        assert_eq!(parse_percentage("0"), Ok(0));
-        assert_eq!(parse_percentage("42"), Ok(42));
-        assert_eq!(parse_percentage("100"), Ok(100));
-        assert_eq!(parse_percentage("75%"), Ok(75));
-        assert!(parse_percentage("101").is_err());
-        assert!(parse_percentage("-1").is_err());
-        assert!(parse_percentage("half").is_err());
-        assert!(parse_percentage("").is_err());
-    }
+#[test]
+fn test_parse_percentage() {
+    assert_eq!(parse_percentage("0"), Ok(0));
+    assert_eq!(parse_percentage("42"), Ok(42));
+    assert_eq!(parse_percentage("100"), Ok(100));
+    assert_eq!(parse_percentage("75%"), Ok(75));
+    assert!(parse_percentage("101").is_err());
+    assert!(parse_percentage("-1").is_err());
+    assert!(parse_percentage("half").is_err());
+    assert!(parse_percentage("").is_err());
 }

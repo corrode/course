@@ -3,14 +3,9 @@ fn first_char(text: &str) -> Option<char> {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_first_char() {
-        assert_eq!(first_char("hello"), Some('h'));
-        assert_eq!(first_char("rust"), Some('r'));
-        assert_eq!(first_char(""), None);
-    }
+#[test]
+fn test_first_char() {
+    assert_eq!(first_char("hello"), Some('h'));
+    assert_eq!(first_char("rust"), Some('r'));
+    assert_eq!(first_char(""), None);
 }

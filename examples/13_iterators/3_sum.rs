@@ -9,13 +9,8 @@ fn calculate_total_revenue() -> i32 {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_calculate_total_revenue() {
-        let total = calculate_total_revenue();
-        assert_eq!(total, 14200); // Sum of all sales
-    }
+#[test]
+fn test_calculate_total_revenue() {
+    let total = calculate_total_revenue();
+    assert_eq!(total, 14200); // Sum of all sales
 }

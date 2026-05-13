@@ -12,13 +12,8 @@ fn get_first_name(full_name: (String, String)) -> String {
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_first_name() {
-        let full_name = ("John".to_string(), "Doe".to_string());
-        assert_eq!(get_first_name(full_name), "John");
-    }
+#[test]
+fn test_get_first_name() {
+    let full_name = ("John".to_string(), "Doe".to_string());
+    assert_eq!(get_first_name(full_name), "John");
 }

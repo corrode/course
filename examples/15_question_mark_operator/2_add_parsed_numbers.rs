@@ -3,13 +3,8 @@ fn add_parsed_numbers(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> 
     todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_add_parsed_numbers() {
-        assert_eq!(add_parsed_numbers("10", "20"), Ok(30));
-        assert!(add_parsed_numbers("abc", "10").is_err());
-    }
+#[test]
+fn test_add_parsed_numbers() {
+    assert_eq!(add_parsed_numbers("10", "20"), Ok(30));
+    assert!(add_parsed_numbers("abc", "10").is_err());
 }
