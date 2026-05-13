@@ -72,19 +72,4 @@ but also work as slice indices (`v[0..3]`).
 > and the rest of the keyboard shortcuts you'd expect. Clone the repo
 > locally if you want `rust-analyzer` and on-save formatting.
 
-## Useful from the standard library
 
-- [`std::fmt::Debug`](https://doc.rust-lang.org/std/fmt/trait.Debug.html)
-  via `#[derive(Debug)]` lets you print a struct with `{:?}` for quick
-  inspection.
-- [`std::cmp::PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html)
-  via `#[derive(PartialEq)]` enables `==` on structs (compared
-  field-by-field).
-- [`Default`](https://doc.rust-lang.org/std/default/trait.Default.html)
-  via `#[derive(Default)]` gives you `User::default()` with every field
-  set to its type's zero value. Useful for "empty" instances.
-- [`Clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html)
-  via `#[derive(Clone)]` adds `.clone()` so you can duplicate the struct
-  when you need two owners.
-- [The Rust Book on structs](https://doc.rust-lang.org/book/ch05-00-structs.html)
-  covers tuple structs, unit structs, and the field shorthand syntax.
