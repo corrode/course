@@ -9,4 +9,10 @@ Heads-up on rounding: `.round()` rounds to the nearest integer
 the fractional part. The tests pin down which behaviour we want
 here, so try one and see what happens if you guessed wrong.
 
-See: <https://doc.rust-lang.org/std/primitive.f64.html#method.round>
+## Useful from the standard library
+
+- [`f64::round`](https://doc.rust-lang.org/std/primitive.f64.html#method.round)
+  rounds to the nearest integer (returned as an `f64`). Pair with
+  `as u32` once you've rounded.
+- [`as`](https://doc.rust-lang.org/std/keyword.as.html) is the cast
+  operator. `1.7_f64 as u32` is `1`; `1.7_f64.round() as u32` is `2`.

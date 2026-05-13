@@ -24,17 +24,3 @@ to handle that.
 ```rust
 let n: u32 = "123".parse().unwrap_or(0);
 ```
-
-## Useful from the standard library
-
-- [`str::parse`](https://doc.rust-lang.org/std/primitive.str.html#method.parse)
-  turns a string into any type that implements `FromStr`. Returns a
-  `Result`, so handle the error case.
-- [`u32::to_string`](https://doc.rust-lang.org/std/primitive.u32.html#method.to_string)
-  goes the other way: number to `String`. The `format!` macro works too.
-- [`f64::round`](https://doc.rust-lang.org/std/primitive.f64.html#method.round)
-  rounds to the nearest integer; pair with `as u32` when you need a whole
-  number.
-- [`u32::checked_add`](https://doc.rust-lang.org/std/primitive.u32.html#method.checked_add)
-  and friends (`checked_sub`, `checked_mul`) return `Option<u32>` instead
-  of overflowing. Useful when you don't trust the inputs.

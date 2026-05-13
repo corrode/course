@@ -757,26 +757,41 @@ pub fn render_markdown(md: &str) -> String {
 
     let mut out = String::with_capacity(md.len() * 2);
     html::push_html(&mut out, parser);
-    wrap_std_library_section(&out)
+    wrap_alert_sections(&out)
 }
 
-/// Wrap any `<h2>Useful from the standard library</h2>` heading plus its
-/// immediately-following `<ul>...</ul>` in the same
+/// Headings whose body (the immediately-following `<ul>...</ul>`) should
+/// be wrapped in a NOTE-style blockquote. The H2 stays inside the
+/// blockquote and acts as the label, so all three render with the same
+/// alert chrome that pulldown-cmark emits for `> [!NOTE]`.
+const ALERT_HEADINGS: &[&str] = &[
+    "<h2>Useful from the standard library</h2>",
+    "<h2>Where to look things up</h2>",
+    "<h2>What we learned</h2>",
+];
+
+/// Wrap every recognized H2-plus-following-`<ul>` block in the same
 /// `<blockquote class="markdown-alert-note">` markup that
-/// pulldown-cmark emits for `> [!NOTE]`. That way the section reuses the
-/// existing alert styling instead of needing its own class. The H2 stays
-/// inside the blockquote and acts as the label (the alert CSS hides its
+/// pulldown-cmark emits for `> [!NOTE]`. The H2 stays inside the
+/// blockquote and acts as the label (the alert CSS hides its
 /// auto-injected "Note" cap when an H2 is the first child).
-fn wrap_std_library_section(html: &str) -> String {
-    const HEADING: &str = "<h2>Useful from the standard library</h2>";
-    let Some(h_start) = html.find(HEADING) else {
+fn wrap_alert_sections(html: &str) -> String {
+    let mut current = html.to_string();
+    for heading in ALERT_HEADINGS {
+        current = wrap_one_alert_section(&current, heading);
+    }
+    current
+}
+
+fn wrap_one_alert_section(html: &str, heading: &str) -> String {
+    let Some(h_start) = html.find(heading) else {
         return html.to_string();
     };
     // Find the matching closing `</ul>` after the heading. The list may
     // contain nested HTML, but pulldown-cmark doesn't emit nested `<ul>`
     // here (each item is its own `<li>` with no sub-list), so the next
     // `</ul>` is the one we want.
-    let after_h = h_start + HEADING.len();
+    let after_h = h_start + heading.len();
     let rest = &html[after_h..];
     // Skip whitespace, expect `<ul>`.
     let ul_offset = rest
