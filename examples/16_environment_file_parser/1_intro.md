@@ -84,21 +84,4 @@ ends with the matching closing quote and `#`s. Inside, backslashes and
 quotes are literal: no escape sequences. Use more `#`s on each side if
 the content itself contains `"#`.
 
-## Useful from the standard library
 
-- [`str::split_once`](https://doc.rust-lang.org/std/primitive.str.html#method.split_once)
-  returns the first split as `Option<(&str, &str)>`. Cleaner than
-  `splitn(2, ...)`.
-- [`str::lines`](https://doc.rust-lang.org/std/primitive.str.html#method.lines)
-  iterates over the lines of a string, handling `\n` and `\r\n`.
-- [`str::trim`](https://doc.rust-lang.org/std/primitive.str.html#method.trim)
-  removes leading and trailing whitespace.
-- [`str::is_empty`](https://doc.rust-lang.org/std/primitive.str.html#method.is_empty)
-  reads better than `len() == 0`.
-- [`str::starts_with`](https://doc.rust-lang.org/std/primitive.str.html#method.starts_with)
-  for prefix checks (skipping `#` comments here).
-- [`std::str::FromStr`](https://doc.rust-lang.org/std/str/trait.FromStr.html)
-  is the trait `.parse::<T>()` uses. Most numeric types, `bool`, and
-  many others implement it.
-- [`Result::ok`](https://doc.rust-lang.org/std/result/enum.Result.html#method.ok)
-  converts a `Result` to an `Option`, dropping the error.
