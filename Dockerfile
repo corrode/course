@@ -40,8 +40,9 @@ RUN touch src/bin/server.rs \
 FROM debian:trixie-slim AS runtime
 
 # `ca-certificates` is needed for outbound HTTPS to play.rust-lang.org.
+# `curl` is used by Coolify / Docker healthchecks against `/health`.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates \
+ && apt-get install -y --no-install-recommends ca-certificates curl \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -55,5 +56,8 @@ COPY --from=builder /app/static     /app/static
 RUN mkdir -p /app/data
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:3000/health || exit 1
 
 CMD ["/app/server"]
