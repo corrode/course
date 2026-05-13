@@ -4,8 +4,8 @@ use std::collections::HashMap;
 /// Returns the value if found, "default" if not found.
 ///
 /// Looking up a key returns an `Option<&V>`, because the key might not
-/// be there. From chapter 7 you've already seen a few ways to collapse
-/// an `Option` into a concrete value.
+/// be there. Collapse it into a concrete value with a fallback for
+/// the missing case (`Option` is covered properly in chapter 7).
 fn get_config_value(config: &HashMap<String, String>, key: &str) -> String {
     todo!()
 }

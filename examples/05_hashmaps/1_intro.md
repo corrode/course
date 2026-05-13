@@ -53,18 +53,4 @@ compiler won't let you do. References show up properly in chapter 9; for
 now it's enough to know that when a function returns `&mut T`, you reach
 the `T` through `*`.
 
-## Useful from the standard library
 
-- [`HashMap::new`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.new)
-  creates an empty map. Type is usually inferred from the first `insert`.
-- [`HashMap::insert`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.insert)
-  adds or updates a key. Returns the previous value, if any.
-- [`HashMap::get`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.get)
-  looks up a key and returns `Option<&V>`.
-- [`HashMap::contains_key`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.contains_key)
-  is a quick "is this key present?" without retrieving the value.
-- [`HashMap::entry`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.entry)
-  is the API for "look up; if missing, insert a default; then operate on
-  the value." Indispensable for counters and accumulators.
-- [`Option::unwrap_or`](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or)
-  pulls a value out with a fallback when `None`. Pairs with `.get()`.
