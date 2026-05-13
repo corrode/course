@@ -74,16 +74,4 @@ Or give each test its own filename if you're feeling tidy. In production
 code you'd reach for [`tempfile::NamedTempFile`](https://docs.rs/tempfile)
 so the OS hands you a guaranteed-unique path and cleans up after itself.
 
-## Useful from the standard library
 
-- [`std::fs::read_to_string`](https://doc.rust-lang.org/std/fs/fn.read_to_string.html)
-  reads a whole file into a `String`. Returns `io::Error`.
-- [`std::io::Error`](https://doc.rust-lang.org/std/io/struct.Error.html)
-  is the canonical error type for I/O.
-- [`std::num::ParseIntError`](https://doc.rust-lang.org/std/num/struct.ParseIntError.html)
-  is what `str::parse::<i32>()` returns on failure.
-- [`std::error::Error`](https://doc.rust-lang.org/std/error/trait.Error.html)
-  is the trait that all error types implement. `Box<dyn Error>` is a
-  trait object based on it.
-- [The Rust Book on `?`](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#a-shortcut-for-propagating-errors-the--operator)
-  has the formal explanation.
