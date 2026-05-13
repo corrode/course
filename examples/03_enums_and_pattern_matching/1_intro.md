@@ -49,16 +49,4 @@ match code {
 `#[derive(Debug, PartialEq)]` on an enum gives you `{:?}` printing and
 `==`/`!=` comparisons for free. You'll see those derives often.
 
-## Useful from the standard library
 
-- [`std::cmp::PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html)
-  is the trait that lets you use `==` on a value. `#[derive(PartialEq)]`
-  asks the compiler to write the implementation for you.
-- [`std::fmt::Debug`](https://doc.rust-lang.org/std/fmt/trait.Debug.html)
-  enables the `{:?}` format specifier, the easiest way to print an enum
-  while debugging.
-- [`std::matches!`](https://doc.rust-lang.org/std/macro.matches.html)
-  is a macro for "does this value match this pattern?" Returns `bool`.
-  Compact when you only care about one variant.
-- [The Rust Book on `match`](https://doc.rust-lang.org/book/ch06-02-match.html)
-  has more patterns: ranges, guards, binding with `@`, and so on.
