@@ -5,7 +5,6 @@ target/
 *.db
 *.db-shm
 *.db-wal
-docs/
 TODO/
 README.md
 .gitignore
