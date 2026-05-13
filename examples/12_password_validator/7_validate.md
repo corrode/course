@@ -31,3 +31,19 @@ way [`PasswordAdvisor`](super) (or your own future code) has something
 to react to. The length-related complaint should mention "characters",
 "length", "short", "longer", or "at least" so the test below can
 recognise it.
+
+## Useful from the standard library
+
+- [`str::len`](https://doc.rust-lang.org/std/primitive.str.html#method.len)
+  is byte length, but for an ASCII-only check it's also the
+  character count. Good enough for the length thresholds.
+- [`Vec::new`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.new)
+  for the `feedback` accumulator; push a `String` for every failed
+  rule.
+- A `match` on the final score with range patterns
+  (`0..30 => Weak, 30..70 => Medium, _ => Strong`) keeps the
+  classification clean. Range patterns are end-exclusive by default;
+  use `..=` if you want the upper bound included.
+- The character-class helpers are exactly what you wrote in step 4,
+  so the body of `validate` is mostly bookkeeping: add to `score`,
+  push to `feedback`, then build the report.

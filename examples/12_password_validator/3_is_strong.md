@@ -12,3 +12,10 @@ By convention in this exercise, "strong" means the score is at least
 This step also introduces the shared `PasswordStrength` enum and
 `PasswordReport` struct that every later step will reuse (each step
 re-declares them so it can stand on its own).
+
+## Useful from the standard library
+
+- The body is one comparison expression: `self.score >= 70`. No
+  semicolon needed since the expression is the function's return.
+- `#[derive(Debug, Clone)]` on the struct is what makes the test
+  helper compile. You don't need to add anything else.
