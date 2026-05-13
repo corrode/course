@@ -51,19 +51,4 @@ let total_chars: usize = words.iter().map(|w| w.len()).sum();
 let avg = total_chars as f64 / words.len() as f64;
 ```
 
-## Useful from the standard library
 
-- [`str::split_whitespace`](https://doc.rust-lang.org/std/primitive.str.html#method.split_whitespace)
-  splits on any whitespace, skipping empties. Almost always what you
-  want for word splitting.
-- [`str::to_lowercase`](https://doc.rust-lang.org/std/primitive.str.html#method.to_lowercase)
-  for case-insensitive comparisons.
-- [`HashMap::entry`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.entry)
-  with `.or_insert(...)` is the canonical "insert if missing, then
-  modify" pattern.
-- [`Iterator::max_by_key`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.max_by_key)
-  for "the largest item by some derived value".
-- [`Iterator::sum`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.sum)
-  for totals over numeric iterators.
-- [`Iterator::collect`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.collect)
-  to materialize iterator chains back into a `Vec` or `HashMap`.
