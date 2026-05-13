@@ -87,6 +87,15 @@ struct ExerciseTemplate {
     /// order. Each `Code` carries the per-step status and the database
     /// key (`<chapter>/<step_key>` or just `<chapter>` for legacy).
     items: Vec<RenderItem>,
+    /// The chapter that comes after the current one in the catalog,
+    /// or `None` when this is the last chapter. Used for the
+    /// "Next chapter" call-to-action at the bottom of the page.
+    next_dot: Option<ProgressDot>,
+    /// Number of completable chapters the participant has finished.
+    /// Quizzes and notes-only chapters don't count toward either total.
+    progress_done: usize,
+    /// Number of completable chapters in the course (denominator).
+    progress_total: usize,
 }
 
 /// One row in the bottom chapter list.
@@ -103,6 +112,9 @@ struct ProgressDot {
     perfected: bool,
     current: bool,
     is_quiz: bool,
+    /// `false` for notes-only chapters (the appendix). Used to skip
+    /// them when building the "next chapter" CTA and progress totals.
+    has_exercises: bool,
 }
 
 /// Per-exercise progress used by the chapter list and current-status badge.
@@ -615,6 +627,7 @@ async fn render_exercise_page(
                 perfected: s.perfected,
                 current: i == idx,
                 is_quiz: e.is_quiz(),
+                has_exercises: !e.code_steps().is_empty(),
             }
         })
         .collect();
@@ -698,12 +711,32 @@ async fn render_exercise_page(
         }
     }
 
+    // Next chapter for the bottom CTA: the first dot that comes after
+    // the current one. We don't skip quizzes or appendices here so the
+    // CTA always points to whatever the picker would show next.
+    let next_dot = dots.get(idx + 1).cloned();
+
+    // Progress: how many completable chapters has the participant
+    // finished? Quizzes and notes-only chapters never "complete", so
+    // they're excluded from both numerator and denominator.
+    let progress_total = dots
+        .iter()
+        .filter(|d| !d.is_quiz && d.has_exercises)
+        .count();
+    let progress_done = dots
+        .iter()
+        .filter(|d| !d.is_quiz && d.has_exercises && d.completed)
+        .count();
+
     let template = ExerciseTemplate {
         exercise,
         ulid,
         current_status,
         dots,
         items,
+        next_dot,
+        progress_done,
+        progress_total,
     };
     match template.render() {
         Ok(html) => Html(html).into_response(),

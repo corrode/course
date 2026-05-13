@@ -418,6 +418,39 @@
                 font-size: 0.85rem;
                 color: var(--color-text);
             }
+            .topbar-progress {
+                display: inline-flex;
+                align-items: baseline;
+                gap: 0.5rem;
+                margin-left: 0.6rem;
+                padding: 0.25rem 0.65rem;
+                border-radius: 6px;
+                border: 1px solid var(--color-border);
+                background: transparent;
+                color: var(--color-text-muted);
+                font-size: 0.8rem;
+                line-height: 1.2;
+                white-space: nowrap;
+            }
+            .topbar-progress-label {
+                color: var(--color-text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                font-size: 0.66rem;
+                font-weight: 600;
+            }
+            .topbar-progress-count {
+                font-family:
+                    "JetBrains Mono", "SF Mono", Monaco, Menlo, Consolas,
+                    monospace;
+                font-size: 0.78rem;
+                font-variant-numeric: tabular-nums;
+                color: var(--color-text-muted);
+            }
+            .topbar-progress-count strong {
+                color: var(--color-primary, #0969da);
+                font-weight: 600;
+            }
             .topbar-spacer {
                 flex: 1;
             }
