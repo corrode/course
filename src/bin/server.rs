@@ -160,6 +160,10 @@ struct ExerciseProgress {
     description: String,
     submissions: Vec<ExerciseSubmission>,
     is_quiz: bool,
+    /// Notes-only chapters (appendix material) have no code steps and
+    /// can't be "completed". The dashboard skips them when choosing
+    /// the next chapter to resume.
+    has_exercises: bool,
 }
 
 /// Individual submission for an exercise
@@ -461,11 +465,12 @@ async fn participant_dashboard(
         }
     };
 
-    // CTA: jump to the first unfinished, non-quiz chapter. If everything
-    // is done, point back to chapter 1 as a graceful default.
+    // CTA: jump to the first unfinished, non-quiz chapter that actually
+    // has exercises. If everything is done, point back to chapter 1 as
+    // a graceful default.
     let first_unfinished = exercises
         .iter()
-        .find(|e| !e.completed && !e.is_quiz)
+        .find(|e| !e.completed && !e.is_quiz && e.has_exercises)
         .or_else(|| exercises.first());
     let any_completed = exercises.iter().any(|e| e.completed);
     let (next_slug, next_label) = match first_unfinished {
@@ -1439,6 +1444,7 @@ async fn get_exercise_progress<'a>(
             description: String::new(),
             submissions: exercise_submissions,
             is_quiz,
+            has_exercises: !code_steps.is_empty(),
         });
     }
 

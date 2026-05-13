@@ -296,17 +296,29 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
     let hints_path = hints.as_ref().and_then(|_| find_hints_path(dir));
 
     let (steps, title) = if step_files.is_empty() {
-        // Legacy single-step chapter: parse `main.rs` as the lone step.
+        // No step files. Two cases:
+        //   * Legacy single-step chapter with `main.rs`. Parse it.
+        //   * Notes-only chapter (appendix): no `main.rs`, just prose.
         let main_rs = dir.join("main.rs");
-        if !main_rs.exists() {
-            return Err(anyhow!("missing main.rs in {}", dir.display()));
+        if main_rs.exists() {
+            let (step, step_title) = parse_code_file(&main_rs, 0, &slug, &file_stem)?;
+            let chapter_title = notes.first().map(|n| n.title.clone()).unwrap_or(step_title);
+            let mut steps: Vec<Step> = notes.into_iter().map(Step::Prose).collect();
+            steps.push(Step::Code(step));
+            (steps, chapter_title)
+        } else if !notes.is_empty() {
+            let chapter_title = notes
+                .first()
+                .map(|n| n.title.clone())
+                .unwrap_or_else(|| file_stem.clone());
+            let steps: Vec<Step> = notes.into_iter().map(Step::Prose).collect();
+            (steps, chapter_title)
+        } else {
+            return Err(anyhow!(
+                "chapter {} has neither code steps nor notes",
+                dir.display()
+            ));
         }
-        let (step, step_title) = parse_code_file(&main_rs, 0, &slug, &file_stem)?;
-        // Title priority: first note H1 > step's own //! H1 > file_stem.
-        let chapter_title = notes.first().map(|n| n.title.clone()).unwrap_or(step_title);
-        let mut steps: Vec<Step> = notes.into_iter().map(Step::Prose).collect();
-        steps.push(Step::Code(step));
-        (steps, chapter_title)
     } else {
         // Multi-step chapter: interleave prose and code by order.
         let mut code_steps = Vec::with_capacity(step_files.len());
