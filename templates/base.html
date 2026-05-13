@@ -947,6 +947,7 @@
         </script>
     </head>
     <body>
+        {% block topbar %}
         <header class="topbar" role="banner">
             <div class="topbar-inner">
                 {% block topbar_left %}
@@ -1050,8 +1051,7 @@
                 </button>
             </div>
         </header>
-
-        {% block content %}{% endblock %}
+        {% endblock %} {% block content %}{% endblock %}
 
         <!-- Cheatsheet modal: lazy-loaded from /cheatsheet/fragment -->
         <div

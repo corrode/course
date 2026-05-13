@@ -1,11 +1,9 @@
 {% extends "base.html" %} {% block topbar_left %} {% match ulid %} {% when Some
 with (u) %}
-<a href="/dashboard/{{ u }}" class="topbar-home">Home</a>
+<a href="/dashboard/{{ u }}" class="topbar-home">Course</a>
 {% when None %}
-<a href="/" class="topbar-home">Home</a>
+<a href="/" class="topbar-home">Course</a>
 {% endmatch %}
-<span class="topbar-crumb-sep" aria-hidden="true">/</span>
-<span class="topbar-crumb-static">examples</span>
 <span class="topbar-crumb-sep" aria-hidden="true">/</span>
 <div class="chapter-picker" data-chapter-picker>
     <button
@@ -16,7 +14,9 @@ with (u) %}
         aria-controls="chapter-picker-menu"
         data-chapter-picker-toggle
     >
-        <span class="chapter-picker-label">{{ exercise.file_stem }}</span>
+        <span class="chapter-picker-label"
+            >{{ exercise.number }} {{ exercise.title }}</span
+        >
         <svg
             class="chapter-picker-chevron"
             viewBox="0 0 12 12"
@@ -1986,6 +1986,9 @@ with (u) %}
         max-width: 100%;
         margin: 0 0 2rem;
     }
+    .exercise-section:has(+ .hints-disclosure-step) {
+        margin-bottom: 0.5rem;
+    }
     .exercise-section-head {
         display: flex;
         justify-content: space-between;
@@ -2222,6 +2225,12 @@ with (u) %}
         border-radius: 12px;
         background-color: var(--color-surface);
         padding: 0.25rem 1rem;
+    }
+    /* When the hints disclosure belongs to a specific exercise step, sit
+       it right under the card so the visual grouping is obvious. */
+    .exercise-section + .hints-disclosure-step {
+        margin-top: 0;
+        margin-bottom: 2rem;
     }
     .hints-disclosure[open] {
         border-style: solid;
