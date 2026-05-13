@@ -71,19 +71,4 @@ Many standard-library methods return `Option`. `.first()`, `.last()`,
 `.next()` on iterators, `.get()` on slices and maps, `.find(...)` on
 iterators. You'll meet `Option` everywhere.
 
-## Useful from the standard library
 
-- [`Option::unwrap_or`](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or)
-  returns the inner value or a fallback. The reach-for-this-first method.
-- [`Option::map`](https://doc.rust-lang.org/std/option/enum.Option.html#method.map)
-  applies a function inside the `Some`, leaves `None` alone. Like a
-  one-element pipeline.
-- [`Option::map_or`](https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or)
-  combines `.map(...)` and `.unwrap_or(...)` into one call.
-- [`Option::is_some`](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_some)
-  and [`Option::is_none`](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_none)
-  for plain bool checks.
-- [`Iterator::find`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find)
-  returns the first matching item as an `Option`. Common in lookups.
-- [The Rust Book on `if let`](https://doc.rust-lang.org/book/ch06-03-if-let.html)
-  for the lighter alternative to `match`.

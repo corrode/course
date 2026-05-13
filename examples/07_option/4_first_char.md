@@ -10,4 +10,11 @@ already done the work for you: `text.chars()` returns an iterator,
 and every iterator's `.next()` already hands you `Option<Item>`.
 Compose the two.
 
-See: <https://doc.rust-lang.org/std/primitive.str.html#method.chars>
+## Useful from the standard library
+
+- [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars)
+  returns an iterator over the `char`s of the string.
+- [`Iterator::next`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.next)
+  pulls one item off the iterator and returns it as `Option<Item>`.
+  For the first character, that's `Option<char>` and exactly the
+  return type.

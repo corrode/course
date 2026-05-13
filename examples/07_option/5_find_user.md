@@ -13,3 +13,16 @@ Type walk-through (this is the puzzle):
 
 `name.as_str()` turns the `&String` we destructured out of the tuple
 into the `&str` the signature wants.
+
+## Useful from the standard library
+
+- [`<[T]>::iter`](https://doc.rust-lang.org/std/primitive.slice.html#method.iter)
+  yields shared references to the slice's items, one at a time.
+- [`Iterator::find`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find)
+  takes a predicate closure and returns the first matching item as
+  an `Option`.
+- [`Option::map`](https://doc.rust-lang.org/std/option/enum.Option.html#method.map)
+  transforms the inner value when present. Here it pulls the
+  username out of the tuple and converts it to `&str`.
+- [`String::as_str`](https://doc.rust-lang.org/std/string/struct.String.html#method.as_str)
+  is the explicit "borrow this `String` as `&str`" call.
