@@ -56,16 +56,4 @@ The borrow checker enforces one rule that takes a moment to internalize:
 This is what prevents data races at compile time. If the compiler ever
 yells at you about borrowing, that rule is the first thing to look at.
 
-## Useful from the standard library
 
-- [`String::from`](https://doc.rust-lang.org/std/string/struct.String.html#method.from)
-  creates an owned `String` from a `&str` literal.
-- [`str::to_string`](https://doc.rust-lang.org/std/primitive.str.html#method.to_string)
-  is the alternative spelling: `"hi".to_string()`.
-- [`Clone::clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html#tymethod.clone)
-  makes an explicit deep copy when you actually want two owners. Common
-  for `String`, `Vec`, `HashMap`. Reach for it sparingly.
-- [The Rust Book on ownership](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)
-  is the reference if you'd like a longer treatment.
-- [The Rust Book on references and borrowing](https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html)
-  for the borrow-checker rules in more depth.

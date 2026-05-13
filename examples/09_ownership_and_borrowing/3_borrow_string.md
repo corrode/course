@@ -13,3 +13,11 @@ Reach for `&str` by default when you're just reading.
 The body is a one-liner: call `.len()` on the slice. The point of
 the exercise is the signature: notice that after the call, the
 caller's `s` is still usable in the test below.
+
+## Useful from the standard library
+
+- [`str::len`](https://doc.rust-lang.org/std/primitive.str.html#method.len)
+  is the byte length of the slice. The chapter on strings covers
+  why that's not the same as a character count.
+- The "deref coercion" from `&String` to `&str` is what lets the
+  test pass `&s` directly. No `.as_str()` needed.
