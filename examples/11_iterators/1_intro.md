@@ -43,26 +43,4 @@ the binding if needed.
 Tell it which one with a type annotation: `Vec<_>`, `HashMap<_, _>`,
 `String`. The `_` lets the compiler fill in the inner types.
 
-## Useful from the standard library
 
-- [`Iterator::map`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map)
-  transforms each item.
-- [`Iterator::filter`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.filter)
-  keeps items matching a predicate. The closure takes a `&T` even on a
-  `T`-yielding iterator, which is why you sometimes see `**c == ...`.
-- [`Iterator::collect`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.collect)
-  turns the pipeline back into a collection.
-- [`Iterator::sum`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.sum)
-  and [`Iterator::product`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.product)
-  reduce numeric iterators in one call.
-- [`Iterator::any`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.any)
-  and [`Iterator::all`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.all)
-  return a `bool`. Short-circuit, so cheap on long iterators.
-- [`Iterator::find`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find)
-  returns the first matching item as an `Option`.
-- [`Iterator::cloned`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.cloned)
-  turns an iterator of `&T` into one of `T` by cloning. Often the easiest
-  way to get owned values out of a `.iter()` chain.
-- [`Iterator::fold`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.fold)
-  is the general "accumulate a value across the iterator". Reach for it
-  when there's no specific reducer.
