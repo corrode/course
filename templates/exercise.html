@@ -613,6 +613,30 @@ progress_total > 0 %}
     // `.chapter.toml` is chapter-wide.
     const passHooks = [];
 
+    // ---- Anonymous progress capture ----
+    // When a visitor without a ULID lands on a passing run, we stash a
+    // snapshot in localStorage. After signup, the dashboard drains this
+    // store via POST /api/migrate-anon-progress (slice 5) so the user
+    // doesn't lose what they solved. One entry per exercise key; the
+    // most recent passing snapshot wins.
+    const ANON_PROGRESS_KEY = "corrode-anon-progress";
+    function saveAnonProgress(exerciseKey, sourceCode) {
+        try {
+            const raw = localStorage.getItem(ANON_PROGRESS_KEY);
+            const store = raw ? JSON.parse(raw) : {};
+            store[exerciseKey] = {
+                source_code: sourceCode,
+                ts: Date.now(),
+            };
+            localStorage.setItem(ANON_PROGRESS_KEY, JSON.stringify(store));
+        } catch (e) {
+            // Quota exceeded, JSON corruption, private browsing in some
+            // browsers, ... none of these are worth blocking the run
+            // success path. The user still sees the green status.
+            console.warn("saveAnonProgress failed:", e);
+        }
+    }
+
     function readChapterConfig() {
         const root = document.querySelector("[data-corrode-config]");
         if (!root) return {};
@@ -1541,21 +1565,34 @@ progress_total > 0 %}
                 inFlight = true;
                 runBtn.disabled = true;
                 try {
-                    const data = await runOnce(api.getValue());
+                    const code = api.getValue();
+                    const data = await runOnce(code);
                     if (!data) return;
                     updateRunStatus(data);
+                    const total = data.test_results.length;
+                    const passed = data.test_results.filter(
+                        (t) => t.passed,
+                    ).length;
+                    const allPassed = total > 0 && passed === total;
                     if (submitBtn) {
-                        const total = data.test_results.length;
-                        const passed = data.test_results.filter(
-                            (t) => t.passed,
-                        ).length;
-                        if (total > 0 && passed === total) {
+                        if (allPassed) {
                             showSubmit();
                             runStatus.textContent +=
                                 ". Click Submit to save your progress.";
                         } else {
                             showRun();
                         }
+                    } else if (allPassed) {
+                        // Anonymous mode: stash the passing snapshot in
+                        // localStorage so /api/migrate-anon-progress can
+                        // replay it after signup, and nudge the user with
+                        // an inline CTA right next to the green status.
+                        saveAnonProgress(exerciseKey, code);
+                        const cta = document.createElement("a");
+                        cta.href = "/signup";
+                        cta.className = "anon-save-cta";
+                        cta.textContent = "Save your progress \u2192";
+                        runStatus.append(" ", cta);
                     }
                 } finally {
                     inFlight = false;
@@ -2328,6 +2365,21 @@ progress_total > 0 %}
     .register-banner a {
         color: var(--color-primary);
         font-weight: 600;
+    }
+
+    /* Inline call-to-action injected next to the run-status text when
+       an anonymous visitor solves an exercise. Looks like a link with a
+       little extra weight so it reads as the next step, not noise. */
+    .anon-save-cta {
+        margin-left: 0.4rem;
+        color: var(--color-primary);
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .anon-save-cta:hover,
+    .anon-save-cta:focus-visible {
+        text-decoration: underline;
     }
 
     .next-chapter-cta.is-locked {
