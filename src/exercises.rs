@@ -139,6 +139,14 @@ pub struct ChapterDirectives {
     /// (`confetti`, ...).
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub on_pass: Vec<String>,
+    /// When set on a chapter rendered anonymously, the inline signup
+    /// card embedded in `exercise.html` is revealed the moment a code
+    /// section passes its tests, and the next-chapter button is gated
+    /// behind it. Used on the welcome chapter so a brand-new visitor
+    /// signs up after their very first successful run, before moving
+    /// on. `None` / `Some(false)` is the default (no inline signup).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signup_on_pass: Option<bool>,
 }
 
 /// A single chapter, parsed from one `examples/NN_slug/` directory.
@@ -218,6 +226,14 @@ impl Exercise {
     #[must_use]
     pub fn directives_json(&self) -> String {
         serde_json::to_string(&self.directives).unwrap_or_else(|_| "{}".into())
+    }
+
+    /// Convenience for templates: did this chapter opt into the inline
+    /// signup-on-pass card? Treats `Some(true)` as enabled and
+    /// everything else (missing field, `Some(false)`) as disabled.
+    #[must_use]
+    pub fn wants_signup_on_pass(&self) -> bool {
+        self.directives.signup_on_pass.unwrap_or(false)
     }
 }
 

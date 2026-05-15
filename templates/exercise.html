@@ -138,14 +138,14 @@ progress_total > 0 %}
         {% when None %} {% endmatch %}
     </div>
 
-    {% match ulid %} {% when None %}
+    {% match ulid %} {% when None %} {% if !exercise.wants_signup_on_pass() %}
     <div class="register-banner">
         👋 Anyone can read and edit this exercise.
         <a href="/signup">Sign up</a> to save your progress.
     </div>
-    {% when Some with (_u) %} {% endmatch %} {% for item in items %} {% match
-    item.kind %} {% when cargo_course::exercises::RenderKind::Prose with { html
-    } %}
+    {% endif %} {% when Some with (_u) %} {% endmatch %} {% for item in items %}
+    {% match item.kind %} {% when cargo_course::exercises::RenderKind::Prose
+    with { html } %}
     <div class="chapter-prose exercise-prose">{{ html|safe }}</div>
     {% when cargo_course::exercises::RenderKind::Code with { dom_id,
     exercise_key, eyebrow, title, show_title, starter_code, attempted,
@@ -472,7 +472,54 @@ progress_total > 0 %}
         })();
     </script>
 
-    {% match next_dot %} {% when Some with (n) %}
+    {% match next_dot %} {% when Some with (n) %} {% if ulid.is_none() &&
+    exercise.wants_signup_on_pass() %} {# Anonymous welcome chapter: the inline
+    signup card stands in for the next-chapter button. It starts hidden and is
+    revealed by the `signup_on_pass` pass hook in applyChapterDirectives() the
+    moment the user gets the first exercise to compile. The hidden `next` field
+    round-trips through `/register` so the redirect lands on the next chapter
+    (now with the fresh ULID), not the dashboard. #}
+    <section
+        id="inline-signup"
+        class="inline-signup"
+        aria-label="Save your progress"
+        hidden
+    >
+        <div class="inline-signup-eyebrow">Nice work, that compiled!</div>
+        <h2 class="inline-signup-title">
+            Pick a name and we'll keep your spot
+        </h2>
+        <p class="inline-signup-byline">
+            One field, no email, no password. We give you a personal link to
+            bookmark and pick up where you left off.
+        </p>
+        <form action="/register" method="post" class="inline-signup-form">
+            <label class="inline-signup-label" for="inline-signup-name">
+                How should I call you throughout the book?
+            </label>
+            <div class="inline-signup-row">
+                <input
+                    type="text"
+                    id="inline-signup-name"
+                    name="name"
+                    class="inline-signup-input"
+                    placeholder="Your name"
+                    required
+                    maxlength="100"
+                    autocomplete="given-name"
+                />
+                <button type="submit" class="btn inline-signup-submit">
+                    Continue to chapter {{ n.number }} →
+                </button>
+            </div>
+            <input type="hidden" name="next" value="/exercise/{{ n.slug }}" />
+        </form>
+        <p class="inline-signup-skip">
+            Just browsing?
+            <a href="/exercise/{{ n.slug }}">Continue without saving</a>.
+        </p>
+    </section>
+    {% else %}
     <section
         class="next-chapter-cta{% if ulid.is_some() && !current_status.completed %} is-locked{% endif %}"
         aria-label="Continue"
@@ -497,7 +544,7 @@ progress_total > 0 %}
         </a>
         {% endmatch %}
     </section>
-    {% when None %} {% endmatch %}
+    {% endif %} {% when None %} {% endmatch %}
 
     <nav
         class="chapter-list"
@@ -613,30 +660,6 @@ progress_total > 0 %}
     // `.chapter.toml` is chapter-wide.
     const passHooks = [];
 
-    // ---- Anonymous progress capture ----
-    // When a visitor without a ULID lands on a passing run, we stash a
-    // snapshot in localStorage. After signup, the dashboard drains this
-    // store via POST /api/migrate-anon-progress (slice 5) so the user
-    // doesn't lose what they solved. One entry per exercise key; the
-    // most recent passing snapshot wins.
-    const ANON_PROGRESS_KEY = "corrode-anon-progress";
-    function saveAnonProgress(exerciseKey, sourceCode) {
-        try {
-            const raw = localStorage.getItem(ANON_PROGRESS_KEY);
-            const store = raw ? JSON.parse(raw) : {};
-            store[exerciseKey] = {
-                source_code: sourceCode,
-                ts: Date.now(),
-            };
-            localStorage.setItem(ANON_PROGRESS_KEY, JSON.stringify(store));
-        } catch (e) {
-            // Quota exceeded, JSON corruption, private browsing in some
-            // browsers, ... none of these are worth blocking the run
-            // success path. The user still sees the green status.
-            console.warn("saveAnonProgress failed:", e);
-        }
-    }
-
     function readChapterConfig() {
         const root = document.querySelector("[data-corrode-config]");
         if (!root) return {};
@@ -690,6 +713,31 @@ progress_total > 0 %}
                 continue;
             }
             passHooks.push(fn);
+        }
+
+        // Inline signup card on the welcome chapter (anonymous mode).
+        // The card is rendered hidden by the template; the first time
+        // any exercise on the page passes its tests we reveal it,
+        // scroll it into view, and focus the name field. Once visible
+        // it stays visible: subsequent passing runs are a no-op.
+        if (cfg.signup_on_pass === true) {
+            const card = document.getElementById("inline-signup");
+            if (card) {
+                passHooks.push(() => {
+                    if (!card.hasAttribute("hidden")) return;
+                    card.hidden = false;
+                    card.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                    });
+                    const input = card.querySelector("#inline-signup-name");
+                    if (input) {
+                        // Slight delay so the smooth-scroll doesn't
+                        // fight with the focus jump on Safari.
+                        setTimeout(() => input.focus(), 350);
+                    }
+                });
+            }
         }
     }
 
@@ -1583,16 +1631,13 @@ progress_total > 0 %}
                             showRun();
                         }
                     } else if (allPassed) {
-                        // Anonymous mode: stash the passing snapshot in
-                        // localStorage so /api/migrate-anon-progress can
-                        // replay it after signup, and nudge the user with
-                        // an inline CTA right next to the green status.
-                        saveAnonProgress(exerciseKey, code);
-                        const cta = document.createElement("a");
-                        cta.href = "/signup";
-                        cta.className = "anon-save-cta";
-                        cta.textContent = "Save your progress \u2192";
-                        runStatus.append(" ", cta);
+                        // Anonymous mode: nothing extra to do here.
+                        // On chapters with `signup_on_pass = true` the
+                        // inline signup card (revealed by
+                        // applyChapterDirectives' pass hook) takes the
+                        // user from here to the next chapter. On every
+                        // other anonymous chapter the next-chapter
+                        // link below is already a plain anonymous URL.
                     }
                 } finally {
                     inFlight = false;
@@ -2375,19 +2420,87 @@ progress_total > 0 %}
         font-weight: 600;
     }
 
-    /* Inline call-to-action injected next to the run-status text when
-       an anonymous visitor solves an exercise. Looks like a link with a
-       little extra weight so it reads as the next step, not noise. */
-    .anon-save-cta {
-        margin-left: 0.4rem;
-        color: var(--color-primary);
-        font-weight: 600;
-        text-decoration: none;
-        white-space: nowrap;
+    /* ---- Inline signup card (welcome chapter, anonymous) ---- */
+    .inline-signup {
+        margin: 3rem auto 0;
+        max-width: 36rem;
+        padding: 1.75rem 1.75rem 1.5rem;
+        border: 1px solid var(--color-border);
+        border-left: 3px solid var(--color-primary);
+        border-radius: 10px;
+        background: var(--color-surface);
     }
-    .anon-save-cta:hover,
-    .anon-save-cta:focus-visible {
+    .inline-signup-eyebrow {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--color-primary);
+        margin-bottom: 0.5rem;
+    }
+    .inline-signup-title {
+        margin: 0 0 0.4rem;
+        font-size: 1.4rem;
+        line-height: 1.2;
+        font-weight: 700;
+        color: var(--color-text);
+    }
+    .inline-signup-byline {
+        margin: 0 0 1.2rem;
+        font-size: 0.95rem;
+        color: var(--color-text-muted);
+        line-height: 1.5;
+    }
+    .inline-signup-form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+    .inline-signup-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--color-text);
+    }
+    .inline-signup-row {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+    }
+    .inline-signup-input {
+        flex: 1 1 14rem;
+        min-width: 0;
+        padding: 0.7rem 0.85rem;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: 1px solid var(--color-border);
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+    .inline-signup-input:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(252, 33, 138, 0.15);
+    }
+    .inline-signup-submit {
+        flex: 0 0 auto;
+        padding: 0.7rem 1.1rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+    .inline-signup-skip {
+        margin: 1rem 0 0;
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+    }
+    .inline-signup-skip a {
+        color: var(--color-text-muted);
         text-decoration: underline;
+    }
+    .inline-signup-skip a:hover,
+    .inline-signup-skip a:focus-visible {
+        color: var(--color-primary);
     }
 
     .next-chapter-cta.is-locked {

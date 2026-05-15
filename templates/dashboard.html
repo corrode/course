@@ -35,7 +35,9 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
             <span class="book-eyebrow-rule" aria-hidden="true"></span>
         </div>
         <h1 class="book-title">A Beginner's Guide To Rust</h1>
-        <p class="book-byline">or, "wrangling with the borrow checker"</p>
+        <p class="book-byline">
+            or, "wrangling with the borrow checker until one of you gives up"
+        </p>
     </header>
 
     <section class="book-intro" aria-label="About this course">
@@ -138,86 +140,7 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         {% endmatch %}
         <p class="book-cta-hint">or pick any chapter above</p>
     </section>
-    {% endif %} {% match ulid %} {% when Some with (u) %} {# Drain
-    anonymous-mode passing snapshots into this freshly authenticated
-    participant. Runs once on first dashboard load after signup; idempotent on
-    the server side, but we also clear localStorage on success so it doesn't
-    fire again. #}
-    <div
-        id="anon-migrate-toast"
-        class="anon-migrate-toast"
-        role="status"
-        aria-live="polite"
-        hidden
-    ></div>
-    <script>
-        (async function migrateAnonProgress() {
-            const KEY = "corrode-anon-progress";
-            let store;
-            try {
-                const raw = localStorage.getItem(KEY);
-                if (!raw) return;
-                store = JSON.parse(raw);
-            } catch (e) {
-                console.warn("anon-progress: bad localStorage payload", e);
-                localStorage.removeItem(KEY);
-                return;
-            }
-            const entries = Object.entries(store || {}).map(
-                ([exercise_name, v]) => ({
-                    exercise_name,
-                    source_code: (v && v.source_code) || "",
-                }),
-            );
-            if (entries.length === 0) {
-                localStorage.removeItem(KEY);
-                return;
-            }
-            try {
-                const resp = await fetch("/api/migrate-anon-progress", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        ulid: "{{ u }}",
-                        entries,
-                    }),
-                });
-                if (!resp.ok) {
-                    console.warn(
-                        "anon-progress: migration failed",
-                        resp.status,
-                    );
-                    return;
-                }
-                const data = await resp.json();
-                // Clear the local store regardless of how many actually
-                // landed: anything we sent that was valid is now in the
-                // DB, anything that wasn't won't ever be.
-                localStorage.removeItem(KEY);
-                if (data.inserted > 0) {
-                    const toast = document.getElementById("anon-migrate-toast");
-                    if (toast) {
-                        toast.textContent =
-                            data.inserted === 1
-                                ? "Saved 1 solution from before you signed up."
-                                : `Saved ${data.inserted} solutions from before you signed up.`;
-                        toast.hidden = false;
-                        // Reload so the TOC checkmarks reflect the
-                        // freshly inserted submissions. The toast was
-                        // shown briefly before the reload; it will
-                        // re-render after refresh as the localStorage
-                        // store is now empty.
-                        setTimeout(() => window.location.reload(), 1200);
-                    } else {
-                        window.location.reload();
-                    }
-                }
-            } catch (err) {
-                console.warn("anon-progress: migration error", err);
-            }
-        })();
-    </script>
-    {% when None %} {% endmatch %}
+    {% endif %}
 </div>
 
 <style>
@@ -433,22 +356,6 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
     .unknown-token-toast-close:hover,
     .unknown-token-toast-close:focus-visible {
         color: var(--color-text);
-    }
-
-    /* ---------- Anon-progress migration toast ---------- */
-    .anon-migrate-toast {
-        position: fixed;
-        right: 1.25rem;
-        bottom: 1.25rem;
-        z-index: 50;
-        max-width: 22rem;
-        padding: 0.85rem 1.1rem;
-        border-radius: 8px;
-        background: var(--color-success, #2e7d32);
-        color: #fff;
-        font-size: 0.92rem;
-        font-weight: 600;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
     }
 
     /* ---------- Responsive ---------- */

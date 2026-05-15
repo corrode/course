@@ -262,44 +262,41 @@ struct DashboardQuery {
     reason: Option<String>,
 }
 
-/// Payload for `POST /api/migrate-anon-progress`.
-///
-/// Sent by the dashboard the first time a freshly signed-up
-/// participant lands on `/dashboard/{ulid}`. Each entry is one
-/// passing snapshot the participant produced anonymously, captured
-/// in `localStorage['corrode-anon-progress']` while they were on
-/// `/exercise/{slug}` (no ULID).
-#[derive(Deserialize)]
-struct MigrateAnonProgressRequest {
-    ulid: String,
-    entries: Vec<MigrateAnonProgressEntry>,
-}
-
-#[derive(Deserialize)]
-struct MigrateAnonProgressEntry {
-    exercise_name: String,
-    source_code: String,
-}
-
-/// Reply with how many rows we ended up writing. The client uses this
-/// to decide whether to surface a small toast (“migrated 3 anonymous
-/// solutions”).
-#[derive(Serialize)]
-struct MigrateAnonProgressResponse {
-    inserted: usize,
-    skipped: usize,
-}
-
 /// Form data for web registration.
 ///
 /// `team_token` is populated from the URL path on `/signup/{group_slug}`
 /// via a hidden input; it's never typed by the user. Public signups at
 /// `/signup` leave it empty / `None`.
+///
+/// `next` is set by the inline signup card embedded in `exercise.html`
+/// (see `signup_on_pass` directive). It carries the URL the visitor
+/// was about to visit so we can redirect there with their fresh ULID
+/// spliced in, instead of bouncing through the dashboard.
 #[derive(Deserialize)]
 struct WebRegistrationForm {
     name: String,
     #[serde(default)]
     team_token: Option<String>,
+    #[serde(default)]
+    next: Option<String>,
+}
+
+/// Resolves the optional `next` form field from `web_register` to a
+/// safe redirect target. Returns `None` if the value is missing,
+/// malformed, or doesn't match the narrow shape we expect (an
+/// anonymous exercise URL: `/exercise/<slug>`). The slug whitelist is
+/// intentionally tight to keep this from becoming an open redirect.
+fn resolve_register_next(next: Option<&str>, ulid: &str) -> Option<String> {
+    let raw = next?.trim();
+    let slug = raw.strip_prefix("/exercise/")?;
+    if slug.is_empty()
+        || !slug
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+    {
+        return None;
+    }
+    Some(format!("/exercise/{ulid}/{slug}"))
 }
 
 #[tokio::main]
@@ -390,7 +387,6 @@ async fn main() -> Result<()> {
     let api_routes = Router::new()
         .route("/register", post(api_register))
         .route("/submit", post(api_submit))
-        .route("/migrate-anon-progress", post(api_migrate_anon_progress))
         .route("/status/{ulid}", get(api_status))
         .route("/run", post(api_run))
         .route("/format", post(api_format))
@@ -628,7 +624,13 @@ async fn web_register(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(axum::response::Redirect::to(&format!("/dashboard/{ulid}")))
+    // If the signup came from the inline card on an exercise page,
+    // hop straight back to the exercise (now with the new ULID in the
+    // URL) so the user lands on the next chapter they were already
+    // looking at, not the dashboard.
+    let target = resolve_register_next(form.next.as_deref(), &ulid)
+        .unwrap_or_else(|| format!("/dashboard/{ulid}"));
+    Ok(axum::response::Redirect::to(&target))
 }
 
 /// Participant dashboard handler
@@ -1335,135 +1337,6 @@ async fn api_submit(
     }
 }
 
-/// Replay anonymous-mode passing snapshots into the submissions table
-/// for a freshly signed-up participant.
-///
-/// Called once by the dashboard right after the user lands on
-/// `/dashboard/{ulid}` with a non-empty
-/// `localStorage['corrode-anon-progress']`. Each entry is treated as a
-/// `tests_passed = true`, `fmt_passed = false`, `clippy_passed = false`
-/// submission (we don't persist anything beyond “this solution made
-/// the test runner happy in the browser”). Duplicates are silently
-/// skipped via the same content-hash check `api_submit` uses.
-///
-/// Validation:
-/// - The participant ULID must exist (mirrors `api_submit`).
-/// - `exercise_name` must match a known chapter file_stem or a known
-///   `<file_stem>/<step_key>` shape from the loaded catalog. Anything
-///   else is dropped on the floor (counted under `skipped`) so a
-///   tampered localStorage can't poison the table with arbitrary
-///   strings.
-#[debug_handler]
-async fn api_migrate_anon_progress(
-    State(state): State<AppState>,
-    Json(request): Json<MigrateAnonProgressRequest>,
-) -> Result<Json<MigrateAnonProgressResponse>, StatusCode> {
-    info!(
-        "Anon-progress migration: participant_id='{}', entries={}",
-        request.ulid,
-        request.entries.len()
-    );
-
-    // Same auth shape as api_submit: the ULID has to exist.
-    let participant_exists = sqlx::query("SELECT 1 FROM participants WHERE id = ?")
-        .bind(&request.ulid)
-        .fetch_optional(&state.pool)
-        .await
-        .map_err(|e| {
-            error!("Database error while checking participant: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
-    if participant_exists.is_none() {
-        warn!(
-            "Anon-progress migration with invalid participant ID: {}",
-            request.ulid
-        );
-        return Err(StatusCode::UNAUTHORIZED);
-    }
-
-    // Build the set of valid exercise keys once. `<file_stem>` (legacy
-    // single-step) and `<file_stem>/<step_key>` (multi-step) are both
-    // accepted; anything else is rejected as untrusted client input.
-    let mut valid_keys: std::collections::HashSet<String> = std::collections::HashSet::new();
-    for ex in state.exercises.iter() {
-        valid_keys.insert(ex.file_stem.clone());
-        for step in ex.code_steps() {
-            let step_key = step.key();
-            if !step_key.is_empty() {
-                valid_keys.insert(format!("{}/{}", ex.file_stem, step_key));
-            }
-        }
-    }
-
-    let mut inserted = 0usize;
-    let mut skipped = 0usize;
-
-    for entry in &request.entries {
-        if !valid_keys.contains(&entry.exercise_name) {
-            warn!(
-                "Anon-progress entry rejected (unknown exercise key): '{}'",
-                entry.exercise_name
-            );
-            skipped += 1;
-            continue;
-        }
-
-        let content_hash =
-            calculate_submission_hash(&request.ulid, &entry.exercise_name, &entry.source_code);
-
-        // Skip if an identical row is already there. This keeps the
-        // migration idempotent: a user who reloads the dashboard
-        // before localStorage is cleared won't double-insert.
-        let exists = sqlx::query(
-            "SELECT id FROM submissions WHERE participant_id = ? AND exercise_name = ? AND content_hash = ?",
-        )
-        .bind(&request.ulid)
-        .bind(&entry.exercise_name)
-        .bind(&content_hash)
-        .fetch_optional(&state.pool)
-        .await
-        .map_err(|e| {
-            error!("Database error while checking duplicate: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
-        if exists.is_some() {
-            skipped += 1;
-            continue;
-        }
-
-        let insert_result = sqlx::query(
-            r#"
-            INSERT INTO submissions (id, participant_id, exercise_name, source_code, tests_passed, clippy_passed, fmt_passed, content_hash)
-            VALUES (?, ?, ?, ?, 1, 0, 0, ?)
-            "#,
-        )
-        .bind(Ulid::new().to_string())
-        .bind(&request.ulid)
-        .bind(&entry.exercise_name)
-        .bind(&entry.source_code)
-        .bind(&content_hash)
-        .execute(&state.pool)
-        .await;
-
-        match insert_result {
-            Ok(_) => inserted += 1,
-            Err(e) => {
-                error!(
-                    "Failed to insert migrated submission for '{}': {}",
-                    entry.exercise_name, e
-                );
-                skipped += 1;
-            }
-        }
-    }
-
-    info!(
-        "Anon-progress migration complete: participant_id='{}', inserted={}, skipped={}",
-        request.ulid, inserted, skipped
-    );
-    Ok(Json(MigrateAnonProgressResponse { inserted, skipped }))
-}
-
 /// API status endpoint
 #[debug_handler]
 async fn api_status(
@@ -1856,4 +1729,52 @@ fn calculate_submission_hash(
     hasher.update(b":");
     hasher.update(source_code.as_bytes());
     format!("{:x}", hasher.finalize())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolve_register_next_accepts_simple_exercise_url() {
+        assert_eq!(
+            resolve_register_next(Some("/exercise/01_numbers"), "ULID"),
+            Some("/exercise/ULID/01_numbers".to_string()),
+        );
+    }
+
+    #[test]
+    fn resolve_register_next_trims_whitespace() {
+        assert_eq!(
+            resolve_register_next(Some("  /exercise/foo-bar  "), "U"),
+            Some("/exercise/U/foo-bar".to_string()),
+        );
+    }
+
+    #[test]
+    fn resolve_register_next_rejects_open_redirects() {
+        // Anything that doesn't begin with the literal `/exercise/`
+        // prefix, or contains characters outside the slug allow-list,
+        // gets dropped so we can't be tricked into bouncing the user
+        // off-site after registration.
+        let bad = [
+            None,
+            Some(""),
+            Some("/dashboard/U"),
+            Some("https://evil.com/exercise/x"),
+            Some("//evil.com/exercise/x"),
+            Some("/exercise/"),
+            Some("/exercise/foo/bar"),
+            Some("/exercise/foo bar"),
+            Some("/exercise/foo?next=evil"),
+            Some("/exercise/foo#frag"),
+        ];
+        for input in bad {
+            assert_eq!(
+                resolve_register_next(input, "U"),
+                None,
+                "expected None for {input:?}"
+            );
+        }
+    }
 }

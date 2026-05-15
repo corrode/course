@@ -11,3 +11,4 @@
 show = ["run"]
 show_toc = false
 on_pass = ["confetti"]
+signup_on_pass = true
