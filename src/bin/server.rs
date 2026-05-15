@@ -177,6 +177,10 @@ struct DashboardTemplate {
     /// of the anonymous dashboard. `Some("unknown-token")` after a
     /// missing-ULID redirect; `None` everywhere else.
     reason: Option<String>,
+    /// Cohort label for the signed-in participant, if any. Drives the
+    /// "View your team" link on the dashboard. `None` for anonymous
+    /// viewers and for participants who signed up via the public form.
+    team_token: Option<TeamToken>,
 }
 
 /// Template for the slim signup form.
@@ -265,7 +269,7 @@ struct ParticipantGroup {
 }
 
 /// Submission summary for admin view
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct SubmissionSummary {
     participant_name: String,
     exercise_name: String,
@@ -274,6 +278,76 @@ struct SubmissionSummary {
     submitted_at: chrono::DateTime<chrono::Utc>,
     source_code: String,
 }
+
+/// Per-team page (`/admin/team/{slug}`, `/admin/team-unassigned`,
+/// `/dashboard/{ulid}/team`). Renders a single cohort's roster plus
+/// a feed of every member's submissions, with the same chrome and
+/// the same code-editor look as the rest of the course site.
+///
+/// Two viewer modes share this template:
+///
+/// - **Admin** (`is_admin = true`): `admin_token` is `Some` so links
+///   back to `/admin` carry the token, member rows show ULIDs and a
+///   "View dashboard" link, and the "Unassigned" bucket is reachable.
+/// - **Participant** (`is_admin = false`): no admin chrome, the
+///   member matching `viewer_ulid` is highlighted as `is_self`, and
+///   `back_href` returns the user to their own dashboard.
+#[derive(Template)]
+#[template(path = "team.html")]
+struct TeamPageTemplate {
+    /// Display label shown in the page heading. The cohort slug for
+    /// a real team, or the literal string "Unassigned" for the
+    /// no-cohort bucket.
+    team_label: String,
+    /// `true` for the synthetic Unassigned bucket. The template uses
+    /// this to swap the eyebrow text and skip a couple of admin
+    /// affordances that only make sense for real cohorts.
+    is_unassigned: bool,
+    /// `true` when rendered for an admin operator. Drives whether
+    /// admin-only chrome (ULIDs, dashboard links, the back-to-admin
+    /// link) is rendered.
+    is_admin: bool,
+    /// Admin token to thread back into `/admin` and `/dashboard/{ulid}`
+    /// links so the operator stays authenticated as they click
+    /// around. `None` in participant mode. Held on the template even
+    /// though the markup currently bakes the token into pre-built
+    /// `back_href` URLs, so future template tweaks can re-use it.
+    #[allow(dead_code)]
+    admin_token: Option<String>,
+    /// Roster: one row per member of this team, ordered by most
+    /// recent activity first.
+    members: Vec<TeamMemberView>,
+    /// Chronological feed of every team member's most recent
+    /// submissions, capped to keep the page from blowing up for a
+    /// busy cohort.
+    submissions: Vec<SubmissionSummary>,
+    /// `true` when the submissions list is the cap (see
+    /// [`TEAM_SUBMISSIONS_LIMIT`]) rather than the full history.
+    submissions_truncated: bool,
+    /// URL for the "back" link at the top of the page.
+    back_href: String,
+    /// Label for the "back" link.
+    back_label: String,
+}
+
+/// One member row on the team page.
+#[derive(Serialize, Clone)]
+struct TeamMemberView {
+    id: String,
+    name: String,
+    completed_count: i64,
+    total_exercises: i64,
+    last_activity: Option<chrono::DateTime<chrono::Utc>>,
+    /// `true` when this row is the participant currently viewing the
+    /// page. Only ever set in participant mode; the template adds a
+    /// small "You" badge so the user can spot themselves quickly.
+    is_self: bool,
+}
+
+/// Cap on the number of submissions rendered on a single team page.
+/// Keeps the page snappy for very active cohorts; the admin can dig
+/// into individual dashboards for the full history.
+const TEAM_SUBMISSIONS_LIMIT: i64 = 60;
 
 /// Query parameters for admin access
 #[derive(Deserialize)]
@@ -464,6 +538,9 @@ async fn main() -> Result<()> {
             "/admin/participants/{ulid}/team-token",
             post(admin_set_team_token),
         )
+        .route("/admin/team/{slug}", get(admin_team_page))
+        .route("/admin/team-unassigned", get(admin_team_unassigned_page))
+        .route("/dashboard/{ulid}/team", get(participant_team_page))
         .nest("/api", api_routes)
         .nest_service("/static", ServeDir::new("static"))
         .with_state(app_state);
@@ -547,6 +624,7 @@ async fn anonymous_dashboard(
         progress_done: 0,
         progress_total,
         reason: query.reason,
+        team_token: None,
     };
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -762,6 +840,7 @@ async fn participant_dashboard(
         .filter(|e| !e.is_quiz && e.has_exercises && e.completed)
         .count();
 
+    let team_token = participant.parsed_team_token();
     let template = DashboardTemplate {
         participant_name: Some(participant.name),
         ulid: Some(ulid.clone()),
@@ -773,6 +852,7 @@ async fn participant_dashboard(
         progress_done,
         progress_total,
         reason: None,
+        team_token,
     };
 
     match template.render() {
@@ -1278,6 +1358,270 @@ async fn admin_set_team_token(
             (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
         }
     }
+}
+
+/// Builds the per-team page (`team.html`) for a given cohort label.
+///
+/// `team_token = None` selects the synthetic Unassigned bucket
+/// (every participant whose `participants.team_token` column is
+/// NULL). `viewer_ulid` highlights the matching member row in
+/// participant mode and is ignored in admin mode. Returns the
+/// rendered HTML response, or a 500 if any of the supporting queries
+/// fail.
+async fn render_team_page(
+    state: &AppState,
+    team_token: Option<&TeamToken>,
+    is_admin: bool,
+    admin_token: Option<String>,
+    viewer_ulid: Option<&str>,
+    back_href: String,
+    back_label: String,
+) -> axum::response::Response {
+    let total_exercises: i64 = state.exercises.len() as i64;
+
+    // Roster: every participant in this team, with a count of their
+    // passing submissions and the timestamp of their most recent one.
+    // We branch on the SQL because SQLite has no portable way to bind
+    // an Option<&str> against `IS NULL` in a single statement.
+    let roster_query = match team_token {
+        Some(_) => {
+            r#"
+            SELECT p.id, p.name,
+                   COUNT(s.id) AS completed_count,
+                   MAX(s.submitted_at) AS last_activity
+            FROM participants p
+            LEFT JOIN submissions s
+                ON p.id = s.participant_id AND s.tests_passed = 1
+            WHERE p.team_token = ?
+            GROUP BY p.id, p.name
+            ORDER BY last_activity DESC NULLS LAST, p.name COLLATE NOCASE
+            "#
+        }
+        None => {
+            r#"
+            SELECT p.id, p.name,
+                   COUNT(s.id) AS completed_count,
+                   MAX(s.submitted_at) AS last_activity
+            FROM participants p
+            LEFT JOIN submissions s
+                ON p.id = s.participant_id AND s.tests_passed = 1
+            WHERE p.team_token IS NULL
+            GROUP BY p.id, p.name
+            ORDER BY last_activity DESC NULLS LAST, p.name COLLATE NOCASE
+            "#
+        }
+    };
+    let roster_q = sqlx::query(roster_query);
+    let roster_q = match team_token {
+        Some(t) => roster_q.bind(t.as_str()),
+        None => roster_q,
+    };
+    let roster_rows = match roster_q.fetch_all(&state.pool).await {
+        Ok(rows) => rows,
+        Err(err) => {
+            error!("team page roster query failed: {err}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
+    let mut members = Vec::with_capacity(roster_rows.len());
+    for row in &roster_rows {
+        let id: String = row.get("id");
+        let is_self = viewer_ulid.is_some_and(|u| u == id.as_str());
+        members.push(TeamMemberView {
+            id,
+            name: row.get("name"),
+            completed_count: row.get("completed_count"),
+            total_exercises,
+            last_activity: row.get("last_activity"),
+            is_self,
+        });
+    }
+
+    // Submissions feed: every member's latest activity, capped so a
+    // very busy cohort doesn't render thousands of editor instances.
+    let member_ids: Vec<String> = roster_rows
+        .iter()
+        .map(|r| r.get::<String, _>("id"))
+        .collect();
+
+    let (submissions, submissions_truncated) = if member_ids.is_empty() {
+        (Vec::new(), false)
+    } else {
+        // Hand-rolled IN list. Member IDs are ULIDs we just read out
+        // of the same DB so there's no untrusted input to escape;
+        // sqlx's prepared-statement placeholders go in via `bind`.
+        let placeholders = std::iter::repeat_n("?", member_ids.len())
+            .collect::<Vec<_>>()
+            .join(", ");
+        let sql = format!(
+            r#"
+            SELECT p.name AS participant_name,
+                   s.exercise_name,
+                   s.tests_passed,
+                   s.fmt_passed,
+                   s.clippy_passed,
+                   s.submitted_at,
+                   s.source_code
+            FROM submissions s
+            JOIN participants p ON s.participant_id = p.id
+            WHERE s.participant_id IN ({placeholders})
+            ORDER BY s.submitted_at DESC
+            LIMIT ?
+            "#
+        );
+        let mut q = sqlx::query(&sql);
+        for id in &member_ids {
+            q = q.bind(id);
+        }
+        // +1 so we can detect truncation without a second query.
+        q = q.bind(TEAM_SUBMISSIONS_LIMIT + 1);
+        let rows = match q.fetch_all(&state.pool).await {
+            Ok(rows) => rows,
+            Err(err) => {
+                error!("team page submissions query failed: {err}");
+                return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            }
+        };
+        let truncated = rows.len() as i64 > TEAM_SUBMISSIONS_LIMIT;
+        let mut subs = Vec::with_capacity(rows.len().min(TEAM_SUBMISSIONS_LIMIT as usize));
+        for row in rows.into_iter().take(TEAM_SUBMISSIONS_LIMIT as usize) {
+            let fmt_passed: bool = row.get("fmt_passed");
+            let clippy_passed: bool = row.get("clippy_passed");
+            subs.push(SubmissionSummary {
+                participant_name: row.get("participant_name"),
+                exercise_name: row.get("exercise_name"),
+                tests_passed: row.get("tests_passed"),
+                perfected: fmt_passed && clippy_passed,
+                submitted_at: row.get("submitted_at"),
+                source_code: row.get("source_code"),
+            });
+        }
+        (subs, truncated)
+    };
+
+    let (team_label, is_unassigned) = match team_token {
+        Some(t) => (t.as_str().to_string(), false),
+        None => ("Unassigned".to_string(), true),
+    };
+
+    let template = TeamPageTemplate {
+        team_label,
+        is_unassigned,
+        is_admin,
+        admin_token,
+        members,
+        submissions,
+        submissions_truncated,
+        back_href,
+        back_label,
+    };
+
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+        Err(err) => {
+            error!("team page template render failed: {err}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to render template",
+            )
+                .into_response()
+        }
+    }
+}
+
+/// Admin: per-team page for a real cohort slug.
+async fn admin_team_page(
+    AxumPath(slug): AxumPath<String>,
+    Query(query): Query<AdminQuery>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    if query.token != state.admin_token {
+        return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
+    }
+    let token = match TeamToken::try_from(slug.as_str()) {
+        Ok(t) => t,
+        Err(_) => {
+            return (StatusCode::BAD_REQUEST, "Invalid team slug").into_response();
+        }
+    };
+    let admin_token = state.admin_token.clone();
+    let back_href = format!("/admin?token={admin_token}");
+    render_team_page(
+        &state,
+        Some(&token),
+        true,
+        Some(admin_token),
+        None,
+        back_href,
+        "Back to admin".to_string(),
+    )
+    .await
+}
+
+/// Admin: per-team page for the synthetic Unassigned bucket.
+async fn admin_team_unassigned_page(
+    Query(query): Query<AdminQuery>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    if query.token != state.admin_token {
+        return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
+    }
+    let admin_token = state.admin_token.clone();
+    let back_href = format!("/admin?token={admin_token}");
+    render_team_page(
+        &state,
+        None,
+        true,
+        Some(admin_token),
+        None,
+        back_href,
+        "Back to admin".to_string(),
+    )
+    .await
+}
+
+/// Participant: read-only view of their own cohort's submissions.
+///
+/// Returns 404 if the ULID is unknown; redirects to the dashboard
+/// with a one-shot toast if the participant has no team_token (no
+/// cohort means there's nothing meaningful to show on this page).
+async fn participant_team_page(
+    AxumPath(ulid): AxumPath<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    let participant: DbParticipant = match sqlx::query_as(
+        "SELECT id, name, team_token, created_at FROM participants WHERE id = ?",
+    )
+    .bind(&ulid)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(p) => p,
+        Err(_) => {
+            return axum::response::Redirect::to("/?reason=unknown-token").into_response();
+        }
+    };
+
+    let token = match participant.parsed_team_token() {
+        Some(t) => t,
+        None => {
+            // No cohort to show; bounce back to the personal dashboard.
+            return axum::response::Redirect::to(&format!("/dashboard/{ulid}")).into_response();
+        }
+    };
+
+    let back_href = format!("/dashboard/{ulid}");
+    render_team_page(
+        &state,
+        Some(&token),
+        false,
+        None,
+        Some(&ulid),
+        back_href,
+        "Back to your dashboard".to_string(),
+    )
+    .await
 }
 
 /// Admin participant removal endpoint

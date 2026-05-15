@@ -1,138 +1,65 @@
-{% extends "base.html" %} {% block title %}Admin Dashboard - corrode Rust
-Course{% endblock %} {% block content %}
-<div class="container">
-    <div class="nav">
-        <a href="/" class="nav-brand">
-            <img
-                src="/static/assets/corrode-logo.svg"
-                alt="corrode"
-                class="brand-logo"
-                style="filter: var(--logo-filter)"
-            />
-        </a>
-        <div class="nav-links">
-            <span class="nav-link">
-                <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    style="
-                        width: 16px;
-                        height: 16px;
-                        margin-right: 6px;
-                        vertical-align: text-bottom;
-                    "
-                >
-                    <rect
-                        x="3"
-                        y="11"
-                        width="18"
-                        height="11"
-                        rx="2"
-                        ry="2"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    />
-                    <circle cx="12" cy="16" r="1" fill="currentColor" />
-                    <path
-                        d="M7 11V7a5 5 0 0 1 10 0v4"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    />
-                </svg>
-                Admin
-            </span>
+{% extends "base.html" %} {% block title %}Admin · corrode Rust Course{%
+endblock %} {% block content %}
+<div class="container book-dashboard admin-page">
+    <header class="book-hero admin-hero">
+        <div class="book-eyebrow">
+            <span class="book-eyebrow-rule" aria-hidden="true"></span>
+            <span class="book-eyebrow-text">Admin</span>
+            <span class="book-eyebrow-rule" aria-hidden="true"></span>
         </div>
-    </div>
+        <h1 class="book-title admin-title">Course dashboard</h1>
+        <p class="book-byline">
+            participant progress, recent submissions, and team rollup
+        </p>
+    </header>
 
-    <div class="header">
-        <h1>Admin Dashboard</h1>
-        <p>Participant progress and recent submissions</p>
-    </div>
+    <section class="admin-stats" aria-label="Overall stats">
+        <div class="admin-stat-card">
+            <span class="admin-stat-number"
+                >{{ stats.total_participants }}</span
+            >
+            <span class="admin-stat-label">Participants</span>
+        </div>
+        <div class="admin-stat-card">
+            <span class="admin-stat-number">{{ stats.total_submissions }}</span>
+            <span class="admin-stat-label">Submissions</span>
+        </div>
+        <div class="admin-stat-card">
+            <span class="admin-stat-number">{{ stats.total_perfected }}</span>
+            <span class="admin-stat-label">Perfected</span>
+        </div>
+    </section>
 
-    <div class="stats">
-        <div class="stat-card">
-            <span class="stat-number">{{ stats.total_participants }}</span>
-            <span class="stat-label">Total Participants</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-number">{{ stats.total_submissions }}</span>
-            <span class="stat-label">Total Submissions</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-number">{{ stats.total_perfected }}</span>
-            <span class="stat-label">Total Perfected</span>
-        </div>
-    </div>
-
-    <div class="card">
-        <div
-            style="
-                display: flex;
-                justify-content: space-between;
-                align-items: baseline;
-                margin-bottom: 1.5rem;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            "
-        >
-            <h2 style="margin: 0">Participants</h2>
-            <div style="font-size: 0.85rem; color: var(--color-text-muted)">
+    <section class="admin-section" aria-label="Participants by team">
+        <div class="admin-section-head">
+            <div class="admin-section-eyebrow">Participants</div>
+            <div class="admin-section-meta">
                 {{ participant_groups.len() }} team{% if
                 participant_groups.len() != 1 %}s{% endif %}
             </div>
         </div>
 
         {% for group in participant_groups %}
-        <div class="team-group" style="margin-bottom: 2rem">
-            <div
-                class="team-group-header"
-                style="
-                    display: flex;
-                    align-items: baseline;
-                    gap: 0.6rem;
-                    margin-bottom: 0.6rem;
-                    padding-bottom: 0.4rem;
-                    border-bottom: 1px solid var(--color-border);
-                "
-            >
+        <div class="team-group">
+            <div class="team-group-head">
                 {% match group.team_token %} {% when Some with (slug) %}
-                <span
-                    style="
-                        font-size: 0.7rem;
-                        font-weight: 700;
-                        letter-spacing: 0.18em;
-                        text-transform: uppercase;
-                        color: var(--color-text-muted);
-                    "
-                    >Team</span
-                >
-                <span
-                    style="
-                        font-family:
-                            &quot;JetBrains Mono&quot;, &quot;SF Mono&quot;,
-                            Monaco, monospace;
-                        font-size: 1rem;
-                        color: var(--color-text);
-                        font-weight: 600;
-                    "
-                    >{{ slug }}</span
+                <span class="team-group-tag">Team</span>
+                <a
+                    class="team-group-name"
+                    href="/admin/team/{{ slug }}?token={{ admin_token }}"
+                    title="Open this team's full page"
+                    >{{ slug }}</a
                 >
                 {% when None %}
-                <span
-                    style="
-                        font-size: 0.7rem;
-                        font-weight: 700;
-                        letter-spacing: 0.18em;
-                        text-transform: uppercase;
-                        color: var(--color-text-muted);
-                    "
-                    >Unassigned</span
+                <span class="team-group-tag">Unassigned</span>
+                <a
+                    class="team-group-name team-group-name-muted"
+                    href="/admin/team-unassigned?token={{ admin_token }}"
+                    title="Open the unassigned bucket"
+                    >no cohort</a
                 >
                 {% endmatch %}
-                <span
-                    style="font-size: 0.85rem; color: var(--color-text-muted)"
-                >
+                <span class="team-group-meta">
                     · {{ group.members.len() }} participant{% if
                     group.members.len() != 1 %}s{% endif %}
                 </span>
@@ -143,33 +70,25 @@ Course{% endblock %} {% block content %}
                     <tr>
                         <th>Name</th>
                         <th>Progress</th>
-                        <th>Last Activity</th>
+                        <th>Last activity</th>
                         <th>Move to team</th>
-                        <th style="text-align: right">Actions</th>
+                        <th class="admin-col-actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for participant in group.members %}
                     <tr>
-                        <td
-                            style="font-weight: 500; color: var(--text-primary)"
-                        >
-                            {{ participant.name }}
-                        </td>
+                        <td class="admin-cell-name">{{ participant.name }}</td>
                         <td>
-                            <span style="color: var(--color-success)"
+                            <span class="admin-progress-done"
                                 >{{ participant.completed_count }}</span
                             >
-                            <span style="color: var(--color-text-muted)"
+                            <span class="admin-progress-total"
                                 >/{{ participant.total_exercises }}</span
                             >
                             {% if participant.completed_count ==
                             participant.total_exercises %}
-                            <span
-                                style="
-                                    color: var(--color-warning);
-                                    margin-left: 0.5rem;
-                                "
+                            <span class="admin-progress-complete"
                                 >🎉 Complete!</span
                             >
                             {% endif %}
@@ -177,20 +96,14 @@ Course{% endblock %} {% block content %}
                         <td>
                             {% if participant.last_activity.is_some() %} Recent
                             activity {% else %}
-                            <span style="color: var(--color-text-muted)"
-                                >No submissions</span
-                            >
+                            <span class="admin-cell-muted">No submissions</span>
                             {% endif %}
                         </td>
                         <td>
                             <form
                                 method="post"
                                 action="/admin/participants/{{ participant.id }}/team-token?token={{ admin_token }}"
-                                style="
-                                    display: flex;
-                                    gap: 0.4rem;
-                                    align-items: center;
-                                "
+                                class="admin-team-form"
                             >
                                 <input
                                     type="text"
@@ -200,63 +113,29 @@ Course{% endblock %} {% block content %}
                                     maxlength="64"
                                     pattern="[A-Za-z0-9_\-]*"
                                     title="Letters, digits, underscore or hyphen. Leave blank to unassign."
-                                    style="
-                                        font-family:
-                                            &quot;JetBrains Mono&quot;,
-                                            &quot;SF Mono&quot;, Monaco,
-                                            monospace;
-                                        font-size: 0.8rem;
-                                        padding: 0.3rem 0.5rem;
-                                        border: 1px solid var(--color-border);
-                                        background: var(--color-bg);
-                                        color: var(--color-text);
-                                        border-radius: 4px;
-                                        width: 8rem;
-                                    "
+                                    class="admin-team-input"
                                 />
                                 <button
                                     type="submit"
-                                    class="btn btn-secondary"
-                                    style="
-                                        font-size: 0.75rem;
-                                        padding: 0.3rem 0.6rem;
-                                    "
+                                    class="btn btn-secondary admin-btn-tiny"
                                 >
                                     Move
                                 </button>
                             </form>
                         </td>
-                        <td style="text-align: right">
-                            <div
-                                style="
-                                    display: flex;
-                                    gap: 0.5rem;
-                                    justify-content: flex-end;
-                                "
+                        <td class="admin-col-actions">
+                            <a
+                                href="/dashboard/{{ participant.id }}"
+                                class="btn btn-secondary admin-btn-tiny"
                             >
-                                <a
-                                    href="/dashboard/{{ participant.id }}"
-                                    class="btn btn-secondary"
-                                    style="
-                                        font-size: 0.75rem;
-                                        padding: 0.375rem 0.75rem;
-                                    "
-                                >
-                                    View Dashboard
-                                </a>
-                                <button
-                                    onclick="removeParticipant('{{ participant.id }}', '{{ participant.name }}')"
-                                    class="btn"
-                                    style="
-                                        font-size: 0.75rem;
-                                        padding: 0.375rem 0.75rem;
-                                        background-color: var(--color-error);
-                                        border: none;
-                                    "
-                                >
-                                    Remove
-                                </button>
-                            </div>
+                                View dashboard
+                            </a>
+                            <button
+                                onclick="removeParticipant('{{ participant.id }}', '{{ participant.name }}')"
+                                class="btn admin-btn-tiny admin-btn-danger"
+                            >
+                                Remove
+                            </button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -264,37 +143,17 @@ Course{% endblock %} {% block content %}
             </table>
         </div>
         {% endfor %}
-    </div>
+    </section>
 
-    <div class="card">
-        <div
-            style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1.5rem;
-            "
-        >
-            <h2 style="margin: 0">Recent Submissions</h2>
-            <div style="display: flex; align-items: center; gap: 0.5rem">
-                <label
-                    for="exercise-filter"
-                    style="font-size: 0.875rem; color: var(--color-text-muted)"
-                    >Filter by exercise:</label
-                >
+    <section class="admin-section" aria-label="Recent submissions">
+        <div class="admin-section-head">
+            <div class="admin-section-eyebrow">Recent submissions</div>
+            <div class="admin-section-meta">
+                <label for="exercise-filter">Filter:</label>
                 <select
                     id="exercise-filter"
                     onchange="filterSubmissions()"
-                    style="
-                        background-color: var(--color-surface);
-                        color: var(--color-text);
-                        border: 1px solid var(--color-border);
-                        border-radius: 4px;
-                        padding: 0.25rem 0.5rem;
-                        font-size: 0.875rem;
-                        cursor: pointer;
-                        transition: border-color 0.2s ease;
-                    "
+                    class="admin-filter"
                 >
                     <option value="">All exercises</option>
                     {% for exercise in exercises %}
@@ -304,268 +163,397 @@ Course{% endblock %} {% block content %}
             </div>
         </div>
 
-        <div style="display: grid; gap: 1rem" id="submissions-container">
+        <ol class="admin-submissions-list" id="submissions-container">
             {% for submission in recent_submissions %}
-            <div
-                class="exercise-item"
-                onclick="toggleSubmissionDetails(this)"
-                style="cursor: pointer"
+            <li
+                class="admin-submission"
                 data-exercise="{{ submission.exercise_name }}"
             >
-                <span class="exercise-status">
-                    {% if submission.perfected %}
-                    <div class="icon-star">
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                <header class="admin-submission-head">
+                    <span class="admin-submission-status">
+                        {% if submission.perfected %}
+                        <span
+                            class="team-badge team-badge-perfect"
+                            title="Perfected (clippy + fmt)"
+                            >★</span
                         >
-                            <path
-                                d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                                fill="white"
-                            />
-                        </svg>
-                    </div>
-                    {% else %} {% if submission.tests_passed %}
-                    <div class="icon-check">
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                        {% else if submission.tests_passed %}
+                        <span
+                            class="team-badge team-badge-pass"
+                            title="Tests passed"
+                            >✓</span
                         >
-                            <path
-                                d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z"
-                                fill="white"
-                            />
-                        </svg>
-                    </div>
-                    {% else %}
-                    <div
-                        style="
-                            width: 24px;
-                            height: 24px;
-                            background-color: var(--color-error);
-                            border-radius: 50%;
-                            display: inline-flex;
-                            align-items: center;
-                            justify-content: center;
-                        "
+                        {% else %}
+                        <span
+                            class="team-badge team-badge-fail"
+                            title="Tests failed"
+                            >×</span
+                        >
+                        {% endif %}
+                    </span>
+                    <span class="admin-submission-who"
+                        >{{ submission.participant_name }}</span
                     >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            style="width: 14px; height: 14px"
-                        >
-                            <path
-                                d="M18 6L6 18M6 6L18 18"
-                                stroke="white"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            />
-                        </svg>
-                    </div>
-                    {% endif %} {% endif %}
-                </span>
-                <div style="flex-grow: 1">
-                    <div
-                        style="
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            margin-bottom: 0.5rem;
-                        "
+                    <span class="admin-submission-sep">·</span>
+                    <span class="admin-submission-exercise"
+                        >{{ submission.exercise_name }}</span
                     >
-                        <div>
-                            <span
-                                style="
-                                    font-weight: 500;
-                                    color: var(--color-text);
-                                "
-                                >{{ submission.participant_name }}</span
-                            >
-                            <span style="color: var(--color-text-muted)">
-                                •
-                            </span>
-                            <span
-                                style="
-                                    color: var(--color-primary);
-                                    font-family:
-                                        &quot;SF Mono&quot;, Monaco, monospace;
-                                "
-                                >{{ submission.exercise_name }}</span
-                            >
-                        </div>
-                        <div
-                            style="
-                                display: flex;
-                                align-items: center;
-                                gap: 1rem;
-                            "
-                        >
-                            <div
-                                style="
-                                    font-size: 0.875rem;
-                                    color: var(--color-text-muted);
-                                "
-                            >
-                                {{ submission.submitted_at }}
-                            </div>
-                            <div
-                                style="
-                                    font-size: 0.75rem;
-                                    color: var(--color-text-muted);
-                                "
-                                data-hint
-                            >
-                                Click to view source
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        class="submission-details"
-                        style="display: none; margin-top: 0.5rem"
+                    <span class="admin-submission-time"
+                        >{{ submission.submitted_at }}</span
                     >
-                        <div class="code-container" style="margin-top: 0.5rem">
-                            <div
-                                class="copy-btn"
-                                onclick="
-                                    event.stopPropagation();
-                                    copyCodeFromElement(
-                                        this.nextElementSibling.nextElementSibling.querySelector(
-                                            'code',
-                                        ),
-                                    );
-                                "
-                                title="Copy to clipboard"
-                            >
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
-                                        fill="currentColor"
-                                    />
-                                </svg>
-                                Copy
-                            </div>
-                            <div
-                                class="copy-btn"
-                                onclick="event.stopPropagation(); openCodeInPlayground(this.nextElementSibling.querySelector('code'), this, '{{ submission.exercise_name }} by {{ submission.participant_name }}')"
-                                title="Open in Rust Playground"
-                                style="right: 70px"
-                            >
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M8 5V19L19 12L8 5Z"
-                                        fill="currentColor"
-                                    />
-                                </svg>
-                                Play
-                            </div>
-                            <pre><code class="language-rust">{{ submission.source_code }}</code></pre>
-                        </div>
-                    </div>
+                </header>
+                <div class="rust-editor admin-submission-code" data-rust-source>
+                    {{ submission.source_code }}
                 </div>
-            </div>
+            </li>
             {% endfor %}
-        </div>
-    </div>
+        </ol>
+    </section>
 
-    <div
-        style="
-            text-align: center;
-            margin-top: 3rem;
-            color: var(--color-text-muted);
-        "
-    >
-        <p>Enabling everyone to build reliable and efficient software</p>
-    </div>
+    <p class="admin-footnote">
+        Enabling everyone to build reliable and efficient software
+    </p>
 </div>
 
+<script type="module" src="/static/js/readonly-rust-editor.js"></script>
+
 <script>
-    async function removeParticipant(participantId, participantName) {
+    async function removeParticipant(id, name) {
         if (
             !confirm(
-                `Are you sure you want to remove participant "${participantName}"? This will delete all their submissions and progress permanently.`,
+                `Remove participant "${name}"? This will delete all their submissions and cannot be undone.`,
             )
         ) {
             return;
         }
-
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get("token");
         try {
-            // Get the admin token from the current URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get("token");
-
-            if (!token) {
-                alert("Admin token not found in URL");
-                return;
-            }
-
             const response = await fetch(
-                `/admin/remove-participant/${participantId}?token=${encodeURIComponent(token)}`,
+                `/admin/remove-participant/${id}?token=${token}`,
                 {
                     method: "DELETE",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
+                    headers: { "Content-Type": "application/json" },
                 },
             );
-
             if (response.ok) {
-                // Reload the page to reflect changes
                 window.location.reload();
             } else {
                 const error = await response.text();
                 alert(`Failed to remove participant: ${error}`);
             }
-        } catch (error) {
-            console.error("Error removing participant:", error);
-            alert("Failed to remove participant. Please try again.");
-        }
-    }
-
-    function toggleSubmissionDetails(element) {
-        const detailsDiv = element.querySelector(".submission-details");
-        const isVisible = detailsDiv.style.display !== "none";
-
-        if (isVisible) {
-            detailsDiv.style.display = "none";
-            element.querySelector("[data-hint]") &&
-                (element.querySelector("[data-hint]").textContent =
-                    "Click to view source");
-        } else {
-            detailsDiv.style.display = "block";
-            element.querySelector("[data-hint]") &&
-                (element.querySelector("[data-hint]").textContent =
-                    "Click to hide source");
+        } catch (e) {
+            alert(`Error removing participant: ${e.message}`);
         }
     }
 
     function filterSubmissions() {
         const filter = document.getElementById("exercise-filter").value;
         const submissions = document.querySelectorAll(
-            "#submissions-container .exercise-item",
+            "#submissions-container .admin-submission",
         );
-
-        submissions.forEach((submission) => {
-            const exerciseName = submission.getAttribute("data-exercise");
-
-            if (filter === "" || exerciseName === filter) {
-                submission.style.display = "flex";
-            } else {
-                submission.style.display = "none";
-            }
+        submissions.forEach((s) => {
+            const exerciseName = s.getAttribute("data-exercise");
+            s.style.display = !filter || exerciseName === filter ? "" : "none";
         });
     }
 </script>
+
+<style>
+    /* Admin chrome borrows the dashboard's book look (eyebrow + big
+       title + max-width container) and shares the team-page styles
+       (`team-badge-*`, etc.) for the submissions feed. Anything
+       admin-specific is scoped with `.admin-`. */
+
+    .admin-page {
+        max-width: 64rem;
+    }
+
+    .admin-hero {
+        margin: 2rem 0 2.5rem;
+    }
+    .admin-title {
+        font-size: 2.4rem;
+    }
+
+    /* ---------- Stats ---------- */
+    .admin-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 3rem;
+    }
+    .admin-stat-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 1.25rem 1rem;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        background: var(--color-surface);
+    }
+    .admin-stat-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--color-text);
+        font-variant-numeric: tabular-nums;
+    }
+    .admin-stat-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+    }
+    @media (max-width: 600px) {
+        .admin-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ---------- Section heads ---------- */
+    .admin-section {
+        margin-bottom: 3.5rem;
+    }
+    .admin-section-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--color-border);
+        flex-wrap: wrap;
+    }
+    .admin-section-eyebrow {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+    }
+    .admin-section-meta {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .admin-filter {
+        background: var(--color-surface);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    /* ---------- Team groups ---------- */
+    .team-group {
+        margin-bottom: 2rem;
+    }
+    .team-group-head {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        margin-bottom: 0.6rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--color-border);
+        flex-wrap: wrap;
+    }
+    .team-group-tag {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+    }
+    .team-group-name {
+        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+        font-size: 1rem;
+        color: var(--color-text);
+        font-weight: 600;
+        text-decoration: none;
+        border-bottom: 1px dashed transparent;
+    }
+    .team-group-name:hover,
+    .team-group-name:focus-visible {
+        color: var(--color-primary);
+        border-bottom-color: var(--color-primary);
+    }
+    .team-group-name-muted {
+        font-style: italic;
+        color: var(--color-text-muted);
+    }
+    .team-group-meta {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+    }
+
+    /* ---------- Participants table ---------- */
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+    }
+    .admin-table th {
+        text-align: left;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+        padding: 0.6rem 0.5rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+    .admin-table td {
+        padding: 0.7rem 0.5rem;
+        border-bottom: 1px solid var(--color-border);
+        vertical-align: middle;
+    }
+    .admin-cell-name {
+        font-weight: 500;
+        color: var(--color-text);
+    }
+    .admin-cell-muted {
+        color: var(--color-text-muted);
+    }
+    .admin-progress-done {
+        color: var(--color-success);
+        font-weight: 600;
+    }
+    .admin-progress-total {
+        color: var(--color-text-muted);
+    }
+    .admin-progress-complete {
+        color: var(--color-warning);
+        margin-left: 0.5rem;
+        font-size: 0.85rem;
+    }
+    .admin-col-actions {
+        text-align: right;
+        white-space: nowrap;
+    }
+    .admin-col-actions .btn {
+        margin-left: 0.4rem;
+    }
+    .admin-team-form {
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+    }
+    .admin-team-input {
+        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+        font-size: 0.8rem;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid var(--color-border);
+        background: var(--color-bg, var(--color-surface));
+        color: var(--color-text);
+        border-radius: 4px;
+        width: 8rem;
+    }
+    .admin-btn-tiny {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+    }
+    .admin-btn-danger {
+        background: var(--color-error);
+        border: none;
+        color: #fff;
+    }
+    .admin-btn-danger:hover {
+        filter: brightness(0.95);
+    }
+
+    /* ---------- Submissions feed ---------- */
+    .admin-submissions-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .admin-submission {
+        margin: 0;
+    }
+    .admin-submission-head {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        margin-bottom: 0.6rem;
+        flex-wrap: wrap;
+    }
+    .admin-submission-who {
+        font-weight: 600;
+        color: var(--color-text);
+    }
+    .admin-submission-sep {
+        color: var(--color-text-muted);
+    }
+    .admin-submission-exercise {
+        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+        color: var(--color-primary);
+        font-size: 0.92rem;
+    }
+    .admin-submission-time {
+        margin-left: auto;
+        color: var(--color-text-muted);
+        font-size: 0.85rem;
+    }
+    .admin-submission-code {
+        display: block;
+        white-space: pre;
+        overflow-x: auto;
+        max-height: 28rem;
+        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+        font-size: 0.85rem;
+        background: var(--color-surface);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        padding: 0.85rem 1rem;
+    }
+    .admin-submission-code .cm-editor {
+        font-family: inherit;
+    }
+    .admin-submission-code:has(.cm-editor) {
+        padding: 0;
+        background: transparent;
+        border: none;
+    }
+
+    /* Shared status badges (also used by team.html). Kept here so the
+       admin page is self-sufficient if team.html is removed. */
+    .team-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.4rem;
+        height: 1.4rem;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #fff;
+    }
+    .team-badge-pass {
+        background: var(--color-success);
+    }
+    .team-badge-perfect {
+        background: #f1c40f;
+        color: #4a3a00;
+    }
+    .team-badge-fail {
+        background: var(--color-error);
+    }
+
+    .admin-footnote {
+        text-align: center;
+        margin-top: 3rem;
+        color: var(--color-text-muted);
+        font-style: italic;
+        font-size: 0.9rem;
+    }
+</style>
 {% endblock %}

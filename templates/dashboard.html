@@ -69,7 +69,18 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
             tell you when you're done. Most take five to ten minutes. Skip ahead
             if a chapter feels familiar, come back when something clicks.
         </p>
-        {% when None %}
+        {% match team_token %} {% when Some with (token) %} {% match ulid %} {%
+        when Some with (u) %}
+        <p class="book-team-link">
+            You're part of cohort
+            <a href="/dashboard/{{ u }}/team"><strong>{{ token }}</strong></a
+            >.
+            <a href="/dashboard/{{ u }}/team"
+                >See what your group is building →</a
+            >
+        </p>
+        {% when None %} {% endmatch %} {% when None %} {% endmatch %} {% when
+        None %}
         <p>
             You're going to write Rust in a browser tab. No setup, no project
             structure to wrangle, just small problems that build into real
@@ -215,6 +226,22 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
     }
     .book-intro-signup a:hover,
     .book-intro-signup a:focus-visible {
+        text-decoration: underline;
+    }
+    .book-team-link {
+        margin-top: 1.4rem;
+        padding-top: 1.1rem;
+        border-top: 1px dashed var(--color-border);
+        font-size: 0.95rem;
+        color: var(--color-text-muted);
+    }
+    .book-team-link a {
+        color: var(--color-primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .book-team-link a:hover,
+    .book-team-link a:focus-visible {
         text-decoration: underline;
     }
     .book-intro code {

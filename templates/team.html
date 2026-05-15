@@ -1,0 +1,328 @@
+{% extends "base.html" %} {% block title %}{{ team_label }} · Team · corrode
+Rust Course{% endblock %} {% block content %}
+<div class="container book-dashboard team-page">
+    <p class="team-back">
+        <a href="{{ back_href }}">← {{ back_label }}</a>
+    </p>
+
+    <header class="book-hero team-hero">
+        <div class="book-eyebrow">
+            <span class="book-eyebrow-rule" aria-hidden="true"></span>
+            <span class="book-eyebrow-text">
+                {% if is_unassigned %}Unassigned{% else %}Team{% endif %}
+            </span>
+            <span class="book-eyebrow-rule" aria-hidden="true"></span>
+        </div>
+        <h1 class="book-title team-title">{{ team_label }}</h1>
+        <p class="book-byline">
+            {{ members.len() }} participant{% if members.len() != 1 %}s{% endif
+            %}, {{ submissions.len() }} recent submission{% if
+            submissions.len() != 1 %}s{% endif %}{% if submissions_truncated %}
+            (most recent only){% endif %}
+        </p>
+    </header>
+
+    <section class="team-roster" aria-label="Team roster">
+        <div class="team-section-eyebrow">Roster</div>
+        {% if members.is_empty() %}
+        <p class="team-empty">No one has signed up under this label yet.</p>
+        {% else %}
+        <ul class="team-roster-list">
+            {% for member in members %}
+            <li class="team-roster-row{% if member.is_self %} is-self{% endif %}">
+                <div class="team-roster-name">
+                    {% if is_admin %}
+                    <a
+                        href="/dashboard/{{ member.id }}"
+                        class="team-roster-link"
+                        title="Open this participant's dashboard"
+                    >
+                        {{ member.name }}
+                    </a>
+                    {% else %} {{ member.name }} {% endif %} {% if
+                    member.is_self %}
+                    <span class="team-self-badge">You</span>
+                    {% endif %}
+                </div>
+                <div class="team-roster-progress">
+                    <span class="team-roster-done"
+                        >{{ member.completed_count }}</span
+                    >
+                    <span class="team-roster-total"
+                        >/ {{ member.total_exercises }} chapters</span
+                    >
+                </div>
+                <div class="team-roster-activity">
+                    {% if member.last_activity.is_some() %} active recently {%
+                    else %}
+                    <span class="team-roster-quiet">no submissions yet</span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+
+    <section class="team-submissions" aria-label="Recent submissions">
+        <div class="team-section-eyebrow">Recent submissions</div>
+        {% if submissions.is_empty() %}
+        <p class="team-empty">No submissions on record yet.</p>
+        {% else %}
+        <ol class="team-submissions-list">
+            {% for sub in submissions %}
+            <li class="team-submission">
+                <header class="team-submission-head">
+                    <span class="team-submission-status">
+                        {% if sub.perfected %}
+                        <span class="team-badge team-badge-perfect" title="Perfected (clippy + fmt)">★</span>
+                        {% else if sub.tests_passed %}
+                        <span class="team-badge team-badge-pass" title="Tests passed">✓</span>
+                        {% else %}
+                        <span class="team-badge team-badge-fail" title="Tests failed">×</span>
+                        {% endif %}
+                    </span>
+                    <span class="team-submission-who">{{ sub.participant_name }}</span>
+                    <span class="team-submission-sep">·</span>
+                    <span class="team-submission-exercise">{{ sub.exercise_name }}</span>
+                    <span class="team-submission-time">{{ sub.submitted_at }}</span>
+                </header>
+                <div class="rust-editor team-submission-code" data-rust-source>{{ sub.source_code }}</div>
+            </li>
+            {% endfor %}
+        </ol>
+        {% if submissions_truncated %}
+        <p class="team-truncated-note">
+            Only the {{ submissions.len() }} most recent submissions are shown.
+            {% if is_admin %}Open an individual dashboard for the full
+            history.{% endif %}
+        </p>
+        {% endif %} {% endif %}
+    </section>
+</div>
+
+<script
+    type="module"
+    src="/static/js/readonly-rust-editor.js"
+></script>
+
+<style>
+    /* The team page borrows the dashboard's book look and feel
+       (max-width, eyebrow, big title) and adds a roster + submissions
+       feed below it. Section names are scoped with `team-` so they
+       don't fight with the dashboard's `book-` rules. */
+
+    .team-page {
+        max-width: 60rem;
+    }
+
+    .team-back {
+        margin: 1.25rem 0 0;
+        font-size: 0.9rem;
+    }
+    .team-back a {
+        color: var(--color-text-muted);
+        text-decoration: none;
+    }
+    .team-back a:hover,
+    .team-back a:focus-visible {
+        color: var(--color-text);
+        text-decoration: underline;
+    }
+
+    .team-hero {
+        margin: 2rem 0 3rem;
+    }
+    .team-title {
+        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+        font-size: 2.4rem;
+        word-break: break-all;
+    }
+
+    .team-section-eyebrow {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .team-empty {
+        margin: 0;
+        color: var(--color-text-muted);
+        font-style: italic;
+    }
+
+    /* ---------- Roster ---------- */
+    .team-roster {
+        margin: 0 0 3.5rem;
+    }
+    .team-roster-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .team-roster-row {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr 1fr;
+        gap: 1rem;
+        align-items: baseline;
+        padding: 0.8rem 0.4rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+    .team-roster-row.is-self {
+        background: color-mix(
+            in srgb,
+            var(--color-primary) 6%,
+            transparent
+        );
+        border-radius: 6px;
+    }
+    .team-roster-name {
+        font-weight: 500;
+        color: var(--color-text);
+    }
+    .team-roster-link {
+        color: inherit;
+        text-decoration: none;
+    }
+    .team-roster-link:hover,
+    .team-roster-link:focus-visible {
+        color: var(--color-primary);
+        text-decoration: underline;
+    }
+    .team-self-badge {
+        display: inline-block;
+        margin-left: 0.5rem;
+        padding: 0.05rem 0.45rem;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        background: var(--color-primary);
+        color: #fff;
+    }
+    .team-roster-progress {
+        font-variant-numeric: tabular-nums;
+    }
+    .team-roster-done {
+        color: var(--color-success);
+        font-weight: 600;
+    }
+    .team-roster-total {
+        color: var(--color-text-muted);
+        margin-left: 0.25rem;
+    }
+    .team-roster-activity {
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+    }
+    .team-roster-quiet {
+        font-style: italic;
+    }
+
+    /* ---------- Submissions feed ---------- */
+    .team-submissions-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .team-submission {
+        padding: 0;
+    }
+    .team-submission-head {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        margin-bottom: 0.6rem;
+        flex-wrap: wrap;
+    }
+    .team-submission-who {
+        font-weight: 600;
+        color: var(--color-text);
+    }
+    .team-submission-sep {
+        color: var(--color-text-muted);
+    }
+    .team-submission-exercise {
+        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+        color: var(--color-primary);
+        font-size: 0.92rem;
+    }
+    .team-submission-time {
+        margin-left: auto;
+        color: var(--color-text-muted);
+        font-size: 0.85rem;
+    }
+    .team-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.4rem;
+        height: 1.4rem;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #fff;
+    }
+    .team-badge-pass {
+        background: var(--color-success);
+    }
+    .team-badge-perfect {
+        background: #f1c40f;
+        color: #4a3a00;
+    }
+    .team-badge-fail {
+        background: var(--color-error);
+    }
+    .team-submission-code {
+        display: block;
+        white-space: pre;
+        overflow-x: auto;
+        max-height: 28rem;
+        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+        font-size: 0.85rem;
+        background: var(--color-surface);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        padding: 0.85rem 1rem;
+    }
+    /* Once the read-only CodeMirror viewer mounts, it replaces the
+       fallback padding with its own gutters; drop our padding so the
+       editor doesn't end up double-padded. */
+    .team-submission-code .cm-editor {
+        font-family: inherit;
+    }
+    .team-submission-code:has(.cm-editor) {
+        padding: 0;
+        background: transparent;
+        border: none;
+    }
+
+    .team-truncated-note {
+        margin-top: 1.5rem;
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        font-style: italic;
+    }
+
+    @media (max-width: 720px) {
+        .team-roster-row {
+            grid-template-columns: 1fr;
+            gap: 0.25rem;
+        }
+        .team-submission-time {
+            margin-left: 0;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
