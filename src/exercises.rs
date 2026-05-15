@@ -235,6 +235,31 @@ impl Exercise {
     pub fn wants_signup_on_pass(&self) -> bool {
         self.directives.signup_on_pass.unwrap_or(false)
     }
+
+    /// Convenience for templates: should the page-wide chapter list at
+    /// the bottom render? `show_toc = false` in `.chapter.toml` hides
+    /// it; any other value (the default) keeps it visible. Mirrored on
+    /// the server so the welcome chapter doesn't flash the TOC and
+    /// then yank it away after JS boots.
+    #[must_use]
+    pub fn shows_toc(&self) -> bool {
+        self.directives.show_toc.unwrap_or(true)
+    }
+
+    /// Convenience for templates: should the named editor button
+    /// (`run`, `submit`, `format`, `reset`, `copy`, `vim`, `vscode`)
+    /// render in this chapter? When `.chapter.toml` doesn't set
+    /// `show`, every button is visible (the default). When `show` is
+    /// an explicit allow-list, only the names in it survive.
+    /// Mirrored on the server so the welcome chapter doesn't flash a
+    /// full toolbar and then strip it down to just Run after JS boots.
+    #[must_use]
+    pub fn shows_button(&self, name: &str) -> bool {
+        match &self.directives.show {
+            None => true,
+            Some(allowed) => allowed.iter().any(|n| n == name),
+        }
+    }
 }
 
 /// One position in a chapter's rendered output: prose or an editable

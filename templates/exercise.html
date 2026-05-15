@@ -169,6 +169,7 @@ progress_total > 0 %}
                     class="action-status"
                     aria-live="polite"
                 ></span>
+                {% if exercise.shows_button("vim") %}
                 <button
                     type="button"
                     class="btn btn-secondary"
@@ -178,6 +179,7 @@ progress_total > 0 %}
                 >
                     Vim: off
                 </button>
+                {% endif %} {% if exercise.shows_button("reset") %}
                 <button
                     type="button"
                     class="btn btn-secondary"
@@ -186,6 +188,7 @@ progress_total > 0 %}
                 >
                     Reset
                 </button>
+                {% endif %} {% if exercise.shows_button("vscode") %}
                 <a
                     class="btn btn-secondary"
                     data-role="vscode-btn"
@@ -196,6 +199,7 @@ progress_total > 0 %}
                 >
                     Open in Web Editor
                 </a>
+                {% endif %} {% if exercise.shows_button("format") %}
                 <button
                     type="button"
                     class="btn btn-secondary"
@@ -204,6 +208,7 @@ progress_total > 0 %}
                 >
                     Format
                 </button>
+                {% endif %} {% if exercise.shows_button("run") %}
                 <button
                     type="button"
                     class="btn"
@@ -212,7 +217,8 @@ progress_total > 0 %}
                 >
                     ▶ Run
                 </button>
-                {% match ulid %} {% when Some with (u) %}
+                {% endif %} {% match ulid %} {% when Some with (u) %} {% if
+                exercise.shows_button("submit") %}
                 <button
                     type="button"
                     class="btn btn-success"
@@ -223,7 +229,7 @@ progress_total > 0 %}
                 >
                     ✓ Submit
                 </button>
-                {% when None %} {% endmatch %}
+                {% endif %} {% when None %} {% endmatch %}
             </div>
         </div>
         <noscript>
@@ -232,6 +238,7 @@ progress_total > 0 %}
             </p>
         </noscript>
         <div style="position: relative">
+            {% if exercise.shows_button("copy") %}
             <button
                 type="button"
                 data-role="copy-btn"
@@ -266,6 +273,7 @@ progress_total > 0 %}
                     />
                 </svg>
             </button>
+            {% endif %}
             <textarea
                 data-role="editor-fallback"
                 spellcheck="false"
@@ -544,8 +552,7 @@ progress_total > 0 %}
         </a>
         {% endmatch %}
     </section>
-    {% endif %} {% when None %} {% endmatch %}
-
+    {% endif %} {% when None %} {% endmatch %} {% if exercise.shows_toc() %}
     <nav
         class="chapter-list"
         aria-label="All exercises"
@@ -581,6 +588,7 @@ progress_total > 0 %}
         </a>
         {% endmatch %} {% endif %} {% endfor %}
     </nav>
+    {% endif %}
 </div>
 
 <script type="importmap">
@@ -607,27 +615,20 @@ progress_total > 0 %}
 
 <script type="module">
     // ---- Per-chapter UI directives -------------------------------------
-    // Read from `data-corrode-config` on the .container, which is the
-    // JSON serialisation of the chapter's `.chapter.toml`. Defaults to
-    // a no-op if the file is missing.
+    // Loaded from `.chapter.toml` on the server and serialised onto
+    // `[data-corrode-config]` on the .container element. The runtime
+    // knobs handled here are the pass-time bits (PassHooks,
+    // `signup_on_pass`); render-time bits (`show`, `show_toc`) are
+    // gated server-side in the template.
     //
     // Adding a new knob:
     //   1. add a field on ChapterDirectives in src/exercises.rs
     //     (mark optional fields `#[serde(skip_serializing_if = ...)]`
     //     so the rendered JSON stays compact)
-    //   2. handle it inside applyChapterDirectives below
+    //   2. handle it inside applyChapterDirectives below if it's a
+    //      runtime concern, or in `templates/exercise.html` if it's
+    //      just a render-time toggle
     //   3. (if it's a pass-time effect) register a function in PassHooks
-
-    // Map of public button names → the data-role we hide.
-    const Buttons = {
-        run: "run-btn",
-        submit: "submit-btn",
-        format: "format-btn",
-        reset: "reset-btn",
-        copy: "copy-btn",
-        vim: "vim-btn",
-        vscode: "vscode-btn",
-    };
 
     // Map of named effects fired when a section's tests all pass.
     // Each handler receives `{ section, data }` (the run-result payload).
@@ -673,36 +674,6 @@ progress_total > 0 %}
 
     function applyChapterDirectives() {
         const cfg = readChapterConfig();
-
-        // Allow-list of visible buttons. Omitting `show` (the default)
-        // leaves every button alone. An explicit array — even an empty
-        // one — hides any button not named in it.
-        if (Array.isArray(cfg.show)) {
-            const showSet = new Set(cfg.show);
-            const sections = document.querySelectorAll(
-                ".exercise-section[data-step-id]",
-            );
-            for (const [name, role] of Object.entries(Buttons)) {
-                if (showSet.has(name)) continue;
-                sections.forEach((section) => {
-                    section.querySelector(`[data-role="${role}"]`)?.remove();
-                });
-            }
-            for (const name of cfg.show) {
-                if (!Buttons[name]) {
-                    console.warn(
-                        `[corrode] unknown button in show list: ${name}`,
-                    );
-                }
-            }
-        }
-
-        // Chapter-wide table of contents (the `.chapter-list` nav at
-        // the bottom of the page). `cfg.show_toc === false` hides it;
-        // any other value leaves it visible.
-        if (cfg.show_toc === false) {
-            document.querySelector(".chapter-list")?.remove();
-        }
 
         // Pass-time effects. Unknown names are warned about but ignored.
         const onPass = Array.isArray(cfg.on_pass) ? cfg.on_pass : [];
