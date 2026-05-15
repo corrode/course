@@ -180,10 +180,13 @@ struct SignupTemplate {
 #[derive(Template)]
 #[template(path = "admin.html")]
 struct AdminTemplate {
-    participants: Vec<ParticipantSummary>,
+    participant_groups: Vec<ParticipantGroup>,
     recent_submissions: Vec<SubmissionSummary>,
     stats: AdminStats,
     exercises: Vec<String>,
+    /// Echoed back into every form action / link so the admin token
+    /// stays attached as the operator clicks around.
+    admin_token: String,
 }
 
 /// Admin dashboard statistics
@@ -224,13 +227,27 @@ struct ExerciseSubmission {
 }
 
 /// Participant summary for admin view
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct ParticipantSummary {
     id: String,
     name: String,
     completed_count: i64,
     total_exercises: i64,
     last_activity: Option<chrono::DateTime<chrono::Utc>>,
+    /// Cohort label written by `/signup/{group_slug}`, or `None` for
+    /// participants who came through the public `/signup` form. Used
+    /// to bucket the admin participants table.
+    team_token: Option<String>,
+}
+
+/// One row of the admin participants view: a team bucket and the
+/// members in it. `team_token` is `None` for the synthetic
+/// "Unassigned" bucket that gathers every participant without a
+/// cohort label.
+#[derive(Serialize, Clone)]
+struct ParticipantGroup {
+    team_token: Option<String>,
+    members: Vec<ParticipantSummary>,
 }
 
 /// Submission summary for admin view
@@ -297,6 +314,46 @@ fn resolve_register_next(next: Option<&str>, ulid: &str) -> Option<String> {
         return None;
     }
     Some(format!("/exercise/{ulid}/{slug}"))
+}
+
+/// Normalises a free-text team-token submission into the value we
+/// store on `participants.team_token`. Empty / whitespace-only inputs
+/// become `Ok(None)` (the participant is moved into the "Unassigned"
+/// bucket). Anything else has to look like a slug, ASCII alphanumeric
+/// plus `_` and `-`, so a fat-fingered admin can't smuggle HTML or
+/// path separators into the column.
+fn normalize_team_token(raw: &str) -> Result<Option<String>, ()> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Ok(None);
+    }
+    if trimmed.len() > 64
+        || !trimmed
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+    {
+        return Err(());
+    }
+    Ok(Some(trimmed.to_string()))
+}
+
+/// Buckets a flat list of participants into one `ParticipantGroup`
+/// per distinct `team_token`. Participants whose `team_token` is
+/// `None` are gathered into a final "Unassigned" bucket. Assumes the
+/// input is already sorted by `team_token` so a single linear pass
+/// produces stable output.
+fn group_participants_by_team(participants: Vec<ParticipantSummary>) -> Vec<ParticipantGroup> {
+    let mut groups: Vec<ParticipantGroup> = Vec::new();
+    for p in participants {
+        match groups.last_mut() {
+            Some(g) if g.team_token == p.team_token => g.members.push(p),
+            _ => groups.push(ParticipantGroup {
+                team_token: p.team_token.clone(),
+                members: vec![p],
+            }),
+        }
+    }
+    groups
 }
 
 #[tokio::main]
@@ -409,6 +466,10 @@ async fn main() -> Result<()> {
         .route(
             "/admin/remove-participant/{ulid}",
             delete(admin_remove_participant),
+        )
+        .route(
+            "/admin/participants/{ulid}/team-token",
+            post(admin_set_team_token),
         )
         .nest("/api", api_routes)
         .nest_service("/static", ServeDir::new("static"))
@@ -1015,13 +1076,17 @@ async fn admin_dashboard(
         SELECT 
             p.id,
             p.name,
+            p.team_token,
             COUNT(s.id) as completed_count,
             15 as total_exercises,
             MAX(s.submitted_at) as last_activity
         FROM participants p
         LEFT JOIN submissions s ON p.id = s.participant_id AND s.tests_passed = 1
-        GROUP BY p.id, p.name
-        ORDER BY last_activity DESC NULLS LAST
+        GROUP BY p.id, p.name, p.team_token
+        ORDER BY
+            CASE WHEN p.team_token IS NULL THEN 1 ELSE 0 END,
+            p.team_token COLLATE NOCASE,
+            last_activity DESC NULLS LAST
         "#,
     )
     .fetch_all(&state.pool)
@@ -1046,8 +1111,14 @@ async fn admin_dashboard(
             completed_count: row.get("completed_count"),
             total_exercises: row.get("total_exercises"),
             last_activity: row.get("last_activity"),
+            team_token: row.get("team_token"),
         });
     }
+
+    // Bucket the flat list into team groups. The query already sorted
+    // by team_token (with NULLs last) so a single linear pass is
+    // enough to produce one bucket per distinct value.
+    let participant_groups = group_participants_by_team(participants);
 
     // Get recent submissions
     let submission_rows_result = sqlx::query(
@@ -1121,10 +1192,11 @@ async fn admin_dashboard(
     };
 
     let template = AdminTemplate {
-        participants,
+        participant_groups,
         recent_submissions,
         stats,
         exercises,
+        admin_token: state.admin_token.clone(),
     };
 
     match template.render() {
@@ -1134,6 +1206,74 @@ async fn admin_dashboard(
             "Failed to render template",
         )
             .into_response(),
+    }
+}
+
+/// Form data for `POST /admin/participants/{ulid}/team-token`.
+#[derive(Deserialize)]
+struct TeamTokenForm {
+    team_token: String,
+}
+
+/// Move a participant into a different team bucket (or out of any).
+///
+/// Submitted by the inline form on the admin participants table. The
+/// `team_token` field is normalised via `normalize_team_token`:
+/// blank values clear the column (sending the participant to the
+/// "Unassigned" bucket), anything else has to be a short slug.
+///
+/// Always redirects back to `/admin?token=...` on success so the
+/// admin sees the regrouped table immediately.
+async fn admin_set_team_token(
+    AxumPath(participant_id): AxumPath<String>,
+    Query(query): Query<AdminQuery>,
+    State(state): State<AppState>,
+    axum::Form(form): axum::Form<TeamTokenForm>,
+) -> impl IntoResponse {
+    if query.token != state.admin_token {
+        return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
+    }
+
+    let new_token = match normalize_team_token(&form.team_token) {
+        Ok(value) => value,
+        Err(()) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                "team_token must be 1-64 chars of [A-Za-z0-9_-] or blank",
+            )
+                .into_response();
+        }
+    };
+
+    let result = sqlx::query("UPDATE participants SET team_token = ? WHERE id = ?")
+        .bind(new_token.as_deref())
+        .bind(&participant_id)
+        .execute(&state.pool)
+        .await;
+
+    match result {
+        Ok(res) if res.rows_affected() == 0 => {
+            (StatusCode::NOT_FOUND, "Participant not found").into_response()
+        }
+        Ok(_) => {
+            info!(
+                "Admin moved participant {} to team {:?}",
+                participant_id, new_token
+            );
+            // The admin token is already taken from the request URL,
+            // which means the operator's browser was OK with it as-is;
+            // echo it straight back, the same way the rest of the
+            // admin UI does (see /admin/remove-participant).
+            axum::response::Redirect::to(&format!("/admin?token={}", state.admin_token))
+                .into_response()
+        }
+        Err(err) => {
+            error!(
+                "Failed to update team_token for {}: {}",
+                participant_id, err
+            );
+            (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
+        }
     }
 }
 
@@ -1776,5 +1916,74 @@ mod tests {
                 "expected None for {input:?}"
             );
         }
+    }
+
+    #[test]
+    fn normalize_team_token_treats_blank_as_none() {
+        assert_eq!(normalize_team_token(""), Ok(None));
+        assert_eq!(normalize_team_token("   "), Ok(None));
+        assert_eq!(normalize_team_token("\t\n "), Ok(None));
+    }
+
+    #[test]
+    fn normalize_team_token_accepts_slugs() {
+        assert_eq!(normalize_team_token("veo"), Ok(Some("veo".to_string())));
+        assert_eq!(
+            normalize_team_token("  veo-x9k2 "),
+            Ok(Some("veo-x9k2".to_string()))
+        );
+        assert_eq!(
+            normalize_team_token("team_2025"),
+            Ok(Some("team_2025".to_string()))
+        );
+    }
+
+    #[test]
+    fn normalize_team_token_rejects_garbage() {
+        // Anything outside [A-Za-z0-9_-], plus anything longer than
+        // 64 chars, gets rejected so an admin can't smuggle HTML,
+        // path separators, or a giant blob into the column.
+        assert!(normalize_team_token("team one").is_err());
+        assert!(normalize_team_token("team/one").is_err());
+        assert!(normalize_team_token("<script>").is_err());
+        assert!(normalize_team_token("équipe").is_err());
+        assert!(normalize_team_token(&"x".repeat(65)).is_err());
+    }
+
+    fn make_summary(name: &str, team: Option<&str>) -> ParticipantSummary {
+        ParticipantSummary {
+            id: format!("id-{name}"),
+            name: name.to_string(),
+            completed_count: 0,
+            total_exercises: 15,
+            last_activity: None,
+            team_token: team.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn group_participants_buckets_by_team_token() {
+        // Pre-sorted as the SQL query produces: alphabetical teams
+        // first, NULLs last.
+        let participants = vec![
+            make_summary("alice", Some("alpha")),
+            make_summary("bob", Some("alpha")),
+            make_summary("carol", Some("beta")),
+            make_summary("dave", None),
+            make_summary("eve", None),
+        ];
+        let groups = group_participants_by_team(participants);
+        assert_eq!(groups.len(), 3);
+        assert_eq!(groups[0].team_token.as_deref(), Some("alpha"));
+        assert_eq!(groups[0].members.len(), 2);
+        assert_eq!(groups[1].team_token.as_deref(), Some("beta"));
+        assert_eq!(groups[1].members.len(), 1);
+        assert_eq!(groups[2].team_token, None);
+        assert_eq!(groups[2].members.len(), 2);
+    }
+
+    #[test]
+    fn group_participants_handles_empty_input() {
+        assert!(group_participants_by_team(Vec::new()).is_empty());
     }
 }
