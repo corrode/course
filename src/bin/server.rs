@@ -41,6 +41,20 @@ struct DbParticipant {
     created_at: chrono::DateTime<chrono::Utc>,
 }
 
+impl DbParticipant {
+    /// Returns the participant's parsed [`TeamToken`], if any. Rows
+    /// that pre-date the type, or that somehow contain a value the
+    /// validator rejects, surface as `None` rather than panicking;
+    /// the worst case is the participant shows up in the
+    /// "Unassigned" bucket and an admin can re-assign them.
+    #[allow(dead_code)]
+    fn parsed_team_token(&self) -> Option<TeamToken> {
+        self.team_token
+            .as_deref()
+            .and_then(|s| TeamToken::try_from(s).ok())
+    }
+}
+
 /// Database model for submissions
 #[derive(sqlx::FromRow)]
 struct DbSubmission {
@@ -237,7 +251,7 @@ struct ParticipantSummary {
     /// Cohort label written by `/signup/{group_slug}`, or `None` for
     /// participants who came through the public `/signup` form. Used
     /// to bucket the admin participants table.
-    team_token: Option<String>,
+    team_token: Option<TeamToken>,
 }
 
 /// One row of the admin participants view: a team bucket and the
@@ -246,7 +260,7 @@ struct ParticipantSummary {
 /// cohort label.
 #[derive(Serialize, Clone)]
 struct ParticipantGroup {
-    team_token: Option<String>,
+    team_token: Option<TeamToken>,
     members: Vec<ParticipantSummary>,
 }
 
@@ -314,27 +328,6 @@ fn resolve_register_next(next: Option<&str>, ulid: &str) -> Option<String> {
         return None;
     }
     Some(format!("/exercise/{ulid}/{slug}"))
-}
-
-/// Normalises a free-text team-token submission into the value we
-/// store on `participants.team_token`. Empty / whitespace-only inputs
-/// become `Ok(None)` (the participant is moved into the "Unassigned"
-/// bucket). Anything else has to look like a slug, ASCII alphanumeric
-/// plus `_` and `-`, so a fat-fingered admin can't smuggle HTML or
-/// path separators into the column.
-fn normalize_team_token(raw: &str) -> Result<Option<String>, ()> {
-    let trimmed = raw.trim();
-    if trimmed.is_empty() {
-        return Ok(None);
-    }
-    if trimmed.len() > 64
-        || !trimmed
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
-    {
-        return Err(());
-    }
-    Ok(Some(trimmed.to_string()))
 }
 
 /// Buckets a flat list of participants into one `ParticipantGroup`
@@ -667,20 +660,22 @@ async fn web_register(
 ) -> Result<axum::response::Redirect, StatusCode> {
     let name = Name::try_from(form.name).map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    // Treat blank / whitespace-only team tokens as "no cohort". This
-    // keeps the column tidy for the public `/signup` flow where the
-    // hidden input is absent.
+    // Treat blank / whitespace-only team tokens as "no cohort" and
+    // reject any other malformed value. The hidden input on the
+    // workshop signup page only ever sends a known-good slug, so a
+    // bad value here means a hand-crafted POST and a 400 is fine.
     let team_token = form
         .team_token
-        .map(|t| t.trim().to_string())
-        .filter(|t| !t.is_empty());
+        .as_deref()
+        .map_or(Ok(None), TeamToken::parse_form_input)
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let ulid = Ulid::new().to_string();
 
     sqlx::query("INSERT INTO participants (id, name, team_token) VALUES (?, ?, ?)")
         .bind(&ulid)
         .bind(name.as_str())
-        .bind(team_token.as_deref())
+        .bind(team_token.as_ref().map(TeamToken::as_str))
         .execute(&state.pool)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -1105,13 +1100,21 @@ async fn admin_dashboard(
 
     let mut participants = Vec::new();
     for row in participant_rows {
+        let raw_token: Option<String> = row.get("team_token");
+        // Rows with a column value the validator rejects degrade to
+        // `None` (the participant lands in the "Unassigned" bucket).
+        // That can't happen via our own write paths, but it keeps a
+        // hand-edited DB row from taking the page down.
+        let team_token = raw_token
+            .as_deref()
+            .and_then(|s| TeamToken::try_from(s).ok());
         participants.push(ParticipantSummary {
             id: row.get("id"),
             name: row.get("name"),
             completed_count: row.get("completed_count"),
             total_exercises: row.get("total_exercises"),
             last_activity: row.get("last_activity"),
-            team_token: row.get("team_token"),
+            team_token,
         });
     }
 
@@ -1234,19 +1237,19 @@ async fn admin_set_team_token(
         return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
     }
 
-    let new_token = match normalize_team_token(&form.team_token) {
+    let new_token = match TeamToken::parse_form_input(&form.team_token) {
         Ok(value) => value,
-        Err(()) => {
+        Err(err) => {
             return (
                 StatusCode::BAD_REQUEST,
-                "team_token must be 1-64 chars of [A-Za-z0-9_-] or blank",
+                format!("Invalid team_token: {err}"),
             )
                 .into_response();
         }
     };
 
     let result = sqlx::query("UPDATE participants SET team_token = ? WHERE id = ?")
-        .bind(new_token.as_deref())
+        .bind(new_token.as_ref().map(TeamToken::as_str))
         .bind(&participant_id)
         .execute(&state.pool)
         .await;
@@ -1919,35 +1922,32 @@ mod tests {
     }
 
     #[test]
-    fn normalize_team_token_treats_blank_as_none() {
-        assert_eq!(normalize_team_token(""), Ok(None));
-        assert_eq!(normalize_team_token("   "), Ok(None));
-        assert_eq!(normalize_team_token("\t\n "), Ok(None));
+    fn team_token_form_input_treats_blank_as_none() {
+        assert_eq!(TeamToken::parse_form_input(""), Ok(None));
+        assert_eq!(TeamToken::parse_form_input("   "), Ok(None));
+        assert_eq!(TeamToken::parse_form_input("\t\n "), Ok(None));
     }
 
     #[test]
-    fn normalize_team_token_accepts_slugs() {
-        assert_eq!(normalize_team_token("veo"), Ok(Some("veo".to_string())));
-        assert_eq!(
-            normalize_team_token("  veo-x9k2 "),
-            Ok(Some("veo-x9k2".to_string()))
-        );
-        assert_eq!(
-            normalize_team_token("team_2025"),
-            Ok(Some("team_2025".to_string()))
-        );
+    fn team_token_form_input_accepts_slugs() {
+        let parsed = TeamToken::parse_form_input("veo").unwrap().unwrap();
+        assert_eq!(parsed.as_str(), "veo");
+        let parsed = TeamToken::parse_form_input("  veo-x9k2 ").unwrap().unwrap();
+        assert_eq!(parsed.as_str(), "veo-x9k2");
+        let parsed = TeamToken::parse_form_input("team_2025").unwrap().unwrap();
+        assert_eq!(parsed.as_str(), "team_2025");
     }
 
     #[test]
-    fn normalize_team_token_rejects_garbage() {
+    fn team_token_rejects_garbage() {
         // Anything outside [A-Za-z0-9_-], plus anything longer than
         // 64 chars, gets rejected so an admin can't smuggle HTML,
         // path separators, or a giant blob into the column.
-        assert!(normalize_team_token("team one").is_err());
-        assert!(normalize_team_token("team/one").is_err());
-        assert!(normalize_team_token("<script>").is_err());
-        assert!(normalize_team_token("équipe").is_err());
-        assert!(normalize_team_token(&"x".repeat(65)).is_err());
+        assert!(TeamToken::parse_form_input("team one").is_err());
+        assert!(TeamToken::parse_form_input("team/one").is_err());
+        assert!(TeamToken::parse_form_input("<script>").is_err());
+        assert!(TeamToken::parse_form_input("équipe").is_err());
+        assert!(TeamToken::parse_form_input(&"x".repeat(65)).is_err());
     }
 
     fn make_summary(name: &str, team: Option<&str>) -> ParticipantSummary {
@@ -1957,7 +1957,7 @@ mod tests {
             completed_count: 0,
             total_exercises: 15,
             last_activity: None,
-            team_token: team.map(str::to_string),
+            team_token: team.map(|s| TeamToken::try_from(s).expect("valid team token in test")),
         }
     }
 
@@ -1974,9 +1974,15 @@ mod tests {
         ];
         let groups = group_participants_by_team(participants);
         assert_eq!(groups.len(), 3);
-        assert_eq!(groups[0].team_token.as_deref(), Some("alpha"));
+        assert_eq!(
+            groups[0].team_token.as_ref().map(TeamToken::as_str),
+            Some("alpha")
+        );
         assert_eq!(groups[0].members.len(), 2);
-        assert_eq!(groups[1].team_token.as_deref(), Some("beta"));
+        assert_eq!(
+            groups[1].team_token.as_ref().map(TeamToken::as_str),
+            Some("beta")
+        );
         assert_eq!(groups[1].members.len(), 1);
         assert_eq!(groups[2].team_token, None);
         assert_eq!(groups[2].members.len(), 2);

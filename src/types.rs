@@ -14,6 +14,169 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
+/// A validated team / cohort token.
+///
+/// Stored on `participants.team_token`. Populated server-side from
+/// the `/signup/{group_slug}` URL (the user never types it). Used
+/// to bucket the admin participants table into one group per cohort
+/// and to scope the per-team submissions view.
+///
+/// A `TeamToken` is always a non-empty slug of up to 64 characters
+/// drawn from `[A-Za-z0-9_-]`. Anything else (HTML, path separators,
+/// non-ASCII letters, oversized blobs) is rejected at the boundary
+/// so the column never holds a value the templates can't safely
+/// render or the URL router can't safely route on.
+///
+/// # Examples
+///
+/// ```
+/// use cargo_course::types::TeamToken;
+///
+/// let token = TeamToken::try_from("veo-x9k2").unwrap();
+/// assert_eq!(token.as_str(), "veo-x9k2");
+///
+/// // Whitespace is trimmed.
+/// let token = TeamToken::try_from("  veo ").unwrap();
+/// assert_eq!(token.as_str(), "veo");
+///
+/// // Spaces inside the slug, non-ASCII, oversized values are rejected.
+/// assert!(TeamToken::try_from("team one").is_err());
+/// assert!(TeamToken::try_from("équipe").is_err());
+/// assert!(TeamToken::try_from("").is_err());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct TeamToken(String);
+
+/// Reasons a string can fail to parse into a [`TeamToken`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TeamTokenError {
+    /// Empty string or only whitespace.
+    Empty,
+    /// More than [`TeamToken::MAX_LENGTH`] characters after trimming.
+    TooLong,
+    /// Contains a character outside `[A-Za-z0-9_-]`.
+    InvalidChar,
+}
+
+impl fmt::Display for TeamTokenError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Empty => write!(f, "team token cannot be empty"),
+            Self::TooLong => write!(
+                f,
+                "team token must be {} characters or fewer",
+                TeamToken::MAX_LENGTH
+            ),
+            Self::InvalidChar => write!(
+                f,
+                "team token may only contain letters, digits, underscore, or hyphen"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for TeamTokenError {}
+
+impl TeamToken {
+    /// Maximum allowed length for a team token, after trimming.
+    ///
+    /// 64 chars is generous enough for any cohort label an instructor
+    /// would actually pick, and tight enough that the value fits
+    /// comfortably in the admin table and any URL we route on.
+    pub const MAX_LENGTH: usize = 64;
+
+    /// Returns the validated token as a string slice.
+    ///
+    /// The returned string is guaranteed to be non-empty, no longer
+    /// than [`Self::MAX_LENGTH`] characters, and made up entirely of
+    /// `[A-Za-z0-9_-]`.
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+
+    /// Parses a free-text form input into an optional team token.
+    ///
+    /// Blank / whitespace-only inputs become `Ok(None)`: the
+    /// participant is moved into the synthetic "Unassigned" bucket.
+    /// Any other input has to be a valid slug per [`TryFrom<&str>`].
+    ///
+    /// This is the right entry point for the admin's inline
+    /// re-assignment form and the `team_token` hidden input on the
+    /// signup page, where blank means "no cohort" rather than "this
+    /// is bad input".
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cargo_course::types::TeamToken;
+    ///
+    /// assert_eq!(TeamToken::parse_form_input("").unwrap(), None);
+    /// assert_eq!(TeamToken::parse_form_input("   ").unwrap(), None);
+    /// assert_eq!(
+    ///     TeamToken::parse_form_input("veo").unwrap().unwrap().as_str(),
+    ///     "veo"
+    /// );
+    /// assert!(TeamToken::parse_form_input("<script>").is_err());
+    /// ```
+    pub fn parse_form_input(raw: &str) -> std::result::Result<Option<Self>, TeamTokenError> {
+        let trimmed = raw.trim();
+        if trimmed.is_empty() {
+            return Ok(None);
+        }
+        Self::try_from(trimmed).map(Some)
+    }
+}
+
+impl TryFrom<&str> for TeamToken {
+    type Error = TeamTokenError;
+
+    fn try_from(value: &str) -> std::result::Result<Self, Self::Error> {
+        let trimmed = value.trim();
+        if trimmed.is_empty() {
+            return Err(TeamTokenError::Empty);
+        }
+        if trimmed.len() > Self::MAX_LENGTH {
+            return Err(TeamTokenError::TooLong);
+        }
+        if !trimmed
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+        {
+            return Err(TeamTokenError::InvalidChar);
+        }
+        Ok(Self(trimmed.to_string()))
+    }
+}
+
+impl TryFrom<String> for TeamToken {
+    type Error = TeamTokenError;
+
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        Self::try_from(value.as_str())
+    }
+}
+
+impl FromStr for TeamToken {
+    type Err = TeamTokenError;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        Self::try_from(s)
+    }
+}
+
+impl fmt::Display for TeamToken {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl AsRef<str> for TeamToken {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
 /// A validated participant name.
 ///
 /// Participant names must be non-empty and no longer than 100 characters.
