@@ -494,13 +494,6 @@ progress_total > 0 %}
         hidden
     >
         <div class="inline-signup-eyebrow">Nice work, that compiled!</div>
-        <h2 class="inline-signup-title">
-            Pick a name and we'll keep your spot
-        </h2>
-        <p class="inline-signup-byline">
-            One field, no email, no password. We give you a personal link to
-            bookmark and pick up where you left off.
-        </p>
         <form action="/register" method="post" class="inline-signup-form">
             <label class="inline-signup-label" for="inline-signup-name">
                 How should I call you throughout the book?
@@ -2391,11 +2384,15 @@ progress_total > 0 %}
         font-weight: 600;
     }
 
+    .next-chapter-cta.is-locked {
+        display: none;
+    }
+
     /* ---- Inline signup card (welcome chapter, anonymous) ---- */
     .inline-signup {
         margin: 3rem auto 0;
         max-width: 36rem;
-        padding: 1.75rem 1.75rem 1.5rem;
+        padding: 1.5rem 1.75rem 1.25rem;
         border: 1px solid var(--color-border);
         border-left: 3px solid var(--color-primary);
         border-radius: 10px;
@@ -2407,28 +2404,15 @@ progress_total > 0 %}
         letter-spacing: 0.18em;
         text-transform: uppercase;
         color: var(--color-primary);
-        margin-bottom: 0.5rem;
-    }
-    .inline-signup-title {
-        margin: 0 0 0.4rem;
-        font-size: 1.4rem;
-        line-height: 1.2;
-        font-weight: 700;
-        color: var(--color-text);
-    }
-    .inline-signup-byline {
-        margin: 0 0 1.2rem;
-        font-size: 0.95rem;
-        color: var(--color-text-muted);
-        line-height: 1.5;
+        margin-bottom: 1rem;
     }
     .inline-signup-form {
         display: flex;
         flex-direction: column;
-        gap: 0.6rem;
+        gap: 0.55rem;
     }
     .inline-signup-label {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         font-weight: 600;
         color: var(--color-text);
     }
@@ -2436,18 +2420,24 @@ progress_total > 0 %}
         display: flex;
         gap: 0.6rem;
         flex-wrap: wrap;
+        align-items: stretch;
+    }
+    .inline-signup-input,
+    .inline-signup-submit {
+        height: 2.75rem;
+        box-sizing: border-box;
+        font-size: 1rem;
+        line-height: 1.2;
     }
     .inline-signup-input {
         flex: 1 1 14rem;
         min-width: 0;
-        padding: 0.7rem 0.85rem;
-        font-size: 1rem;
+        padding: 0 0.85rem;
         border-radius: 6px;
         border: 1px solid var(--color-border);
         background: var(--color-bg);
         color: var(--color-text);
         font-family: inherit;
-        box-sizing: border-box;
     }
     .inline-signup-input:focus {
         outline: none;
@@ -2456,14 +2446,17 @@ progress_total > 0 %}
     }
     .inline-signup-submit {
         flex: 0 0 auto;
-        padding: 0.7rem 1.1rem;
-        font-size: 0.95rem;
+        padding: 0 1.1rem;
         font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
     .inline-signup-skip {
         margin: 1rem 0 0;
         font-size: 0.85rem;
         color: var(--color-text-muted);
+        text-align: center;
     }
     .inline-signup-skip a {
         color: var(--color-text-muted);
@@ -2472,10 +2465,6 @@ progress_total > 0 %}
     .inline-signup-skip a:hover,
     .inline-signup-skip a:focus-visible {
         color: var(--color-primary);
-    }
-
-    .next-chapter-cta.is-locked {
-        display: none;
     }
     .next-chapter-cta {
         margin: 3rem auto 0;
