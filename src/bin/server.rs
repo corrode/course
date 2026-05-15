@@ -246,6 +246,34 @@ struct AdminQuery {
     token: String,
 }
 
+/// Payload for `POST /api/migrate-anon-progress`.
+///
+/// Sent by the dashboard the first time a freshly signed-up
+/// participant lands on `/dashboard/{ulid}`. Each entry is one
+/// passing snapshot the participant produced anonymously, captured
+/// in `localStorage['corrode-anon-progress']` while they were on
+/// `/exercise/{slug}` (no ULID).
+#[derive(Deserialize)]
+struct MigrateAnonProgressRequest {
+    ulid: String,
+    entries: Vec<MigrateAnonProgressEntry>,
+}
+
+#[derive(Deserialize)]
+struct MigrateAnonProgressEntry {
+    exercise_name: String,
+    source_code: String,
+}
+
+/// Reply with how many rows we ended up writing. The client uses this
+/// to decide whether to surface a small toast (“migrated 3 anonymous
+/// solutions”).
+#[derive(Serialize)]
+struct MigrateAnonProgressResponse {
+    inserted: usize,
+    skipped: usize,
+}
+
 /// Form data for web registration.
 ///
 /// `team_token` is populated from the URL path on `/signup/{group_slug}`
@@ -346,6 +374,7 @@ async fn main() -> Result<()> {
     let api_routes = Router::new()
         .route("/register", post(api_register))
         .route("/submit", post(api_submit))
+        .route("/migrate-anon-progress", post(api_migrate_anon_progress))
         .route("/status/{ulid}", get(api_status))
         .route("/run", post(api_run))
         .route("/format", post(api_format))
@@ -1273,6 +1302,135 @@ async fn api_submit(
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
     }
+}
+
+/// Replay anonymous-mode passing snapshots into the submissions table
+/// for a freshly signed-up participant.
+///
+/// Called once by the dashboard right after the user lands on
+/// `/dashboard/{ulid}` with a non-empty
+/// `localStorage['corrode-anon-progress']`. Each entry is treated as a
+/// `tests_passed = true`, `fmt_passed = false`, `clippy_passed = false`
+/// submission (we don't persist anything beyond “this solution made
+/// the test runner happy in the browser”). Duplicates are silently
+/// skipped via the same content-hash check `api_submit` uses.
+///
+/// Validation:
+/// - The participant ULID must exist (mirrors `api_submit`).
+/// - `exercise_name` must match a known chapter file_stem or a known
+///   `<file_stem>/<step_key>` shape from the loaded catalog. Anything
+///   else is dropped on the floor (counted under `skipped`) so a
+///   tampered localStorage can't poison the table with arbitrary
+///   strings.
+#[debug_handler]
+async fn api_migrate_anon_progress(
+    State(state): State<AppState>,
+    Json(request): Json<MigrateAnonProgressRequest>,
+) -> Result<Json<MigrateAnonProgressResponse>, StatusCode> {
+    info!(
+        "Anon-progress migration: participant_id='{}', entries={}",
+        request.ulid,
+        request.entries.len()
+    );
+
+    // Same auth shape as api_submit: the ULID has to exist.
+    let participant_exists = sqlx::query("SELECT 1 FROM participants WHERE id = ?")
+        .bind(&request.ulid)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| {
+            error!("Database error while checking participant: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    if participant_exists.is_none() {
+        warn!(
+            "Anon-progress migration with invalid participant ID: {}",
+            request.ulid
+        );
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    // Build the set of valid exercise keys once. `<file_stem>` (legacy
+    // single-step) and `<file_stem>/<step_key>` (multi-step) are both
+    // accepted; anything else is rejected as untrusted client input.
+    let mut valid_keys: std::collections::HashSet<String> = std::collections::HashSet::new();
+    for ex in state.exercises.iter() {
+        valid_keys.insert(ex.file_stem.clone());
+        for step in ex.code_steps() {
+            let step_key = step.key();
+            if !step_key.is_empty() {
+                valid_keys.insert(format!("{}/{}", ex.file_stem, step_key));
+            }
+        }
+    }
+
+    let mut inserted = 0usize;
+    let mut skipped = 0usize;
+
+    for entry in &request.entries {
+        if !valid_keys.contains(&entry.exercise_name) {
+            warn!(
+                "Anon-progress entry rejected (unknown exercise key): '{}'",
+                entry.exercise_name
+            );
+            skipped += 1;
+            continue;
+        }
+
+        let content_hash =
+            calculate_submission_hash(&request.ulid, &entry.exercise_name, &entry.source_code);
+
+        // Skip if an identical row is already there. This keeps the
+        // migration idempotent: a user who reloads the dashboard
+        // before localStorage is cleared won't double-insert.
+        let exists = sqlx::query(
+            "SELECT id FROM submissions WHERE participant_id = ? AND exercise_name = ? AND content_hash = ?",
+        )
+        .bind(&request.ulid)
+        .bind(&entry.exercise_name)
+        .bind(&content_hash)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| {
+            error!("Database error while checking duplicate: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+        if exists.is_some() {
+            skipped += 1;
+            continue;
+        }
+
+        let insert_result = sqlx::query(
+            r#"
+            INSERT INTO submissions (id, participant_id, exercise_name, source_code, tests_passed, clippy_passed, fmt_passed, content_hash)
+            VALUES (?, ?, ?, ?, 1, 0, 0, ?)
+            "#,
+        )
+        .bind(Ulid::new().to_string())
+        .bind(&request.ulid)
+        .bind(&entry.exercise_name)
+        .bind(&entry.source_code)
+        .bind(&content_hash)
+        .execute(&state.pool)
+        .await;
+
+        match insert_result {
+            Ok(_) => inserted += 1,
+            Err(e) => {
+                error!(
+                    "Failed to insert migrated submission for '{}': {}",
+                    entry.exercise_name, e
+                );
+                skipped += 1;
+            }
+        }
+    }
+
+    info!(
+        "Anon-progress migration complete: participant_id='{}', inserted={}, skipped={}",
+        request.ulid, inserted, skipped
+    );
+    Ok(Json(MigrateAnonProgressResponse { inserted, skipped }))
 }
 
 /// API status endpoint
