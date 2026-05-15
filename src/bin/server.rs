@@ -33,6 +33,11 @@ struct AppState {
 struct DbParticipant {
     id: String,
     name: String,
+    /// Optional cohort label, populated when the participant signed up
+    /// via `/signup/{group_slug}`. `None` for public signups. See
+    /// migration `007_add_team_token.sql`.
+    #[allow(dead_code)]
+    team_token: Option<String>,
     created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -216,10 +221,16 @@ struct AdminQuery {
     token: String,
 }
 
-/// Form data for web registration
+/// Form data for web registration.
+///
+/// `team_token` is populated from the URL path on `/signup/{group_slug}`
+/// via a hidden input; it's never typed by the user. Public signups at
+/// `/signup` leave it empty / `None`.
 #[derive(Deserialize)]
 struct WebRegistrationForm {
     name: String,
+    #[serde(default)]
+    team_token: Option<String>,
 }
 
 #[tokio::main]
@@ -436,11 +447,20 @@ async fn web_register(
 ) -> Result<axum::response::Redirect, StatusCode> {
     let name = Name::try_from(form.name).map_err(|_| StatusCode::BAD_REQUEST)?;
 
+    // Treat blank / whitespace-only team tokens as "no cohort". This
+    // keeps the column tidy for the public `/signup` flow where the
+    // hidden input is absent.
+    let team_token = form
+        .team_token
+        .map(|t| t.trim().to_string())
+        .filter(|t| !t.is_empty());
+
     let ulid = Ulid::new().to_string();
 
-    sqlx::query("INSERT INTO participants (id, name) VALUES (?, ?)")
+    sqlx::query("INSERT INTO participants (id, name, team_token) VALUES (?, ?, ?)")
         .bind(&ulid)
         .bind(name.as_str())
+        .bind(team_token.as_deref())
         .execute(&state.pool)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -455,7 +475,7 @@ async fn participant_dashboard(
 ) -> impl IntoResponse {
     // Get participant info
     let participant_result =
-        sqlx::query_as("SELECT id, name, created_at FROM participants WHERE id = ?")
+        sqlx::query_as("SELECT id, name, team_token, created_at FROM participants WHERE id = ?")
             .bind(&ulid)
             .fetch_one(&state.pool)
             .await;
