@@ -2050,6 +2050,14 @@ progress_total > 0 %}
     .chapter-prose:has(> p:first-child > em:only-child) {
         margin-top: -3rem;
     }
+    /* The negative pull above assumes the prose sits directly under
+       the chapter title. On the anonymous public route the
+       register-banner sits between them, so drop the pull-up when
+       the previous sibling is that banner; otherwise the epigraph
+       lands on top of the banner text. */
+    .register-banner + .chapter-prose:has(> p:first-child > em:only-child) {
+        margin-top: 1.5rem;
+    }
     .chapter-prose:not(.hints-body) > p:first-child:has(> em:only-child) {
         max-width: 44rem;
         margin: 0 auto 3rem;
