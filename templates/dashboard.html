@@ -1,6 +1,33 @@
 {% extends "base.html" %} {% block title %}A Beginner's Guide To Rust |
 corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
 <div class="container book-dashboard">
+    {% match reason %} {% when Some with (r) %} {% if r == "unknown-token" %}
+    <div
+        class="unknown-token-toast"
+        role="status"
+        aria-live="polite"
+        id="unknown-token-toast"
+    >
+        <span>
+            We couldn't find that personal link. Sign up below or open the
+            bookmark you were given.
+        </span>
+        <button
+            type="button"
+            class="unknown-token-toast-close"
+            aria-label="Dismiss"
+            onclick="document.getElementById('unknown-token-toast').remove()"
+        >
+            ×
+        </button>
+    </div>
+    <script>
+        // Strip the query param so a reload doesn't re-show the toast.
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState({}, "", window.location.pathname);
+        }
+    </script>
+    {% endif %} {% when None %} {% endmatch %}
     <header class="book-hero">
         <div class="book-eyebrow">
             <span class="book-eyebrow-rule" aria-hidden="true"></span>
@@ -376,6 +403,36 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         font-size: 0.9rem;
         color: var(--color-text-muted);
         font-style: italic;
+    }
+
+    /* ---------- Unknown-token toast (top of dashboard) ---------- */
+    .unknown-token-toast {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 1.25rem auto 0;
+        max-width: 38rem;
+        padding: 0.85rem 1rem;
+        border-radius: 8px;
+        background: var(--color-surface);
+        border-left: 3px solid var(--color-primary);
+        color: var(--color-text);
+        font-size: 0.92rem;
+        line-height: 1.5;
+    }
+    .unknown-token-toast-close {
+        margin-left: auto;
+        background: transparent;
+        border: 0;
+        color: var(--color-text-muted);
+        font-size: 1.4rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0 0.25rem;
+    }
+    .unknown-token-toast-close:hover,
+    .unknown-token-toast-close:focus-visible {
+        color: var(--color-text);
     }
 
     /* ---------- Anon-progress migration toast ---------- */

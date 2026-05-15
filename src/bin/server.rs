@@ -159,6 +159,10 @@ struct DashboardTemplate {
     progress_done: usize,
     /// Number of completable chapters in the course (denominator).
     progress_total: usize,
+    /// Optional one-shot reason code shown as a toast on first render
+    /// of the anonymous dashboard. `Some("unknown-token")` after a
+    /// missing-ULID redirect; `None` everywhere else.
+    reason: Option<String>,
 }
 
 /// Template for the slim signup form.
@@ -244,6 +248,18 @@ struct SubmissionSummary {
 #[derive(Deserialize)]
 struct AdminQuery {
     token: String,
+}
+
+/// Optional query parameters on the anonymous dashboard at `/`.
+///
+/// `reason` carries a short machine-readable code that the template
+/// turns into a toast. Only `unknown-token` is recognized today (set
+/// when `/dashboard/{ulid}` redirects here because the ULID has no
+/// matching participant). Anything else renders as no toast.
+#[derive(Deserialize, Default)]
+struct DashboardQuery {
+    #[serde(default)]
+    reason: Option<String>,
 }
 
 /// Payload for `POST /api/migrate-anon-progress`.
@@ -433,7 +449,13 @@ async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
 /// `completed = perfected = false`; the TOC links to `/exercise/{slug}`
 /// (the public exercise route). The CTA invites the visitor to start
 /// chapter 1 without registering.
-async fn anonymous_dashboard(State(state): State<AppState>) -> impl IntoResponse {
+///
+/// Optionally accepts a `?reason=...` query param surfaced as a one-shot
+/// toast (e.g. when a participant landed on a missing-ULID dashboard).
+async fn anonymous_dashboard(
+    State(state): State<AppState>,
+    Query(query): Query<DashboardQuery>,
+) -> impl IntoResponse {
     let exercises = match get_exercise_progress(&state.pool, None, &state.exercises).await {
         Ok(exercises) => exercises,
         Err(_) => {
@@ -474,6 +496,7 @@ async fn anonymous_dashboard(State(state): State<AppState>) -> impl IntoResponse
         next_chapter_title,
         progress_done: 0,
         progress_total,
+        reason: query.reason,
     };
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -622,7 +645,14 @@ async fn participant_dashboard(
 
     let participant: DbParticipant = match participant_result {
         Ok(p) => p,
-        Err(_) => return (StatusCode::NOT_FOUND, "Participant not found").into_response(),
+        Err(_) => {
+            // Unknown ULID. Old behavior was a hard 404, which is
+            // unfriendly because the dashboard URL is the bookmark and
+            // people will mistype it (or follow a stale link from
+            // before we migrated databases). Send them home with a
+            // soft toast instead so they have somewhere to go.
+            return axum::response::Redirect::to("/?reason=unknown-token").into_response();
+        }
     };
 
     // Get exercise progress
@@ -684,6 +714,7 @@ async fn participant_dashboard(
         next_chapter_title,
         progress_done,
         progress_total,
+        reason: None,
     };
 
     match template.render() {
