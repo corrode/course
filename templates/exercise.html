@@ -98,7 +98,8 @@ with (u) %}
         </ul>
     </div>
 </div>
-{% if ulid.is_some() && progress_total > 0 %}
+{% endblock %} {% block topbar_progress %} {% if ulid.is_some() &&
+progress_total > 0 %}
 <span
     class="topbar-progress"
     title="Chapters completed"
@@ -106,7 +107,7 @@ with (u) %}
 >
     <span class="topbar-progress-label">Progress</span>
     <span class="topbar-progress-count"
-        ><strong>{{ progress_done }}</strong> / {{ progress_total }}</span
+        ><strong>{{ progress_done }}</strong> / {{ progress_total }}</span
     >
 </span>
 {% endif %} {% endblock %} {% block content %}
