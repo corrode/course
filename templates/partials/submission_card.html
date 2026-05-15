@@ -1,0 +1,34 @@
+{# Shared submission card. Included by admin.html and team.html. The caller sets
+a loop variable `sub` of type `SubmissionSummary` (fields: participant_name,
+exercise_name, tests_passed, perfected, submitted_at, source_code). The
+data-exercise attribute on the list item is what filterSubmissions() in
+base.html reads to show/hide cards when the user picks an exercise from the
+dropdown. The .rust-editor element is replaced in-place with a read-only
+CodeMirror 6 viewer by static/js/readonly-rust-editor.js. The styled fallback
+(border, padding, mono font) lives on .rust-editor in base.html. #}
+<li class="submission-card" data-exercise="{{ sub.exercise_name }}">
+    <header class="submission-card-head">
+        <span class="submission-card-status">
+            {% if sub.perfected %}
+            <span
+                class="status-badge status-badge-perfect"
+                title="Perfected (clippy + fmt)"
+                >★</span
+            >
+            {% else if sub.tests_passed %}
+            <span class="status-badge status-badge-pass" title="Tests passed"
+                >✓</span
+            >
+            {% else %}
+            <span class="status-badge status-badge-fail" title="Tests failed"
+                >×</span
+            >
+            {% endif %}
+        </span>
+        <span class="submission-card-who">{{ sub.participant_name }}</span>
+        <span class="submission-card-sep">·</span>
+        <span class="submission-card-exercise">{{ sub.exercise_name }}</span>
+        <span class="submission-card-time">{{ sub.submitted_at }}</span>
+    </header>
+    <div class="rust-editor" data-rust-source>{{ sub.source_code }}</div>
+</li>

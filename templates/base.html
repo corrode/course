@@ -101,6 +101,12 @@
                 --color-success: #1a7f37;
                 --color-warning: #9a6700;
                 --color-error: #d1242f;
+                /* Brand pink, used for the headline color and for high-emphasis
+                   destructive actions (e.g. the admin "Remove participant"
+                   button) so the page reads with a single accent palette
+                   instead of competing reds. */
+                --color-brand: #fc218a;
+                --color-brand-muted: #d11a73;
                 --logo-filter: invert(0%);
                 /* Syntax highlight palette, shared by chapter prose code
                    blocks and the in-page CodeMirror editor. */
@@ -137,6 +143,8 @@
                 --color-success: #3fb950;
                 --color-warning: #d29922;
                 --color-error: #f85149;
+                --color-brand: #fc218a;
+                --color-brand-muted: #ff4ca0;
                 --logo-filter: invert(100%);
                 --syn-keyword: #cba6f7;
                 --syn-type: #f9e2af;
@@ -395,24 +403,160 @@
                 letter-spacing: 0.05em;
             }
 
+            /* ---------- Admin / team page layout rhythm ----------
+               Both `/admin` and the per-team pages add `.admin-page` to
+               the outer container so they share the same column width,
+               vertical padding, and section spacing. The rules live here
+               (rather than in either page's scoped `<style>` block) so
+               the two views can't drift visually. */
+            .admin-page {
+                max-width: 60rem;
+                padding-top: 1rem;
+                padding-bottom: 5rem;
+            }
+            .admin-hero {
+                margin: 3rem 0 4rem;
+            }
+            .admin-title {
+                font-size: 2.4rem;
+            }
+            .admin-section {
+                margin-bottom: 5rem;
+            }
+            .admin-section:last-of-type {
+                margin-bottom: 0;
+            }
+
             .admin-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 1rem;
-            }
-            .admin-table th,
-            .admin-table td {
-                padding: 0.6rem 0.75rem;
-                text-align: left;
-                border-bottom: 1px solid var(--color-border);
+                font-size: 0.92rem;
             }
             .admin-table th {
-                background-color: var(--color-surface);
-                font-weight: 600;
-                color: var(--color-text);
+                text-align: left;
+                font-size: 0.72rem;
+                font-weight: 700;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: var(--color-text-muted);
+                padding: 0.6rem 0.5rem;
+                border-bottom: 1px solid var(--color-border);
+                background: transparent;
             }
             .admin-table td {
+                padding: 0.7rem 0.5rem;
+                border-bottom: 1px solid var(--color-border);
+                vertical-align: middle;
+                color: var(--color-text);
+            }
+            .admin-cell-name {
+                font-weight: 500;
+                color: var(--color-text);
+            }
+            .admin-cell-muted {
                 color: var(--color-text-muted);
+            }
+            .admin-progress-done {
+                color: var(--color-success);
+                font-weight: 600;
+                font-variant-numeric: tabular-nums;
+            }
+            .admin-progress-total {
+                color: var(--color-text-muted);
+                font-variant-numeric: tabular-nums;
+            }
+            .admin-progress-complete {
+                color: var(--color-warning);
+                margin-left: 0.5rem;
+                font-size: 0.85rem;
+            }
+            .admin-col-actions {
+                text-align: right;
+                white-space: nowrap;
+            }
+            .admin-col-actions .btn {
+                margin-left: 0.4rem;
+            }
+
+            /* ---------- Inline forms / inputs shared by admin + team pages ----------
+               Inputs match the button height (2.25rem default, 1.85rem for the
+               `tiny` variant used inside tables) so rows of controls line up
+               cleanly. The styling is intentionally understated: a single thin
+               border, the page surface as background, and a soft primary ring on
+               focus rather than a heavy outline. */
+            .admin-input {
+                box-sizing: border-box;
+                height: 2.25rem;
+                padding: 0 0.65rem;
+                font-family: inherit;
+                font-size: 0.9rem;
+                line-height: 1;
+                color: var(--color-text);
+                background: var(--color-input-bg);
+                border: 1px solid var(--color-border);
+                border-radius: 6px;
+                transition:
+                    border-color 120ms ease,
+                    box-shadow 120ms ease;
+            }
+            .admin-input:hover {
+                border-color: var(--color-text-muted);
+            }
+            .admin-input:focus,
+            .admin-input:focus-visible {
+                outline: none;
+                border-color: var(--color-primary);
+                box-shadow: 0 0 0 3px
+                    color-mix(in srgb, var(--color-primary) 18%, transparent);
+            }
+            .admin-input::placeholder {
+                color: var(--color-text-muted);
+                opacity: 0.75;
+            }
+            .admin-input-tiny {
+                height: 1.85rem;
+                font-size: 0.82rem;
+                padding: 0 0.55rem;
+            }
+            .admin-input-mono {
+                font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+                font-size: 0.8rem;
+            }
+            select.admin-input {
+                padding-right: 1.75rem;
+                appearance: none;
+                /* Inline SVG caret so the dropdown reads consistently across
+                   themes without pulling in an icon font. */
+                background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%2359636e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1.5l5 5 5-5'/></svg>");
+                background-repeat: no-repeat;
+                background-position: right 0.55rem center;
+                background-size: 0.7rem auto;
+            }
+            html[data-theme="dark"] select.admin-input {
+                background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%239198a1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1.5l5 5 5-5'/></svg>");
+            }
+
+            .admin-inline-form {
+                display: inline-flex;
+                gap: 0.4rem;
+                align-items: center;
+            }
+
+            /* ---------- Tiny / danger button variants ---------- */
+            .btn.admin-btn-tiny {
+                height: 1.85rem;
+                padding: 0 0.7rem;
+                font-size: 0.78rem;
+                font-weight: 600;
+            }
+            .btn.admin-btn-danger {
+                background-color: var(--color-brand);
+                border-color: var(--color-brand);
+                color: #fff;
+            }
+            .btn.admin-btn-danger:hover {
+                background-color: var(--color-brand-muted);
+                border-color: var(--color-brand-muted);
             }
 
             .code-block {
@@ -930,7 +1074,7 @@
                 line-height: 1.1;
                 font-weight: 700;
                 letter-spacing: -0.015em;
-                color: #fc218a;
+                color: var(--color-brand);
             }
             .book-byline {
                 margin: 0;
@@ -989,10 +1133,21 @@
             }
 
             /* ---------- Submission card ----------
-               Shared markup is in `templates/_submission_card.html`,
+               Shared markup is in `templates/partials/submission_card.html`,
                included by both `admin.html` and `team.html`. The
                read-only CodeMirror viewer mounts inside `.rust-editor`
                (see `static/js/readonly-rust-editor.js`). */
+            /* Submissions feed list, shared by `/admin` and the
+               per-team pages. Cards themselves are styled below. */
+            .submission-list {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 3rem;
+            }
+
             .submission-card {
                 margin: 0;
                 padding: 0;
@@ -1275,7 +1430,7 @@
         <header class="topbar" role="banner">
             <div class="topbar-inner">
                 {% block topbar_left %}
-                <a href="/" class="topbar-home">corrode</a>
+                <a href="/" class="topbar-home">Course</a>
                 {% endblock %}
                 <div class="topbar-spacer"></div>
                 {% block topbar_progress %}{% endblock %}
@@ -1754,6 +1909,57 @@
                     }
                 });
             })();
+
+            // ----- Admin / team page helpers ------------------------------
+            // Both `/admin` and `/admin/team/{slug}` (plus the participant
+            // team view) include a submissions feed and a filter dropdown,
+            // and the admin views additionally render "Remove" buttons.
+            // The handlers are global because the markup wires them up via
+            // inline `onclick=` / `onchange=` attributes; the early returns
+            // make them harmless when an unrelated page loads `base.html`.
+            function filterSubmissions() {
+                var select = document.getElementById("exercise-filter");
+                if (!select) return;
+                var filter = select.value;
+                document
+                    .querySelectorAll("#submissions-container .submission-card")
+                    .forEach(function (card) {
+                        var name = card.getAttribute("data-exercise");
+                        card.style.display =
+                            !filter || name === filter ? "" : "none";
+                    });
+            }
+
+            async function removeParticipant(id, name) {
+                if (
+                    !confirm(
+                        'Remove participant "' +
+                            name +
+                            '"? This will delete all their submissions and cannot be undone.',
+                    )
+                ) {
+                    return;
+                }
+                var params = new URLSearchParams(window.location.search);
+                var token = params.get("token");
+                try {
+                    var response = await fetch(
+                        "/admin/remove-participant/" + id + "?token=" + token,
+                        {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" },
+                        },
+                    );
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        var err = await response.text();
+                        alert("Failed to remove participant: " + err);
+                    }
+                } catch (e) {
+                    alert("Error removing participant: " + e.message);
+                }
+            }
         </script>
 
         <!-- canvas-confetti for celebrating passing test runs -->

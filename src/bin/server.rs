@@ -309,10 +309,9 @@ struct TeamPageTemplate {
     is_admin: bool,
     /// Admin token to thread back into `/admin` and `/dashboard/{ulid}`
     /// links so the operator stays authenticated as they click
-    /// around. `None` in participant mode. Held on the template even
-    /// though the markup currently bakes the token into pre-built
-    /// `back_href` URLs, so future template tweaks can re-use it.
-    #[allow(dead_code)]
+    /// around. `None` in participant mode. Threaded into the inline
+    /// "move to team" form action so the form posts back with the
+    /// admin token still attached.
     admin_token: Option<String>,
     /// Roster: one row per member of this team, ordered by most
     /// recent activity first.
@@ -324,6 +323,10 @@ struct TeamPageTemplate {
     /// `true` when the submissions list is the cap (see
     /// [`TEAM_SUBMISSIONS_LIMIT`]) rather than the full history.
     submissions_truncated: bool,
+    /// Distinct exercise names that show up in this team's submissions
+    /// feed. Used to populate the per-team "Filter" dropdown so the
+    /// reader can narrow the list without leaving the page.
+    exercises: Vec<String>,
     /// URL for the "back" link at the top of the page.
     back_href: String,
     /// Label for the "back" link.
@@ -1505,6 +1508,15 @@ async fn render_team_page(
         None => ("Unassigned".to_string(), true),
     };
 
+    // Distinct exercise names from the submissions we're about to
+    // render. Sorted for a stable, alphabetic dropdown.
+    let mut exercises: Vec<String> = submissions
+        .iter()
+        .map(|s| s.exercise_name.clone())
+        .collect();
+    exercises.sort();
+    exercises.dedup();
+
     let template = TeamPageTemplate {
         team_label,
         is_unassigned,
@@ -1513,6 +1525,7 @@ async fn render_team_page(
         members,
         submissions,
         submissions_truncated,
+        exercises,
         back_href,
         back_label,
     };

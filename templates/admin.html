@@ -1,6 +1,6 @@
 {% extends "base.html" %} {% block title %}Admin · corrode Rust Course{%
 endblock %} {% block content %}
-<div class="container book-dashboard admin-page">
+<div class="container admin-page">
     <header class="book-hero admin-hero">
         <div class="book-eyebrow">
             <span class="book-eyebrow-rule" aria-hidden="true"></span>
@@ -9,26 +9,14 @@ endblock %} {% block content %}
         </div>
         <h1 class="book-title admin-title">Course dashboard</h1>
         <p class="book-byline">
-            participant progress, recent submissions, and team rollup
+            {{ stats.total_participants }} participant{% if
+            stats.total_participants != 1 %}s{% endif %} in {{
+            participant_groups.len() }} cohort{% if participant_groups.len() !=
+            1 %}s{% endif %} · {{ stats.total_submissions }} submission{% if
+            stats.total_submissions != 1 %}s{% endif %} · {{
+            stats.total_perfected }} perfected
         </p>
     </header>
-
-    <section class="admin-stats" aria-label="Overall stats">
-        <div class="admin-stat-card">
-            <span class="admin-stat-number"
-                >{{ stats.total_participants }}</span
-            >
-            <span class="admin-stat-label">Participants</span>
-        </div>
-        <div class="admin-stat-card">
-            <span class="admin-stat-number">{{ stats.total_submissions }}</span>
-            <span class="admin-stat-label">Submissions</span>
-        </div>
-        <div class="admin-stat-card">
-            <span class="admin-stat-number">{{ stats.total_perfected }}</span>
-            <span class="admin-stat-label">Perfected</span>
-        </div>
-    </section>
 
     <section class="admin-section" aria-label="Participants by team">
         <div class="section-head">
@@ -103,7 +91,7 @@ endblock %} {% block content %}
                             <form
                                 method="post"
                                 action="/admin/participants/{{ participant.id }}/team-token?token={{ admin_token }}"
-                                class="admin-team-form"
+                                class="admin-inline-form"
                             >
                                 <input
                                     type="text"
@@ -113,7 +101,7 @@ endblock %} {% block content %}
                                     maxlength="64"
                                     pattern="[A-Za-z0-9_\-]*"
                                     title="Letters, digits, underscore or hyphen. Leave blank to unassign."
-                                    class="admin-team-input"
+                                    class="admin-input admin-input-tiny admin-input-mono"
                                 />
                                 <button
                                     type="submit"
@@ -153,7 +141,7 @@ endblock %} {% block content %}
                 <select
                     id="exercise-filter"
                     onchange="filterSubmissions()"
-                    class="admin-filter"
+                    class="admin-input admin-input-tiny"
                 >
                     <option value="">All exercises</option>
                     {% for exercise in exercises %}
@@ -164,136 +152,34 @@ endblock %} {% block content %}
         </div>
 
         <ol class="submission-list" id="submissions-container">
-            {% for sub in recent_submissions %}
-            <div data-exercise="{{ sub.exercise_name }}">
-                {% include "_submission_card.html" %}
-            </div>
-            {% endfor %}
+            {% for sub in recent_submissions %} {% include
+            "partials/submission_card.html" %} {% endfor %}
         </ol>
     </section>
-
-    <p class="admin-footnote">
-        Enabling everyone to build reliable and efficient software
-    </p>
 </div>
 
 <script type="module" src="/static/js/readonly-rust-editor.js"></script>
 
-<script>
-    async function removeParticipant(id, name) {
-        if (
-            !confirm(
-                `Remove participant "${name}"? This will delete all their submissions and cannot be undone.`,
-            )
-        ) {
-            return;
-        }
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get("token");
-        try {
-            const response = await fetch(
-                `/admin/remove-participant/${id}?token=${token}`,
-                {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" },
-                },
-            );
-            if (response.ok) {
-                window.location.reload();
-            } else {
-                const error = await response.text();
-                alert(`Failed to remove participant: ${error}`);
-            }
-        } catch (e) {
-            alert(`Error removing participant: ${e.message}`);
-        }
-    }
-
-    function filterSubmissions() {
-        const filter = document.getElementById("exercise-filter").value;
-        document
-            .querySelectorAll("#submissions-container [data-exercise]")
-            .forEach((wrapper) => {
-                const exerciseName = wrapper.getAttribute("data-exercise");
-                wrapper.style.display =
-                    !filter || exerciseName === filter ? "" : "none";
-            });
-    }
-</script>
-
 <style>
-    /* Page-specific admin chrome only. Shared rules
-       (`.book-*`, `.section-*`, `.submission-card-*`,
-       `.status-badge-*`, `.rust-editor`) live in `base.html`. */
-
-    .admin-page {
-        max-width: 64rem;
-    }
-    .admin-hero {
-        margin: 2rem 0 2.5rem;
-    }
-    .admin-title {
-        font-size: 2.4rem;
-    }
-
-    /* ---------- Stats ---------- */
-    .admin-stats {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
-        margin-bottom: 3rem;
-    }
-    .admin-stat-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 1.25rem 1rem;
-        border: 1px solid var(--color-border);
-        border-radius: 8px;
-        background: var(--color-surface);
-    }
-    .admin-stat-number {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--color-text);
-        font-variant-numeric: tabular-nums;
-    }
-    .admin-stat-label {
-        font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: var(--color-text-muted);
-    }
-    @media (max-width: 600px) {
-        .admin-stats {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .admin-section {
-        margin-bottom: 3.5rem;
-    }
-    .admin-filter {
-        background: var(--color-surface);
-        color: var(--color-text);
-        border: 1px solid var(--color-border);
-        border-radius: 4px;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.85rem;
-    }
+    /* Page-specific admin chrome only. Layout rhythm (`.admin-page`,
+       `.admin-hero`, `.admin-section`), the participants table
+       (`.admin-table`, `.admin-input*`, tiny/danger button variants),
+       the submissions feed, and all `.book-*` / `.section-*` rules
+       live in `base.html` and are shared with the team page. */
 
     /* ---------- Team groups ---------- */
     .team-group {
-        margin-bottom: 2rem;
+        margin-bottom: 3rem;
+    }
+    .team-group:last-child {
+        margin-bottom: 0;
     }
     .team-group-head {
         display: flex;
         align-items: baseline;
         gap: 0.6rem;
-        margin-bottom: 0.6rem;
-        padding-bottom: 0.4rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.6rem;
         border-bottom: 1px solid var(--color-border);
         flex-wrap: wrap;
     }
@@ -324,99 +210,6 @@ endblock %} {% block content %}
     .team-group-meta {
         font-size: 0.85rem;
         color: var(--color-text-muted);
-    }
-
-    /* ---------- Participants table ---------- */
-    .admin-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.92rem;
-    }
-    .admin-table th {
-        text-align: left;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--color-text-muted);
-        padding: 0.6rem 0.5rem;
-        border-bottom: 1px solid var(--color-border);
-    }
-    .admin-table td {
-        padding: 0.7rem 0.5rem;
-        border-bottom: 1px solid var(--color-border);
-        vertical-align: middle;
-    }
-    .admin-cell-name {
-        font-weight: 500;
-        color: var(--color-text);
-    }
-    .admin-cell-muted {
-        color: var(--color-text-muted);
-    }
-    .admin-progress-done {
-        color: var(--color-success);
-        font-weight: 600;
-    }
-    .admin-progress-total {
-        color: var(--color-text-muted);
-    }
-    .admin-progress-complete {
-        color: var(--color-warning);
-        margin-left: 0.5rem;
-        font-size: 0.85rem;
-    }
-    .admin-col-actions {
-        text-align: right;
-        white-space: nowrap;
-    }
-    .admin-col-actions .btn {
-        margin-left: 0.4rem;
-    }
-    .admin-team-form {
-        display: flex;
-        gap: 0.4rem;
-        align-items: center;
-    }
-    .admin-team-input {
-        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
-        font-size: 0.8rem;
-        padding: 0.3rem 0.5rem;
-        border: 1px solid var(--color-border);
-        background: var(--color-input-bg, var(--color-surface));
-        color: var(--color-text);
-        border-radius: 4px;
-        width: 8rem;
-    }
-    .admin-btn-tiny {
-        font-size: 0.75rem;
-        padding: 0.3rem 0.6rem;
-    }
-    .admin-btn-danger {
-        background: var(--color-error);
-        border: none;
-        color: #fff;
-    }
-    .admin-btn-danger:hover {
-        filter: brightness(0.95);
-    }
-
-    /* Submissions feed list (cards themselves are styled in base.html). */
-    .submission-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .admin-footnote {
-        text-align: center;
-        margin-top: 3rem;
-        color: var(--color-text-muted);
-        font-style: italic;
-        font-size: 0.9rem;
     }
 </style>
 {% endblock %}

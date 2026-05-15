@@ -1,11 +1,11 @@
 {% extends "base.html" %} {% block title %}{{ team_label }} · Team · corrode
 Rust Course{% endblock %} {% block content %}
-<div class="container book-dashboard team-page">
+<div class="container admin-page team-page">
     <p class="team-back">
         <a href="{{ back_href }}">← {{ back_label }}</a>
     </p>
 
-    <header class="book-hero team-hero">
+    <header class="book-hero admin-hero">
         <div class="book-eyebrow">
             <span class="book-eyebrow-rule" aria-hidden="true"></span>
             <span class="book-eyebrow-text">
@@ -16,64 +16,133 @@ Rust Course{% endblock %} {% block content %}
         <h1 class="book-title team-title">{{ team_label }}</h1>
         <p class="book-byline">
             {{ members.len() }} participant{% if members.len() != 1 %}s{% endif
-            %}, {{ submissions.len() }} recent submission{% if submissions.len()
-            != 1 %}s{% endif %}{% if submissions_truncated %} (most recent
-            only){% endif %}
+            %} · {{ submissions.len() }} submission{% if submissions.len() != 1
+            %}s{% endif %}{% if submissions_truncated %} (most recent only){%
+            endif %}
         </p>
     </header>
 
-    <section class="team-roster" aria-label="Team roster">
-        <div class="section-eyebrow">Roster</div>
+    <section class="admin-section" aria-label="Roster">
+        <div class="section-head">
+            <span class="section-eyebrow">Participants</span>
+        </div>
+
         {% if members.is_empty() %}
         <p class="team-empty">No one has signed up under this label yet.</p>
         {% else %}
-        <ul class="team-roster-list">
-            {% for member in members %}
-            <li
-                class="team-roster-row{% if member.is_self %} is-self{% endif %}"
-            >
-                <div class="team-roster-name">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Progress</th>
+                    <th>Last activity</th>
                     {% if is_admin %}
-                    <a
-                        href="/dashboard/{{ member.id }}"
-                        class="team-roster-link"
-                        title="Open this participant's dashboard"
-                    >
-                        {{ member.name }}
-                    </a>
-                    {% else %} {{ member.name }} {% endif %} {% if
-                    member.is_self %}
-                    <span class="team-self-badge">You</span>
+                    <th>Move to team</th>
+                    <th class="admin-col-actions">Actions</th>
                     {% endif %}
-                </div>
-                <div class="team-roster-progress">
-                    <span class="team-roster-done"
-                        >{{ member.completed_count }}</span
-                    >
-                    <span class="team-roster-total"
-                        >/ {{ member.total_exercises }} chapters</span
-                    >
-                </div>
-                <div class="team-roster-activity">
-                    {% if member.last_activity.is_some() %} active recently {%
-                    else %}
-                    <span class="team-roster-quiet">no submissions yet</span>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr class="{% if member.is_self %}is-self{% endif %}">
+                    <td class="admin-cell-name">
+                        {{ member.name }} {% if member.is_self %}
+                        <span class="team-self-badge">You</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="admin-progress-done"
+                            >{{ member.completed_count }}</span
+                        >
+                        <span class="admin-progress-total"
+                            >/{{ member.total_exercises }}</span
+                        >
+                        {% if member.completed_count == member.total_exercises
+                        %}
+                        <span class="admin-progress-complete"
+                            >🎉 Complete!</span
+                        >
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if member.last_activity.is_some() %} Recent activity
+                        {% else %}
+                        <span class="admin-cell-muted">No submissions</span>
+                        {% endif %}
+                    </td>
+                    {% if is_admin %}
+                    <td>
+                        <form
+                            method="post"
+                            action="/admin/participants/{{ member.id }}/team-token?token={% match admin_token %}{% when Some with (t) %}{{ t }}{% when None %}{% endmatch %}"
+                            class="admin-inline-form"
+                        >
+                            <input
+                                type="text"
+                                name="team_token"
+                                value="{% if !is_unassigned %}{{ team_label }}{% endif %}"
+                                placeholder="team-slug"
+                                maxlength="64"
+                                pattern="[A-Za-z0-9_\-]*"
+                                title="Letters, digits, underscore or hyphen. Leave blank to unassign."
+                                class="admin-input admin-input-tiny admin-input-mono"
+                            />
+                            <button
+                                type="submit"
+                                class="btn btn-secondary admin-btn-tiny"
+                            >
+                                Move
+                            </button>
+                        </form>
+                    </td>
+                    <td class="admin-col-actions">
+                        <a
+                            href="/dashboard/{{ member.id }}"
+                            class="btn btn-secondary admin-btn-tiny"
+                        >
+                            View dashboard
+                        </a>
+                        <button
+                            onclick="removeParticipant('{{ member.id }}', '{{ member.name }}')"
+                            class="btn admin-btn-tiny admin-btn-danger"
+                        >
+                            Remove
+                        </button>
+                    </td>
                     {% endif %}
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% endif %}
     </section>
 
-    <section class="team-submissions" aria-label="Recent submissions">
-        <div class="section-eyebrow">Recent submissions</div>
+    <section class="admin-section" aria-label="Recent submissions">
+        <div class="section-head">
+            <span class="section-eyebrow">Recent submissions</span>
+            {% if !exercises.is_empty() %}
+            <span class="section-meta">
+                <label for="exercise-filter">Filter:</label>
+                <select
+                    id="exercise-filter"
+                    onchange="filterSubmissions()"
+                    class="admin-input admin-input-tiny"
+                >
+                    <option value="">All exercises</option>
+                    {% for exercise in exercises %}
+                    <option value="{{ exercise }}">{{ exercise }}</option>
+                    {% endfor %}
+                </select>
+            </span>
+            {% endif %}
+        </div>
+
         {% if submissions.is_empty() %}
         <p class="team-empty">No submissions on record yet.</p>
         {% else %}
-        <ol class="submission-list">
-            {% for sub in submissions %} {% include "_submission_card.html" %}
-            {% endfor %}
+        <ol class="submission-list" id="submissions-container">
+            {% for sub in submissions %} {% include
+            "partials/submission_card.html" %} {% endfor %}
         </ol>
         {% if submissions_truncated %}
         <p class="team-truncated-note">
@@ -88,17 +157,21 @@ Rust Course{% endblock %} {% block content %}
 <script type="module" src="/static/js/readonly-rust-editor.js"></script>
 
 <style>
-    /* Page-specific team-page chrome only. Shared rules
-       (`.book-*`, `.section-*`, `.submission-card-*`,
-       `.status-badge-*`, `.rust-editor`, `.submission-list`)
-       live in `base.html`. */
+    /* Page-specific team-page chrome only. All of the heavy lifting
+       (`.book-*`, `.admin-*`, `.section-*`, `.submission-card-*`,
+       `.status-badge-*`, `.rust-editor`, `.submission-list`) lives
+       in `base.html` and is shared with the admin dashboard so the
+       two pages stay visually aligned. */
 
     .team-page {
-        max-width: 60rem;
+        /* Width and section rhythm come from `.admin-page` in
+           `base.html`; we only add the bottom padding so the page
+           ends gracefully after the submissions feed. */
+        padding-bottom: 5rem;
     }
 
     .team-back {
-        margin: 1.25rem 0 0;
+        margin: 2rem 0 0;
         font-size: 0.9rem;
     }
     .team-back a {
@@ -111,12 +184,8 @@ Rust Course{% endblock %} {% block content %}
         text-decoration: underline;
     }
 
-    .team-hero {
-        margin: 2rem 0 3rem;
-    }
     .team-title {
         font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
-        font-size: 2.4rem;
         word-break: break-all;
     }
 
@@ -126,39 +195,10 @@ Rust Course{% endblock %} {% block content %}
         font-style: italic;
     }
 
-    /* ---------- Roster ---------- */
-    .team-roster {
-        margin: 0 0 3.5rem;
-    }
-    .team-roster-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-    .team-roster-row {
-        display: grid;
-        grid-template-columns: 1.6fr 1fr 1fr;
-        gap: 1rem;
-        align-items: baseline;
-        padding: 0.8rem 0.4rem;
-        border-bottom: 1px solid var(--color-border);
-    }
-    .team-roster-row.is-self {
+    /* Highlight the current participant's own row in participant
+       view. Subtle wash so it reads as "you" without shouting. */
+    .admin-table tr.is-self td {
         background: color-mix(in srgb, var(--color-primary) 6%, transparent);
-        border-radius: 6px;
-    }
-    .team-roster-name {
-        font-weight: 500;
-        color: var(--color-text);
-    }
-    .team-roster-link {
-        color: inherit;
-        text-decoration: none;
-    }
-    .team-roster-link:hover,
-    .team-roster-link:focus-visible {
-        color: var(--color-primary);
-        text-decoration: underline;
     }
     .team-self-badge {
         display: inline-block;
@@ -172,37 +212,12 @@ Rust Course{% endblock %} {% block content %}
         background: var(--color-primary);
         color: #fff;
     }
-    .team-roster-progress {
-        font-variant-numeric: tabular-nums;
-    }
-    .team-roster-done {
-        color: var(--color-success);
-        font-weight: 600;
-    }
-    .team-roster-total {
-        color: var(--color-text-muted);
-        margin-left: 0.25rem;
-    }
-    .team-roster-activity {
-        font-size: 0.9rem;
-        color: var(--color-text-muted);
-    }
-    .team-roster-quiet {
-        font-style: italic;
-    }
 
     .team-truncated-note {
         margin-top: 1.5rem;
         font-size: 0.85rem;
         color: var(--color-text-muted);
         font-style: italic;
-    }
-
-    @media (max-width: 720px) {
-        .team-roster-row {
-            grid-template-columns: 1fr;
-            gap: 0.25rem;
-        }
     }
 </style>
 {% endblock %}
