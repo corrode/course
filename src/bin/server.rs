@@ -63,7 +63,7 @@ struct PlaygroundTemplate {
 }
 
 /// Template for the cheatsheet page. Just renders pre-built HTML
-/// produced from `examples/21_appendix/3_cheatsheet.md` at startup.
+/// produced from `static/cheatsheet.md` at startup.
 #[derive(Template)]
 #[template(path = "cheatsheet.html")]
 struct CheatsheetTemplate {
@@ -395,9 +395,9 @@ fn main() {
     }
 }
 
-/// Renders `examples/21_appendix/3_cheatsheet.md` as a standalone reference page.
+/// Renders `static/cheatsheet.md` as a standalone reference page.
 async fn cheatsheet_page() -> impl IntoResponse {
-    let md = match std::fs::read_to_string("examples/21_appendix/3_cheatsheet.md") {
+    let md = match std::fs::read_to_string("static/cheatsheet.md") {
         Ok(s) => s,
         Err(e) => {
             warn!("cheatsheet markdown missing: {e}");
@@ -419,7 +419,7 @@ async fn cheatsheet_page() -> impl IntoResponse {
 /// Used by the in-page modal so we don't have to ship the entire
 /// document with every page load.
 async fn cheatsheet_fragment() -> impl IntoResponse {
-    let md = match std::fs::read_to_string("examples/21_appendix/3_cheatsheet.md") {
+    let md = match std::fs::read_to_string("static/cheatsheet.md") {
         Ok(s) => s,
         Err(e) => {
             warn!("cheatsheet markdown missing: {e}");

@@ -110,7 +110,7 @@ with (u) %}
     >
 </span>
 {% endif %} {% endblock %} {% block content %}
-<div class="container">
+<div class="container" data-corrode-config="{{ exercise.directives_json() }}">
     <div class="exercise-header">
         <div class="chapter-eyebrow">Chapter {{ exercise.number }}</div>
         <h1 class="exercise-title">{{ exercise.title }}</h1>
@@ -472,7 +472,10 @@ with (u) %}
     </script>
 
     {% match next_dot %} {% when Some with (n) %}
-    <section class="next-chapter-cta" aria-label="Continue">
+    <section
+        class="next-chapter-cta{% if ulid.is_some() && !current_status.completed %} is-locked{% endif %}"
+        aria-label="Continue"
+    >
         {% match ulid %} {% when Some with (u) %}
         <a class="btn next-chapter-btn" href="/exercise/{{ u }}/{{ n.slug }}">
             <span class="next-chapter-eyebrow">Next chapter</span>
@@ -555,6 +558,116 @@ with (u) %}
 </script>
 
 <script type="module">
+    // ---- Per-chapter UI directives -------------------------------------
+    // Read from `data-corrode-config` on the .container, which is the
+    // JSON serialisation of the chapter's `.chapter.toml`. Defaults to
+    // a no-op if the file is missing.
+    //
+    // Adding a new knob:
+    //   1. add a field on ChapterDirectives in src/exercises.rs
+    //     (mark optional fields `#[serde(skip_serializing_if = ...)]`
+    //     so the rendered JSON stays compact)
+    //   2. handle it inside applyChapterDirectives below
+    //   3. (if it's a pass-time effect) register a function in PassHooks
+
+    // Map of public button names → the data-role we hide.
+    const Buttons = {
+        run: "run-btn",
+        submit: "submit-btn",
+        format: "format-btn",
+        reset: "reset-btn",
+        copy: "copy-btn",
+        vim: "vim-btn",
+        vscode: "vscode-btn",
+    };
+
+    // Map of named effects fired when a section's tests all pass.
+    // Each handler receives `{ section, data }` (the run-result payload).
+    const PassHooks = {
+        confetti() {
+            if (typeof window.confetti !== "function") {
+                console.warn(
+                    "[corrode] confetti hook fired but window.confetti is not loaded (CDN blocked?)",
+                );
+                return;
+            }
+            const fire = (originX) =>
+                window.confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    startVelocity: 55,
+                    ticks: 250,
+                    zIndex: 10000,
+                    origin: { x: originX, y: 0.7 },
+                });
+            fire(0.2);
+            fire(0.5);
+            fire(0.8);
+        },
+    };
+
+    // Pass hooks for the current chapter, populated once by
+    // applyChapterDirectives() and read by every section's
+    // updateRunStatus() on a successful run. Chapter-wide because
+    // `.chapter.toml` is chapter-wide.
+    const passHooks = [];
+
+    function readChapterConfig() {
+        const root = document.querySelector("[data-corrode-config]");
+        if (!root) return {};
+        try {
+            return JSON.parse(root.dataset.corrodeConfig || "{}");
+        } catch (err) {
+            console.warn("[corrode] invalid data-corrode-config:", err);
+            return {};
+        }
+    }
+
+    function applyChapterDirectives() {
+        const cfg = readChapterConfig();
+
+        // Allow-list of visible buttons. Omitting `show` (the default)
+        // leaves every button alone. An explicit array — even an empty
+        // one — hides any button not named in it.
+        if (Array.isArray(cfg.show)) {
+            const showSet = new Set(cfg.show);
+            const sections = document.querySelectorAll(
+                ".exercise-section[data-step-id]",
+            );
+            for (const [name, role] of Object.entries(Buttons)) {
+                if (showSet.has(name)) continue;
+                sections.forEach((section) => {
+                    section.querySelector(`[data-role="${role}"]`)?.remove();
+                });
+            }
+            for (const name of cfg.show) {
+                if (!Buttons[name]) {
+                    console.warn(
+                        `[corrode] unknown button in show list: ${name}`,
+                    );
+                }
+            }
+        }
+
+        // Chapter-wide table of contents (the `.chapter-list` nav at
+        // the bottom of the page). `cfg.show_toc === false` hides it;
+        // any other value leaves it visible.
+        if (cfg.show_toc === false) {
+            document.querySelector(".chapter-list")?.remove();
+        }
+
+        // Pass-time effects. Unknown names are warned about but ignored.
+        const onPass = Array.isArray(cfg.on_pass) ? cfg.on_pass : [];
+        for (const name of onPass) {
+            const fn = PassHooks[name];
+            if (!fn) {
+                console.warn(`[corrode] unknown on_pass hook: ${name}`);
+                continue;
+            }
+            passHooks.push(fn);
+        }
+    }
+
     // CodeMirror 6 via an import map. The leading `*` on each esm.sh URL
     // tells esm.sh to keep its own deps as bare specifiers, so the browser
     // resolves *all* @codemirror/state references through this map and we
@@ -1320,6 +1433,8 @@ with (u) %}
             function updateRunStatus(data) {
                 const passed = data.test_results.filter((t) => t.passed).length;
                 const total = data.test_results.length;
+                const succeeded =
+                    data.success && (total === 0 || passed === total);
                 if (total === 0) {
                     runStatus.textContent = data.success
                         ? "Compiled. No tests ran."
@@ -1350,6 +1465,19 @@ with (u) %}
                             : `✗ ${failed} tests failed (${passed}/${total})`,
                         "fail",
                     );
+                }
+
+                if (succeeded) {
+                    document
+                        .querySelector(".next-chapter-cta.is-locked")
+                        ?.classList.remove("is-locked");
+                    for (const hook of passHooks) {
+                        try {
+                            hook({ section, data });
+                        } catch (err) {
+                            console.error("pass hook failed:", err);
+                        }
+                    }
                 }
             }
 
@@ -1592,6 +1720,8 @@ with (u) %}
                     );
                 }
             });
+
+        applyChapterDirectives();
     } catch (err) {
         console.warn(
             "CodeMirror failed to load, keeping textarea fallback:",
@@ -1601,6 +1731,7 @@ with (u) %}
         document
             .querySelectorAll(".exercise-section[data-step-id]")
             .forEach((section) => initFallbackSection(section));
+        applyChapterDirectives();
     }
 
     // Plain-textarea fallback when CodeMirror fails to load. The Run /
@@ -2158,6 +2289,9 @@ with (u) %}
         font-weight: 600;
     }
 
+    .next-chapter-cta.is-locked {
+        display: none;
+    }
     .next-chapter-cta {
         margin: 3rem auto 0;
         max-width: 32rem;

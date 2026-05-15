@@ -21,6 +21,7 @@
 //! See `docs/multi_step_chapters_plan.md` for the rollout plan.
 
 use anyhow::{Context, Result, anyhow};
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -105,6 +106,41 @@ impl Step {
     }
 }
 
+/// Optional per-chapter UI customisation, loaded from
+/// `examples/<chapter>/.chapter.toml` if that file exists. The struct
+/// is intentionally small and additive: unknown keys are rejected (so
+/// typos surface), and every field has a sensible default so omitting
+/// the file is the same as having an empty one.
+///
+/// The whole struct is serialised to JSON and emitted on the exercise
+/// page root as `data-corrode-config`. Adding a new knob therefore
+/// requires only:
+///   1. a field here (with `#[serde(default)]`),
+///   2. a handler in the JS `applyChapterDirectives()` registry.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, default)]
+pub struct ChapterDirectives {
+    /// Allow-list of buttons to keep visible in every code section.
+    /// `None` (the field is omitted) means "show every button" — the
+    /// default for any chapter without a `.chapter.toml`. An explicit
+    /// list (including the empty list) hides any button not named in
+    /// it. See the `Buttons` map in `exercise.html` for valid names
+    /// (`run`, `submit`, `format`, `reset`, `copy`, `vim`, `vscode`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub show: Option<Vec<String>>,
+    /// Whether the page-wide table of contents (the chapter list at
+    /// the bottom of the page) is rendered. `None` = default visible.
+    /// `Some(false)` hides it; `Some(true)` is identical to `None` and
+    /// exists only for explicitness.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub show_toc: Option<bool>,
+    /// Names of effects to fire when a run finishes successfully.
+    /// See the `PassHooks` map in `exercise.html` for valid names
+    /// (`confetti`, ...).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub on_pass: Vec<String>,
+}
+
 /// A single chapter, parsed from one `examples/NN_slug/` directory.
 #[derive(Debug, Clone)]
 pub struct Exercise {
@@ -125,6 +161,9 @@ pub struct Exercise {
     /// closed `<details>` below the last step. Sourced from a sibling
     /// note whose slug is exactly `hints`.
     pub hints: Option<Note>,
+    /// Per-chapter UI tweaks loaded from `.chapter.toml` (if present).
+    /// Empty/default when the file is absent.
+    pub directives: ChapterDirectives,
 }
 
 impl Exercise {
@@ -170,6 +209,15 @@ impl Exercise {
     #[must_use]
     pub fn is_multi_step(&self) -> bool {
         self.code_steps().len() > 1
+    }
+
+    /// Serialise this chapter's directives as a compact JSON string,
+    /// suitable for embedding in a `data-corrode-config` attribute.
+    /// Falls back to `"{}"` if serialisation somehow fails so the
+    /// template never panics.
+    #[must_use]
+    pub fn directives_json(&self) -> String {
+        serde_json::to_string(&self.directives).unwrap_or_else(|_| "{}".into())
     }
 }
 
@@ -349,6 +397,8 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
 
     let (steps, hints) = apply_hints(steps, hints, hints_path.as_deref());
 
+    let directives = load_chapter_directives(dir);
+
     Ok(Exercise {
         number,
         slug,
@@ -356,7 +406,32 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
         title,
         steps,
         hints,
+        directives,
     })
+}
+
+/// Read `.chapter.toml` from a chapter directory if present.
+///
+/// A missing file is not an error — it just yields the default
+/// (empty) directives. A malformed file is logged and ignored so a
+/// typo in one chapter doesn't take down the whole server.
+fn load_chapter_directives(dir: &Path) -> ChapterDirectives {
+    let path = dir.join(".chapter.toml");
+    let raw = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return ChapterDirectives::default(),
+        Err(e) => {
+            log::warn!("reading {}: {e}", path.display());
+            return ChapterDirectives::default();
+        }
+    };
+    match toml::from_str::<ChapterDirectives>(&raw) {
+        Ok(d) => d,
+        Err(e) => {
+            log::warn!("parsing {}: {e}", path.display());
+            ChapterDirectives::default()
+        }
+    }
 }
 
 /// Distribute the chapter's `hints.md` over its code steps and rebuild
@@ -869,7 +944,7 @@ mod tests {
             "intro note should be rendered HTML"
         );
         assert!(
-            primary.starter_code.contains("fn count_chars"),
+            primary.starter_code.contains("fn format_welcome_message"),
             "first step's starter code should contain its function stub, got: {}",
             primary.starter_code
         );
@@ -908,17 +983,10 @@ mod tests {
             "note should render to HTML, got: {}",
             first.html
         );
-        // External links should be rewritten to open in a new tab.
-        assert!(
-            first.html.contains("target=\"_blank\""),
-            "external links should open in a new tab, got: {}",
-            first.html
-        );
-        assert!(
-            first.html.contains("class=\"external-link\""),
-            "external links should be tagged for the icon affordance, got: {}",
-            first.html
-        );
+        // Note: chapter 0's intro is intentionally link-free so we no
+        // longer assert on external-link rewriting here. That logic is
+        // still covered indirectly by the markdown rendering tests in
+        // chapters that do link out (e.g. 02_strings_and_chars).
     }
 
     #[test]

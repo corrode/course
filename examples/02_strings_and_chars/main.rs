@@ -3,11 +3,13 @@
 // To change it, edit (or add/remove) those step files and re-run `cargo build`.
 #![allow(dead_code, unused_imports)]
 
-#[path = "2_count_chars.rs"]
-mod _2_count_chars;
-#[path = "3_shout.rs"]
-mod _3_shout;
-#[path = "4_has_uppercase.rs"]
-mod _4_has_uppercase;
+#[path = "2_welcome.rs"]
+mod _2_welcome;
+#[path = "3_count_chars.rs"]
+mod _3_count_chars;
+#[path = "4_shout.rs"]
+mod _4_shout;
+#[path = "5_has_uppercase.rs"]
+mod _5_has_uppercase;
 
 fn main() {}

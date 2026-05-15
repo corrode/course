@@ -168,7 +168,7 @@ Web (HTML, Askama):
 - `GET  /exercise/{slug}`: public, no progress
 - `GET  /exercise/{ulid}/{slug}`: participant view (with progress)
 - `GET  /playground`: standalone scratchpad
-- `GET  /cheatsheet`: renders `examples/21_appendix/3_cheatsheet.md`
+- `GET  /cheatsheet`: renders `static/cheatsheet.md`
 - `GET  /cheatsheet/fragment`: same body without the chrome (for the modal)
 - `GET  /admin?token=…`: admin dashboard
 - `DELETE /admin/remove-participant/{ulid}?token=…`

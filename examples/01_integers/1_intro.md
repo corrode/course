@@ -1,6 +1,6 @@
 # Numbers in Rust
 
-*I tried to start this chapter with a joke about integers; it was pointless.*
+*This chapter was supposed to start with an integer joke. Turns out, it's pointless.*
 
 Rust has many integer types. The most common ones are `i32` (signed,
 32-bit) and `u32` (unsigned, 32-bit). The `u` versions can't be negative.

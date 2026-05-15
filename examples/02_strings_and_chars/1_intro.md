@@ -10,7 +10,7 @@ Rust splits "string" across three cooperating types:
 
 The split is what makes Rust strings both fast and safe. A function that
 just *reads* text takes `&str`; a function that *produces* new text returns
-`String`.
+`String`. You'll see this rhythm again and again:
 
 ```rust
 fn shout(text: &str) -> String {
@@ -21,6 +21,12 @@ let s = String::from("hello");
 let louder = shout(&s); // &String coerces to &str
 ```
 
+- **`&str`** ("string slice", pronounced *stir*) is a *borrowed* view
+  into text that lives elsewhere. Taking `name: &str` means "I just need
+  to read this string; I'm not taking ownership of it."
+- **`String`** is *owned* and heap-allocated. Returning `-> String`
+  means the caller gets a fresh, owned value back.
+
 A common gotcha: `s.len()` returns the number of *bytes*, not characters.
 For character counts use `s.chars().count()`. UTF-8 means a single visible
 character can take more than one byte.
@@ -28,6 +34,27 @@ character can take more than one byte.
 You'll also meet `.chars()` a lot. It returns an iterator of `char`, and
 iterators have many useful adapters like `.next()`, `.count()`, and
 `.any(...)` (more on iterators in chapter 13).
+
+## Building a `String` with `format!`
+
+The fastest way to assemble a new `String` is the `format!` macro. It
+works like `println!`, except instead of printing, it returns the
+formatted text:
+
+```rust
+let name = "Alice";
+let greeting: String = format!("Hello, {name}!");
+```
+
+A few things worth noticing:
+
+- The `{name}` inside the string is a **captured identifier**. Rust
+  pulls the variable from the surrounding scope. (Pre-2021 code uses
+  `format!("Hello, {}!", name)` instead; both still work.)
+- The macro returns a `String`, ready to return from your function.
+- The exclamation mark (`!`) means it's a macro, not a regular function
+  call. You'll learn what that distinction buys you later; for now,
+  treat it as a quirky bit of punctuation.
 
 ## A note on `for` loops
 
@@ -43,3 +70,13 @@ You can read it as "for each `c` produced by the iterator on the right,
 run the body once." The loop variable is a fresh binding scoped to each
 iteration. Anything that produces an iterator (a `Vec`, a slice, a
 `HashMap`, `0..10`, ...) works on the right-hand side.
+
+## Where to look things up
+
+You won't memorize Rust's `std` library, and you don't need to.
+Two things you can open in separate tabs right now:
+
+- [`std::fmt`](https://doc.rust-lang.org/std/fmt/) contains everything the
+  formatting macros can do (padding, precision, hex, debug output…).
+- [`str`](https://doc.rust-lang.org/std/primitive.str.html):
+  the inventory of operations available on any `&str`.

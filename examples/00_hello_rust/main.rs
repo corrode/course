@@ -3,7 +3,7 @@
 // To change it, edit (or add/remove) those step files and re-run `cargo build`.
 #![allow(dead_code, unused_imports)]
 
-#[path = "4_welcome.rs"]
-mod _4_welcome;
+#[path = "2_hello.rs"]
+mod _2_hello;
 
 fn main() {}
