@@ -155,48 +155,9 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
 </div>
 
 <style>
-    .book-dashboard {
-        max-width: 60rem;
-    }
-
-    /* ---------- Hero ---------- */
-    .book-hero {
-        text-align: center;
-        margin: 4rem 0 3.5rem;
-    }
-    .book-eyebrow {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.85rem;
-        margin-bottom: 1.25rem;
-    }
-    .book-eyebrow-rule {
-        flex: 0 0 4rem;
-        height: 1px;
-        background-color: var(--color-border);
-    }
-    .book-eyebrow-text {
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-        color: var(--color-text-muted);
-    }
-    .book-title {
-        margin: 0 0 0.85rem;
-        font-size: 3rem;
-        line-height: 1.1;
-        font-weight: 700;
-        letter-spacing: -0.015em;
-        color: #fc218a;
-    }
-    .book-byline {
-        margin: 0;
-        font-size: 1rem;
-        color: var(--color-text-muted);
-        font-style: italic;
-    }
+    /* Page-specific styles only. The shared book look
+       (`.book-dashboard`, `.book-hero`, `.book-eyebrow`,
+       `.book-title`, `.book-byline`) lives in `base.html`. */
 
     /* ---------- Intro prose ---------- */
     .book-intro {
@@ -387,15 +348,6 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
 
     /* ---------- Responsive ---------- */
     @media (max-width: 600px) {
-        .book-title {
-            font-size: 2.2rem;
-        }
-        .book-hero {
-            margin: 2.5rem 0 2.5rem;
-        }
-        .book-eyebrow-rule {
-            flex-basis: 2rem;
-        }
         .book-toc-row {
             grid-template-columns: 2rem 1fr auto;
             gap: 0.6rem;

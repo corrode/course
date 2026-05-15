@@ -31,12 +31,12 @@ endblock %} {% block content %}
     </section>
 
     <section class="admin-section" aria-label="Participants by team">
-        <div class="admin-section-head">
-            <div class="admin-section-eyebrow">Participants</div>
-            <div class="admin-section-meta">
+        <div class="section-head">
+            <span class="section-eyebrow">Participants</span>
+            <span class="section-meta">
                 {{ participant_groups.len() }} team{% if
                 participant_groups.len() != 1 %}s{% endif %}
-            </div>
+            </span>
         </div>
 
         {% for group in participant_groups %}
@@ -146,9 +146,9 @@ endblock %} {% block content %}
     </section>
 
     <section class="admin-section" aria-label="Recent submissions">
-        <div class="admin-section-head">
-            <div class="admin-section-eyebrow">Recent submissions</div>
-            <div class="admin-section-meta">
+        <div class="section-head">
+            <span class="section-eyebrow">Recent submissions</span>
+            <span class="section-meta">
                 <label for="exercise-filter">Filter:</label>
                 <select
                     id="exercise-filter"
@@ -160,52 +160,14 @@ endblock %} {% block content %}
                     <option value="{{ exercise }}">{{ exercise }}</option>
                     {% endfor %}
                 </select>
-            </div>
+            </span>
         </div>
 
-        <ol class="admin-submissions-list" id="submissions-container">
-            {% for submission in recent_submissions %}
-            <li
-                class="admin-submission"
-                data-exercise="{{ submission.exercise_name }}"
-            >
-                <header class="admin-submission-head">
-                    <span class="admin-submission-status">
-                        {% if submission.perfected %}
-                        <span
-                            class="team-badge team-badge-perfect"
-                            title="Perfected (clippy + fmt)"
-                            >★</span
-                        >
-                        {% else if submission.tests_passed %}
-                        <span
-                            class="team-badge team-badge-pass"
-                            title="Tests passed"
-                            >✓</span
-                        >
-                        {% else %}
-                        <span
-                            class="team-badge team-badge-fail"
-                            title="Tests failed"
-                            >×</span
-                        >
-                        {% endif %}
-                    </span>
-                    <span class="admin-submission-who"
-                        >{{ submission.participant_name }}</span
-                    >
-                    <span class="admin-submission-sep">·</span>
-                    <span class="admin-submission-exercise"
-                        >{{ submission.exercise_name }}</span
-                    >
-                    <span class="admin-submission-time"
-                        >{{ submission.submitted_at }}</span
-                    >
-                </header>
-                <div class="rust-editor admin-submission-code" data-rust-source>
-                    {{ submission.source_code }}
-                </div>
-            </li>
+        <ol class="submission-list" id="submissions-container">
+            {% for sub in recent_submissions %}
+            <div data-exercise="{{ sub.exercise_name }}">
+                {% include "_submission_card.html" %}
+            </div>
             {% endfor %}
         </ol>
     </section>
@@ -249,26 +211,24 @@ endblock %} {% block content %}
 
     function filterSubmissions() {
         const filter = document.getElementById("exercise-filter").value;
-        const submissions = document.querySelectorAll(
-            "#submissions-container .admin-submission",
-        );
-        submissions.forEach((s) => {
-            const exerciseName = s.getAttribute("data-exercise");
-            s.style.display = !filter || exerciseName === filter ? "" : "none";
-        });
+        document
+            .querySelectorAll("#submissions-container [data-exercise]")
+            .forEach((wrapper) => {
+                const exerciseName = wrapper.getAttribute("data-exercise");
+                wrapper.style.display =
+                    !filter || exerciseName === filter ? "" : "none";
+            });
     }
 </script>
 
 <style>
-    /* Admin chrome borrows the dashboard's book look (eyebrow + big
-       title + max-width container) and shares the team-page styles
-       (`team-badge-*`, etc.) for the submissions feed. Anything
-       admin-specific is scoped with `.admin-`. */
+    /* Page-specific admin chrome only. Shared rules
+       (`.book-*`, `.section-*`, `.submission-card-*`,
+       `.status-badge-*`, `.rust-editor`) live in `base.html`. */
 
     .admin-page {
         max-width: 64rem;
     }
-
     .admin-hero {
         margin: 2rem 0 2.5rem;
     }
@@ -312,33 +272,8 @@ endblock %} {% block content %}
         }
     }
 
-    /* ---------- Section heads ---------- */
     .admin-section {
         margin-bottom: 3.5rem;
-    }
-    .admin-section-head {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 1.25rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid var(--color-border);
-        flex-wrap: wrap;
-    }
-    .admin-section-eyebrow {
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.24em;
-        text-transform: uppercase;
-        color: var(--color-text-muted);
-    }
-    .admin-section-meta {
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
     }
     .admin-filter {
         background: var(--color-surface);
@@ -448,7 +383,7 @@ endblock %} {% block content %}
         font-size: 0.8rem;
         padding: 0.3rem 0.5rem;
         border: 1px solid var(--color-border);
-        background: var(--color-bg, var(--color-surface));
+        background: var(--color-input-bg, var(--color-surface));
         color: var(--color-text);
         border-radius: 4px;
         width: 8rem;
@@ -466,86 +401,14 @@ endblock %} {% block content %}
         filter: brightness(0.95);
     }
 
-    /* ---------- Submissions feed ---------- */
-    .admin-submissions-list {
+    /* Submissions feed list (cards themselves are styled in base.html). */
+    .submission-list {
         list-style: none;
         margin: 0;
         padding: 0;
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
-    }
-    .admin-submission {
-        margin: 0;
-    }
-    .admin-submission-head {
-        display: flex;
-        align-items: baseline;
-        gap: 0.6rem;
-        margin-bottom: 0.6rem;
-        flex-wrap: wrap;
-    }
-    .admin-submission-who {
-        font-weight: 600;
-        color: var(--color-text);
-    }
-    .admin-submission-sep {
-        color: var(--color-text-muted);
-    }
-    .admin-submission-exercise {
-        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
-        color: var(--color-primary);
-        font-size: 0.92rem;
-    }
-    .admin-submission-time {
-        margin-left: auto;
-        color: var(--color-text-muted);
-        font-size: 0.85rem;
-    }
-    .admin-submission-code {
-        display: block;
-        white-space: pre;
-        overflow-x: auto;
-        max-height: 28rem;
-        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
-        font-size: 0.85rem;
-        background: var(--color-surface);
-        color: var(--color-text);
-        border: 1px solid var(--color-border);
-        border-radius: 8px;
-        padding: 0.85rem 1rem;
-    }
-    .admin-submission-code .cm-editor {
-        font-family: inherit;
-    }
-    .admin-submission-code:has(.cm-editor) {
-        padding: 0;
-        background: transparent;
-        border: none;
-    }
-
-    /* Shared status badges (also used by team.html). Kept here so the
-       admin page is self-sufficient if team.html is removed. */
-    .team-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.4rem;
-        height: 1.4rem;
-        border-radius: 50%;
-        font-weight: 700;
-        font-size: 0.85rem;
-        color: #fff;
-    }
-    .team-badge-pass {
-        background: var(--color-success);
-    }
-    .team-badge-perfect {
-        background: #f1c40f;
-        color: #4a3a00;
-    }
-    .team-badge-fail {
-        background: var(--color-error);
     }
 
     .admin-footnote {

@@ -4,6 +4,37 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{% block title %}corrode Rust Course{% endblock %}</title>
+
+        <!-- Shared CodeMirror 6 import map.
+             Lives here so any page that extends `base.html` can mount
+             a CM6 editor (the in-exercise editor on chapter pages, the
+             read-only viewer on admin and team pages) and they all
+             resolve to the same single instance per module. The leading
+             `*` on each esm.sh URL keeps the resolver from bundling
+             dependencies, so transitive `@codemirror/state` references
+             route back through this map and we don't end up with two
+             copies fighting `instanceof` checks. -->
+        <script type="importmap">
+            {
+                "imports": {
+                    "@codemirror/state": "https://esm.sh/*@codemirror/state@6.4.1",
+                    "@codemirror/view": "https://esm.sh/*@codemirror/view@6.26.3",
+                    "@codemirror/language": "https://esm.sh/*@codemirror/language@6.10.2",
+                    "@codemirror/commands": "https://esm.sh/*@codemirror/commands@6.6.0",
+                    "@codemirror/lang-rust": "https://esm.sh/*@codemirror/lang-rust@6.0.1",
+                    "@codemirror/autocomplete": "https://esm.sh/*@codemirror/autocomplete@6.18.0",
+                    "@codemirror/search": "https://esm.sh/*@codemirror/search@6.5.6",
+                    "@replit/codemirror-vim": "https://esm.sh/*@replit/codemirror-vim@6.2.1",
+                    "@lezer/common": "https://esm.sh/*@lezer/common@1.2.1",
+                    "@lezer/highlight": "https://esm.sh/*@lezer/highlight@1.2.0",
+                    "@lezer/lr": "https://esm.sh/*@lezer/lr@1.4.1",
+                    "@lezer/rust": "https://esm.sh/*@lezer/rust@1.0.2",
+                    "style-mod": "https://esm.sh/style-mod@4.1.2",
+                    "w3c-keyname": "https://esm.sh/w3c-keyname@2.2.8",
+                    "crelt": "https://esm.sh/crelt@1.0.6"
+                }
+            }
+        </script>
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
             rel="stylesheet"
@@ -859,6 +890,186 @@
                     /* Drop the labels on phones, keep just the icons. */
                     display: none;
                 }
+            }
+
+            /* ---------- Shared "book" page chrome ----------
+               Used by the dashboard, the admin dashboard, and the
+               per-team page. Anything specific to one of those pages
+               (TOC, CTA, stats grid, table) lives in the page's own
+               <style> block; the shared eyebrow + big title + container
+               width all live here so the three pages read as one site. */
+            .book-dashboard {
+                max-width: 60rem;
+            }
+            .book-hero {
+                text-align: center;
+                margin: 4rem 0 3.5rem;
+            }
+            .book-eyebrow {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.85rem;
+                margin-bottom: 1.25rem;
+            }
+            .book-eyebrow-rule {
+                flex: 0 0 4rem;
+                height: 1px;
+                background-color: var(--color-border);
+            }
+            .book-eyebrow-text {
+                font-size: 0.75rem;
+                font-weight: 600;
+                letter-spacing: 0.22em;
+                text-transform: uppercase;
+                color: var(--color-text-muted);
+            }
+            .book-title {
+                margin: 0 0 0.85rem;
+                font-size: 3rem;
+                line-height: 1.1;
+                font-weight: 700;
+                letter-spacing: -0.015em;
+                color: #fc218a;
+            }
+            .book-byline {
+                margin: 0;
+                font-size: 1rem;
+                color: var(--color-text-muted);
+                font-style: italic;
+            }
+            @media (max-width: 600px) {
+                .book-title {
+                    font-size: 2.2rem;
+                }
+                .book-hero {
+                    margin: 2.5rem 0 2.5rem;
+                }
+                .book-eyebrow-rule {
+                    flex-basis: 2rem;
+                }
+            }
+
+            /* ---------- Section eyebrow ----------
+               Small uppercase label with an underline, used as the
+               heading of every section on the dashboard, admin, and
+               team pages ("Roster", "Recent submissions", "Participants",
+               etc.). Lives here so the three pages stay in lockstep. */
+            .section-eyebrow {
+                font-size: 0.72rem;
+                font-weight: 700;
+                letter-spacing: 0.24em;
+                text-transform: uppercase;
+                color: var(--color-text-muted);
+                margin-bottom: 1.25rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid var(--color-border);
+            }
+            .section-head {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 1rem;
+                margin-bottom: 1.25rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid var(--color-border);
+                flex-wrap: wrap;
+            }
+            .section-head .section-eyebrow {
+                margin: 0;
+                padding: 0;
+                border: 0;
+            }
+            .section-meta {
+                font-size: 0.85rem;
+                color: var(--color-text-muted);
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            /* ---------- Submission card ----------
+               Shared markup is in `templates/_submission_card.html`,
+               included by both `admin.html` and `team.html`. The
+               read-only CodeMirror viewer mounts inside `.rust-editor`
+               (see `static/js/readonly-rust-editor.js`). */
+            .submission-card {
+                margin: 0;
+                padding: 0;
+            }
+            .submission-card-head {
+                display: flex;
+                align-items: baseline;
+                gap: 0.6rem;
+                margin-bottom: 0.6rem;
+                flex-wrap: wrap;
+            }
+            .submission-card-who {
+                font-weight: 600;
+                color: var(--color-text);
+            }
+            .submission-card-sep {
+                color: var(--color-text-muted);
+            }
+            .submission-card-exercise {
+                font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+                color: var(--color-primary);
+                font-size: 0.92rem;
+            }
+            .submission-card-time {
+                margin-left: auto;
+                color: var(--color-text-muted);
+                font-size: 0.85rem;
+            }
+            /* The .rust-editor element starts as a styled <pre>-like
+               box so the source is readable even if CodeMirror fails
+               to load (network blocked, esm.sh down, etc.). Once the
+               read-only viewer mounts and adds a `.cm-editor` child,
+               we drop our padding/border so the editor's own chrome
+               isn't double-wrapped. */
+            .rust-editor {
+                display: block;
+                white-space: pre;
+                overflow-x: auto;
+                max-height: 32rem;
+                font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+                font-size: 0.85rem;
+                background: var(--syn-bg, var(--color-surface));
+                color: var(--syn-fg, var(--color-text));
+                border: 1px solid var(--color-border);
+                border-radius: 12px;
+                padding: 0.85rem 1rem;
+            }
+            .rust-editor:has(.cm-editor) {
+                padding: 0;
+                background: transparent;
+                border: none;
+            }
+
+            /* ---------- Status badges ----------
+               Used by the submission feed (admin + team) for the
+               pass / perfect / fail glyph at the start of each row. */
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 1.4rem;
+                height: 1.4rem;
+                border-radius: 50%;
+                font-weight: 700;
+                font-size: 0.85rem;
+                color: #fff;
+                flex-shrink: 0;
+            }
+            .status-badge-pass {
+                background: var(--color-success);
+            }
+            .status-badge-perfect {
+                background: #f1c40f;
+                color: #4a3a00;
+            }
+            .status-badge-fail {
+                background: var(--color-error);
             }
 
             /* ---------- Cheatsheet modal ---------- */
