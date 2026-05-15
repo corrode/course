@@ -1991,6 +1991,46 @@ with (u) %}
         margin: 1.5rem 0 3rem;
         font-size: 1.05rem;
     }
+
+    /* Chapter intro "epigraph": the convention is that every chapter's
+       1_intro.md opens with a single italicised one-liner (a joke or
+       quote). We detect it as a first paragraph whose only child is an
+       <em> and treat it as a chapter subtitle: centred under the title,
+       pulled flush to it so the title block reads as one unit. Excludes
+       `.hints-body` so per-step hint disclosures stay plain. */
+
+    /* When a prose block leads with an epigraph, snap it up against
+       the title (kills the ~5.5rem of combined header + prose top
+       margin so the joke doesn't float orphaned mid-page).
+
+       Uses `:has(> p:first-child > em:only-child)` rather than the more
+       obvious `:has(> p:first-child:has(> em:only-child))`. Nesting
+       `:has()` inside `:has()` silently fails to match in current
+       Chrome (148.x) even though both are individually supported. The
+       descendant-combinator form expresses the same condition and
+       matches reliably. Verified with a headless screenshot test. */
+    .chapter-prose:has(> p:first-child > em:only-child) {
+        margin-top: -3rem;
+    }
+    .chapter-prose:not(.hints-body) > p:first-child:has(> em:only-child) {
+        max-width: 44rem;
+        margin: 0 auto 3rem;
+        text-align: center;
+        color: var(--color-text-muted);
+        font-family: "Lora", Georgia, "Iowan Old Style", serif;
+        font-size: 1.05rem;
+        line-height: 1.55;
+        font-style: italic;
+    }
+    /* Inline code inside the epigraph drops its usual gray chip so the
+       quote reads as one continuous thought. */
+    .chapter-prose:not(.hints-body) > p:first-child:has(> em:only-child) code {
+        background: transparent;
+        padding: 0;
+        color: inherit;
+        font-style: normal;
+        font-size: 0.9em;
+    }
     .exercise-prose h1,
     .exercise-prose h2,
     .exercise-prose h3 {
@@ -2451,34 +2491,29 @@ with (u) %}
     .chapter-row.current.perfected {
         background-color: rgba(241, 196, 15, 0.18);
     }
+    /* The hint is a disclosure widget, not a UI card. Collapsed state
+       is a quiet text trigger (icon + label, no border/background) so
+       it never competes visually with the editor section or run output
+       above it. When opened, the body indents under a coloured left rule
+       — the same affordance as a blockquote — so the spoiler material
+       reads as set-apart secondary content. */
     .hints-disclosure {
-        margin: 1.25rem 0 1.5rem;
-        border: 1px dashed var(--color-border);
-        border-radius: 12px;
-        background-color: var(--color-surface);
-        padding: 0.25rem 1rem;
-    }
-    /* When the hints disclosure belongs to a specific exercise step, sit
-       it right under the card so the visual grouping is obvious. The
-       negative top margin pulls it up against the card's bottom border
-       even in browsers without :has() support. */
-    .exercise-section + .hints-disclosure-step {
-        margin-top: -0.75rem;
-        margin-bottom: 2rem;
-    }
-    .hints-disclosure[open] {
-        border-style: solid;
-        background-color: var(--color-background);
+        margin: 1rem 0 2rem;
     }
     .hints-disclosure > summary {
         list-style: none;
         cursor: pointer;
-        display: flex;
-        align-items: baseline;
-        gap: 0.6rem;
-        padding: 0.65rem 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
         font-size: 0.95rem;
         color: var(--color-text);
+        user-select: none;
+    }
+    .hints-disclosure > summary:hover .hints-summary-text,
+    .hints-disclosure > summary:focus-visible .hints-summary-text {
+        color: var(--color-primary);
     }
     .hints-disclosure > summary::-webkit-details-marker {
         display: none;
@@ -2499,7 +2534,10 @@ with (u) %}
         font-weight: 400;
     }
     .hints-disclosure .hints-body {
-        padding: 0.5rem 0 0.75rem;
+        margin-top: 0.5rem;
+        padding: 0.25rem 0 0.25rem 1rem;
+        border-left: 3px solid var(--color-border);
+        color: var(--color-text);
     }
     .hints-next-btn {
         margin: 0.25rem 0 1rem 1.5rem;
