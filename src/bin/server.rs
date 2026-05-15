@@ -54,11 +54,6 @@ struct DbSubmission {
     submitted_at: chrono::DateTime<chrono::Utc>,
 }
 
-/// Template for the landing page
-#[derive(Template)]
-#[template(path = "landing.html")]
-struct LandingTemplate;
-
 /// Template for the standalone playground (scratchpad) page.
 #[derive(Template)]
 #[template(path = "playground.html")]
@@ -130,12 +125,19 @@ struct UiExerciseStatus {
     perfected: bool,
 }
 
-/// Template for participant dashboard
+/// Template for participant dashboard.
+///
+/// Rendered in two modes:
+/// - **Anonymous** (`/`): `participant_name` and `ulid` are `None`.
+///   All chapters render with `completed = perfected = false`. Links
+///   from the TOC point at `/exercise/{slug}` (no participant prefix).
+/// - **Participant** (`/dashboard/{ulid}`): both fields are `Some`.
+///   Completion marks reflect real submissions and links carry the ULID.
 #[derive(Template)]
 #[template(path = "dashboard.html")]
 struct DashboardTemplate {
-    participant_name: String,
-    ulid: String,
+    participant_name: Option<String>,
+    ulid: Option<String>,
     exercises: Vec<ExerciseProgress>,
     /// Slug of the first chapter the participant hasn't completed yet,
     /// or the first chapter overall if they're brand new / fully done.
@@ -145,6 +147,17 @@ struct DashboardTemplate {
     /// "Resume chapter 5" depending on whether anything has been
     /// completed yet).
     next_label: String,
+}
+
+/// Template for the slim signup form.
+///
+/// `group_slug` is `Some` when reached via `/signup/{group_slug}`; it
+/// renders an inline banner above the form and a hidden `team_token`
+/// input so the cohort label is round-tripped back to `/register`.
+#[derive(Template)]
+#[template(path = "signup.html")]
+struct SignupTemplate {
+    group_slug: Option<String>,
 }
 
 /// Template for admin dashboard
@@ -328,7 +341,9 @@ async fn main() -> Result<()> {
 
     // Build main routes
     let app = Router::new()
-        .route("/", get(landing_page))
+        .route("/", get(anonymous_dashboard))
+        .route("/signup", get(signup_page))
+        .route("/signup/{group_slug}", get(signup_page_with_group))
         .route("/register", post(web_register))
         .route("/dashboard/{ulid}", get(participant_dashboard))
         .route("/exercise/{slug}", get(public_exercise_page))
@@ -370,12 +385,78 @@ async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
     }
 }
 
-/// Landing page handler
-async fn landing_page() -> impl IntoResponse {
-    let template = LandingTemplate;
+/// Anonymous dashboard at `/`.
+///
+/// Renders the same `dashboard.html` template the participant view
+/// uses, but with no ULID and no name. All chapters render with
+/// `completed = perfected = false`; the TOC links to `/exercise/{slug}`
+/// (the public exercise route). The CTA invites the visitor to start
+/// chapter 1 without registering.
+async fn anonymous_dashboard(State(state): State<AppState>) -> impl IntoResponse {
+    let exercises = match get_exercise_progress(&state.pool, None, &state.exercises).await {
+        Ok(exercises) => exercises,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to build catalog").into_response();
+        }
+    };
+
+    let first = exercises
+        .iter()
+        .find(|e| !e.is_quiz && e.has_exercises)
+        .or_else(|| exercises.first());
+    let (next_slug, next_label) = match first {
+        Some(e) => (e.name.clone(), format!("Start with chapter {}", e.number)),
+        None => (String::new(), "Start the course".to_string()),
+    };
+
+    let template = DashboardTemplate {
+        participant_name: None,
+        ulid: None,
+        exercises,
+        next_slug,
+        next_label,
+    };
     match template.render() {
-        Ok(html) => Html(html),
-        Err(_) => Html("Error rendering template".to_string()),
+        Ok(html) => Html(html).into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to render template",
+        )
+            .into_response(),
+    }
+}
+
+/// Public signup form at `/signup` (no cohort).
+async fn signup_page() -> impl IntoResponse {
+    render_signup(None)
+}
+
+/// Workshop signup form at `/signup/{group_slug}`.
+///
+/// The slug is captured server-side and surfaced both as a banner and
+/// as a hidden `team_token` input on the form so it round-trips back
+/// to `/register` without the user typing anything.
+async fn signup_page_with_group(AxumPath(group_slug): AxumPath<String>) -> impl IntoResponse {
+    // Defensive trim. Empty slugs degrade to the public form rather
+    // than rendering a banner that says "Signing up with **(blank)**".
+    let trimmed = group_slug.trim();
+    let group = if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    };
+    render_signup(group)
+}
+
+fn render_signup(group_slug: Option<String>) -> axum::response::Response {
+    let template = SignupTemplate { group_slug };
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to render template",
+        )
+            .into_response(),
     }
 }
 
@@ -486,7 +567,7 @@ async fn participant_dashboard(
     };
 
     // Get exercise progress
-    let exercises = match get_exercise_progress(&state.pool, &ulid, &state.exercises).await {
+    let exercises = match get_exercise_progress(&state.pool, Some(&ulid), &state.exercises).await {
         Ok(exercises) => exercises,
         Err(_) => {
             return (
@@ -512,8 +593,8 @@ async fn participant_dashboard(
     };
 
     let template = DashboardTemplate {
-        participant_name: participant.name,
-        ulid: ulid.clone(),
+        participant_name: Some(participant.name),
+        ulid: Some(ulid.clone()),
         exercises,
         next_slug,
         next_label,
@@ -590,7 +671,7 @@ async fn render_exercise_page(
 
     // Per-chapter rollup status for the header badge and chapter list.
     let chapter_progress: std::collections::HashMap<String, UiExerciseStatus> = match &ulid {
-        Some(u) => match get_exercise_progress(&state.pool, u, &state.exercises).await {
+        Some(u) => match get_exercise_progress(&state.pool, Some(u), &state.exercises).await {
             Ok(rows) => rows
                 .into_iter()
                 .map(|r| {
@@ -1145,7 +1226,7 @@ async fn api_status(
 ) -> Result<Json<ProgressResponse>, StatusCode> {
     info!("Status request for participant: {}", ulid);
 
-    match get_exercise_progress(&state.pool, &ulid, &state.exercises).await {
+    match get_exercise_progress(&state.pool, Some(&ulid), &state.exercises).await {
         Ok(exercises) => {
             let completed_count = exercises.iter().filter(|e| e.completed).count();
             let perfected_count = exercises.iter().filter(|e| e.perfected).count();
@@ -1419,19 +1500,31 @@ async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
     })
 }
 
-/// Get exercise progress for a participant
+/// Build the per-chapter progress vector used by the dashboard.
+///
+/// Pass `Some(ulid)` for an authenticated participant view; submissions
+/// belonging to that participant are aggregated into per-chapter
+/// `completed` / `perfected` flags. Pass `None` for the anonymous
+/// dashboard at `/`; the database is skipped entirely and every
+/// chapter comes back with both flags `false`.
 async fn get_exercise_progress<'a>(
     pool: &'a SqlitePool,
-    ulid: &'a str,
+    ulid: Option<&'a str>,
     catalog: &'a [Exercise],
 ) -> Result<Vec<ExerciseProgress>> {
-    // Get all submissions (both successful and failed)
-    let all_submissions: Vec<DbSubmission> = sqlx::query_as(
-        "SELECT * FROM submissions WHERE participant_id = ? ORDER BY exercise_name, submitted_at DESC",
-    )
-    .bind(ulid)
-    .fetch_all(pool)
-    .await?;
+    // Anonymous mode: skip the SQL round-trip entirely. The loop below
+    // still has to run to enumerate the catalog, but with no rows to
+    // match against every chapter falls into the "not yet attempted"
+    // branch.
+    let all_submissions: Vec<DbSubmission> = match ulid {
+        Some(ulid) => sqlx::query_as(
+            "SELECT * FROM submissions WHERE participant_id = ? ORDER BY exercise_name, submitted_at DESC",
+        )
+        .bind(ulid)
+        .fetch_all(pool)
+        .await?,
+        None => Vec::new(),
+    };
 
     let mut exercises = Vec::with_capacity(catalog.len());
     for ex in catalog {

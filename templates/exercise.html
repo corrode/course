@@ -141,7 +141,7 @@ progress_total > 0 %}
     {% match ulid %} {% when None %}
     <div class="register-banner">
         👋 Anyone can read and edit this exercise.
-        <a href="/">Register</a> to track your progress.
+        <a href="/signup">Sign up</a> to save your progress.
     </div>
     {% when Some with (_u) %} {% endmatch %} {% for item in items %} {% match
     item.kind %} {% when cargo_course::exercises::RenderKind::Prose with { html

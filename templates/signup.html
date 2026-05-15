@@ -1,0 +1,219 @@
+{% extends "base.html" %} {% block title %}Sign up | A Beginner's Guide To
+Rust{% endblock %} {% block topbar %}{% endblock %} {% block content %}
+<div class="container signup-page">
+    <header class="signup-hero">
+        <div class="signup-eyebrow">
+            <span class="signup-eyebrow-rule" aria-hidden="true"></span>
+            <span class="signup-eyebrow-text">Save file</span>
+            <span class="signup-eyebrow-rule" aria-hidden="true"></span>
+        </div>
+        <h1 class="signup-title">Save your progress</h1>
+        <p class="signup-byline">
+            One field, no email, no password. We give you a personal link to
+            bookmark and pick up where you left off.
+        </p>
+    </header>
+
+    {% match group_slug %} {% when Some with (slug) %}
+    <div class="signup-group-banner" role="status">
+        <span class="signup-group-eyebrow">Joining</span>
+        <strong class="signup-group-name">{{ slug }}</strong>
+        <span class="signup-group-hint"
+            >Your progress will be visible to whoever shared this link with
+            you.</span
+        >
+    </div>
+    {% when None %} {% endmatch %}
+
+    <section class="signup-card">
+        <form action="/register" method="post" class="signup-form">
+            <label class="signup-label" for="name">What should we call you?</label>
+            <input
+                type="text"
+                id="name"
+                name="name"
+                class="signup-input"
+                placeholder="Your name"
+                required
+                maxlength="100"
+                autocomplete="given-name"
+                autofocus
+            />
+            {% match group_slug %} {% when Some with (slug) %}
+            <input type="hidden" name="team_token" value="{{ slug }}" />
+            {% when None %} {% endmatch %}
+            <button type="submit" class="btn signup-submit">
+                Create my save file
+            </button>
+        </form>
+
+        <div class="signup-recover">
+            <p class="signup-recover-eyebrow">Already have a personal link?</p>
+            <p class="signup-recover-body">
+                Just open it. Your progress is tied to the link itself, so the
+                bookmark is your account.
+            </p>
+        </div>
+    </section>
+
+    <p class="signup-back">
+        <a href="/">← Back to the course</a>
+    </p>
+</div>
+
+<style>
+    .signup-page {
+        max-width: 36rem;
+    }
+
+    .signup-hero {
+        text-align: center;
+        margin: 4rem 0 2.5rem;
+    }
+    .signup-eyebrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.85rem;
+        margin-bottom: 1.25rem;
+    }
+    .signup-eyebrow-rule {
+        flex: 0 0 3rem;
+        height: 1px;
+        background-color: var(--color-border);
+    }
+    .signup-eyebrow-text {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+    }
+    .signup-title {
+        margin: 0 0 0.85rem;
+        font-size: 2.25rem;
+        line-height: 1.15;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        color: var(--color-text);
+    }
+    .signup-byline {
+        margin: 0 auto;
+        max-width: 28rem;
+        font-size: 1rem;
+        color: var(--color-text-muted);
+        line-height: 1.55;
+    }
+
+    .signup-group-banner {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        padding: 1rem 1.2rem;
+        margin: 0 0 2rem;
+        border-radius: 8px;
+        background: var(--color-surface);
+        border-left: 3px solid var(--color-primary);
+    }
+    .signup-group-eyebrow {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+    }
+    .signup-group-name {
+        font-size: 1.15rem;
+        color: var(--color-text);
+        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+    }
+    .signup-group-hint {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        margin-top: 0.2rem;
+    }
+
+    .signup-card {
+        padding: 2rem 2rem 1.5rem;
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        background: var(--color-bg);
+    }
+    .signup-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .signup-label {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--color-text);
+    }
+    .signup-input {
+        width: 100%;
+        padding: 0.8rem 0.9rem;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: 1px solid var(--color-border);
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+    .signup-input:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(252, 33, 138, 0.15);
+    }
+    .signup-submit {
+        width: 100%;
+        font-size: 1rem;
+        padding: 0.9rem 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .signup-recover {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--color-border);
+    }
+    .signup-recover-eyebrow {
+        margin: 0 0 0.4rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+    }
+    .signup-recover-body {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+        line-height: 1.55;
+    }
+
+    .signup-back {
+        margin: 2rem 0 4rem;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+    .signup-back a {
+        color: var(--color-text-muted);
+        text-decoration: none;
+    }
+    .signup-back a:hover,
+    .signup-back a:focus-visible {
+        color: var(--color-primary);
+    }
+
+    @media (max-width: 600px) {
+        .signup-title {
+            font-size: 1.75rem;
+        }
+        .signup-card {
+            padding: 1.5rem 1.25rem 1.25rem;
+        }
+    }
+</style>
+{% endblock %}

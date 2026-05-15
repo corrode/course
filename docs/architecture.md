@@ -162,9 +162,14 @@ Axum 0.8, askama 0.13, sqlx 0.8 (SQLite). One `AppState` holds:
 
 Web (HTML, Askama):
 
-- `GET  /`: landing + registration form
+- `GET  /`: anonymous course dashboard (no signup required to browse,
+  read, or run exercises)
+- `GET  /signup`: slim signup form (name only)
+- `GET  /signup/{group_slug}`: same form with a cohort banner; the slug
+  becomes the participant's `team_token` via a hidden input
 - `POST /register`: web registration, redirects to `/dashboard/{ulid}`
-- `GET  /dashboard/{ulid}`: participant dashboard
+- `GET  /dashboard/{ulid}`: participant dashboard (same template as `/`,
+  rendered with completion marks and ULID-prefixed links)
 - `GET  /exercise/{slug}`: public, no progress
 - `GET  /exercise/{ulid}/{slug}`: participant view (with progress)
 - `GET  /playground`: standalone scratchpad
@@ -311,8 +316,9 @@ Askama 0.13. Each `.html` file maps to one of the structs in
 `server.rs`:
 
 - `base.html`: shared layout (topbar, footer)
-- `landing.html`: registration form
-- `dashboard.html`: participant view, exercise list, stats
+- `signup.html`: slim signup form, optional cohort banner
+- `dashboard.html`: course view, rendered in two modes (anonymous via
+  `/` and participant via `/dashboard/{ulid}`)
 - `exercise.html`: prose + editor + run/test panels +
   chapter list at the bottom
 - `playground.html`: standalone scratchpad
