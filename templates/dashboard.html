@@ -12,11 +12,33 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
     </header>
 
     <section class="book-intro" aria-label="About this course">
-        {% match participant_name %} {% when Some with (name) %}
+        {% match participant_name %} {% when Some with (name) %} {#
+        Authenticated view: pick the greeting + "where you left off" prose based
+        on how far the participant has gotten. #} {% if progress_total > 0 &&
+        progress_done >= progress_total %}
         <p>
-            Welcome back, <strong>{{ name }}</strong>. You're going to write
-            Rust in a browser tab. No setup, no project structure to wrangle,
-            just small problems that build into real fluency.
+            Welcome back, <strong>{{ name }}</strong>. You finished all {{
+            progress_total }} chapters. Browse anything you want to revisit, or
+            open the playground for a scratchpad.
+        </p>
+        {% else if progress_done > 0 %}
+        <p>
+            Welcome back, <strong>{{ name }}</strong>. You're {{ progress_done
+            }} of {{ progress_total }} chapters in. Pick up at chapter {{
+            next_chapter_number }}, <em>{{ next_chapter_title }}</em>, when
+            you're ready.
+        </p>
+        {% else %}
+        <p>
+            Welcome, <strong>{{ name }}</strong>. Your save file is ready.
+            Chapter {{ next_chapter_number }},
+            <em>{{ next_chapter_title }}</em>, is a good place to begin.
+        </p>
+        {% endif %}
+        <p>
+            Each chapter has a short note, a working code editor, and tests that
+            tell you when you're done. Most take five to ten minutes. Skip ahead
+            if a chapter feels familiar, come back when something clicks.
         </p>
         {% when None %}
         <p>
@@ -24,19 +46,16 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
             structure to wrangle, just small problems that build into real
             fluency. Try a chapter, run the tests, see what sticks.
         </p>
-        {% endmatch %}
         <p>
             Each chapter has a short note, a working code editor, and tests that
-            tell you when you're done. Most take five to ten minutes. Pick up
-            where you leave off, skip ahead if a chapter feels familiar, come
-            back when something clicks.
+            tell you when you're done. Most take five to ten minutes. Skip ahead
+            if a chapter feels familiar, come back when something clicks.
         </p>
-        {% if ulid.is_none() %}
         <p class="book-intro-signup">
             Want to save your progress as you go?
             <a href="/signup">Create a save file</a>, it takes one field.
         </p>
-        {% endif %}
+        {% endmatch %}
     </section>
 
     <section class="book-toc" aria-label="Table of contents">

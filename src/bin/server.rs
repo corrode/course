@@ -147,6 +147,18 @@ struct DashboardTemplate {
     /// "Resume chapter 5" depending on whether anything has been
     /// completed yet).
     next_label: String,
+    /// Number / title of the chapter the participant should pick up at
+    /// next. Used by the "where you left off" prose for authenticated
+    /// participants. Empty / 0 when there is no next chapter (brand-new
+    /// course with no exercises, or course fully completed).
+    next_chapter_number: u8,
+    next_chapter_title: String,
+    /// Number of completable chapters the participant has finished.
+    /// Always 0 in anonymous mode. Quizzes and notes-only chapters
+    /// don't count.
+    progress_done: usize,
+    /// Number of completable chapters in the course (denominator).
+    progress_total: usize,
 }
 
 /// Template for the slim signup form.
@@ -404,10 +416,24 @@ async fn anonymous_dashboard(State(state): State<AppState>) -> impl IntoResponse
         .iter()
         .find(|e| !e.is_quiz && e.has_exercises)
         .or_else(|| exercises.first());
-    let (next_slug, next_label) = match first {
-        Some(e) => (e.name.clone(), format!("Start with chapter {}", e.number)),
-        None => (String::new(), "Start the course".to_string()),
+    let (next_slug, next_label, next_chapter_number, next_chapter_title) = match first {
+        Some(e) => (
+            e.name.clone(),
+            format!("Start with chapter {}", e.number),
+            e.number,
+            e.title.clone(),
+        ),
+        None => (
+            String::new(),
+            "Start the course".to_string(),
+            0,
+            String::new(),
+        ),
     };
+    let progress_total = exercises
+        .iter()
+        .filter(|e| !e.is_quiz && e.has_exercises)
+        .count();
 
     let template = DashboardTemplate {
         participant_name: None,
@@ -415,6 +441,10 @@ async fn anonymous_dashboard(State(state): State<AppState>) -> impl IntoResponse
         exercises,
         next_slug,
         next_label,
+        next_chapter_number,
+        next_chapter_title,
+        progress_done: 0,
+        progress_total,
     };
     match template.render() {
         Ok(html) => Html(html).into_response(),
@@ -586,11 +616,34 @@ async fn participant_dashboard(
         .find(|e| !e.completed && !e.is_quiz && e.has_exercises)
         .or_else(|| exercises.first());
     let any_completed = exercises.iter().any(|e| e.completed);
-    let (next_slug, next_label) = match first_unfinished {
-        Some(e) if any_completed => (e.name.clone(), format!("Resume chapter {}", e.number)),
-        Some(e) => (e.name.clone(), format!("Start with chapter {}", e.number)),
-        None => (String::new(), "Start the course".to_string()),
+    let (next_slug, next_label, next_chapter_number, next_chapter_title) = match first_unfinished {
+        Some(e) if any_completed => (
+            e.name.clone(),
+            format!("Resume chapter {}", e.number),
+            e.number,
+            e.title.clone(),
+        ),
+        Some(e) => (
+            e.name.clone(),
+            format!("Start with chapter {}", e.number),
+            e.number,
+            e.title.clone(),
+        ),
+        None => (
+            String::new(),
+            "Start the course".to_string(),
+            0,
+            String::new(),
+        ),
     };
+    let progress_total = exercises
+        .iter()
+        .filter(|e| !e.is_quiz && e.has_exercises)
+        .count();
+    let progress_done = exercises
+        .iter()
+        .filter(|e| !e.is_quiz && e.has_exercises && e.completed)
+        .count();
 
     let template = DashboardTemplate {
         participant_name: Some(participant.name),
@@ -598,6 +651,10 @@ async fn participant_dashboard(
         exercises,
         next_slug,
         next_label,
+        next_chapter_number,
+        next_chapter_title,
+        progress_done,
+        progress_total,
     };
 
     match template.render() {
