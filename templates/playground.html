@@ -22,7 +22,11 @@ endblock %} {% block content %}
         </p>
     </div>
 
-    <section class="exercise-section">
+    <section
+        class="exercise-section"
+        data-step-id="playground"
+        data-exercise-key="playground"
+    >
         <div class="exercise-section-head">
             <div>
                 <div class="section-eyebrow">Scratchpad</div>
@@ -30,14 +34,23 @@ endblock %} {% block content %}
             </div>
             <div class="exercise-actions">
                 <span
-                    id="action-status"
+                    data-role="action-status"
                     class="action-status"
                     aria-live="polite"
                 ></span>
                 <button
                     type="button"
                     class="btn btn-secondary"
-                    id="reset-btn"
+                    data-role="vim-btn"
+                    title="Toggle Vim keybindings"
+                    aria-pressed="false"
+                >
+                    Vim: off
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-role="reset-btn"
                     title="Replace the buffer with the starter snippet"
                 >
                     Reset
@@ -45,7 +58,7 @@ endblock %} {% block content %}
                 <button
                     type="button"
                     class="btn btn-secondary"
-                    id="format-btn"
+                    data-role="format-btn"
                     title="Reformat with rustfmt via play.rust-lang.org"
                 >
                     Format
@@ -53,8 +66,8 @@ endblock %} {% block content %}
                 <button
                     type="button"
                     class="btn"
-                    id="run-btn"
-                    data-slug="playground"
+                    data-role="run-btn"
+                    title="Run on play.rust-lang.org (⌘/Ctrl+Enter)"
                 >
                     ▶ Run
                 </button>
@@ -63,7 +76,7 @@ endblock %} {% block content %}
 
         <div style="position: relative">
             <textarea
-                id="editor-fallback"
+                data-role="editor-fallback"
                 spellcheck="false"
                 style="
                     width: 100%;
@@ -82,11 +95,11 @@ endblock %} {% block content %}
             >
 {{ starter }}</textarea
             >
-            <div id="editor-mount" style="display: none"></div>
+            <div data-role="editor-mount" style="display: none"></div>
         </div>
 
         <div
-            id="run-status-row"
+            data-role="run-status-row"
             style="
                 margin-top: 0.75rem;
                 min-height: 1.2rem;
@@ -96,21 +109,22 @@ endblock %} {% block content %}
             "
         >
             <span
-                id="run-spinner"
+                data-role="run-spinner"
+                class="run-spinner"
                 aria-hidden="true"
                 style="display: none"
             ></span>
             <span
-                id="run-status"
+                data-role="run-status"
                 style="color: var(--color-text-muted); font-size: 0.9rem"
                 aria-live="polite"
             ></span>
         </div>
 
-        <div id="output-panel" style="display: none; margin-top: 1rem">
+        <div data-role="output-panel" style="display: none; margin-top: 1rem">
             <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem">Output</h3>
             <pre
-                id="output-stderr"
+                data-role="output-stderr"
                 style="
                     margin: 0;
                     padding: 0.85rem 1rem;
@@ -129,322 +143,38 @@ endblock %} {% block content %}
     </section>
 </div>
 
-<script type="importmap">
-    {
-        "imports": {
-            "@codemirror/state": "https://esm.sh/*@codemirror/state@6.4.1",
-            "@codemirror/view": "https://esm.sh/*@codemirror/view@6.26.3",
-            "@codemirror/language": "https://esm.sh/*@codemirror/language@6.10.2",
-            "@codemirror/commands": "https://esm.sh/*@codemirror/commands@6.6.0",
-            "@codemirror/lang-rust": "https://esm.sh/*@codemirror/lang-rust@6.0.1",
-            "@codemirror/autocomplete": "https://esm.sh/*@codemirror/autocomplete@6.18.0",
-            "@codemirror/search": "https://esm.sh/*@codemirror/search@6.5.6",
-            "@codemirror/theme-one-dark": "https://esm.sh/*@codemirror/theme-one-dark@6.1.2",
-            "@lezer/common": "https://esm.sh/*@lezer/common@1.2.1",
-            "@lezer/highlight": "https://esm.sh/*@lezer/highlight@1.2.0",
-            "@lezer/lr": "https://esm.sh/*@lezer/lr@1.4.1",
-            "@lezer/rust": "https://esm.sh/*@lezer/rust@1.0.2",
-            "style-mod": "https://esm.sh/style-mod@4.1.2",
-            "w3c-keyname": "https://esm.sh/w3c-keyname@2.2.8",
-            "crelt": "https://esm.sh/crelt@1.0.6"
-        }
-    }
-</script>
-
 <script type="module">
-    const STORAGE_KEY = "corrode:playground:draft";
-    const fallback = document.getElementById("editor-fallback");
-    const starter = fallback.value;
-
-    // Restore previous draft, if any.
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) fallback.value = saved;
-    } catch (_) {}
-
-    let getValue = () => fallback.value;
-    let setValue = (text) => {
-        fallback.value = text;
-        persist();
-    };
-    const persist = () => {
-        try {
-            localStorage.setItem(STORAGE_KEY, getValue());
-        } catch (_) {}
-    };
-    fallback.addEventListener("input", persist);
-
-    try {
-        const [
-            state,
-            view,
-            lang,
-            commands,
-            langRust,
-            autocomplete,
-            search,
-            oneDark,
-        ] = await Promise.all([
-            import("@codemirror/state"),
-            import("@codemirror/view"),
-            import("@codemirror/language"),
-            import("@codemirror/commands"),
-            import("@codemirror/lang-rust"),
-            import("@codemirror/autocomplete"),
-            import("@codemirror/search"),
-            import("@codemirror/theme-one-dark"),
-        ]);
-        const { EditorState, Compartment } = state;
-        const {
-            EditorView,
-            keymap,
-            lineNumbers,
-            highlightActiveLine,
-            highlightActiveLineGutter,
-            drawSelection,
-            rectangularSelection,
-            crosshairCursor,
-        } = view;
-        const {
-            syntaxHighlighting,
-            defaultHighlightStyle,
-            bracketMatching,
-            indentOnInput,
-            foldGutter,
-            foldKeymap,
-        } = lang;
-        const { defaultKeymap, history, historyKeymap, indentWithTab } =
-            commands;
-        const {
-            autocompletion,
-            completionKeymap,
-            closeBrackets,
-            closeBracketsKeymap,
-        } = autocomplete;
-        const { searchKeymap, highlightSelectionMatches } = search;
-
-        const themeCompartment = new Compartment();
-        const dark = (
-            document.documentElement.getAttribute("data-theme") || ""
-        ).startsWith("dark");
-
-        const mount = document.getElementById("editor-mount");
-        const editor = new EditorView({
-            state: EditorState.create({
-                doc: fallback.value,
-                extensions: [
-                    lineNumbers(),
-                    foldGutter(),
-                    highlightActiveLine(),
-                    highlightActiveLineGutter(),
-                    highlightSelectionMatches(),
-                    drawSelection(),
-                    rectangularSelection(),
-                    crosshairCursor(),
-                    bracketMatching(),
-                    closeBrackets(),
-                    indentOnInput(),
-                    autocompletion(),
-                    history(),
-                    keymap.of([
-                        ...closeBracketsKeymap,
-                        ...defaultKeymap,
-                        ...historyKeymap,
-                        ...foldKeymap,
-                        ...completionKeymap,
-                        ...searchKeymap,
-                        indentWithTab,
-                    ]),
-                    langRust.rust(),
-                    syntaxHighlighting(defaultHighlightStyle, {
-                        fallback: true,
-                    }),
-                    themeCompartment.of(dark ? oneDark.oneDark : []),
-                    EditorView.lineWrapping,
-                    EditorView.updateListener.of((u) => {
-                        if (u.docChanged) persist();
-                    }),
-                    EditorView.theme({
-                        "&": { fontSize: "0.9rem", minHeight: "28rem" },
-                        ".cm-content": {
-                            fontFamily:
-                                '"JetBrains Mono", "SF Mono", Monaco, monospace',
-                            padding: "1rem 0",
-                        },
-                        ".cm-gutters": {
-                            backgroundColor: "transparent",
-                            border: "none",
-                        },
-                    }),
-                ],
-            }),
-            parent: mount,
-        });
-        editor.dom.style.border = "1px solid var(--color-border)";
-        editor.dom.style.borderRadius = "12px";
-        editor.dom.style.overflow = "hidden";
-
-        fallback.style.display = "none";
-        mount.style.display = "block";
-
-        getValue = () => editor.state.doc.toString();
-        setValue = (text) => {
-            editor.dispatch({
-                changes: { from: 0, to: editor.state.doc.length, insert: text },
+    // Playground scratchpad. The CodeMirror mount, button wiring, draft
+    // persistence (via `features.draftKey`), and fallback path all live
+    // in `static/js/inline-editor.js`. The `corrode:playground:draft`
+    // key matches the previous standalone STORAGE_KEY so users keep
+    // their existing scratchpad contents across this refactor.
+    import("/static/js/inline-editor.js")
+        .then(({ mountInlineEditor }) => {
+            const section = document.querySelector(
+                '.exercise-section[data-step-id="playground"]',
+            );
+            if (!section) return;
+            const fallback = section.querySelector(
+                '[data-role="editor-fallback"]',
+            );
+            mountInlineEditor(section, {
+                starter: fallback ? fallback.value : "",
+                slug: "playground",
+                features: {
+                    vim: true,
+                    draftKey: "corrode:playground:draft",
+                    submit: null,
+                    testResults: false,
+                    copyButton: false,
+                    urlPlugin: false,
+                    syntaxHighlightOutput: false,
+                },
             });
-            persist();
-        };
-
-        new MutationObserver(() => {
-            const isDark = (
-                document.documentElement.getAttribute("data-theme") || ""
-            ).startsWith("dark");
-            editor.dispatch({
-                effects: themeCompartment.reconfigure(
-                    isDark ? oneDark.oneDark : [],
-                ),
-            });
-        }).observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ["data-theme"],
+        })
+        .catch((err) => {
+            console.error("inline-editor module failed to load:", err);
         });
-    } catch (err) {
-        console.warn(
-            "CodeMirror failed to load on playground; falling back to textarea",
-            err,
-        );
-        // Surface the real reason so the user understands why they're
-        // looking at a plain textarea.
-        const status = document.getElementById("run-status");
-        if (status) {
-            status.textContent =
-                "Editor failed to load (" +
-                (err && err.message ? err.message : err) +
-                "). Using a plain textarea \u2014 the run button still works.";
-            status.style.color = "var(--color-error, #c62828)";
-        }
-    }
-
-    // Reset button restores the original starter.
-    document.getElementById("reset-btn").addEventListener("click", () => {
-        if (!confirm("Replace the playground with the starter snippet?"))
-            return;
-        setValue(starter);
-    });
-
-    // Format button: rustfmt via /api/format. Replaces the buffer on success.
-    {
-        const formatBtn = document.getElementById("format-btn");
-        let formatInFlight = false;
-        formatBtn.addEventListener("click", async () => {
-            if (formatInFlight) return;
-            formatInFlight = true;
-            formatBtn.disabled = true;
-            const status = document.getElementById("run-status");
-            status.textContent = "Formatting\u2026";
-            status.style.color = "var(--color-text-muted)";
-            try {
-                const resp = await fetch("/api/format", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        code: getValue(),
-                        slug: "playground",
-                    }),
-                });
-                if (!resp.ok) {
-                    status.textContent =
-                        resp.status === 429
-                            ? "Formatter rate-limited; try again in a moment."
-                            : resp.status === 502
-                              ? "Formatter unreachable."
-                              : `Format failed (HTTP ${resp.status}).`;
-                    status.style.color = "var(--color-error, #c62828)";
-                    return;
-                }
-                const data = await resp.json();
-                if (!data.success) {
-                    status.textContent =
-                        "rustfmt couldn't parse the code \u2014 fix the syntax error first.";
-                    status.style.color = "var(--color-error, #c62828)";
-                    return;
-                }
-                if (data.code && data.code !== getValue()) {
-                    setValue(data.code);
-                    status.textContent = "Formatted.";
-                    status.style.color = "var(--color-success, #2e7d32)";
-                } else {
-                    status.textContent = "Already formatted.";
-                    status.style.color = "var(--color-text-muted)";
-                }
-            } catch (e) {
-                console.error(e);
-                status.textContent = "Format failed: " + e.message;
-                status.style.color = "var(--color-error, #c62828)";
-            } finally {
-                formatInFlight = false;
-                setTimeout(() => {
-                    formatBtn.disabled = false;
-                }, 250);
-            }
-        });
-    }
-
-    // Run button: same /api/run proxy as the exercises, with debounce.
-    const runBtn = document.getElementById("run-btn");
-    const runStatus = document.getElementById("run-status");
-    const runSpinner = document.getElementById("run-spinner");
-    const outputPanel = document.getElementById("output-panel");
-    const outputStderr = document.getElementById("output-stderr");
-    let lastRunAt = 0;
-    runBtn.addEventListener("click", async () => {
-        const now = Date.now();
-        if (now - lastRunAt < 1000) return; // debounce: 1s minimum gap
-        lastRunAt = now;
-        runBtn.disabled = true;
-        runSpinner.style.display = "inline-block";
-        runStatus.textContent = "Running on play.rust-lang.org…";
-        runStatus.style.color = "var(--color-text-muted)";
-        try {
-            const resp = await fetch("/api/run", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code: getValue(), slug: "playground" }),
-            });
-            if (!resp.ok) {
-                runStatus.textContent =
-                    resp.status === 429
-                        ? "Rate-limited; try again in a moment."
-                        : resp.status === 502
-                          ? "Playground unreachable."
-                          : `Run failed (HTTP ${resp.status}).`;
-                runStatus.style.color = "var(--color-error, #c62828)";
-                return;
-            }
-            const data = await resp.json();
-            outputPanel.style.display = "block";
-            const out = data.stdout || "";
-            const err = data.stderr || "";
-            outputStderr.textContent =
-                out + (out && err ? "\n\n" : "") + err || "(no output)";
-            runStatus.textContent = data.success
-                ? "Done."
-                : "Compilation or runtime error.";
-            runStatus.style.color = data.success
-                ? "var(--color-text-muted)"
-                : "var(--color-error, #c62828)";
-        } catch (e) {
-            console.error(e);
-            runStatus.textContent = "Run failed: " + e.message;
-            runStatus.style.color = "var(--color-error, #c62828)";
-        } finally {
-            runSpinner.style.display = "none";
-            // Keep the button disabled briefly so eager double-clicks don't fire two runs.
-            setTimeout(() => {
-                runBtn.disabled = false;
-            }, 500);
-        }
-    });
 </script>
 
 <style>
@@ -494,7 +224,8 @@ endblock %} {% block content %}
         align-items: center;
     }
 
-    #run-spinner {
+    #run-spinner,
+    .run-spinner {
         width: 0.9rem;
         height: 0.9rem;
         border: 2px solid var(--color-border);

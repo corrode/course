@@ -33,7 +33,7 @@ The workflow is roughly:
 git clone https://github.com/corrode/course.git
 cd course
 # edit away, then...
-cargo test --example 00_hello_rust
+cargo test --example 00_integers
 ```
 
 ## About corrode

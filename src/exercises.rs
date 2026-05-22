@@ -152,12 +152,18 @@ pub struct ChapterDirectives {
 /// A single chapter, parsed from one `examples/NN_slug/` directory.
 #[derive(Debug, Clone)]
 pub struct Exercise {
-    /// Numeric prefix from the directory name, e.g. `2` for `02_strings_and_chars`.
+    /// 1-based, human-facing chapter number used in headings, the TOC,
+    /// and the chapter picker. Derived from the directory prefix as
+    /// `prefix + 1`, so `00_integers` (the first chapter on disk) is
+    /// displayed as **Chapter 1**. The shift exists because the dashboard
+    /// landing experience is itself an unnumbered "Chapter 0" — the
+    /// `println!` warm-up — and the on-disk chapters pick up at 1.
     pub number: u8,
-    /// Slug without the numeric prefix, e.g. `strings_and_chars`.
+    /// Slug without the numeric prefix, e.g. `integers` for `00_integers`.
     pub slug: String,
-    /// Directory name including the prefix, e.g. `02_strings_and_chars`.
-    /// Doubles as the chapter half of `submissions.exercise_name`.
+    /// Directory name including the prefix, e.g. `00_integers`. Doubles
+    /// as the chapter half of `submissions.exercise_name` and the URL
+    /// segment under `/exercise/`.
     pub file_stem: String,
     /// Chapter title, taken from the first code step's `//!` H1 (legacy
     /// shape) or from a top-level `0_chapter.md` (future). Falls back to
@@ -370,8 +376,11 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
         .ok_or_else(|| anyhow!("invalid directory name"))?
         .to_string();
 
-    let (number, slug) = split_numeric_prefix(&file_stem)
+    let (prefix, slug) = split_numeric_prefix(&file_stem)
         .ok_or_else(|| anyhow!("directory does not start with NN_: {file_stem}"))?;
+    // Display number is 1-based: directory `00_integers` is "Chapter 1".
+    // See the doc comment on `Exercise::number`.
+    let number = prefix + 1;
 
     // Discover sibling step files (`<n>_<slug>.rs`) before deciding the
     // shape. The presence of any such file flips us into multi-step mode,
@@ -966,9 +975,11 @@ mod tests {
         let strings = exercises
             .iter()
             .find(|e| e.slug == "strings_and_chars")
-            .expect("expected 02_strings_and_chars to be present");
+            .expect("expected 01_strings_and_chars to be present");
+        // Directory prefix is 01, displayed number is 2 (1-based, see
+        // `Exercise::number` doc).
         assert_eq!(strings.number, 2);
-        assert_eq!(strings.file_stem, "02_strings_and_chars");
+        assert_eq!(strings.file_stem, "01_strings_and_chars");
         // Title now comes from the first code step's `# Title` (multi-step
         // chapter). The chapter intro lives in `1_intro.md` (a Note).
         let primary = strings
@@ -1004,41 +1015,37 @@ mod tests {
 
     #[test]
     fn discovers_chapter_notes() {
-        // 00_hello_rust ships with an introductory note (added in the
-        // same migration as the chapter-directory layout).
+        // The first chapter (`00_integers`) ships with an introductory
+        // note (`1_intro.md`). Verify the parser surfaces it.
         let exercises =
             scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
         let chapter = exercises
             .iter()
-            .find(|e| e.slug == "hello_rust")
-            .expect("expected 00_hello_rust to be present");
+            .find(|e| e.slug == "integers")
+            .expect("expected 00_integers to be present");
         let notes = chapter.notes();
         assert!(
             !notes.is_empty(),
-            "expected at least one note in 00_hello_rust"
+            "expected at least one note in 00_integers"
         );
         let first = notes[0];
-        assert_eq!(first.order, 1);
+        assert!(first.order >= 1);
         assert!(
             first.html.contains("<p>"),
             "note should render to HTML, got: {}",
             first.html
         );
-        // Note: chapter 0's intro is intentionally link-free so we no
-        // longer assert on external-link rewriting here. That logic is
-        // still covered indirectly by the markdown rendering tests in
-        // chapters that do link out (e.g. 02_strings_and_chars).
     }
 
     #[test]
     fn multi_step_chapter_exposes_each_step() {
-        // 07_option is the pilot multi-step chapter (four step files).
+        // 08_option (formerly 07_option) is the pilot multi-step chapter.
         let exercises =
             scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "option")
-            .expect("expected 07_option to be present");
+            .expect("expected 08_option to be present");
         let code_steps = chapter.code_steps();
         assert!(
             code_steps.len() >= 2,

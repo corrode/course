@@ -337,6 +337,19 @@ Served by `tower-http` `ServeDir` at `/static/*`. Notable:
 - `static/quiz.html`: the chapter 18 quiz. Self-contained HTML/JS;
   no backend involvement. The chapter's `main.rs` is essentially a
   pointer to this file.
+- `static/js/inline-editor.js`: shared CodeMirror 6 mount used by
+  `templates/exercise.html`, `templates/dashboard.html`, and
+  `templates/playground.html`. Owns Run/Format/Reset/Submit wiring,
+  draft persistence, vim toggle (global across mounts), test result
+  rendering, and the textarea fallback. Each call site supplies its
+  own DOM (per the `data-role` contract documented at the top of the
+  module) and an optional `onRunSuccess` callback.
+- `static/js/cm-theme.js`: the shared `proseHighlightStyle` /
+  `proseEditorTheme` CodeMirror exports, read by `inline-editor.js`
+  and `readonly-rust-editor.js` so all editors stay in sync with the
+  `--syn-*` CSS variables in `base.html`.
+- `static/js/readonly-rust-editor.js`: read-only CodeMirror viewer
+  for Rust code blocks on admin and team pages.
 - `static/assets/`: logos, screenshots.
 - `static/fonts/`: bundled webfonts.
 

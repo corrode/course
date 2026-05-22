@@ -40,11 +40,11 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         </p>
     </header>
 
+    {% match participant_name %} {% when Some with (name) %}
     <section class="book-intro" aria-label="About this course">
-        {% match participant_name %} {% when Some with (name) %} {#
-        Authenticated view: pick the greeting + "where you left off" prose based
-        on how far the participant has gotten. #} {% if progress_total > 0 &&
-        progress_done >= progress_total %}
+        {# Authenticated view: pick the greeting + "where you left off" prose
+        based on how far the participant has gotten. #} {% if progress_total > 0
+        && progress_done >= progress_total %}
         <p>
             Welcome back, <strong>{{ name }}</strong>. You finished all {{
             progress_total }} chapters. Browse anything you want to revisit, or
@@ -79,24 +79,201 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
                 >See what your group is building →</a
             >
         </p>
-        {% when None %} {% endmatch %} {% when None %} {% endmatch %} {% when
-        None %}
-        <p>
-            You're going to write Rust in a browser tab. No setup, no project
-            structure to wrangle, just small problems that build into real
-            fluency. Try a chapter, run the tests, see what sticks.
-        </p>
-        <p>
-            Each chapter has a short note, a working code editor, and tests that
-            tell you when you're done. Most take five to ten minutes. Skip ahead
-            if a chapter feels familiar, come back when something clicks.
-        </p>
-        <p class="book-intro-signup">
-            Want to save your progress as you go?
-            <a href="/signup">Create a save file</a>, it takes one field.
-        </p>
-        {% endmatch %}
+        {% when None %} {% endmatch %} {% when None %} {% endmatch %}
     </section>
+    {% when None %}
+    <section class="book-intro" aria-label="About this course">
+        <p>
+            Glad you're here. You're going to write Rust in a browser tab — no
+            setup, no project structure to wrangle, just small problems that
+            build into real fluency. Each chapter has a short note, a working
+            code editor, and tests that turn green when your code is right. Most
+            take five to ten minutes.
+        </p>
+        <p>
+            Along the way you'll meet <strong>ownership and borrowing</strong>,
+            <strong>pattern matching</strong>, <code>Option</code> and
+            <code>Result</code>, <strong>iterators</strong>,
+            <strong>structs and methods</strong>, <strong>modules</strong>, and
+            four hands-on mini-projects — a password validator, a word counter,
+            an env-file parser, and a CSV parser. Skip ahead if a chapter feels
+            familiar; come back when something clicks.
+        </p>
+    </section>
+
+    {#
+      The dashboard editor uses the same `.exercise-section[data-step-id]`
+      DOM contract as `templates/exercise.html` so the inline editor module
+      can be lifted into a shared file later (Phase 2b in `TODO/new4.md`).
+      Per-section data attributes are scoped via `data-role` lookups in
+      the script below, mirroring `initSection` on the chapter page. The
+      step id `dashboard-warmup` is also used as the `slug` on `/api/run`
+      and `/api/format` calls so server logs can tell warm-up traffic
+      from real chapter traffic.
+    #}
+    <section
+        class="book-acquainted exercise-section"
+        data-step-id="dashboard-warmup"
+        data-exercise-key="dashboard-warmup"
+        aria-label="Let's get acquainted"
+    >
+        <div class="chapter-prose exercise-prose">
+            <h2>Let's get acquainted</h2>
+            <p>
+                Here's your first piece of Rust. Hit <strong>Run</strong> below
+                to send it off to the compiler &mdash; if everything's wired
+                up, you'll see <code>Hello, Rust!</code> appear underneath.
+                Then we'll get you a save file and start chapter 1.
+            </p>
+        </div>
+
+        <div class="exercise-section-head">
+            <div>
+                <div class="section-eyebrow">hello.rs</div>
+            </div>
+            <div class="exercise-actions">
+                <span
+                    data-role="action-status"
+                    class="action-status"
+                    aria-live="polite"
+                ></span>
+                <button
+                    type="button"
+                    class="btn"
+                    data-role="run-btn"
+                    title="Run on play.rust-lang.org (⌘/Ctrl+Enter)"
+                >
+                    ▶ Run
+                </button>
+            </div>
+        </div>
+
+        <div style="position: relative">
+            <textarea
+                data-role="editor-fallback"
+                spellcheck="false"
+                style="
+                    width: 100%;
+                    min-height: 12rem;
+                    font-family: &quot;SF Mono&quot;, Monaco, monospace;
+                    font-size: 0.9rem;
+                    padding: 1rem;
+                    border: 1px solid var(--color-border);
+                    border-radius: 12px;
+                    background-color: var(--color-background);
+                    color: var(--color-text);
+                    resize: vertical;
+                    box-sizing: border-box;
+                "
+            >
+/// Prints a friendly greeting.
+fn hello() {
+    println!("Hello, Rust!");
+}
+
+fn main() {
+    hello();
+}</textarea>
+            <div data-role="editor-mount" style="display: none"></div>
+        </div>
+
+        <div
+            data-role="run-status-row"
+            style="
+                margin-top: 0.75rem;
+                min-height: 1.2rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            "
+        >
+            <span
+                data-role="run-spinner"
+                class="run-spinner"
+                aria-hidden="true"
+                style="display: none"
+            ></span>
+            <span
+                data-role="run-status"
+                style="color: var(--color-text-muted); font-size: 0.9rem"
+                aria-live="polite"
+            ></span>
+        </div>
+
+        <div data-role="output-panel" style="display: none; margin-top: 1rem">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem">Output</h3>
+            <pre
+                data-role="output-stderr"
+                style="
+                    margin: 0;
+                    padding: 0.85rem 1rem;
+                    background-color: var(--color-background);
+                    border: 1px solid var(--color-border);
+                    border-radius: 12px;
+                    overflow-x: auto;
+                    font-family: &quot;SF Mono&quot;, Monaco, monospace;
+                    font-size: 0.8rem;
+                    white-space: pre-wrap;
+                    color: var(--color-text);
+                "
+            ></pre>
+        </div>
+
+        {#
+          Inline signup card. Hidden until the warm-up's first successful
+          run. Once visible, the form posts the chosen name to
+          `/api/register` (JSON), gets a fresh ULID back, and redirects to
+          chapter 1 (`00_integers`) under that ULID. The fallback `<a>`
+          right below the form lets visitors who'd rather skip the save
+          file jump straight in as anonymous.
+        #}
+        <div
+            id="warmup-signup"
+            class="book-acquainted-signup-card"
+            hidden
+            aria-live="polite"
+        >
+            <h3 class="book-acquainted-signup-title">
+                Nicely done. What should we call you?
+            </h3>
+            <p class="book-acquainted-signup-sub">
+                One field, no email. Your save file is a personal link you can
+                bookmark to pick up where you left off on any device.
+            </p>
+            <form id="warmup-signup-form" class="book-acquainted-signup-form">
+                <input
+                    type="text"
+                    id="warmup-signup-name"
+                    name="name"
+                    placeholder="Your name"
+                    autocomplete="given-name"
+                    required
+                    minlength="1"
+                    maxlength="50"
+                    class="book-acquainted-signup-input"
+                />
+                <button
+                    type="submit"
+                    class="btn book-acquainted-signup-submit"
+                    id="warmup-signup-submit"
+                >
+                    Continue to chapter 1 →
+                </button>
+            </form>
+            <p
+                id="warmup-signup-error"
+                class="book-acquainted-signup-error"
+                hidden
+                aria-live="polite"
+            ></p>
+            <p class="book-acquainted-signup-skip">
+                Or
+                <a href="/exercise/{{ next_slug }}">jump in without a save file</a>
+                &mdash; you can always sign up later from any chapter.
+            </p>
+        </div>
+    </section>
+    {% endmatch %}
 
     <section class="book-toc" aria-label="Table of contents">
         <div class="book-toc-eyebrow">Contents</div>
@@ -138,7 +315,8 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         </ol>
     </section>
 
-    {% if !next_slug.is_empty() %}
+    {% if !next_slug.is_empty() %} {% match participant_name %} {% when Some
+    with (_n) %}
     <section class="book-cta" aria-label="Start the course">
         {% match ulid %} {% when Some with (u) %}
         <a class="btn book-cta-btn" href="/exercise/{{ u }}/{{ next_slug }}">
@@ -151,8 +329,142 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         {% endmatch %}
         <p class="book-cta-hint">or pick any chapter above</p>
     </section>
-    {% endif %}
+    {% when None %} {% endmatch %} {% endif %}
 </div>
+
+<script type="module">
+    // Dashboard "Let's get acquainted" warm-up editor (anonymous viewers
+    // only). The CodeMirror mount, button wiring, and fallback path live
+    // in `static/js/inline-editor.js`. This block is just dashboard-page
+    // glue: confetti + reveal of the inline signup card on first pass,
+    // and the signup form's POST /api/register handler.
+    const section = document.querySelector(
+        '.exercise-section[data-step-id="dashboard-warmup"]',
+    );
+    if (section) {
+        const signupCard = document.getElementById("warmup-signup");
+        const signupForm = document.getElementById("warmup-signup-form");
+        const signupName = document.getElementById("warmup-signup-name");
+        const signupSubmit = document.getElementById("warmup-signup-submit");
+        const signupError = document.getElementById("warmup-signup-error");
+        const NEXT_SLUG = "{{ next_slug }}";
+
+        function revealSignup() {
+            if (!signupCard.hasAttribute("hidden")) return;
+            signupCard.hidden = false;
+            signupCard.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+            // Wait out the smooth scroll on Safari before grabbing focus.
+            setTimeout(() => signupName && signupName.focus(), 350);
+        }
+
+        // Three-burst confetti, identical to the chapter editor's
+        // `PassHooks.confetti` so the celebration on the warm-up feels
+        // continuous with the rest of the course. canvas-confetti is
+        // loaded once via CDN at the bottom of `base.html`.
+        function celebrate() {
+            if (typeof window.confetti !== "function") {
+                console.warn(
+                    "[corrode] confetti not loaded on dashboard (CDN blocked?)",
+                );
+                return;
+            }
+            const fire = (originX) =>
+                window.confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    startVelocity: 55,
+                    ticks: 250,
+                    zIndex: 10000,
+                    origin: { x: originX, y: 0.7 },
+                });
+            fire(0.2);
+            fire(0.5);
+            fire(0.8);
+        }
+
+        import("/static/js/inline-editor.js").then(({ mountInlineEditor }) => {
+            const fallback = section.querySelector(
+                '[data-role="editor-fallback"]',
+            );
+            mountInlineEditor(section, {
+                starter: fallback ? fallback.value : "",
+                slug: "dashboard-warmup",
+                features: {
+                    vim: false,
+                    draftKey: null,
+                    submit: null,
+                    testResults: false,
+                    copyButton: false,
+                    urlPlugin: false,
+                    syntaxHighlightOutput: false,
+                },
+                onRunSuccess: () => {
+                    celebrate();
+                    revealSignup();
+                },
+            });
+        }).catch((err) => {
+            console.error("inline-editor module failed to load:", err);
+        });
+
+        // ---- Inline signup ---------------------------------------------
+        // POSTs the chosen name to /api/register (JSON), then redirects
+        // to chapter 1 under the freshly minted ULID. The endpoint
+        // validates the name server-side via `Name::try_from`; we surface
+        // any 4xx as inline error text rather than alerting.
+        signupForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = (signupName.value || "").trim();
+            if (!name) {
+                signupName.focus();
+                return;
+            }
+            signupSubmit.disabled = true;
+            signupName.disabled = true;
+            signupError.hidden = true;
+            signupError.textContent = "";
+            try {
+                const resp = await fetch("/api/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name }),
+                });
+                if (!resp.ok) {
+                    const detail =
+                        resp.status === 400
+                            ? "That name doesn't look right. Try a shorter one with letters only."
+                            : `Couldn't sign you up (HTTP ${resp.status}). Please try again.`;
+                    signupError.textContent = detail;
+                    signupError.hidden = false;
+                    signupSubmit.disabled = false;
+                    signupName.disabled = false;
+                    return;
+                }
+                const data = await resp.json();
+                if (!data.ulid) {
+                    signupError.textContent =
+                        "The server didn't return a save link. Please try again.";
+                    signupError.hidden = false;
+                    signupSubmit.disabled = false;
+                    signupName.disabled = false;
+                    return;
+                }
+                window.location.href = `/exercise/${data.ulid}/${NEXT_SLUG}`;
+            } catch (err) {
+                console.error(err);
+                signupError.textContent =
+                    "Network error: " + err.message + ". Please try again.";
+                signupError.hidden = false;
+                signupSubmit.disabled = false;
+                signupName.disabled = false;
+            }
+        });
+    }
+</script>
+
 
 <style>
     /* Page-specific styles only. The shared book look
@@ -172,22 +484,6 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
     }
     .book-intro p:last-child {
         margin-bottom: 0;
-    }
-    .book-intro-signup {
-        margin-top: 1.4rem;
-        padding-top: 1.1rem;
-        border-top: 1px dashed var(--color-border);
-        font-size: 0.95rem;
-        color: var(--color-text-muted);
-    }
-    .book-intro-signup a {
-        color: var(--color-primary);
-        text-decoration: none;
-        font-weight: 600;
-    }
-    .book-intro-signup a:hover,
-    .book-intro-signup a:focus-visible {
-        text-decoration: underline;
     }
     .book-team-link {
         margin-top: 1.4rem;
@@ -212,6 +508,124 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         border-radius: 4px;
         background-color: var(--color-surface);
         border: 1px solid var(--color-border);
+    }
+
+    /* ---------- "Let's get acquainted" inline editor ----------
+       Anonymous viewers land on the homepage and get a real CodeMirror
+       `println!` warm-up, mounted by `static/js/inline-editor.js` against
+       the standard `.exercise-section` DOM contract.
+
+       Once a Run succeeds, `.book-acquainted-signup-card` is revealed
+       inline (no full-page navigation). Submitting the form posts to
+       `/api/register` and lands the user on the new chapter 1
+       (`00_integers`) under a freshly minted ULID. */
+    .book-acquainted {
+        max-width: 38rem;
+        margin: 0 auto 4rem;
+    }
+    /* `.exercise-section-head` layout is duplicated here because the
+       chapter / playground pages define it in their own page-scoped
+       <style> blocks; once those move into base.html this whole block
+       can go. */
+    .book-acquainted .exercise-section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.85rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+    .book-acquainted .section-eyebrow {
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+        font-weight: 600;
+    }
+    .book-acquainted .exercise-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Inline signup card revealed on first successful Run. */
+    .book-acquainted-signup-card {
+        margin-top: 2rem;
+        padding: 1.5rem 1.5rem 1.25rem;
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        background: var(--color-surface);
+        text-align: center;
+    }
+    .book-acquainted-signup-title {
+        margin: 0 0 0.5rem;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--color-text);
+    }
+    .book-acquainted-signup-sub {
+        margin: 0 auto 1.25rem;
+        max-width: 32rem;
+        color: var(--color-text-muted);
+        font-size: 0.92rem;
+        line-height: 1.55;
+    }
+    .book-acquainted-signup-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        justify-content: center;
+        align-items: stretch;
+        max-width: 32rem;
+        margin: 0 auto;
+    }
+    .book-acquainted-signup-input {
+        flex: 1 1 14rem;
+        min-width: 0;
+        padding: 0.55rem 0.85rem;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        background: var(--color-input-bg, var(--color-background));
+        color: var(--color-text);
+        font-size: 0.95rem;
+        font-family: inherit;
+    }
+    .book-acquainted-signup-input:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px
+            color-mix(in srgb, var(--color-primary) 18%, transparent);
+    }
+    .book-acquainted-signup-input:disabled {
+        opacity: 0.6;
+    }
+    .book-acquainted-signup-submit {
+        flex: 0 0 auto;
+        font-size: 0.95rem;
+        padding: 0 1.1rem;
+    }
+    .book-acquainted-signup-error {
+        margin: 0.75rem auto 0;
+        max-width: 32rem;
+        color: var(--color-error, #c62828);
+        font-size: 0.88rem;
+    }
+    .book-acquainted-signup-skip {
+        margin: 1.1rem 0 0;
+        font-size: 0.88rem;
+        color: var(--color-text-muted);
+    }
+    .book-acquainted-signup-skip a {
+        color: var(--color-primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .book-acquainted-signup-skip a:hover,
+    .book-acquainted-signup-skip a:focus-visible {
+        text-decoration: underline;
     }
 
     /* ---------- Table of contents ---------- */

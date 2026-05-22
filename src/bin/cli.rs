@@ -621,7 +621,7 @@ async fn register_with_server(name: &Name) -> Result<String> {
                      • The course server is not running\n\
                      • You're working offline\n\n\
                      💡 For offline practice, use manual testing instead:\n\
-                     cargo test --example 00_hello_rust",
+                     cargo test --example 00_integers",
                     get_server_url()
                 )
             } else {
