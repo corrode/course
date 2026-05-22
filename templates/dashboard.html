@@ -1,6 +1,9 @@
 {% extends "base.html" %} {% block title %}A Beginner's Guide To Rust |
 corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
 <div class="container book-dashboard">
+    <div class="book-theme-toggle">
+        {% include "partials/theme_toggle.html" %}
+    </div>
     {% match reason %} {% when Some with (r) %} {% if r == "unknown-token" %}
     <div
         class="unknown-token-toast"
@@ -470,6 +473,14 @@ fn main() {
     /* Page-specific styles only. The shared book look
        (`.book-dashboard`, `.book-hero`, `.book-eyebrow`,
        `.book-title`, `.book-byline`) lives in `base.html`. */
+
+    /* ---------- Theme toggle (floats in the top-right corner of the
+       dashboard since this page hides the shared topbar). ---------- */
+    .book-theme-toggle {
+        display: flex;
+        justify-content: flex-end;
+        padding: 1rem 0 0;
+    }
 
     /* ---------- Intro prose ---------- */
     .book-intro {
