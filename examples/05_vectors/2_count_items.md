@@ -11,3 +11,8 @@ ownership of the list.
   allocation.
 - [`Vec::is_empty`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.is_empty)
   reads better than `len() == 0` when that's all you need to know.
+
+> [!TIP]
+> Press `Ctrl/Cmd + Enter` to run the tests without leaving the
+> keyboard. The **Run** button does the same thing.
+

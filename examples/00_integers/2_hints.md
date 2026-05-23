@@ -6,14 +6,14 @@
    a `String` with one method call.
 2. Look for `to_string` on the integer types, or the `format!` macro.
 
-## `calculate_total_with_tax`
+## `damage_with_bonus`
 
-1. The maths is `price + price * (tax_rate / 100.0)`.
-2. `price` is `u32` and `tax_rate` is `f64`. You can't multiply them
-   directly. Cast `price` with `as f64` first.
-3. To go back to `u32` for the return value, *round* (don't truncate).
-   `f64::round` then `as u32` gives you the rounded integer that the
-   `108` test expects.
+1. The maths is `base + base * (bonus_percent / 100.0)`.
+2. `base` is `u32` and `bonus_percent` is `f64`. You can't
+   multiply them directly. Cast `base` with `as f64` first.
+3. To go back to `u32` for the return value, use a plain `as u32` cast.
+   That *truncates* the fractional part (drops any fractional HP),
+   which is what the `15.5%` test pins down.
 
 ## `parse_positive_integer`
 

@@ -27,7 +27,9 @@ CodeMirror 6 viewer by static/js/readonly-rust-editor.js. The styled fallback
         </span>
         <span class="submission-card-who">{{ sub.participant_name }}</span>
         <span class="submission-card-sep">·</span>
-        <span class="submission-card-exercise">{{ sub.exercise_name }}</span>
+        <span class="submission-card-exercise" title="{{ sub.exercise_name }}"
+            >{{ sub.exercise_label }}</span
+        >
         <span class="submission-card-time">{{ sub.submitted_at }}</span>
     </header>
     <div class="rust-editor" data-rust-source>{{ sub.source_code }}</div>

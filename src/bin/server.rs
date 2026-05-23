@@ -273,10 +273,40 @@ struct ParticipantGroup {
 struct SubmissionSummary {
     participant_name: String,
     exercise_name: String,
+    /// Human-readable version of `exercise_name`. The DB value is
+    /// `<chapter_file_stem>` for legacy single-step chapters and
+    /// `<chapter_file_stem>/<step_key>` for multi-step (e.g.
+    /// `01_strings_and_chars/4_shout`). For display we strip the
+    /// numeric ordering prefixes and turn underscores into spaces so
+    /// readers see "Strings and chars · Shout" instead of the raw key.
+    exercise_label: String,
     tests_passed: bool,
     perfected: bool,
     submitted_at: chrono::DateTime<chrono::Utc>,
     source_code: String,
+}
+
+/// Strip the `NN_` ordering prefix and turn underscores into spaces.
+/// `01_strings_and_chars` -> `Strings and chars`,
+/// `4_shout` -> `Shout`.
+fn prettify_slug_segment(seg: &str) -> String {
+    let trimmed = seg
+        .trim_start_matches(|c: char| c.is_ascii_digit())
+        .trim_start_matches('_');
+    let body = if trimmed.is_empty() { seg } else { trimmed };
+    let spaced = body.replace('_', " ");
+    let mut chars = spaced.chars();
+    match chars.next() {
+        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+        None => String::new(),
+    }
+}
+
+/// Format `exercise_name` (DB key) into something a reader can scan.
+/// Multi-step keys (`<chapter>/<step>`) become `Chapter · Step`.
+fn prettify_exercise_name(name: &str) -> String {
+    let parts: Vec<String> = name.split('/').map(prettify_slug_segment).collect();
+    parts.join(" · ")
 }
 
 /// Per-team page (`/admin/team/{slug}`, `/admin/team-unassigned`,
@@ -1241,9 +1271,12 @@ async fn admin_dashboard(
     for row in submission_rows {
         let fmt_passed: bool = row.get("fmt_passed");
         let clippy_passed: bool = row.get("clippy_passed");
+        let exercise_name: String = row.get("exercise_name");
+        let exercise_label = prettify_exercise_name(&exercise_name);
         recent_submissions.push(SubmissionSummary {
             participant_name: row.get("participant_name"),
-            exercise_name: row.get("exercise_name"),
+            exercise_name,
+            exercise_label,
             tests_passed: row.get("tests_passed"),
             perfected: fmt_passed && clippy_passed,
             submitted_at: row.get("submitted_at"),
@@ -1491,9 +1524,12 @@ async fn render_team_page(
         for row in rows.into_iter().take(TEAM_SUBMISSIONS_LIMIT as usize) {
             let fmt_passed: bool = row.get("fmt_passed");
             let clippy_passed: bool = row.get("clippy_passed");
+            let exercise_name: String = row.get("exercise_name");
+            let exercise_label = prettify_exercise_name(&exercise_name);
             subs.push(SubmissionSummary {
                 participant_name: row.get("participant_name"),
-                exercise_name: row.get("exercise_name"),
+                exercise_name,
+                exercise_label,
                 tests_passed: row.get("tests_passed"),
                 perfected: fmt_passed && clippy_passed,
                 submitted_at: row.get("submitted_at"),

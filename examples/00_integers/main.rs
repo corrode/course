@@ -5,8 +5,8 @@
 
 #[path = "3_number_to_string.rs"]
 mod _3_number_to_string;
-#[path = "4_calculate_total_with_tax.rs"]
-mod _4_calculate_total_with_tax;
+#[path = "4_damage_with_bonus.rs"]
+mod _4_damage_with_bonus;
 #[path = "5_parse_positive_integer.rs"]
 mod _5_parse_positive_integer;
 
