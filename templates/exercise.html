@@ -1578,6 +1578,23 @@ progress_total > 0 %}
     .hints-disclosure > summary::-webkit-details-marker {
         display: none;
     }
+    /* Custom chevron so the disclosure clearly reads as expand/collapse.
+       Replaces the default `<details>` triangle we hide above. Uses a
+       Unicode triangle so it renders reliably regardless of font
+       availability, and rotates 90° when the disclosure is open. */
+    .hints-disclosure > summary::before {
+        content: "\25B6"; /* ▶ black right-pointing triangle */
+        display: inline-block;
+        flex-shrink: 0;
+        width: 0.7em;
+        font-size: 0.75em;
+        line-height: 1;
+        color: var(--color-text-muted);
+        transition: transform 0.15s ease;
+    }
+    .hints-disclosure[open] > summary::before {
+        transform: rotate(90deg);
+    }
     .hints-disclosure .hints-icon {
         font-size: 1.05rem;
     }

@@ -8,12 +8,12 @@
 
 ## `calculate_total_with_tax`
 
-1. The maths is `price + price * (tax_rate / 100.0)`.
-2. `price` is `u32` and `tax_rate` is `f64`. You can't multiply them
-   directly. Cast `price` with `as f64` first.
-3. To go back to `u32` for the return value, *round* (don't truncate).
-   `f64::round` then `as u32` gives you the rounded integer that the
-   `108` test expects.
+1. The maths is `price_cents + price_cents * (tax_rate_percent / 100.0)`.
+2. `price_cents` is `u32` and `tax_rate_percent` is `f64`. You can't
+   multiply them directly. Cast `price_cents` with `as f64` first.
+3. To go back to `u32` for the return value, use a plain `as u32` cast.
+   That *truncates* the fractional part (drops any sub-cent amount),
+   which is what the test for `8.49%` pins down.
 
 ## `parse_positive_integer`
 

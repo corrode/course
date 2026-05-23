@@ -458,7 +458,9 @@ export async function mountInlineEditor(section, opts = {}) {
     let saveTimer = null;
     const persistExt = EditorView.updateListener.of((u) => {
       if (!u.docChanged) return;
-      // Any edit invalidates Run result: swap Submit back to Run.
+      // Any edit invalidates Run result: swap Submit back to Run, and clear
+      // any prior "Submitted \u2713" state so the next Run/Submit is fresh.
+      resetSubmittedIndicator();
       if (submitBtn && submitBtn.style.display !== "none") {
         submitBtn.style.display = "none";
         if (runBtn) runBtn.style.display = "";
@@ -882,6 +884,29 @@ export async function mountInlineEditor(section, opts = {}) {
     runBtn.style.display = "";
     submitBtn.style.display = "none";
   }
+  // Remember the submit button's initial label so we can restore it after
+  // the editor is edited again (the persistExt updateListener flips Submit
+  // back to Run on any change; we mirror that for the "Submitted" state).
+  const submitDefaultLabel = submitBtn ? submitBtn.textContent : "";
+  function markSubmittedIndicator() {
+    if (!submitBtn) return;
+    submitBtn.textContent = "Submitted \u2713";
+    submitBtn.classList.add("is-submitted");
+    submitBtn.disabled = true;
+    submitBtn.style.display = "";
+    if (runBtn) runBtn.style.display = "none";
+  }
+  function resetSubmittedIndicator() {
+    if (!submitBtn) return;
+    if (submitBtn.classList.contains("is-submitted")) {
+      submitBtn.classList.remove("is-submitted");
+      submitBtn.textContent = submitDefaultLabel;
+      submitBtn.disabled = false;
+    }
+  }
+  // Filled in below if Submit is enabled. Called by the Run handler to
+  // autosubmit when every test passes.
+  let autosubmit = null;
 
   if (runBtn) {
     runBtn.addEventListener("click", async () => {
@@ -900,9 +925,20 @@ export async function mountInlineEditor(section, opts = {}) {
         const allPassed = total > 0 && passed === total;
         if (submitBtn && features.submit) {
           if (allPassed) {
-            showSubmit();
-            if (runStatus) {
-              runStatus.textContent += ". Click Submit to save your progress.";
+            // Autosubmit: when every test passes we don't make the user
+            // press a second button. Submit in the background and show
+            // "Submitted \u2713" as the post-run confirmation. The Submit
+            // button stays in the DOM as the indicator. If autosubmit
+            // isn't possible (e.g. no participant ulid) we fall back to
+            // the previous two-step Run → Submit flow.
+            if (typeof autosubmit === "function") {
+              await autosubmit(code, passed, total);
+            } else {
+              showSubmit();
+              if (runStatus) {
+                runStatus.textContent +=
+                  ". Click Submit to save your progress.";
+              }
             }
           } else {
             showRun();
@@ -1025,6 +1061,7 @@ export async function mountInlineEditor(section, opts = {}) {
             runStatus.style.color = "var(--color-success, #2e7d32)";
           }
           markAsCompleted();
+          markSubmittedIndicator();
           if (typeof opts.onSubmit === "function") {
             try {
               opts.onSubmit({ section, ulid, exerciseKey: exKey });
@@ -1051,6 +1088,34 @@ export async function mountInlineEditor(section, opts = {}) {
       }
       return false;
     }
+
+    // Expose for the Run handler's autosubmit-on-all-green path. Only
+    // active when we actually have a ulid; otherwise the run handler
+    // falls back to the two-step Run → Submit flow.
+    autosubmit = async (code, passed, total) => {
+      const ulid = (submitInfo && submitInfo.ulid) || submitBtn.dataset.ulid;
+      if (!ulid) {
+        showSubmit();
+        if (runStatus) {
+          runStatus.textContent += ". Click Submit to save your progress.";
+        }
+        return;
+      }
+      submitBtn.disabled = true;
+      if (runBtn) runBtn.disabled = true;
+      try {
+        await submitOnce(code, passed, total);
+      } finally {
+        // submitOnce flips the button into the "Submitted" state on
+        // success; on failure we leave Submit clickable so the user
+        // can retry without re-running.
+        if (!submitBtn.classList.contains("is-submitted")) {
+          submitBtn.disabled = false;
+          showSubmit();
+        }
+        if (runBtn) runBtn.disabled = false;
+      }
+    };
 
     submitBtn.addEventListener("click", async () => {
       submitBtn.disabled = true;
