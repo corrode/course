@@ -11,7 +11,13 @@ fn digit_count(n: u32) -> u32 {
 fn test_digit_count() {
     assert_eq!(digit_count(0), 1);
     assert_eq!(digit_count(7), 1);
+    // Boundary: a loop that exits on `n > 10` instead of `n >= 10`
+    // (or, equivalently, checks before dividing instead of after)
+    // will mis-count 10 as a single digit.
+    assert_eq!(digit_count(10), 2);
     assert_eq!(digit_count(42), 2);
+    assert_eq!(digit_count(99), 2);
+    assert_eq!(digit_count(100), 3);
     assert_eq!(digit_count(999), 3);
     assert_eq!(digit_count(1_000_000), 7);
     assert_eq!(digit_count(u32::MAX), 10);

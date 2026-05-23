@@ -121,5 +121,5 @@ A useful rule of thumb:
 - Use `loop` only when neither of the above fits, usually because
   the exit condition is in the middle of the body.
 
-Most code reaches for `for`. Iterators (next-and-a-half chapters
-away) make `for` even more powerful.
+Most code reaches for `for`. Iterators (covered later in the
+course) make `for` even more powerful.
