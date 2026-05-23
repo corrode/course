@@ -13,6 +13,3 @@ chapter 0 works too. Either is fine.
 - [`format!`](https://doc.rust-lang.org/std/macro.format.html) builds a
   `String` from a template, e.g. `format!("{n}")`.
 
-> [!TIP]
-> Press `Ctrl/Cmd + Enter` to run the tests without leaving the
-> keyboard. The **Run** button does the same thing.
