@@ -26,5 +26,5 @@ isn't known up front.
   reads better than nesting the work inside an `if`.
 - The accumulator pattern (`let mut acc = ...; for ... { acc = ...; }`)
   is the standard shape for "compute one value from many". Once you
-  meet iterators in chapter 13, methods like `sum`, `count`, and
+  meet iterators in chapter 15, methods like `sum`, `count`, and
   `fold` will replace many of these by-hand loops.

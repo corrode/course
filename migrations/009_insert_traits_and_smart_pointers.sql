@@ -1,0 +1,40 @@
+-- Migration 009: insert `12_traits` and `13_smart_pointers`,
+-- shifting every later chapter's directory prefix up by two.
+--
+-- Background. The course gained two new fundamentals chapters between
+-- `11_structs_and_methods` and the existing `12_iterators`:
+--
+--   12_traits            (Rust's interfaces, `dyn Trait`)
+--   13_smart_pointers    (`Box<T>`, with a nod to `Rc`/`RefCell`)
+--
+-- The reviewer flagged Chapter 17 (`?` operator) as the place these
+-- gaps stung most: `Box<dyn Error>` showed up with neither half
+-- explained. With the two new chapters in place, every chapter from
+-- `12_iterators` onward is renamed with its prefix bumped by two:
+--
+--   12_iterators                 -> 14_iterators
+--   13_password_validator        -> 15_password_validator
+--   14_question_mark_operator    -> 16_question_mark_operator
+--   15_modules_and_visibility    -> 17_modules_and_visibility
+--   16_word_counter              -> 18_word_counter
+--   17_environment_file_parser   -> 19_environment_file_parser
+--   18_csv_parser                -> 20_csv_parser
+--   19_rust_fundamentals_quiz    -> 21_rust_fundamentals_quiz
+--   20_appendix                  -> 22_appendix
+--
+-- `submissions.exercise_name` stores the directory prefix as part of
+-- the key (chapter slug for legacy single-step rows; `<chapter>/<step>`
+-- for multi-step). Per the request that came with this change ("we
+-- are not live yet, flushing the DB is acceptable"), the simplest
+-- correct thing to do is to drop every existing submission row. That
+-- removes the ambiguity of trying to interpret an old `13_password_*`
+-- key (which now refers to the brand-new `13_smart_pointers` chapter)
+-- and lets the rename land cleanly. Each affected developer DB will
+-- be reset to a state consistent with the new on-disk layout.
+--
+-- If you have a personal DB whose submissions you want to keep, do
+-- the prefix shift by hand (highest prefix first to avoid collisions:
+-- 20 -> 22, 19 -> 21, ..., 12 -> 14) BEFORE applying this migration
+-- and remove the DELETE below.
+
+DELETE FROM submissions;

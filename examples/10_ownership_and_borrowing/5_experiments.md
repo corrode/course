@@ -2,8 +2,8 @@
 
 Passing the previous tests is the easy part of this chapter.
 Ownership only really clicks once you've seen the canonical errors
-with your own eyes, so the messages feel familiar later (chapter 13,
-chapter 15, …) instead of like a brick wall.
+with your own eyes, so the messages feel familiar later (chapter 15,
+chapter 17, ...) instead of like a brick wall.
 
 Each test below is paired with a commented-out line. Uncomment one
 at a time, run the tests, read the error carefully, then comment it

@@ -22,5 +22,5 @@ to turn a search into the exact return type the signature asked for.
   them in tests or when you've already ruled out `None`; otherwise
   prefer the safer combinators.
 - The `|x| ...` syntax is a closure: a tiny anonymous function. It
-  shows up everywhere with `Option` and iterators. Chapter 13 covers
+  shows up everywhere with `Option` and iterators. Chapter 15 covers
   closures in their own right.

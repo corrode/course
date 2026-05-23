@@ -58,7 +58,7 @@ also yields `5`. Both work as iterators and as patterns in `match`
 
 For larger collections, you'll usually iterate over a `Vec`, a
 slice, a `HashMap`, or the result of `s.chars()`. Iterators get
-their own chapter (chapter 13); for now, "anything you can put on
+their own chapter (chapter 15); for now, "anything you can put on
 the right of `for x in ...`" is enough.
 
 ## `while` and `loop`

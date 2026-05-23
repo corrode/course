@@ -65,7 +65,7 @@ arms then pattern-match both elements at once, and the guards (chapter
 10's `if chars.peek() == Some(&'"')`) do the rest.
 
 The tests in this chapter also lean heavily on raw strings
-(`r#"..."#`, introduced in chapter 18) so the CSV examples can contain
+(`r#"..."#`, introduced in chapter 20) so the CSV examples can contain
 literal commas and quotes without an escape forest.
 
 ## A useful tactic

@@ -1102,8 +1102,8 @@ mod tests {
             Some((2, "strings_and_chars".to_string()))
         );
         assert_eq!(
-            split_numeric_prefix("13_question_mark_operator"),
-            Some((13, "question_mark_operator".to_string()))
+            split_numeric_prefix("16_question_mark_operator"),
+            Some((16, "question_mark_operator".to_string()))
         );
         assert_eq!(split_numeric_prefix("no_prefix"), None);
     }
