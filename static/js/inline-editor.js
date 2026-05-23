@@ -628,44 +628,53 @@ export async function mountInlineEditor(section, opts = {}) {
     const { EditorState } = state;
     const { EditorView } = view;
     const { syntaxHighlighting } = lang;
-    if (!outputView) {
-      outputStderr.textContent = "";
-      outputStderr.style.padding = "0";
-      outputStderr.style.fontFamily = "";
-      outputStderr.style.fontSize = "";
-      const exts = [
-        EditorView.editable.of(false),
-        EditorState.readOnly.of(true),
-        EditorView.lineWrapping,
-        langRust.rust(),
-        syntaxHighlighting(proseHighlightStyle, { fallback: true }),
-        proseEditorTheme,
-        EditorView.theme({
-          "&": {
-            backgroundColor: "transparent",
-            fontSize: "0.8rem",
-          },
-          ".cm-content": {
-            fontFamily: '"SF Mono", Monaco, monospace',
-            padding: "0.85rem 1rem",
-          },
-          ".cm-scroller": { overflow: "auto" },
-          "&.cm-focused": { outline: "none" },
-        }),
-      ];
-      outputView = new EditorView({
-        state: EditorState.create({ doc: text, extensions: exts }),
-        parent: outputStderr,
-      });
-    } else {
-      outputView.dispatch({
-        changes: {
-          from: 0,
-          to: outputView.state.doc.length,
-          insert: text,
-        },
-      });
+    // We always tear down and recreate the read-only output view rather
+    // than calling `outputView.dispatch(...)` to replace the document.
+    //
+    // Reusing the view triggered a viewport-measurement crash inside
+    // `@codemirror/state` ("can't access property 'length', l is
+    // undefined" via `lineInner` -> `lineAt` -> `getViewport`) on some
+    // browsers (notably Firefox ESR) whenever the output panel had just
+    // been toggled from `display: none` to `display: block`. The crash
+    // only reproduced with DevTools closed, because DevTools forces
+    // additional layout passes that paper over the missing measurement.
+    // See https://github.com/corrode/course/issues/6.
+    //
+    // Recreating the view is cheap (it happens at most once per Run /
+    // Submit) and follows the same constructor path that already works
+    // on the first render.
+    if (outputView) {
+      outputView.destroy();
+      outputView = null;
     }
+    outputStderr.textContent = "";
+    outputStderr.style.padding = "0";
+    outputStderr.style.fontFamily = "";
+    outputStderr.style.fontSize = "";
+    const exts = [
+      EditorView.editable.of(false),
+      EditorState.readOnly.of(true),
+      EditorView.lineWrapping,
+      langRust.rust(),
+      syntaxHighlighting(proseHighlightStyle, { fallback: true }),
+      proseEditorTheme,
+      EditorView.theme({
+        "&": {
+          backgroundColor: "transparent",
+          fontSize: "0.8rem",
+        },
+        ".cm-content": {
+          fontFamily: '"SF Mono", Monaco, monospace',
+          padding: "0.85rem 1rem",
+        },
+        ".cm-scroller": { overflow: "auto" },
+        "&.cm-focused": { outline: "none" },
+      }),
+    ];
+    outputView = new EditorView({
+      state: EditorState.create({ doc: text, extensions: exts }),
+      parent: outputStderr,
+    });
   };
 
   function setActionStatus(text, tone) {
