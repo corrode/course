@@ -133,7 +133,7 @@ Recently enforced and worth preserving:
 - No `**bold**` in `//!` / `///` comments. Use plain text and let
   context carry the emphasis.
 - No `*italics*` either.
-- No em-dashes (`—`). Replace with the punctuation that actually fits
+- No em-dashes (`-`). Replace with the punctuation that actually fits
   the sentence: period, semicolon, colon, comma, or parentheses for
   parentheticals.
 - Forward-reference future chapters when introducing a placeholder

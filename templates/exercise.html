@@ -692,60 +692,58 @@ progress_total > 0 %}
     // CodeMirror mount + button wiring lives in the shared module.
     // Each `.exercise-section[data-step-id]` on the page gets its own
     // mount; multi-step chapters render multiple sections.
-    import("/static/js/inline-editor.js").then(({ mountInlineEditor }) => {
-        document
-            .querySelectorAll(".exercise-section[data-step-id]")
-            .forEach((section) => {
-                const submitBtn = section.querySelector(
-                    '[data-role="submit-btn"]',
-                );
-                const fallback = section.querySelector(
-                    '[data-role="editor-fallback"]',
-                );
-                const stepId = section.dataset.stepId;
-                const exerciseKey = section.dataset.exerciseKey;
-                mountInlineEditor(section, {
-                    starter: fallback ? fallback.value : "",
-                    slug: exerciseKey,
-                    features: {
-                        vim: true,
-                        draftKey: `corrode:draft:${stepId}`,
-                        submit: submitBtn
-                            ? {
-                                  ulid: submitBtn.dataset.ulid,
-                                  exerciseKey,
-                              }
-                            : null,
-                        testResults: true,
-                        copyButton: true,
-                        urlPlugin: true,
-                        syntaxHighlightOutput: true,
-                    },
-                    onRunSuccess: ({ section, data }) => {
-                        document
-                            .querySelector(".next-chapter-cta.is-locked")
-                            ?.classList.remove("is-locked");
-                        for (const hook of passHooks) {
-                            try {
-                                hook({ section, data });
-                            } catch (err) {
-                                console.error("pass hook failed:", err);
-                            }
-                        }
-                    },
-                }).catch((err) => {
-                    console.error(
-                        "Failed to mount section",
-                        stepId,
-                        err,
+    import("/static/js/inline-editor.js")
+        .then(({ mountInlineEditor }) => {
+            document
+                .querySelectorAll(".exercise-section[data-step-id]")
+                .forEach((section) => {
+                    const submitBtn = section.querySelector(
+                        '[data-role="submit-btn"]',
                     );
+                    const fallback = section.querySelector(
+                        '[data-role="editor-fallback"]',
+                    );
+                    const stepId = section.dataset.stepId;
+                    const exerciseKey = section.dataset.exerciseKey;
+                    mountInlineEditor(section, {
+                        starter: fallback ? fallback.value : "",
+                        slug: exerciseKey,
+                        features: {
+                            vim: true,
+                            draftKey: `corrode:draft:${stepId}`,
+                            submit: submitBtn
+                                ? {
+                                      ulid: submitBtn.dataset.ulid,
+                                      exerciseKey,
+                                  }
+                                : null,
+                            testResults: true,
+                            copyButton: true,
+                            urlPlugin: true,
+                            syntaxHighlightOutput: true,
+                        },
+                        onRunSuccess: ({ section, data }) => {
+                            document
+                                .querySelector(".next-chapter-cta.is-locked")
+                                ?.classList.remove("is-locked");
+                            for (const hook of passHooks) {
+                                try {
+                                    hook({ section, data });
+                                } catch (err) {
+                                    console.error("pass hook failed:", err);
+                                }
+                            }
+                        },
+                    }).catch((err) => {
+                        console.error("Failed to mount section", stepId, err);
+                    });
                 });
-            });
-        applyChapterDirectives();
-    }).catch((err) => {
-        console.error("inline-editor module failed to load:", err);
-        applyChapterDirectives();
-    });
+            applyChapterDirectives();
+        })
+        .catch((err) => {
+            console.error("inline-editor module failed to load:", err);
+            applyChapterDirectives();
+        });
 </script>
 <script type="module">
     // Syntax-highlight code blocks in chapter prose (notes + intro)
@@ -1556,7 +1554,7 @@ progress_total > 0 %}
        is a quiet text trigger (icon + label, no border/background) so
        it never competes visually with the editor section or run output
        above it. When opened, the body indents under a coloured left rule
-       — the same affordance as a blockquote — so the spoiler material
+       (the same affordance as a blockquote) so the spoiler material
        reads as set-apart secondary content. */
     .hints-disclosure {
         margin: 1rem 0 2rem;

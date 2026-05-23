@@ -8,9 +8,27 @@ Rust splits "string" across three cooperating types:
 - `&str` is a borrowed view into UTF-8 text. Cheap to pass around.
 - `String` is an owned, growable UTF-8 buffer. You own the memory.
 
-The split is what makes Rust strings both fast and safe. A function that
-just *reads* text takes `&str`; a function that *produces* new text returns
-`String`. You'll see this rhythm again and again:
+Before we go further, two words that show up everywhere in Rust:
+
+- **Owned** means *this value is mine; when I go out of scope, the
+  memory behind it is freed*. In C++ terms, it's the object held by
+  `std::unique_ptr`; in Python or Java terms, it's the role of the
+  variable that decides when the object can be collected. In Rust
+  every heap value has exactly one owner at a time.
+- **Borrowed** means *I'm looking at someone else's value without
+  taking it over*. It's the equivalent of passing a `const T&` in
+  C++, or handing out a read-only pointer in C. Borrows are written
+  with an `&` (or `&mut` if you also want to mutate). The borrow has
+  to end before the owner is dropped, and the compiler enforces that
+  for you, ruling out use-after-free and dangling pointers.
+
+Chapter 11 is dedicated to ownership and borrowing; for now just keep
+the mental picture of "one owner, many short-lived borrows."
+
+The split between `&str` and `String` is what makes Rust strings both
+fast and safe. A function that just *reads* text takes `&str`; a
+function that *produces* new text returns `String`. You'll see this
+rhythm again and again:
 
 ```rust
 fn shout(text: &str) -> String {

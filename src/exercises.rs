@@ -121,8 +121,8 @@ impl Step {
 #[serde(deny_unknown_fields, default)]
 pub struct ChapterDirectives {
     /// Allow-list of buttons to keep visible in every code section.
-    /// `None` (the field is omitted) means "show every button" — the
-    /// default for any chapter without a `.chapter.toml`. An explicit
+    /// `None` (the field is omitted) means "show every button", which is
+    /// the default for any chapter without a `.chapter.toml`. An explicit
     /// list (including the empty list) hides any button not named in
     /// it. See the `Buttons` map in `exercise.html` for valid names
     /// (`run`, `submit`, `format`, `reset`, `copy`, `vim`, `vscode`).
@@ -156,8 +156,8 @@ pub struct Exercise {
     /// and the chapter picker. Derived from the directory prefix as
     /// `prefix + 1`, so `00_integers` (the first chapter on disk) is
     /// displayed as **Chapter 1**. The shift exists because the dashboard
-    /// landing experience is itself an unnumbered "Chapter 0" — the
-    /// `println!` warm-up — and the on-disk chapters pick up at 1.
+    /// landing experience is itself an unnumbered "Chapter 0" (the
+    /// `println!` warm-up), and the on-disk chapters pick up at 1.
     pub number: u8,
     /// Slug without the numeric prefix, e.g. `integers` for `00_integers`.
     pub slug: String,
@@ -462,7 +462,7 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
 
 /// Read `.chapter.toml` from a chapter directory if present.
 ///
-/// A missing file is not an error — it just yields the default
+/// A missing file is not an error; it just yields the default
 /// (empty) directives. A malformed file is logged and ignored so a
 /// typo in one chapter doesn't take down the whole server.
 fn load_chapter_directives(dir: &Path) -> ChapterDirectives {

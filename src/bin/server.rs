@@ -1790,7 +1790,7 @@ async fn api_submit(
     match existing_submission {
         Ok(Some(_)) => {
             info!(
-                "Duplicate submission detected for participant='{}', exercise='{}' - skipping",
+                "Duplicate submission detected for participant='{}', exercise='{}'; skipping",
                 request.ulid, request.exercise_name
             );
             return Ok(StatusCode::OK); // Return success but don't store duplicate

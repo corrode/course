@@ -49,6 +49,28 @@ The compiler needs them to agree. The two common solutions:
    }
    ```
 
+   This is the first time we've reached for a *smart pointer* and a
+   *trait object*, so a quick translation of the syntax:
+
+   - `Box<T>` is the simplest smart pointer in the standard library:
+     it owns a `T` that lives on the heap, and frees it when the
+     `Box` is dropped. If you've used C++, it's `std::unique_ptr<T>`
+     with the same single-owner rule Rust uses everywhere.
+   - `dyn Error` means "some value whose concrete type we don't
+     know at compile time, but which implements the `Error` trait."
+     The `dyn` keyword marks it as a *trait object*, essentially a
+     pair of pointers: one to the value, one to its method table.
+     This is Rust's version of runtime polymorphism, the same idea
+     as a Java interface reference or a C++ virtual base pointer.
+   - We need the `Box<...>` wrapper around `dyn Error` because the
+     real value can be any size, and Rust insists that the things
+     it stores directly have a size known at compile time. Boxing
+     it puts the unknown-sized value behind a known-size pointer.
+
+   Traits, trait objects, and smart pointers each get more attention
+   in later material; for now, read `Box<dyn Error>` as "a heap-
+   allocated, any-error-goes return type."
+
 2. **A custom error enum** with a variant per underlying error. More
    work, but the type system tells callers exactly what can go wrong.
    You'll see the [`thiserror`](https://docs.rs/thiserror) crate used for

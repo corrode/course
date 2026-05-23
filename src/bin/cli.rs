@@ -268,7 +268,7 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
                 }
             },
             Err(_) => {
-                // Task panicked - this shouldn't happen in normal operation
+                // Task panicked; this shouldn't happen in normal operation
                 failed_exercises.push("unknown".to_string());
             }
         }

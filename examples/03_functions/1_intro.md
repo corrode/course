@@ -69,5 +69,19 @@ inside the body.
   are easier to test and easier to read.
 - Use parameter names that say what the value *is*, not what type it
   is: `width: u32`, not `w: u32`.
-- Default to the simplest signature that works. If a function only
-  reads a string, take `&str`, not `String`.
+- Prefer the *least demanding* parameter type that still lets you do
+  the job. "Least demanding" means: ask the caller for as little as
+  possible. If you only need to *read* a string, take `&str`, not
+  `String`. Three reasons this matters:
+  1. Taking `String` would force the caller to hand over their value (or
+     `.clone()` it). Taking `&str` lets them keep it.
+  2. A `&str` parameter accepts string literals (`"hi"`), borrows of owned
+     strings (`&my_string` coerces from `&String` to `&str`), and slices of
+     larger buffers, all without conversion at the call site.
+  3. A `&str` is just a pointer and a length; passing one costs nothing. A
+     `String` parameter would mean moving (or cloning) a heap buffer on every
+     call.
+
+  The same idea extends to other types: take `&[T]` instead of
+  `&Vec<T>`, `&Path` instead of `&PathBuf`, and so on. We'll come
+  back to this pattern in the vectors and ownership chapters.

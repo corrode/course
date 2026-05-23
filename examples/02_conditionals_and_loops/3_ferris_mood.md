@@ -15,8 +15,14 @@ following these rules:
 | anything else                                       | `"Content"` |
 
 `&'static str` just means "a borrowed string slice that lives for
-the whole program". String literals like `"Hangry"` automatically
-have this type.
+the whole program". String literals like `"Hangry"` are baked into
+your compiled binary, so the text is around for as long as the
+program is running. The `'static` *lifetime* is just the compiler's
+way of saying "this reference will never dangle." If you've written
+C, it's the same intuition as a `const char *` pointing at a string
+literal. Lifetimes get a proper introduction in chapter 11 alongside
+ownership and borrowing; for now the only thing to take away is
+*"string literals are always safe to return as `&'static str`."*
 
 ## Two things to watch
 
