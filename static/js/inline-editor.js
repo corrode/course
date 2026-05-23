@@ -773,7 +773,39 @@ export async function mountInlineEditor(section, opts = {}) {
           out + (out && errStr ? "\n\n" : "") + errStr || "(no output)";
       }
     }
-    outputPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // Bring the output panel into view, but never scroll so far that
+    // the Run/Submit button row leaves the viewport. Without this guard
+    // a tall output panel pushes the buttons above the fold, and the
+    // user has to scroll back up to press Submit / re-Run.
+    scrollOutputIntoViewKeepingButtonsVisible();
+  }
+
+  function scrollOutputIntoViewKeepingButtonsVisible() {
+    if (!outputPanel) return;
+    const panelRect = outputPanel.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    // Already comfortably in view? Nothing to do.
+    if (panelRect.top >= 0 && panelRect.top < vh * 0.85) return;
+
+    // Target: panel's top edge ~70% down the viewport (so the first few
+    // result lines are visible while the editor + buttons stay above).
+    const desired = panelRect.top - vh * 0.7;
+
+    // Cap so the button row stays in view. Use the run button's row as
+    // the anchor (submit lives in the same row, hidden until needed).
+    const anchor =
+      (runBtn && runBtn.parentElement) ||
+      (submitBtn && submitBtn.parentElement);
+    let delta = desired;
+    if (anchor) {
+      const anchorRect = anchor.getBoundingClientRect();
+      // Largest downward scroll allowed before the button row's top
+      // would cross the viewport top. Leave a small margin.
+      const maxDownward = Math.max(0, anchorRect.top - 16);
+      if (delta > 0) delta = Math.min(delta, maxDownward);
+    }
+    if (Math.abs(delta) < 4) return;
+    window.scrollBy({ top: delta, behavior: "smooth" });
   }
 
   function updateRunStatus(data) {
@@ -907,6 +939,14 @@ export async function mountInlineEditor(section, opts = {}) {
   // Filled in below if Submit is enabled. Called by the Run handler to
   // autosubmit when every test passes.
   let autosubmit = null;
+
+  // Persist the "Submitted ✓" state across reloads: the server marks
+  // the section with `data-completed="true"` when this step's most
+  // recent submission has all tests passing. Any subsequent edit clears
+  // it via the `persistExt` updateListener.
+  if (submitBtn && section.dataset.completed === "true") {
+    markSubmittedIndicator();
+  }
 
   if (runBtn) {
     runBtn.addEventListener("click", async () => {
