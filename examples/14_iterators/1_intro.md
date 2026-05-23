@@ -7,7 +7,7 @@ They're lazy: nothing actually runs until you ask for a result. The
 compiler usually fuses chained iterator calls into a single tight loop,
 so the abstraction is free at runtime.
 
-The shape is always the same:
+Here's how iterators work in practice:
 
 1. Get an iterator with `.iter()`, `.into_iter()`, `.iter_mut()`, or
    directly from `.chars()`, `.lines()`, etc.

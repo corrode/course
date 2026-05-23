@@ -1,10 +1,11 @@
 # Traits
 
-A **trait** is Rust's word for "a named collection of method signatures
-that any type can opt into." If you've used Java or C# interfaces, C++
-abstract classes with pure virtual methods, Haskell type classes, Swift
-protocols, or Python's `abc`/`Protocol`, you already know the shape of
-the idea. The Rust spelling is:
+A **trait** is Rust's word for "a named collection of method signatures that any
+type can opt into." If you've used Java or C# interfaces, C++ abstract classes
+with pure virtual methods, Haskell type classes, Swift protocols, or Python's
+`abc`/`Protocol`, you already know the gist of it.
+
+The Rust spelling is:
 
 ```rust
 trait Greet {

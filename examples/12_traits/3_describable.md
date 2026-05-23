@@ -5,8 +5,6 @@ trait someone else wrote, you'll write the trait yourself, give two
 types their own implementation, and then write a *generic* function
 that accepts anything implementing it.
 
-The shape:
-
 ```rust
 trait Describable {
     fn describe(&self) -> String;

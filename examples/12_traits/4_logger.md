@@ -47,7 +47,7 @@ trait Logger {
 }
 ```
 
-The shape is deliberately recognisable: every logging library in
+This is deliberately recognisable: every logging library in
 every language has this same skeleton. The teaching value of the
 default methods is that they live on the *trait*, so adding a new
 implementor doesn't mean writing `warn` and `error` from scratch

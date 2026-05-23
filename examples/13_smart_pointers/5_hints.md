@@ -15,7 +15,7 @@
    `Expr::Add`, and `Expr::Mul`.
 2. `Num(v)` returns `*v` (it's a borrow, so deref to get the `i32`).
    `Add(l, r)` returns `l.eval() + r.eval()`. `Mul(l, r)` is the same
-   shape with `*`. Method calls auto-deref through the `Box`, so you
+   concept, but for `*`. Method calls auto-deref through the `Box`, so you
    do not need to write `(*l).eval()`.
 3. ```rust
    match self {

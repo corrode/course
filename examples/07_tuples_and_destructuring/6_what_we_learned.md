@@ -12,7 +12,7 @@ differently for `Copy` and non-`Copy` element types.
 - Build a tuple with parentheses; access fields with `.0`, `.1`,
   etc. Destructuring with `let (a, b) = pair;` is usually clearer.
 - Tuples are the lightest-weight way to return more than one value
-  from a function. When the same tuple shape shows up in many places
+  from a function. When the same tuple shows up in many places
   or grows past two or three fields, switch to a `struct`
   (chapter 12).
 - Use `_` in a pattern to ignore a field: `let (first, _) = pair;`.

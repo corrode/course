@@ -1,8 +1,8 @@
 /// Returns the number of decimal digits in `n`. `digit_count(0)` is `1`.
 ///
-/// Use a `while` loop. The "divide by 10 until you hit zero" pattern
-/// is the classic shape for this kind of "I don't know how many
-/// iterations up front" problem.
+/// Use a `while` loop. The "divide by 10 until you hit zero" pattern is the
+/// classic solution for this kind of "I don't know how many iterations up
+/// front" problem.
 fn digit_count(n: u32) -> u32 {
     todo!()
 }

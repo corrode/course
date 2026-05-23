@@ -8,7 +8,7 @@ All four functions take a `&str` and return `bool`. The "special"
 character set for this exercise is `!@#$%^&*`. Feel free to expand it if
 you want a stricter validator later.
 
-Hint: `str::chars()` plus `Iterator::any` is the natural shape here.
+Hint: `str::chars()` plus `Iterator::any` is the natural way to check for the presence of a character class.
 
 ## Useful from the standard library
 

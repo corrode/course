@@ -83,7 +83,7 @@ Press `?` from any page to bring this up; `Esc` to close.
 | `struct User { name: String, age: u32 }` | Named-field struct. |
 | `struct Pair(i32, i32);` | Tuple struct; access with `.0`, `.1`. |
 | `impl User { fn name(&self) -> &str { ... } }` | Methods via `impl`. `&self` borrows. |
-| `enum Event { Login, Click { x: i32, y: i32 } }` | Sum type with mixed-shape variants. |
+| `enum Event { Login, Click { x: i32, y: i32 } }` | Sum type with different variants. |
 | `#[derive(Debug, Clone, PartialEq)]` | Auto-implement common traits. |
 
 ## Iterators

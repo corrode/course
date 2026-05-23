@@ -391,7 +391,7 @@ struct WebRegistrationForm {
 
 /// Resolves the optional `next` form field from `web_register` to a
 /// safe redirect target. Returns `None` if the value is missing,
-/// malformed, or doesn't match the narrow shape we expect (an
+/// malformed, or doesn't match the narrow structure we expect (an
 /// anonymous exercise URL: `/exercise/<slug>`). The slug whitelist is
 /// intentionally tight to keep this from becoming an open redirect.
 fn resolve_register_next(next: Option<&str>, ulid: &str) -> Option<String> {
@@ -1883,7 +1883,7 @@ struct RunRequest {
     slug: Option<String>,
 }
 
-/// Response shape mirroring the Playground `/execute` endpoint, plus a
+/// Response type mirroring the Playground `/execute` endpoint, plus a
 /// parsed list of test results extracted from stdout.
 #[derive(Serialize)]
 struct RunResponse {
@@ -1975,7 +1975,7 @@ async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, Statu
     }))
 }
 
-/// Request body for `/api/format`. Same shape as `/api/run` minus the
+/// Request body for `/api/format`. Same request as `/api/run` minus the
 /// fields the formatter doesn't care about.
 #[derive(Deserialize)]
 struct FormatRequest {
@@ -1984,7 +1984,7 @@ struct FormatRequest {
     slug: Option<String>,
 }
 
-/// Response shape returned to the browser. `success = false` means the
+/// Response returned to the browser. `success = false` means the
 /// formatter rejected the input (almost always a parse error); in that
 /// case `stderr` carries rustfmt's complaint and `code` is the
 /// (unchanged) original input.
@@ -2149,7 +2149,7 @@ async fn get_exercise_progress<'a>(
     for ex in catalog {
         // A chapter's submissions live under `<chapter_file_stem>` (legacy
         // single-step) or `<chapter_file_stem>/<step_key>` (multi-step).
-        // Match both shapes so chapter-level progress aggregates correctly.
+        // Match both formats so chapter-level progress aggregates correctly.
         let chapter_prefix = format!("{}/", ex.file_stem);
         let exercise_submissions: Vec<ExerciseSubmission> = all_submissions
             .iter()

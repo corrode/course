@@ -1,7 +1,7 @@
 /// Reads a configuration file (simulated).
 /// Returns Ok(content) normally, Err("File not found") for empty input.
 ///
-/// Same shape as `safe_divide`, but returning an owned `String`. Notice
+/// Same idea as `safe_divide`, but returning an owned `String`. Notice
 /// you can mix `Ok(String::from("..."))` and `Err("...")` in the same
 /// function: the success and error types are independent.
 fn read_config_file(filename: &str) -> Result<String, &'static str> {

@@ -1,8 +1,8 @@
 /// Counts how many numbers in the slice are even.
 ///
-/// A `for` loop over the slice plus a `mut` counter is the natural
-/// shape. Use `continue` to skip the odd numbers if you like; it's
-/// not required, just easier to read.
+/// A `for` loop over the slice plus a `mut` counter is a simple way to do this.
+/// Use `continue` to skip the odd numbers if you like; it's not required, just
+/// easier to read.
 fn count_evens(numbers: &[i32]) -> u32 {
     todo!()
 }

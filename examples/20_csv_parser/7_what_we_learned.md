@@ -8,7 +8,7 @@ those rows into `HashMap` records.
 ## What we learned
 
 - Stateful parsing comes up everywhere CSV doesn't (JSON, command
-  lines, terminal escape sequences). The shape is always: walk the
+  lines, terminal escape sequences). The routine is always: walk the
   input character by character, keep a small flag (or enum) of
   current state, occasionally emit a result.
 - A peekable iterator is the standard tool for "what comes next?"

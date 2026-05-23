@@ -1,15 +1,15 @@
 # Functions
 
-The elephant in the room: you've been writing a function since chapter
-one. Every `fn main() { ... }` is one. And every `println!(...)` is a
-*call*, though `println!` is a macro, which is why it has the `!`. So
-this chapter isn't really introducing functions. It's introducing the
-parts of `fn` we've quietly skipped: parameters, return types, the
-body, and a few small Rust-specific quirks.
+The elephant in the room is that you've been writing a function since chapter
+one... 😬👉👈
+
+Every `fn main() { ... }` is one. And every `println!(...)` is a *call*,
+though `println!` is a macro, which is why it has the `!`. So this chapter isn't
+really introducing functions. It's introducing the parts of `fn` we've quietly
+skipped: parameters, return types, the body, and a few small Rust-specific
+quirks.
 
 ## Anatomy
-
-The shape is always the same:
 
 ```rust
 fn add(a: i32, b: i32) -> i32 {

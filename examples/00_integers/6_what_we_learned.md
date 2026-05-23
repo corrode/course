@@ -1,8 +1,8 @@
 # Wrapping up numbers
 
-You converted numbers to strings, mixed integers with floats (carefully),
-and turned text back into a number. The shape "convert, then operate"
-is one you'll keep using.
+Congratulations! You converted numbers to strings, mixed integers with floats
+(carefully), and turned text back into a number. The pattern "convert, then
+operate" is very helpful for your future work with numbers.
 
 ## What we learned
 

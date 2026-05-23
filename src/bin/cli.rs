@@ -501,7 +501,7 @@ impl SubmissionTarget {
 /// Derive the submission target from a path the user passed to
 /// `cargo course submit`.
 ///
-/// Recognised shapes:
+/// Recognised inputs:
 ///
 /// * `examples/<chapter>/main.rs`       (legacy single-step chapter)
 /// * `examples/<chapter>/<n>_<slug>.rs` (multi-step file: step `n_slug`)

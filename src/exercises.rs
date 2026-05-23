@@ -7,7 +7,7 @@
 //! either a [`Note`] (prose) or a [`CodeStep`] (an exercise with its own
 //! editor and tests).
 //!
-//! Two shapes are supported:
+//! Two formats are supported:
 //!
 //! * **Single-step (legacy):** only a `main.rs` and (optionally) one or
 //!   more `<n>_<slug>.md` notes. The chapter is treated as a single code
@@ -48,7 +48,7 @@ pub struct CodeStep {
     /// Single-step (legacy) chapters use order `0`.
     pub order: u8,
     /// Slug after the leading number, e.g. `unwrap` for `2_unwrap.rs`.
-    /// For the legacy single-step shape, this is the chapter slug itself.
+    /// For the legacy single-step format, this is the chapter slug itself.
     pub slug: String,
     /// Step title. Source priority: paired `<N>_<slug>.md` H1 (if it
     /// exists) > first H1 in the file's `//!` block > slug. Used as
@@ -73,7 +73,7 @@ impl CodeStep {
     ///
     /// For multi-step chapters this is `<order>_<slug>` (e.g. `2_unwrap`)
     /// so the on-disk filename is recoverable from the key. For the
-    /// legacy single-step shape the key is the empty string, so the
+    /// legacy single-step format the key is the empty string, so the
     /// chapter slug alone identifies the step.
     #[must_use]
     pub fn key(&self) -> String {
@@ -166,7 +166,7 @@ pub struct Exercise {
     /// segment under `/exercise/`.
     pub file_stem: String,
     /// Chapter title, taken from the first code step's `//!` H1 (legacy
-    /// shape) or from a top-level `0_chapter.md` (future). Falls back to
+    /// format) or from a top-level `0_chapter.md` (future). Falls back to
     /// `file_stem`.
     pub title: String,
     /// Ordered prose + code steps as they should render top-to-bottom.
@@ -383,7 +383,7 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
     let number = prefix + 1;
 
     // Discover sibling step files (`<n>_<slug>.rs`) before deciding the
-    // shape. The presence of any such file flips us into multi-step mode,
+    // layout. The presence of any such file flips us into multi-step mode,
     // even if there's also a `main.rs` (which in that case is generated).
     let step_files = scan_step_files(dir)?;
     let mut notes = scan_notes(dir)?;

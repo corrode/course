@@ -75,7 +75,7 @@ makes "pluggable rules" work: every rule is a different struct (and
 might carry different configuration), but the call site only knows
 "a list of things that can validate."
 
-You'll see the same shape, scaled up, in Chapter 15's password
+You'll see the same idea, scaled up, in Chapter 15's password
 validator: a configurable set of checks running against one input.
 
 ## A word about `Box<dyn Trait>`
@@ -105,6 +105,6 @@ fine for borrowing.
 - `str::contains` (with a `&str` argument) is all you need for the
   `MustContain` / `MustNotContain` checks.
 - Inside `collect_errors`, a plain `for` loop pushing into a
-  `Vec<String>` is the most direct shape. The same chain with
+  `Vec<String>` is the most direct form. The same chain with
   `.iter().filter_map(...)` works once you've met iterators in
   Chapter 15.

@@ -33,7 +33,7 @@ let top = counts.iter().max_by_key(|(_, count)| *count);
 // top: Option<(&String, &usize)>
 ```
 
-**Filtering and collecting.** Same iterator shape as in chapter 15:
+**Filtering and collecting.** Same iterator chain as in chapter 15:
 
 ```rust
 let frequent: Vec<String> = counts

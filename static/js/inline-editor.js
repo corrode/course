@@ -61,7 +61,7 @@
 // Fallback path: if any of the CodeMirror imports fail (esm.sh blocked,
 // offline, etc.) the module wires Run/Format/Reset/Submit against the
 // plain `<textarea data-role="editor-fallback">` and returns the same
-// handle shape so call sites don't need to branch.
+// handle so call sites don't need to branch.
 
 import { proseHighlightStyle, proseEditorTheme } from "./cm-theme.js";
 

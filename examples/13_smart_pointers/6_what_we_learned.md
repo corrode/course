@@ -19,7 +19,7 @@ text-transformation commands via `Box<dyn Command>`.
 - Recursive enums need indirection. `Add(Expr, Expr)` is infinitely
   sized; `Add(Box<Expr>, Box<Expr>)` is two pointers. The compiler
   can lay it out, and recursion mirrors the data exactly. The same
-  shape underpins parsers, interpreters, and ASTs everywhere.
+  concept underpins parsers, interpreters, and ASTs everywhere.
 - `Box<dyn Trait>` is the owned form of a trait object. It lets you
   store mixed concrete types behind a single interface (a
   `Vec<Box<dyn Command>>` of pipeline stages, all different structs,

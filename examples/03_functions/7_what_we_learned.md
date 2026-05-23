@@ -6,8 +6,8 @@ Four small exercises, four new ideas:
   expression and a statement: one trailing `;` is the line between
   "return this value" and "return `()`".
 - **`countdown`** introduced the unit return type `()` and the basic
-  shape of a recursive function: a base case plus a recursive case.
-- **`sum_to`** turned that shape into a value-returning recursion,
+  form of a recursive function: a base case plus a recursive case.
+- **`sum_to`** turned that into a value-returning recursion,
   where each call's answer feeds into the caller's answer.
 - **`cap_at`** showed that function parameters are immutable
   bindings by default, and that adding `mut` to the parameter name

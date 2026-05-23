@@ -7,7 +7,7 @@ trait Validator {
 /// Rule: the input must be at least `n` characters long.
 ///
 /// Already implemented for you as the worked example. Read it,
-/// then write the other two impls in the same shape.
+/// then write the other two impls in the same way.
 struct MinLength {
     n: usize,
 }

@@ -9,7 +9,7 @@ and `loop`) and the keywords that control them (`break` and
 
 ## `if` / `else` / `else if`
 
-The shape is unsurprising:
+The usage is unsurprising:
 
 ```rust
 if x > 0 {
@@ -38,8 +38,7 @@ Two things to call out:
 
 ## `for` loops
 
-`for` walks anything that produces an iterator. The two most common
-shapes:
+`for` walks anything that produces an iterator. Here's how it works: 
 
 ```rust
 for i in 0..5 {            // 0, 1, 2, 3, 4

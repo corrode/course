@@ -12,7 +12,7 @@ talk to each other.
   `String`, `Option`) keep showing up.
 - Per-character checks are almost always
   `s.chars().any(|c| c.is_ascii_*())` or
-  `s.chars().filter(...).count()`. Internalise the shape.
+  `s.chars().filter(...).count()`. Internalise this call chain.
 - Membership in a small set of literal characters is one
   `"!@#$%^&*".contains(c)` call. No need for a `HashSet`.
 - A `Vec<String>` you `push` into as you check each rule is the

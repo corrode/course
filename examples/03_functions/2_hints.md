@@ -19,7 +19,7 @@
 
 ## sum_to
 
-1. Same recursion shape as `countdown`: an `if` with a base case
+1. Same recursion pattern as `countdown`: an `if` with a base case
    (`n == 0`) and a recursive case that calls `sum_to(n - 1)`.
 2. The recursive case returns `n + sum_to(n - 1)`. No `mut`, no
    `let`, no `return`.

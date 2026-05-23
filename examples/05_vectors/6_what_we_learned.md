@@ -1,6 +1,6 @@
 # Wrapping up vectors
 
-You worked through every shape a `Vec` parameter can take: a shared
+You worked through every form a `Vec` parameter can take: a shared
 borrow for reading, a mutable borrow for changing, and a fresh
 `Vec<String>` produced from borrowed `&str` inputs.
 
@@ -10,7 +10,7 @@ borrow for reading, a mutable borrow for changing, and a fresh
   but a single `Vec` only holds one type at a time.
 - Build them with `Vec::new()` for an empty one, or the `vec![...]`
   macro when you already have the contents.
-- The parameter shape says what you intend to do: `&[T]` or
+- The parameter version says what you intend to do: `&[T]` or
   `&Vec<T>` to read, `&mut Vec<T>` to add or remove, plain `Vec<T>`
   to consume the whole thing.
 - `push` appends, `pop` removes the last item and returns

@@ -27,7 +27,7 @@
 
 ## `filter_to_string`
 
-1. Same shape as the previous one, but the closure now sees `&&&str`.
+1. Same as the previous one, but the closure now sees `&&&str`.
    Auto-deref still saves you for `.ends_with(".rs")`.
 2. The function returns `Vec<String>`, not `Vec<&str>`. Add a `.map(...)`
    step that converts each `&&str` into an owned `String`.

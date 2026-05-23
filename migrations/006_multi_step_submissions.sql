@@ -6,5 +6,5 @@
 -- meaningless, so we wipe the table rather than backfilling.
 --
 -- The schema itself is unchanged: `exercise_name TEXT` already accommodates
--- both shapes.
+-- both formats. 
 DELETE FROM submissions;

@@ -22,7 +22,7 @@ The shared types are duplicated here so this step compiles on its own.
   report. The closure inside an `if`/`else` chain can decide what
   suggestion (if any) to emit.
 - [`Vec::push`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.push)
-  appends each suggestion. A `Vec<String>` is a fine return shape.
+  appends each suggestion. A `Vec<String>` is a fine return value.
 - [`format!`](https://doc.rust-lang.org/std/macro.format.html) lets
   you splice the input password into a suggestion when that helps
   the user understand what to fix.

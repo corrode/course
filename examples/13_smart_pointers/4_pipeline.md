@@ -60,7 +60,7 @@ command type per pipeline.
 - A `for` loop over `&[Box<dyn Command>]` yields `&Box<dyn Command>`
   on each iteration. Method calls auto-deref through the box (and
   through the `&`), so `cmd.run(...)` just works.
-- The pipeline shape is a *fold*: start with the input, and at each
+- The pipeline is a *fold*: start with the input, and at each
   step the next command takes the previous output. A plain `let mut
   current = input.to_string();` plus reassignment in the loop is the
   most readable thing.
