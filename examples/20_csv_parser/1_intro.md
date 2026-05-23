@@ -1,4 +1,4 @@
-# State machines and stateful parsing
+# State Machines and Stateful Parsing
 
 CSV looks easy until you hit quoted fields with commas inside, or
 escaped quotes inside quoted fields. The trick is to walk the input

@@ -4,7 +4,7 @@ A short, opinionated quick-reference of the syntax this course uses.
 Inspired by [cheats.rs](https://cheats.rs/), trimmed to the essentials.
 Press `?` from any page to bring this up; `Esc` to close.
 
-## Variables and types
+## Variables and Types
 
 | Syntax | Meaning |
 | --- | --- |
@@ -24,7 +24,7 @@ Press `?` from any page to bring this up; `Esc` to close.
 | `println!("{s} {n}");` | Print to stdout, with a newline. |
 | Take `&str` in, return `String` out | Rule of thumb for function signatures. |
 
-## Control flow
+## Control Flow
 
 | Syntax | Meaning |
 | --- | --- |
@@ -57,7 +57,7 @@ Press `?` from any page to bring this up; `Esc` to close.
 | `HashMap<K, V>` | Hash map. `use std::collections::HashMap;` |
 | `m.insert(k, v);` `m.get(&k);` | Insert; lookup returns `Option<&V>`. |
 
-## Functions and closures
+## Functions and Closures
 
 | Syntax | Meaning |
 | --- | --- |
@@ -66,7 +66,7 @@ Press `?` from any page to bring this up; `Esc` to close.
 | `\|x: i32\| -> i32 { x + 1 }` | Closure with explicit types and a body block. |
 | `Fn`, `FnMut`, `FnOnce` | Closure traits, in order of how much they capture. |
 
-## Ownership and borrowing
+## Ownership and Borrowing
 
 | Syntax | Meaning |
 | --- | --- |
@@ -76,7 +76,7 @@ Press `?` from any page to bring this up; `Esc` to close.
 | `fn consume(s: String) { ... }` | Takes ownership; original binding becomes invalid. |
 | Rule | At any time: many `&` *or* one `&mut`, never both. |
 
-## Structs, enums, methods
+## Structs, Enums, Methods
 
 | Syntax | Meaning |
 | --- | --- |
@@ -117,7 +117,7 @@ Direct comparisons (`==`, `<`, `>`) don't, which is why you sometimes
 need `**` or `&&` to make the types meet.
 
 
-## Error handling with `?`
+## Error Handling with `?`
 
 | Syntax | Meaning |
 | --- | --- |
@@ -125,7 +125,7 @@ need `**` or `&&` to make the types meet.
 | `Result<T, Box<dyn Error>>` | "Any error type", common in `main`. |
 | `?` requires a matching return type | Function must return `Result` or `Option`. |
 
-## Modules and visibility
+## Modules and Visibility
 
 | Syntax | Meaning |
 | --- | --- |
@@ -135,7 +135,7 @@ need `**` or `&&` to make the types meet.
 | `pub(crate) fn ...` | Public within this crate only. |
 | (no keyword) | Private to the current module. |
 
-## Traits and generics (just enough)
+## Traits and Generics (Just Enough)
 
 | Syntax | Meaning |
 | --- | --- |
@@ -143,7 +143,7 @@ need `**` or `&&` to make the types meet.
 | `impl Display for User { ... }` | Implement a trait for your type. |
 | `Box<dyn Trait>` | Heap-allocated trait object (dynamic dispatch). |
 
-## Cargo commands
+## Cargo Commands
 
 | Command | Purpose |
 | --- | --- |
@@ -155,7 +155,7 @@ need `**` or `&&` to make the types meet.
 | `cargo fmt` | Auto-format with rustfmt. |
 | `cargo clippy -- -D warnings` | Lint, fail on warnings. |
 
-## Where to look next
+## Where to Look Next
 
 [`std` docs](https://doc.rust-lang.org/std/) ·
 [Rust by Example](https://doc.rust-lang.org/rust-by-example/) ·

@@ -1,4 +1,4 @@
-# Ownership and borrowing
+# Ownership and Borrowing
 
 *Why are Rust developers so frugal? They prefer to borrow.*
 

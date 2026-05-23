@@ -1,4 +1,4 @@
-# The `?` operator
+# The `?` Operator
 
 Working with `Result` quickly becomes verbose if every call needs a
 match-then-return:
