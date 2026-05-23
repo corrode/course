@@ -908,6 +908,14 @@ export async function mountInlineEditor(section, opts = {}) {
   // autosubmit when every test passes.
   let autosubmit = null;
 
+  // Persist the "Submitted ✓" state across reloads: the server marks
+  // the section with `data-completed="true"` when this step's most
+  // recent submission has all tests passing. Any subsequent edit clears
+  // it via the `persistExt` updateListener.
+  if (submitBtn && section.dataset.completed === "true") {
+    markSubmittedIndicator();
+  }
+
   if (runBtn) {
     runBtn.addEventListener("click", async () => {
       const now = Date.now();

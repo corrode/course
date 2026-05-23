@@ -1331,11 +1331,25 @@
                 margin: 0 0 0.4rem;
                 font-size: 1.15rem;
             }
-            .cheatsheet-modal-body > p {
+            /* Only the intro paragraph (immediately after the h1) spans
+               all columns. In-section paragraphs (e.g. the prose around
+               the "What does my closure receive?" table) must stay in
+               column flow, otherwise each one forces a span-all break
+               and strands the surrounding sections in empty columns. */
+            .cheatsheet-modal-body > h1 + p {
                 column-span: all;
                 margin: 0 0 0.75rem;
                 font-size: 0.85rem;
                 color: var(--color-text-muted);
+            }
+            .cheatsheet-modal-body > p {
+                margin: 0 0 0.6rem;
+                font-size: 0.78rem;
+                line-height: 1.45;
+                break-inside: avoid;
+                /* Keep paragraphs glued to the heading or paragraph
+                   above so a section never splits across columns. */
+                break-before: avoid;
             }
             .cheatsheet-modal-body > h2 {
                 font-size: 0.9rem;
@@ -1346,9 +1360,26 @@
                 color: var(--color-text);
                 break-after: avoid;
             }
+            /* h3 is used for sub-sections (e.g. "What does my closure
+               receive?"). Style smaller than h2 and keep it attached to
+               the following paragraph/table. */
+            .cheatsheet-modal-body > h3 {
+                font-size: 0.82rem;
+                font-weight: 600;
+                margin: 0.4rem 0 0.25rem;
+                color: var(--color-text);
+                break-after: avoid;
+                break-inside: avoid;
+            }
             .cheatsheet-modal-body > h2,
+            .cheatsheet-modal-body > h3,
             .cheatsheet-modal-body > table {
                 break-inside: avoid;
+            }
+            /* Tables follow either an h2/h3 or an intro paragraph; pin
+               them to whatever comes before so they don't detach. */
+            .cheatsheet-modal-body > table {
+                break-before: avoid;
             }
             .cheatsheet-modal-body > table {
                 width: 100%;

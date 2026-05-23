@@ -155,6 +155,7 @@ progress_total > 0 %}
         class="exercise-section"
         data-step-id="{{ dom_id }}"
         data-exercise-key="{{ exercise_key }}"
+        data-completed="{% if *completed %}true{% else %}false{% endif %}"
     >
         <div class="exercise-section-head">
             <div>
