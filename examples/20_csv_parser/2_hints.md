@@ -31,6 +31,14 @@
 1. `content.lines()` gives you an iterator over `&str` lines.
 2. The first line is headers; the rest are rows. `next()` on the
    iterator pulls the first one off; the rest you can `map(parse_csv_line).collect()`.
+3. ```rust
+   fn parse_csv_file(content: &str) -> (Vec<String>, Vec<Vec<String>>) {
+       let mut lines = content.lines();
+       let headers = lines.next().map(parse_csv_line).unwrap_or_default();
+       let rows = lines.map(parse_csv_line).collect();
+       (headers, rows)
+   }
+   ```
 
 ## `records`
 
@@ -38,3 +46,19 @@
    `(header, value)` pairs, then `collect::<HashMap<_, _>>()`.
 2. You'll be cloning `String`s into the map. That's expected here, the
    function takes shared slices.
+3. ```rust
+   use std::collections::HashMap;
+
+   fn csv_to_records(
+       headers: &[String],
+       rows: &[Vec<String>],
+   ) -> Vec<HashMap<String, String>> {
+       rows.iter()
+           .map(|row| {
+               headers.iter().cloned()
+                   .zip(row.iter().cloned())
+                   .collect()
+           })
+           .collect()
+   }
+   ```
