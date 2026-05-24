@@ -1083,6 +1083,8 @@ export async function mountInlineEditor(section, opts = {}) {
         `Progress: ${data.progress_done} of ${data.progress_total} chapters completed`,
       );
     }
+    // Note: the topbar's hairline tracks reading-scroll position, not
+    // chapter completion, so we don't touch `.topbar-progress-bar` here.
   }
 
   if (submitBtn && features.submit) {

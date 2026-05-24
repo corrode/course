@@ -599,7 +599,10 @@
                 z-index: 900;
                 height: 3rem;
                 background: var(--color-background);
-                border-bottom: 1px solid var(--color-border);
+                /* The hairline scroll-progress bar (`.topbar-progress-bar`)
+                   sits at the bottom edge of the topbar and acts as the
+                   visual separator from the page content, so the topbar
+                   itself doesn't draw a border. */
                 display: flex;
                 align-items: center;
                 padding: 0 1.5rem;
@@ -666,6 +669,37 @@
             .topbar-progress-count strong {
                 color: var(--color-primary, #0969da);
                 font-weight: 600;
+            }
+            /* Hairline scroll-progress bar pinned to the bottom edge of
+               the sticky topbar. The fill's `width` is driven by the
+               inline scroll handler at the bottom of `<body>`; the
+               track itself doubles as the topbar's bottom border. */
+            .topbar-progress-bar {
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: 2px;
+                pointer-events: none;
+                background: var(--color-border);
+            }
+            .topbar-progress-bar-fill {
+                display: block;
+                height: 100%;
+                /* `width` is set inline by the scroll handler; default
+                   to 0 so the bar starts empty before JS runs. No
+                   transition: the fill should track the scroll gesture
+                   in real time, not lag behind it. */
+                width: 0;
+                background: var(--color-primary);
+            }
+            html[data-theme="dark"] .topbar-progress-bar-fill {
+                /* Brand pink reads better against the dark surface than
+                   the muted dark-theme blue, and matches the accent
+                   used elsewhere (headline, destructive admin actions). */
+                background: var(--color-brand);
+                box-shadow: 0 0 6px
+                    color-mix(in srgb, var(--color-brand) 55%, transparent);
             }
             .topbar-spacer {
                 flex: 1;
@@ -1999,6 +2033,9 @@
                 </a>
                 {% include "partials/theme_toggle.html" %}
             </div>
+            <div class="topbar-progress-bar" aria-hidden="true">
+                <span class="topbar-progress-bar-fill"></span>
+            </div>
         </header>
         {% endblock %} {% block content %}{% endblock %}
 
@@ -2433,5 +2470,43 @@
 
         <!-- canvas-confetti for celebrating passing test runs -->
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+        <script>
+            // Reading-progress hairline at the bottom of the sticky
+            // topbar. Updates on `scroll` and `resize`, throttled to
+            // one paint per frame via `requestAnimationFrame`, with a
+            // passive listener so it never blocks scrolling.
+            (function () {
+                var fill = document.querySelector(".topbar-progress-bar-fill");
+                if (!fill) return;
+                var ticking = false;
+                function update() {
+                    ticking = false;
+                    var doc = document.documentElement;
+                    // Short pages have no scrollable distance; clamp to
+                    // 0% instead of dividing by zero.
+                    var max =
+                        (doc.scrollHeight || 0) - (window.innerHeight || 0);
+                    var pct =
+                        max > 0
+                            ? Math.max(
+                                  0,
+                                  Math.min(100, (window.scrollY / max) * 100),
+                              )
+                            : 0;
+                    fill.style.width = pct + "%";
+                }
+                function schedule() {
+                    if (ticking) return;
+                    ticking = true;
+                    window.requestAnimationFrame(update);
+                }
+                window.addEventListener("scroll", schedule, { passive: true });
+                window.addEventListener("resize", schedule, { passive: true });
+                // Paint once on load so the bar matches the initial
+                // scroll position (e.g. on a bfcache restore).
+                update();
+            })();
+        </script>
     </body>
 </html>

@@ -9,7 +9,7 @@
     clippy::needless_pass_by_value,
     clippy::needless_pass_by_ref_mut,
     clippy::ptr_arg,
-    clippy::boxed_local
+    clippy::boxed_local,
 )]
 
 #[path = "2_safe_divide.rs"]
