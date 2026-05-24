@@ -2424,15 +2424,26 @@
             // inline `onclick=` / `onchange=` attributes; the early returns
             // make them harmless when an unrelated page loads `base.html`.
             function filterSubmissions() {
-                var select = document.getElementById("exercise-filter");
-                if (!select) return;
-                var filter = select.value;
+                var exerciseSelect = document.getElementById("exercise-filter");
+                var participantSelect =
+                    document.getElementById("participant-filter");
+                if (!exerciseSelect && !participantSelect) return;
+                var exerciseFilter = exerciseSelect ? exerciseSelect.value : "";
+                var participantFilter = participantSelect
+                    ? participantSelect.value
+                    : "";
                 document
                     .querySelectorAll("#submissions-container .submission-card")
                     .forEach(function (card) {
-                        var name = card.getAttribute("data-exercise");
+                        var exercise = card.getAttribute("data-exercise");
+                        var participant = card.getAttribute("data-participant");
+                        var matchesExercise =
+                            !exerciseFilter || exercise === exerciseFilter;
+                        var matchesParticipant =
+                            !participantFilter ||
+                            participant === participantFilter;
                         card.style.display =
-                            !filter || name === filter ? "" : "none";
+                            matchesExercise && matchesParticipant ? "" : "none";
                     });
             }
 

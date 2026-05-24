@@ -1,12 +1,17 @@
 {# Shared submission card. Included by admin.html and team.html. The caller sets
 a loop variable `sub` of type `SubmissionSummary` (fields: participant_name,
 exercise_name, tests_passed, perfected, submitted_at, source_code). The
-data-exercise attribute on the list item is what filterSubmissions() in
-base.html reads to show/hide cards when the user picks an exercise from the
-dropdown. The .rust-editor element is replaced in-place with a read-only
-CodeMirror 6 viewer by static/js/readonly-rust-editor.js. The styled fallback
-(border, padding, mono font) lives on .rust-editor in base.html. #}
-<li class="submission-card" data-exercise="{{ sub.exercise_name }}">
+data-exercise and data-participant attributes on the list item are what
+filterSubmissions() in base.html reads to show/hide cards when the user picks an
+exercise or participant from the dropdowns. The .rust-editor element is replaced
+in-place with a read-only CodeMirror 6 viewer by
+static/js/readonly-rust-editor.js. The styled fallback (border, padding, mono
+font) lives on .rust-editor in base.html. #}
+<li
+    class="submission-card"
+    data-exercise="{{ sub.exercise_name }}"
+    data-participant="{{ sub.participant_name }}"
+>
     <header class="submission-card-head">
         <span class="submission-card-status">
             {% if sub.perfected %}

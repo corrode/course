@@ -136,7 +136,21 @@ endblock %} {% block content %}
         <div class="section-head">
             <span class="section-eyebrow">Recent submissions</span>
             <span class="section-meta">
-                <label for="exercise-filter">Filter:</label>
+                <label for="participant-filter">Participant:</label>
+                <select
+                    id="participant-filter"
+                    onchange="filterSubmissions()"
+                    class="admin-input admin-input-tiny"
+                >
+                    <option value="">All participants</option>
+                    {% for group in participant_groups %} {% for participant in
+                    group.members %}
+                    <option value="{{ participant.name }}">
+                        {{ participant.name }}
+                    </option>
+                    {% endfor %} {% endfor %}
+                </select>
+                <label for="exercise-filter">Exercise:</label>
                 <select
                     id="exercise-filter"
                     onchange="filterSubmissions()"
