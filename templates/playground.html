@@ -312,6 +312,36 @@ endblock %} {% block content %}
         }
     }
 
+    /* Make the editor fill the available vertical space by default,
+       not just in fullscreen mode. The container and section both
+       become flex columns so the CodeMirror mount can stretch into
+       whatever's left below the intro prose and toolbar. */
+    body:has(.exercise-section[data-step-id="playground"]) .container {
+        display: flex;
+        flex-direction: column;
+    }
+    .exercise-section[data-step-id="playground"] {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+    .exercise-section[data-step-id="playground"]
+        > div[style*="position: relative"] {
+        flex: 1 1 auto;
+        min-height: 24rem;
+        display: flex;
+        flex-direction: column;
+    }
+    .exercise-section[data-step-id="playground"] [data-role="editor-mount"],
+    .exercise-section[data-step-id="playground"] [data-role="editor-fallback"] {
+        flex: 1 1 auto;
+        min-height: 24rem;
+    }
+    .exercise-section[data-step-id="playground"] .cm-editor {
+        height: 100%;
+    }
+
     /* Icon-only toolbar button: square, currentColor SVG inside.
        Matches `.btn.btn-secondary` height so it lines up with Vim /
        Reset / Format in the actions row. */
