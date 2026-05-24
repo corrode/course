@@ -51,6 +51,10 @@
 //   syntaxHighlightOutput  -> mount a read-only CM6 view inside
 //                             `data-role="output-stderr"` to colourise
 //                             cargo output (defaults to features.testResults)
+//   runWithoutTests        -> send `tests: false` to /api/run so the
+//                             upstream Playground runs `main()` instead of
+//                             `cargo test`. The scratchpad uses this so
+//                             `println!` / `dbg!` output actually shows up.
 //
 // Vim toggle is *global* across every mounted editor on the page (it would
 // be jarring to have one section in vim mode and another not). Each mount
@@ -306,6 +310,7 @@ export async function mountInlineEditor(section, opts = {}) {
   const draftKey = features.draftKey || null;
   const wantsTestResults = features.testResults !== false && !!testList;
   const wantsHighlightOutput = features.syntaxHighlightOutput === true;
+  const runWithoutTests = features.runWithoutTests === true;
 
   const persistDraft = (text) => {
     if (!draftKey) return;
@@ -373,7 +378,8 @@ export async function mountInlineEditor(section, opts = {}) {
       Decoration,
       ViewPlugin,
     } = view;
-    const { syntaxHighlighting, bracketMatching, indentOnInput } = lang;
+    const { syntaxHighlighting, bracketMatching, indentOnInput, indentUnit } =
+      lang;
     const { defaultKeymap, history, historyKeymap, indentWithTab } = commands;
     const {
       autocompletion,
@@ -488,6 +494,10 @@ export async function mountInlineEditor(section, opts = {}) {
       history(),
       drawSelection(),
       indentOnInput(),
+      // Match Zed / rustfmt: 4-space indent. CM6 defaults to 2, which made
+      // newlines inside `fn`/`impl` blocks indent half as far as the
+      // surrounding (rustfmt'd) code in the same buffer.
+      indentUnit.of("    "),
       bracketMatching(),
       syntaxHighlighting(proseHighlightStyle, { fallback: true }),
       closeBrackets(),
@@ -783,9 +793,13 @@ export async function mountInlineEditor(section, opts = {}) {
 
     if (runStatus) {
       if (total === 0) {
-        runStatus.textContent = data.success
-          ? "Compiled. No tests ran."
-          : "Did not compile.";
+        if (runWithoutTests) {
+          runStatus.textContent = data.success ? "Ran." : "Did not compile.";
+        } else {
+          runStatus.textContent = data.success
+            ? "Compiled. No tests ran."
+            : "Did not compile.";
+        }
         runStatus.style.color = data.success
           ? "var(--color-text-muted)"
           : "var(--color-error, #c62828)";
@@ -800,7 +814,11 @@ export async function mountInlineEditor(section, opts = {}) {
 
     if (total === 0) {
       setActionStatus(
-        data.success ? "Compiled" : "Did not compile",
+        data.success
+          ? runWithoutTests
+            ? "Ran"
+            : "Compiled"
+          : "Did not compile",
         data.success ? "neutral" : "fail",
       );
     } else if (passed === total) {
@@ -838,10 +856,12 @@ export async function mountInlineEditor(section, opts = {}) {
     if (runSpinner) runSpinner.style.display = "inline-block";
     clearActionStatus();
     try {
+      const payload = { code, slug: exerciseKey };
+      if (runWithoutTests) payload.tests = false;
       const resp = await fetch("/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, slug: exerciseKey }),
+        body: JSON.stringify(payload),
       });
       if (!resp.ok) {
         if (runStatus) {
