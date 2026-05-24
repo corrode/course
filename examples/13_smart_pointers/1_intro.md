@@ -1,4 +1,4 @@
-# Smart pointers
+# Smart Pointers
 
 *A pointer that cleans up after itself walks into a scope. Nothing
 leaks.*

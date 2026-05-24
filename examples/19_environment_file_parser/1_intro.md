@@ -1,4 +1,4 @@
-# Parsing structured text and generics
+# Parsing Structured Text and Generics
 
 *You have a problem. You decide to use generics. Now you have a `Problem<T> where T: Clone + Send + Sync + 'static`.*
 

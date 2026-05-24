@@ -1,4 +1,4 @@
-# Putting it together
+# Putting It Together
 
 This chapter doesn't introduce a new concept. It combines strings,
 collections, and iterators into one small program: count words in a

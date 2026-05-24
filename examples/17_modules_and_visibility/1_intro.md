@@ -1,4 +1,4 @@
-# Modules and visibility
+# Modules and Visibility
 
 Modules are how Rust organizes code into namespaces. They give you two
 things: a way to group related items together, and a way to control

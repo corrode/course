@@ -1,4 +1,4 @@
-# Enums and pattern matching
+# Enums and Pattern Matching
 
 *“Dad, why is my sister’s name Rose?”  
 “Because your mother loves roses.”  

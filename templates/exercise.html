@@ -546,43 +546,8 @@ progress_total > 0 %}
         </a>
         {% endmatch %}
     </section>
-    {% endif %} {% when None %} {% endmatch %} {% if exercise.shows_toc() %}
-    <nav
-        class="chapter-list"
-        aria-label="All exercises"
-        style="--chapter-rows: {{ (dots.len() + 1) / 2 }}"
-    >
-        {% for d in dots %} {% if d.current %}
-        <span
-            class="chapter-row current{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
-            id="current-chapter-row"
-            aria-current="page"
-        >
-            <span class="chapter-num">{{ d.number }}</span>
-            <span class="chapter-title">{{ d.title }}</span>
-            <span class="chapter-mark" aria-hidden="true"></span>
-        </span>
-        {% else %} {% match ulid %} {% when Some with (u) %}
-        <a
-            href="/exercise/{{ u }}/{{ d.slug }}"
-            class="chapter-row{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
-        >
-            <span class="chapter-num">{{ d.number }}</span>
-            <span class="chapter-title">{{ d.title }}</span>
-            <span class="chapter-mark" aria-hidden="true"></span>
-        </a>
-        {% when None %}
-        <a
-            href="/exercise/{{ d.slug }}"
-            class="chapter-row{% if d.is_quiz %} quiz{% endif %}"
-        >
-            <span class="chapter-num">{{ d.number }}</span>
-            <span class="chapter-title">{{ d.title }}</span>
-            <span class="chapter-mark" aria-hidden="true"></span>
-        </a>
-        {% endmatch %} {% endif %} {% endfor %}
-    </nav>
-    {% endif %}
+    {% endif %} {% when None %} {% endmatch %} {% if exercise.shows_toc() %} {%
+    include "partials/chapter_list.html" %} {% endif %}
 </div>
 
 <script type="module">
@@ -1455,103 +1420,10 @@ progress_total > 0 %}
         transform: translateX(0.2rem);
     }
 
-    .chapter-list {
-        margin: 3rem auto 0;
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 0 2rem;
-        max-width: 60rem;
-    }
-    @media (min-width: 720px) {
-        .chapter-list {
-            grid-template-columns: 1fr 1fr;
-            grid-auto-flow: column;
-            grid-template-rows: repeat(var(--chapter-rows, 10), auto);
-        }
-    }
-    .chapter-row {
-        display: grid;
-        grid-template-columns: 2.25rem 1fr auto;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.65rem 0.75rem;
-        border-top: 1px solid var(--color-border);
-        color: var(--color-primary, #0969da);
-        text-decoration: none;
-        font-size: 0.95rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        transition: background-color 120ms;
-    }
-    .chapter-row:last-child {
-        border-bottom: 1px solid var(--color-border);
-    }
-    .chapter-row:hover,
-    .chapter-row:focus-visible {
-        background-color: var(--color-background);
-    }
-    .chapter-row .chapter-num {
-        color: var(--color-text-muted);
-        font-variant-numeric: tabular-nums;
-        font-weight: 500;
-    }
-    .chapter-row .chapter-title {
-        font-weight: 500;
-    }
-    .chapter-row .chapter-mark {
-        width: 0.6rem;
-        height: 0.6rem;
-        border-radius: 999px;
-        background: transparent;
-        border: 1px solid var(--color-border);
-    }
-    .chapter-row.attempted {
-        background-color: rgba(125, 125, 125, 0.06);
-    }
-    .chapter-row.attempted .chapter-mark {
-        background: var(--color-text-muted);
-        border-color: var(--color-text-muted);
-        opacity: 0.45;
-    }
-    .chapter-row.completed {
-        background-color: rgba(46, 125, 50, 0.07);
-    }
-    .chapter-row.completed .chapter-mark {
-        background: var(--color-success, #2e7d32);
-        border-color: var(--color-success, #2e7d32);
-        opacity: 1;
-    }
-    .chapter-row.perfected {
-        background-color: rgba(241, 196, 15, 0.1);
-    }
-    .chapter-row.perfected .chapter-mark {
-        background: #f1c40f;
-        border-color: #f1c40f;
-    }
-    .chapter-row.completed:hover,
-    .chapter-row.completed:focus-visible {
-        background-color: rgba(46, 125, 50, 0.13);
-    }
-    .chapter-row.perfected:hover,
-    .chapter-row.perfected:focus-visible {
-        background-color: rgba(241, 196, 15, 0.18);
-    }
-    .chapter-row.current {
-        background-color: var(--color-background);
-        color: var(--color-text);
-        font-weight: 700;
-        box-shadow: inset 3px 0 0 var(--color-primary, #0969da);
-    }
-    .chapter-row.current .chapter-num {
-        color: var(--color-text);
-        font-weight: 700;
-    }
-    .chapter-row.current.completed {
-        background-color: rgba(46, 125, 50, 0.12);
-    }
-    .chapter-row.current.perfected {
-        background-color: rgba(241, 196, 15, 0.18);
-    }
+    /* The bottom "All exercises" chapter list and the homepage TOC both
+       render through `templates/partials/chapter_list.html`. The shared
+       `.chapter-list` / `.chapter-row` styles live in base.html. */
+
     /* The hint is a disclosure widget, not a UI card. Collapsed state
        is a quiet text trigger (icon + label, no border/background) so
        it never competes visually with the editor section or run output
@@ -1667,9 +1539,6 @@ progress_total > 0 %}
     .prose-copy-btn svg {
         width: 14px;
         height: 14px;
-    }
-    .chapter-row.quiz .chapter-title {
-        font-style: italic;
     }
 </style>
 {% endblock %}

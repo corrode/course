@@ -1,4 +1,4 @@
-# A creative break
+# A Creative Break
 
 You might not have noticed yet, but, quietly, like a beautiful magpie collecting
 shiny things, you've acquired the skills to write a lot of helpful Rust programs

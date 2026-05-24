@@ -278,45 +278,7 @@ fn main() {
     </section>
     {% endmatch %}
 
-    <section class="book-toc" aria-label="Table of contents">
-        <div class="book-toc-eyebrow">Contents</div>
-        <ol class="book-toc-list">
-            {% for exercise in exercises %} {% if exercise.is_quiz %}
-            <li
-                class="book-toc-row{% if exercise.completed %} is-completed{% endif %}{% if exercise.perfected %} is-perfected{% endif %} is-quiz"
-            >
-                <span class="book-toc-num">{{ exercise.number }}.</span>
-                <a
-                    class="book-toc-link"
-                    href="/static/quiz.html"
-                    target="_blank"
-                >
-                    <span class="book-toc-title">{{ exercise.title }}</span>
-                </a>
-                <span class="book-toc-mark" aria-hidden="true"></span>
-            </li>
-            {% else %}
-            <li
-                class="book-toc-row{% if exercise.completed %} is-completed{% endif %}{% if exercise.perfected %} is-perfected{% endif %}"
-            >
-                <span class="book-toc-num">{{ exercise.number }}.</span>
-                {% match ulid %} {% when Some with (u) %}
-                <a
-                    class="book-toc-link"
-                    href="/exercise/{{ u }}/{{ exercise.name }}"
-                >
-                    <span class="book-toc-title">{{ exercise.title }}</span>
-                </a>
-                {% when None %}
-                <a class="book-toc-link" href="/exercise/{{ exercise.name }}">
-                    <span class="book-toc-title">{{ exercise.title }}</span>
-                </a>
-                {% endmatch %}
-                <span class="book-toc-mark" aria-hidden="true"></span>
-            </li>
-            {% endif %} {% endfor %}
-        </ol>
-    </section>
+    {% include "partials/chapter_list.html" %}
 
     {% if !next_slug.is_empty() %} {% match participant_name %} {% when Some
     with (_n) %}
@@ -639,88 +601,6 @@ fn main() {
         text-decoration: underline;
     }
 
-    /* ---------- Table of contents ---------- */
-    .book-toc {
-        margin: 0 auto 4rem;
-        max-width: 52rem;
-    }
-    .book-toc-eyebrow {
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.24em;
-        text-transform: uppercase;
-        color: var(--color-text-muted);
-        text-align: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid var(--color-border);
-    }
-    .book-toc-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: grid;
-        grid-template-columns: 1fr;
-        column-gap: 3rem;
-        row-gap: 0.15rem;
-    }
-    @media (min-width: 860px) {
-        .book-toc-list {
-            grid-template-columns: 1fr 1fr;
-        }
-    }
-    .book-toc-row {
-        display: grid;
-        grid-template-columns: 2.25rem 1fr auto;
-        align-items: baseline;
-        gap: 0.75rem;
-        padding: 0.75rem 0;
-    }
-    .book-toc-num {
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-        color: var(--color-text-muted);
-        font-weight: 500;
-        font-size: 0.95rem;
-    }
-    .book-toc-link {
-        color: var(--color-text);
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 1rem;
-        line-height: 1.4;
-        min-width: 0;
-        transition: color 120ms ease;
-    }
-    .book-toc-link:hover,
-    .book-toc-link:focus-visible {
-        color: var(--color-primary);
-    }
-    .book-toc-title {
-        display: inline;
-    }
-    .book-toc-mark {
-        display: inline-block;
-        width: 0.55rem;
-        height: 0.55rem;
-        border-radius: 999px;
-        background: transparent;
-        border: 1px solid var(--color-border);
-        align-self: center;
-    }
-    .book-toc-row.is-completed .book-toc-mark {
-        background: var(--color-success, #2e7d32);
-        border-color: var(--color-success, #2e7d32);
-    }
-    .book-toc-row.is-perfected .book-toc-mark {
-        background: #f1c40f;
-        border-color: #f1c40f;
-        box-shadow: 0 0 0 2px rgba(241, 196, 15, 0.18);
-    }
-    .book-toc-row.is-quiz .book-toc-link {
-        font-style: italic;
-    }
-
     /* ---------- Call to action ---------- */
     .book-cta {
         text-align: center;
@@ -769,14 +649,6 @@ fn main() {
     .unknown-token-toast-close:hover,
     .unknown-token-toast-close:focus-visible {
         color: var(--color-text);
-    }
-
-    /* ---------- Responsive ---------- */
-    @media (max-width: 600px) {
-        .book-toc-row {
-            grid-template-columns: 2rem 1fr auto;
-            gap: 0.6rem;
-        }
     }
 </style>
 {% endblock %}

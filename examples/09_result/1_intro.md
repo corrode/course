@@ -1,4 +1,4 @@
-# Result<T, E>: when an operation might fail
+# Result<T, E>: When an Operation Might Fail
 
 *Failure is not an `Option<T>`, but a `Result<T, E>`.*
 

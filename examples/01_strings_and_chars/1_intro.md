@@ -1,4 +1,4 @@
-# Strings, &str, and chars
+# Strings, &str, and Chars
 
 *An `i32` walks up to a `String` and asks for its number. The `String` replies: "Sorry, you're not my type."*
 

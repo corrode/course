@@ -1,4 +1,4 @@
-# Conditionals and loops
+# Conditionals and Loops
 
 *Why did the Rust loop break up with the condition? It said "I just need some space."*
 

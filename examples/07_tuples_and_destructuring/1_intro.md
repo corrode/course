@@ -1,4 +1,4 @@
-# Tuples and destructuring
+# Tuples and Destructuring
 
 A tuple is a fixed-size group of values. Unlike a `Vec`, the elements can
 be different types, and the size is part of the type.

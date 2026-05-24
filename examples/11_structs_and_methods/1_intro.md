@@ -1,4 +1,4 @@
-# Structs and methods
+# Structs and Methods
 
 A `struct` groups related fields under a single named type. Once you have
 a struct, you can attach methods to it with an `impl` block.

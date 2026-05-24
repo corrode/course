@@ -1,4 +1,4 @@
-# Option<T>: when a value might be missing
+# Option<T>: When a Value Might Be Missing
 
 *I looked for a joke about null pointers in Rust, but there was `None`.*
 
