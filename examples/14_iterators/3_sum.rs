@@ -5,7 +5,7 @@
 /// library can collapse a numeric iterator down for you in one call.
 /// See: <https://doc.rust-lang.org/std/iter/trait.Iterator.html>
 fn calculate_total_revenue() -> i32 {
-    let sales = vec![1200, 850, 2300, 950, 1800, 3200, 1100, 2800];
+    let sales = [1200, 850, 2300, 950, 1800, 3200, 1100, 2800];
     todo!()
 }
 

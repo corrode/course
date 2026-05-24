@@ -21,6 +21,7 @@
 //! completely alone so this script is safe to run against the existing
 //! tree.
 
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -64,7 +65,28 @@ fn process_chapter(dir: &Path) -> Result<(), String> {
     }
 
     let mut body = String::from(GENERATED_HEADER);
-    body.push_str("#![allow(dead_code, unused_imports)]\n\n");
+    // Stub-friendly allows: every step starts as a `todo!()` skeleton
+    // with named parameters the learner will eventually use. Without
+    // these allows, clippy floods the example with warnings about the
+    // unused parameters and the `todo!()` macro itself, which buries
+    // any actual lint a learner might want to see in their own code.
+    //
+    // `ptr_arg` and `boxed_local` are allowed because the chapters on
+    // `Vec`, `String`, and `Box<T>` deliberately use those concrete
+    // types in function signatures to teach them; clippy's "prefer a
+    // slice" / "take by value" suggestions would defeat the lesson.
+    body.push_str(
+        "#![allow(\n    \
+         dead_code,\n    \
+         unused_imports,\n    \
+         unused_variables,\n    \
+         clippy::todo,\n    \
+         clippy::needless_pass_by_value,\n    \
+         clippy::needless_pass_by_ref_mut,\n    \
+         clippy::ptr_arg,\n    \
+         clippy::boxed_local,\n\
+         )]\n\n",
+    );
     for (_n, path, module_name) in &step_files {
         // The on-disk filename starts with a digit (`2_fallback.rs`), so
         // we name the module `_2_fallback` (legal identifier) and point
@@ -74,18 +96,15 @@ fn process_chapter(dir: &Path) -> Result<(), String> {
             .file_name()
             .and_then(|s| s.to_str())
             .ok_or_else(|| "step file has no filename".to_string())?;
-        body.push_str(&format!("#[path = \"{filename}\"]\n"));
-        body.push_str(&format!("mod {module_name};\n"));
+        let _ = writeln!(body, "#[path = \"{filename}\"]");
+        let _ = writeln!(body, "mod {module_name};");
     }
     body.push_str("\nfn main() {}\n");
 
     let main_rs = dir.join("main.rs");
     // Only write when the content actually changed so we don't bust
     // mtimes on every build and trigger needless rebuilds downstream.
-    let needs_write = match fs::read_to_string(&main_rs) {
-        Ok(existing) => existing != body,
-        Err(_) => true,
-    };
+    let needs_write = fs::read_to_string(&main_rs).map_or(true, |existing| existing != body);
     if needs_write {
         fs::write(&main_rs, body).map_err(|e| format!("writing {}: {e}", main_rs.display()))?;
     }
@@ -104,16 +123,14 @@ fn collect_step_files(dir: &Path) -> Result<Vec<(u32, PathBuf, String)>, String>
         if path.extension().and_then(|s| s.to_str()) != Some("rs") {
             continue;
         }
-        let filename = match path.file_name().and_then(|s| s.to_str()) {
-            Some(s) => s,
-            None => continue,
+        let Some(filename) = path.file_name().and_then(|s| s.to_str()) else {
+            continue;
         };
         if filename == "main.rs" {
             continue;
         }
-        let stem = match path.file_stem().and_then(|s| s.to_str()) {
-            Some(s) => s,
-            None => continue,
+        let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
+            continue;
         };
         let Some((order_str, rest)) = stem.split_once('_') else {
             continue;

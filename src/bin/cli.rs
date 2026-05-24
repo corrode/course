@@ -1,4 +1,6 @@
-use cargo_course::types::*;
+use cargo_course::types::{
+    Name, ProgressResponse, RegistrationRequest, RegistrationResponse, SubmissionRequest, Token,
+};
 
 use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
@@ -48,7 +50,7 @@ enum CourseCommands {
     },
     /// Submit an exercise solution
     Submit {
-        /// Path to the exercise file (e.g., examples/01_strings.rs)
+        /// Path to the exercise file (e.g., `examples/01_strings.rs`)
         file: Option<String>,
         /// Run fmt and clippy for a pedantic submission to earn a star
         #[arg(long)]
@@ -78,25 +80,23 @@ async fn main() -> Result<()> {
                 all,
             } => handle_submit(file.as_deref(), pedantic, all).await,
             CourseCommands::Status => handle_status().await,
-            CourseCommands::Open => handle_open().await,
-            CourseCommands::Token => handle_token().await,
+            CourseCommands::Open => handle_open(),
+            CourseCommands::Token => handle_token(),
         },
     }
 }
 
-async fn handle_token() -> Result<()> {
-    match read_token() {
-        Ok(token) => {
-            println!("{}", token.as_str());
-            Ok(())
-        }
-        Err(_) => Err(anyhow!(
+fn handle_token() -> Result<()> {
+    let Ok(token) = read_token() else {
+        return Err(anyhow!(
             "No token found. Run 'cargo course init' to register."
-        )),
-    }
+        ));
+    };
+    println!("{}", token.as_str());
+    Ok(())
 }
 
-async fn handle_open() -> Result<()> {
+fn handle_open() -> Result<()> {
     // Read token from file
     let token = read_token()?;
 
@@ -175,11 +175,11 @@ async fn handle_submit(file: Option<&str>, pedantic: bool, all: bool) -> Result<
 
     // 3. Run tests scoped to the right chapter (and step, if any).
     let (tests_passed, test_output) =
-        run_cargo_test(&target.chapter, target.test_filter.as_deref()).await?;
+        run_cargo_test(&target.chapter, target.test_filter.as_deref())?;
 
     // 4. If pedantic flag, also run fmt + clippy
     let (fmt_passed, clippy_passed) = if pedantic {
-        (run_cargo_fmt().await?, run_cargo_clippy().await?)
+        (run_cargo_fmt()?, run_cargo_clippy()?)
     } else {
         (false, false)
     };
@@ -290,18 +290,15 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
 }
 
 /// Process a single exercise: test, validate, and submit if successful.
-/// Returns Ok(exercise_name) on success, Err(exercise_name) on failure.
+/// Returns `Ok(exercise_name)` on success, `Err(exercise_name)` on failure.
 async fn process_single_exercise(
     file_path: String,
     pedantic: bool,
     token: &Token,
 ) -> Result<String, String> {
-    let target = match extract_submission_target(&file_path) {
-        Ok(t) => t,
-        Err(_) => {
-            println!("⚠️  Skipping {}: invalid filename format", file_path);
-            return Err(file_path);
-        }
+    let Ok(target) = extract_submission_target(&file_path) else {
+        println!("⚠️  Skipping {file_path}: invalid filename format");
+        return Err(file_path);
     };
     let exercise_name = target.exercise_key();
 
@@ -309,14 +306,12 @@ async fn process_single_exercise(
     std::io::stdout().flush().unwrap();
 
     // Run tests for this exercise
-    let (tests_passed, _test_output) =
-        match run_cargo_test(&target.chapter, target.test_filter.as_deref()).await {
-            Ok(result) => result,
-            Err(_) => {
-                println!("❌ Error running tests");
-                return Err(exercise_name);
-            }
-        };
+    let Ok((tests_passed, _test_output)) =
+        run_cargo_test(&target.chapter, target.test_filter.as_deref())
+    else {
+        println!("❌ Error running tests");
+        return Err(exercise_name);
+    };
 
     if !tests_passed {
         println!("❌ Tests failed");
@@ -324,22 +319,18 @@ async fn process_single_exercise(
     }
 
     // Tests passed, now read source code
-    let source_code = match fs::read_to_string(&file_path) {
-        Ok(content) => content,
-        Err(_) => {
-            println!("❌ Failed to read file");
-            return Err(exercise_name);
-        }
+    let Ok(source_code) = fs::read_to_string(&file_path) else {
+        println!("❌ Failed to read file");
+        return Err(exercise_name);
     };
 
     // If pedantic flag, also run fmt + clippy (these are global checks)
     let (fmt_passed, clippy_passed) = if pedantic {
-        match (run_cargo_fmt().await, run_cargo_clippy().await) {
-            (Ok(fmt), Ok(clippy)) => (fmt, clippy),
-            _ => {
-                println!("❌ Error running pedantic checks");
-                return Err(exercise_name);
-            }
+        if let (Ok(fmt), Ok(clippy)) = (run_cargo_fmt(), run_cargo_clippy()) {
+            (fmt, clippy)
+        } else {
+            println!("❌ Error running pedantic checks");
+            return Err(exercise_name);
         }
     } else {
         (false, false)
@@ -356,19 +347,16 @@ async fn process_single_exercise(
     })
     .await;
 
-    match submission_result {
-        Ok(_) => {
-            if pedantic && fmt_passed && clippy_passed {
-                print!("⭐ Perfected! ");
-            } else {
-                print!("✅ Submitted! ");
-            }
-            Ok(exercise_name)
+    if submission_result.is_ok() {
+        if pedantic && fmt_passed && clippy_passed {
+            print!("⭐ Perfected! ");
+        } else {
+            print!("✅ Submitted! ");
         }
-        Err(_) => {
-            println!("❌ Upload failed");
-            Err(exercise_name)
-        }
+        Ok(exercise_name)
+    } else {
+        println!("❌ Upload failed");
+        Err(exercise_name)
     }
 }
 
@@ -414,9 +402,8 @@ fn find_exercise_files() -> Result<Vec<String>> {
                     continue;
                 }
                 // Only count files starting with `<n>_`.
-                let stem = match p.file_stem().and_then(|s| s.to_str()) {
-                    Some(s) => s,
-                    None => continue,
+                let Some(stem) = p.file_stem().and_then(|s| s.to_str()) else {
+                    continue;
                 };
                 let Some((num, _)) = stem.split_once('_') else {
                     continue;
@@ -430,16 +417,16 @@ fn find_exercise_files() -> Result<Vec<String>> {
             }
         }
 
-        if !step_files.is_empty() {
+        if step_files.is_empty() {
+            let main_rs = path.join("main.rs");
+            if main_rs.exists()
+                && let Some(p) = main_rs.to_str()
+            {
+                exercise_files.push(p.to_string());
+            }
+        } else {
             step_files.sort();
             exercise_files.extend(step_files);
-        } else {
-            let main_rs = path.join("main.rs");
-            if main_rs.exists() {
-                if let Some(p) = main_rs.to_str() {
-                    exercise_files.push(p.to_string());
-                }
-            }
         }
     }
 
@@ -491,10 +478,10 @@ impl SubmissionTarget {
     /// Full `submissions.exercise_name` value: `<chapter>` for legacy,
     /// `<chapter>/<step_key>` for multi-step.
     fn exercise_key(&self) -> String {
-        match &self.step_key {
-            Some(k) => format!("{}/{}", self.chapter, k),
-            None => self.chapter.clone(),
-        }
+        self.step_key.as_ref().map_or_else(
+            || self.chapter.clone(),
+            |k| format!("{}/{}", self.chapter, k),
+        )
     }
 }
 
@@ -528,34 +515,33 @@ fn extract_submission_target(file_path: &str) -> Result<SubmissionTarget> {
     }
 
     // `<chapter>/<n>_<slug>.rs`: multi-step file.
-    if let Some(name) = filename {
-        if let Some(stem) = name.strip_suffix(".rs") {
-            if stem != "main" {
-                if let Some(parent_name) = path
-                    .parent()
-                    .and_then(|p| p.file_name())
-                    .and_then(|s| s.to_str())
-                {
-                    // Verify the stem starts with `<n>_` so we don't
-                    // mis-classify a bare `examples/foo.rs`.
-                    if let Some((num, _rest)) = stem.split_once('_') {
-                        if num.parse::<u32>().is_ok() {
-                            return Ok(SubmissionTarget {
-                                chapter: parent_name.to_string(),
-                                step_key: Some(stem.to_string()),
-                                test_filter: Some(format!("_{stem}::")),
-                            });
-                        }
-                    }
-                }
-                // Bare `examples/<name>.rs`: legacy flat layout.
+    if let Some(name) = filename
+        && let Some(stem) = name.strip_suffix(".rs")
+        && stem != "main"
+    {
+        if let Some(parent_name) = path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|s| s.to_str())
+        {
+            // Verify the stem starts with `<n>_` so we don't
+            // mis-classify a bare `examples/foo.rs`.
+            if let Some((num, _rest)) = stem.split_once('_')
+                && num.parse::<u32>().is_ok()
+            {
                 return Ok(SubmissionTarget {
-                    chapter: stem.to_string(),
-                    step_key: None,
-                    test_filter: None,
+                    chapter: parent_name.to_string(),
+                    step_key: Some(stem.to_string()),
+                    test_filter: Some(format!("_{stem}::")),
                 });
             }
         }
+        // Bare `examples/<name>.rs`: legacy flat layout.
+        return Ok(SubmissionTarget {
+            chapter: stem.to_string(),
+            step_key: None,
+            test_filter: None,
+        });
     }
 
     // Bare directory or chapter slug.
@@ -575,7 +561,7 @@ fn extract_submission_target(file_path: &str) -> Result<SubmissionTarget> {
 ///
 /// When `filter` is `Some`, it's passed as a `cargo test` test-name filter
 /// (e.g. `_2_fallback::`) so only one step's tests run.
-async fn run_cargo_test(chapter: &str, filter: Option<&str>) -> Result<(bool, String)> {
+fn run_cargo_test(chapter: &str, filter: Option<&str>) -> Result<(bool, String)> {
     let mut cmd = Command::new("cargo");
     cmd.arg("test").arg("--example").arg(chapter);
     if let Some(f) = filter {
@@ -590,14 +576,14 @@ async fn run_cargo_test(chapter: &str, filter: Option<&str>) -> Result<(bool, St
 }
 
 /// Run cargo fmt --check and return success status.
-async fn run_cargo_fmt() -> Result<bool> {
+fn run_cargo_fmt() -> Result<bool> {
     let output = Command::new("cargo").args(["fmt", "--check"]).output()?;
 
     Ok(output.status.success())
 }
 
 /// Run cargo clippy with warnings as errors and return success status.
-async fn run_cargo_clippy() -> Result<bool> {
+fn run_cargo_clippy() -> Result<bool> {
     let output = Command::new("cargo")
         .args(["clippy", "--", "-D", "warnings"])
         .output()?;
@@ -609,7 +595,7 @@ async fn run_cargo_clippy() -> Result<bool> {
 async fn register_with_server(name: &Name) -> Result<String> {
     let client = reqwest::Client::new();
     let response = client
-        .post(&format!("{}/api/register", get_server_url()))
+        .post(format!("{}/api/register", get_server_url()))
         .json(&RegistrationRequest { name: name.clone() })
         .send()
         .await
@@ -641,7 +627,7 @@ async fn register_with_server(name: &Name) -> Result<String> {
 async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
     let client = reqwest::Client::new();
     let response = client
-        .post(&format!("{}/api/submit", get_server_url()))
+        .post(format!("{}/api/submit", get_server_url()))
         .json(&submission)
         .send()
         .await
@@ -677,7 +663,7 @@ async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
                 )
             }
             status => {
-                format!("Submission failed: {}", status)
+                format!("Submission failed: {status}")
             }
         };
         return Err(anyhow!(error_msg));
@@ -690,7 +676,7 @@ async fn submit_to_server(submission: SubmissionRequest) -> Result<()> {
 async fn fetch_progress(token: &Token) -> Result<ProgressResponse> {
     let client = reqwest::Client::new();
     let response = client
-        .get(&format!(
+        .get(format!(
             "{}/api/status/{}",
             get_server_url(),
             token.as_str()

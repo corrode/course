@@ -7,7 +7,7 @@ struct User {
 }
 
 impl User {
-    fn new(email: String, name: String) -> Self {
+    const fn new(email: String, name: String) -> Self {
         Self {
             email,
             name,

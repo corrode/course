@@ -279,7 +279,7 @@ impl Token {
     /// This constructor does not validate the ULID format, as tokens
     /// are typically received from trusted sources (the server).
     #[must_use]
-    pub fn new(ulid: String) -> Self {
+    pub const fn new(ulid: String) -> Self {
         Self(ulid)
     }
 
@@ -338,7 +338,7 @@ pub struct RegistrationResponse {
 pub struct SubmissionRequest {
     /// The participant's ULID token for identification
     pub ulid: String,
-    /// Name of the exercise (e.g., "01_strings")
+    /// Name of the exercise (e.g., "`01_strings`")
     pub exercise_name: String,
     /// The complete source code submitted by the participant
     pub source_code: String,
@@ -356,7 +356,7 @@ pub struct SubmissionRequest {
 /// including whether they've completed it and achieved perfection.
 #[derive(Serialize, Deserialize)]
 pub struct ExerciseStatus {
-    /// The exercise name (e.g., "01_strings")
+    /// The exercise name (e.g., "`01_strings`")
     pub name: String,
     /// Whether the participant has submitted a passing solution
     pub completed: bool,

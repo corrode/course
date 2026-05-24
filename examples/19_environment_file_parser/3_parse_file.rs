@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {
     InvalidFormat,
     EmptyKey,
@@ -20,7 +20,7 @@ fn parse_env_line(line: &str) -> Result<(String, String), ParseError> {
 /// `   # comment` counts as a comment too). Stops at the first malformed
 /// line and returns `Err`. Strict parsing is easier to debug than
 /// silently dropping lines.
-/// Returns HashMap of all valid key-value pairs.
+/// Returns `HashMap` of all valid key-value pairs.
 fn parse_env_file(content: &str) -> Result<HashMap<String, String>, ParseError> {
     todo!()
 }

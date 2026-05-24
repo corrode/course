@@ -11,8 +11,8 @@
 #[derive(Debug, PartialEq)]
 enum Expr {
     Num(i32),
-    Add(Box<Expr>, Box<Expr>),
-    Mul(Box<Expr>, Box<Expr>),
+    Add(Box<Self>, Box<Self>),
+    Mul(Box<Self>, Box<Self>),
 }
 
 impl Expr {

@@ -1,5 +1,5 @@
 /// Extracts the first and last names from a full name tuple.
-/// Takes a tuple (first_name, last_name) and returns just the first name.
+/// Takes a tuple (`first_name`, `last_name`) and returns just the first name.
 ///
 /// Note: this signature moves the tuple in (it contains `String`s, which
 /// aren't `Copy`). After the call, the original `full_name` is no longer

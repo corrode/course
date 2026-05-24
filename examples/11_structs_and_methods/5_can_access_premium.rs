@@ -7,7 +7,7 @@ struct User {
 }
 
 impl User {
-    fn new(email: String, name: String) -> Self {
+    const fn new(email: String, name: String) -> Self {
         Self {
             email,
             name,
@@ -16,7 +16,7 @@ impl User {
         }
     }
 
-    fn record_login(&mut self) {
+    const fn record_login(&mut self) {
         self.login_count += 1;
         self.is_verified = true;
     }

@@ -1,4 +1,4 @@
-/// Converts CSV data to a vector of records (HashMap).
+/// Converts CSV data to a vector of records (`HashMap`).
 /// Each record maps column names to values.
 ///
 /// Hint: pair headers with each row using

@@ -1,5 +1,8 @@
 use cargo_course::exercises::{self, Exercise, RenderItem, RenderKind, Step};
-use cargo_course::types::*;
+use cargo_course::types::{
+    ExerciseStatus, Name, ProgressResponse, RegistrationRequest, RegistrationResponse,
+    SubmissionRequest, TeamToken,
+};
 
 use anyhow::Result;
 use askama::Template;
@@ -28,17 +31,16 @@ struct AppState {
     exercises: Arc<Vec<Exercise>>,
 }
 
-/// Database model for participants
+/// Database model for participants. Only the fields we actually read
+/// in Rust live here; the SQL queries below select exactly these columns
+/// so `sqlx::FromRow` stays in lockstep.
 #[derive(sqlx::FromRow)]
 struct DbParticipant {
-    id: String,
     name: String,
     /// Optional cohort label, populated when the participant signed up
     /// via `/signup/{group_slug}`. `None` for public signups. See
     /// migration `007_add_team_token.sql`.
-    #[allow(dead_code)]
     team_token: Option<String>,
-    created_at: chrono::DateTime<chrono::Utc>,
 }
 
 impl DbParticipant {
@@ -47,7 +49,6 @@ impl DbParticipant {
     /// validator rejects, surface as `None` rather than panicking;
     /// the worst case is the participant shows up in the
     /// "Unassigned" bucket and an admin can re-assign them.
-    #[allow(dead_code)]
     fn parsed_team_token(&self) -> Option<TeamToken> {
         self.team_token
             .as_deref()
@@ -55,11 +56,13 @@ impl DbParticipant {
     }
 }
 
-/// Database model for submissions
+/// Database model for submissions. Mirrors the subset of the
+/// `submissions` table columns we actually read; the SQL queries below
+/// list these columns explicitly so adding a column to the schema
+/// (e.g. `content_hash`) doesn't silently break the row mapping.
 #[derive(sqlx::FromRow)]
 struct DbSubmission {
     id: String,
-    participant_id: String,
     exercise_name: String,
     source_code: String,
     tests_passed: bool,
@@ -113,6 +116,8 @@ struct ExerciseTemplate {
 }
 
 /// One row in the bottom chapter list.
+// reason: data-transfer struct for templates / JSON
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Clone)]
 struct ProgressDot {
     slug: String,
@@ -216,12 +221,14 @@ struct AdminTemplate {
 /// Admin dashboard statistics
 #[derive(Serialize)]
 struct AdminStats {
-    total_participants: i64,
-    total_submissions: i64,
-    total_perfected: i64,
+    participants: i64,
+    submissions: i64,
+    perfected: i64,
 }
 
 /// Exercise progress for dashboard display
+// reason: data-transfer struct for templates / JSON
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Serialize, Clone)]
 struct ExerciseProgress {
     /// Display number, 1-based (chapter 0 on disk -> `1.` in the TOC).
@@ -302,10 +309,9 @@ fn prettify_slug_segment(seg: &str) -> String {
     let body = if trimmed.is_empty() { seg } else { trimmed };
     let spaced = body.replace('_', " ");
     let mut chars = spaced.chars();
-    match chars.next() {
-        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-        None => String::new(),
-    }
+    chars.next().map_or_else(String::new, |first| {
+        first.to_uppercase().collect::<String>() + chars.as_str()
+    })
 }
 
 /// Format `exercise_name` (DB key) into something a reader can scan.
@@ -463,6 +469,8 @@ fn group_participants_by_team(participants: Vec<ParticipantSummary>) -> Vec<Part
 }
 
 #[tokio::main]
+// reason: top-level server bootstrap; splitting would only add indirection
+#[allow(clippy::too_many_lines)]
 async fn main() -> Result<()> {
     // Initialize logging with info level by default
     if env::var("RUST_LOG").is_err() {
@@ -492,24 +500,24 @@ async fn main() -> Result<()> {
         .expect("PORT must be a valid number");
 
     // Set up database
-    info!("Checking if database exists: {}", database_url);
-    if !Sqlite::database_exists(&database_url)
+    info!("Checking if database exists: {database_url}");
+    if Sqlite::database_exists(&database_url)
         .await
         .unwrap_or(false)
     {
-        info!("Creating database {}", database_url);
+        info!("Database already exists");
+    } else {
+        info!("Creating database {database_url}");
         match Sqlite::create_database(&database_url).await {
-            Ok(_) => {
+            Ok(()) => {
                 println!("✅ Database created successfully");
                 info!("Database created successfully");
             }
             Err(error) => {
-                error!("Error creating database: {}", error);
-                panic!("❌ Error creating database: {}", error);
+                error!("Error creating database: {error}");
+                panic!("❌ Error creating database: {error}");
             }
         }
-    } else {
-        info!("Database already exists");
     }
 
     info!("Connecting to database...");
@@ -518,10 +526,10 @@ async fn main() -> Result<()> {
         .connect(&database_url)
         .await
         .map_err(|e| {
-            eprintln!("❌ Failed to connect to database: {}", e);
-            eprintln!("   Database URL: {}", database_url);
-            error!("Failed to connect to database: {}", e);
-            error!("Database URL: {}", database_url);
+            eprintln!("❌ Failed to connect to database: {e}");
+            eprintln!("   Database URL: {database_url}");
+            error!("Failed to connect to database: {e}");
+            error!("Database URL: {database_url}");
             e
         })?;
 
@@ -643,31 +651,32 @@ async fn anonymous_dashboard(
     State(state): State<AppState>,
     Query(query): Query<DashboardQuery>,
 ) -> impl IntoResponse {
-    let exercises = match get_exercise_progress(&state.pool, None, &state.exercises).await {
-        Ok(exercises) => exercises,
-        Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to build catalog").into_response();
-        }
+    let Ok(exercises) = get_exercise_progress(&state.pool, None, &state.exercises).await else {
+        return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to build catalog").into_response();
     };
 
     let first = exercises
         .iter()
         .find(|e| !e.is_quiz && e.has_exercises)
         .or_else(|| exercises.first());
-    let (next_slug, next_label, next_chapter_number, next_chapter_title) = match first {
-        Some(e) => (
-            e.name.clone(),
-            format!("Start with chapter {}", e.number),
-            e.number,
-            e.title.clone(),
-        ),
-        None => (
-            String::new(),
-            "Start the course".to_string(),
-            0,
-            String::new(),
-        ),
-    };
+    let (next_slug, next_label, next_chapter_number, next_chapter_title) = first.map_or_else(
+        || {
+            (
+                String::new(),
+                "Start the course".to_string(),
+                0,
+                String::new(),
+            )
+        },
+        |e| {
+            (
+                e.name.clone(),
+                format!("Start with chapter {}", e.number),
+                e.number,
+                e.title.clone(),
+            )
+        },
+    );
     let progress_total = exercises
         .iter()
         .filter(|e| !e.is_quiz && e.has_exercises)
@@ -686,14 +695,16 @@ async fn anonymous_dashboard(
         reason: query.reason,
         team_token: None,
     };
-    match template.render() {
-        Ok(html) => Html(html).into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to render template",
-        )
-            .into_response(),
-    }
+    template.render().map_or_else(
+        |_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to render template",
+            )
+                .into_response()
+        },
+        |html| Html(html).into_response(),
+    )
 }
 
 /// Public signup form at `/signup` (no cohort).
@@ -720,14 +731,16 @@ async fn signup_page_with_group(AxumPath(group_slug): AxumPath<String>) -> impl 
 
 fn render_signup(group_slug: Option<String>) -> axum::response::Response {
     let template = SignupTemplate { group_slug };
-    match template.render() {
-        Ok(html) => Html(html).into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to render template",
-        )
-            .into_response(),
-    }
+    template.render().map_or_else(
+        |_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to render template",
+            )
+                .into_response()
+        },
+        |html| Html(html).into_response(),
+    )
 }
 
 /// Standalone Rust scratchpad. Code is persisted client-side in
@@ -834,7 +847,7 @@ async fn participant_dashboard(
 ) -> impl IntoResponse {
     // Get participant info
     let participant_result =
-        sqlx::query_as("SELECT id, name, team_token, created_at FROM participants WHERE id = ?")
+        sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
             .bind(&ulid)
             .fetch_one(&state.pool)
             .await;
@@ -852,15 +865,13 @@ async fn participant_dashboard(
     };
 
     // Get exercise progress
-    let exercises = match get_exercise_progress(&state.pool, Some(&ulid), &state.exercises).await {
-        Ok(exercises) => exercises,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to get exercise progress",
-            )
-                .into_response();
-        }
+    let Ok(exercises) = get_exercise_progress(&state.pool, Some(&ulid), &state.exercises).await
+    else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to get exercise progress",
+        )
+            .into_response();
     };
 
     // CTA: jump to the first unfinished, non-quiz chapter that actually
@@ -915,14 +926,16 @@ async fn participant_dashboard(
         team_token,
     };
 
-    match template.render() {
-        Ok(html) => Html(html).into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to render template",
-        )
-            .into_response(),
-    }
+    template.render().map_or_else(
+        |_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to render template",
+            )
+                .into_response()
+        },
+        |html| Html(html).into_response(),
+    )
 }
 
 /// Public exercise page (no participant context).
@@ -968,6 +981,8 @@ fn html_escape(s: &str) -> String {
     out
 }
 
+// reason: top-level request handler; splitting purely for line count adds indirection without value
+#[allow(clippy::too_many_lines)]
 async fn render_exercise_page(
     state: &AppState,
     slug: &str,
@@ -1204,6 +1219,8 @@ async fn load_step_progress(
     }
     Ok(by_key)
 }
+// reason: top-level request handler; splitting purely for line count adds indirection without value
+#[allow(clippy::too_many_lines)]
 async fn admin_dashboard(
     Query(query): Query<AdminQuery>,
     State(state): State<AppState>,
@@ -1215,7 +1232,7 @@ async fn admin_dashboard(
 
     // Get participant summaries
     let participant_rows_result = sqlx::query(
-        r#"
+        r"
         SELECT 
             p.id,
             p.name,
@@ -1230,20 +1247,17 @@ async fn admin_dashboard(
             CASE WHEN p.team_token IS NULL THEN 1 ELSE 0 END,
             p.team_token COLLATE NOCASE,
             last_activity DESC NULLS LAST
-        "#,
+        ",
     )
     .fetch_all(&state.pool)
     .await;
 
-    let participant_rows = match participant_rows_result {
-        Ok(rows) => rows,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to fetch participants",
-            )
-                .into_response();
-        }
+    let Ok(participant_rows) = participant_rows_result else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to fetch participants",
+        )
+            .into_response();
     };
 
     let mut participants = Vec::new();
@@ -1273,7 +1287,7 @@ async fn admin_dashboard(
 
     // Get recent submissions
     let submission_rows_result = sqlx::query(
-        r#"
+        r"
         SELECT 
             p.name as participant_name,
             s.exercise_name,
@@ -1286,20 +1300,17 @@ async fn admin_dashboard(
         JOIN participants p ON s.participant_id = p.id
         ORDER BY s.submitted_at DESC
         LIMIT 20
-        "#,
+        ",
     )
     .fetch_all(&state.pool)
     .await;
 
-    let submission_rows = match submission_rows_result {
-        Ok(rows) => rows,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to fetch submissions",
-            )
-                .into_response();
-        }
+    let Ok(submission_rows) = submission_rows_result else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to fetch submissions",
+        )
+            .into_response();
     };
 
     let mut recent_submissions = Vec::new();
@@ -1320,15 +1331,12 @@ async fn admin_dashboard(
     }
 
     // Get admin statistics with proper SQL queries
-    let stats = match get_admin_stats(&state.pool).await {
-        Ok(stats) => stats,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to get admin statistics",
-            )
-                .into_response();
-        }
+    let Ok(admin_stats) = get_admin_stats(&state.pool).await else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to get admin statistics",
+        )
+            .into_response();
     };
 
     // Get unique exercises from submissions
@@ -1337,30 +1345,33 @@ async fn admin_dashboard(
             .fetch_all(&state.pool)
             .await;
 
-    let exercises = match exercise_rows_result {
-        Ok(rows) => rows
-            .iter()
-            .map(|row| row.get::<String, _>("exercise_name"))
-            .collect(),
-        Err(_) => Vec::new(), // Return empty list if query fails
-    };
+    let exercises = exercise_rows_result.map_or_else(
+        |_| Vec::new(),
+        |rows| {
+            rows.iter()
+                .map(|row| row.get::<String, _>("exercise_name"))
+                .collect()
+        },
+    );
 
     let template = AdminTemplate {
         participant_groups,
         recent_submissions,
-        stats,
+        stats: admin_stats,
         exercises,
         admin_token: state.admin_token.clone(),
     };
 
-    match template.render() {
-        Ok(html) => Html(html).into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to render template",
-        )
-            .into_response(),
-    }
+    template.render().map_or_else(
+        |_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to render template",
+            )
+                .into_response()
+        },
+        |html| Html(html).into_response(),
+    )
 }
 
 /// Form data for `POST /admin/participants/{ulid}/team-token`.
@@ -1410,10 +1421,7 @@ async fn admin_set_team_token(
             (StatusCode::NOT_FOUND, "Participant not found").into_response()
         }
         Ok(_) => {
-            info!(
-                "Admin moved participant {} to team {:?}",
-                participant_id, new_token
-            );
+            info!("Admin moved participant {participant_id} to team {new_token:?}");
             // The admin token is already taken from the request URL,
             // which means the operator's browser was OK with it as-is;
             // echo it straight back, the same way the rest of the
@@ -1422,10 +1430,7 @@ async fn admin_set_team_token(
                 .into_response()
         }
         Err(err) => {
-            error!(
-                "Failed to update team_token for {}: {}",
-                participant_id, err
-            );
+            error!("Failed to update team_token for {participant_id}: {err}");
             (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
         }
     }
@@ -1439,6 +1444,8 @@ async fn admin_set_team_token(
 /// participant mode and is ignored in admin mode. Returns the
 /// rendered HTML response, or a 500 if any of the supporting queries
 /// fail.
+// reason: top-level request handler; splitting purely for line count adds indirection without value
+#[allow(clippy::too_many_lines)]
 async fn render_team_page(
     state: &AppState,
     team_token: Option<&TeamToken>,
@@ -1448,7 +1455,7 @@ async fn render_team_page(
     back_href: String,
     back_label: String,
 ) -> axum::response::Response {
-    let total_exercises: i64 = state.exercises.len() as i64;
+    let total_exercises: i64 = i64::try_from(state.exercises.len()).unwrap_or(i64::MAX);
 
     // Roster: every participant in this team, with a count of their
     // passing submissions and the timestamp of their most recent one.
@@ -1456,7 +1463,7 @@ async fn render_team_page(
     // an Option<&str> against `IS NULL` in a single statement.
     let roster_query = match team_token {
         Some(_) => {
-            r#"
+            r"
             SELECT p.id, p.name,
                    COUNT(s.id) AS completed_count,
                    MAX(s.submitted_at) AS last_activity
@@ -1466,10 +1473,10 @@ async fn render_team_page(
             WHERE p.team_token = ?
             GROUP BY p.id, p.name
             ORDER BY last_activity DESC NULLS LAST, p.name COLLATE NOCASE
-            "#
+            "
         }
         None => {
-            r#"
+            r"
             SELECT p.id, p.name,
                    COUNT(s.id) AS completed_count,
                    MAX(s.submitted_at) AS last_activity
@@ -1479,7 +1486,7 @@ async fn render_team_page(
             WHERE p.team_token IS NULL
             GROUP BY p.id, p.name
             ORDER BY last_activity DESC NULLS LAST, p.name COLLATE NOCASE
-            "#
+            "
         }
     };
     let roster_q = sqlx::query(roster_query);
@@ -1526,7 +1533,7 @@ async fn render_team_page(
             .collect::<Vec<_>>()
             .join(", ");
         let sql = format!(
-            r#"
+            r"
             SELECT p.name AS participant_name,
                    s.exercise_name,
                    s.tests_passed,
@@ -1539,7 +1546,7 @@ async fn render_team_page(
             WHERE s.participant_id IN ({placeholders})
             ORDER BY s.submitted_at DESC
             LIMIT ?
-            "#
+            "
         );
         let mut q = sqlx::query(&sql);
         for id in &member_ids {
@@ -1554,9 +1561,10 @@ async fn render_team_page(
                 return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
             }
         };
-        let truncated = rows.len() as i64 > TEAM_SUBMISSIONS_LIMIT;
-        let mut subs = Vec::with_capacity(rows.len().min(TEAM_SUBMISSIONS_LIMIT as usize));
-        for row in rows.into_iter().take(TEAM_SUBMISSIONS_LIMIT as usize) {
+        let truncated = i64::try_from(rows.len()).unwrap_or(i64::MAX) > TEAM_SUBMISSIONS_LIMIT;
+        let limit = usize::try_from(TEAM_SUBMISSIONS_LIMIT).unwrap_or(0);
+        let mut subs = Vec::with_capacity(rows.len().min(limit));
+        for row in rows.into_iter().take(limit) {
             let fmt_passed: bool = row.get("fmt_passed");
             let clippy_passed: bool = row.get("clippy_passed");
             let exercise_name: String = row.get("exercise_name");
@@ -1574,10 +1582,10 @@ async fn render_team_page(
         (subs, truncated)
     };
 
-    let (team_label, is_unassigned) = match team_token {
-        Some(t) => (t.as_str().to_string(), false),
-        None => ("Unassigned".to_string(), true),
-    };
+    let (team_label, is_unassigned) = team_token.map_or_else(
+        || ("Unassigned".to_string(), true),
+        |t| (t.as_str().to_string(), false),
+    );
 
     // Distinct exercise names from the submissions we're about to
     // render. Sorted for a stable, alphabetic dropdown.
@@ -1623,11 +1631,8 @@ async fn admin_team_page(
     if query.token != state.admin_token {
         return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
     }
-    let token = match TeamToken::try_from(slug.as_str()) {
-        Ok(t) => t,
-        Err(_) => {
-            return (StatusCode::BAD_REQUEST, "Invalid team slug").into_response();
-        }
+    let Ok(token) = TeamToken::try_from(slug.as_str()) else {
+        return (StatusCode::BAD_REQUEST, "Invalid team slug").into_response();
     };
     let admin_token = state.admin_token.clone();
     let back_href = format!("/admin?token={admin_token}");
@@ -1668,31 +1673,27 @@ async fn admin_team_unassigned_page(
 /// Participant: read-only view of their own cohort's submissions.
 ///
 /// Returns 404 if the ULID is unknown; redirects to the dashboard
-/// with a one-shot toast if the participant has no team_token (no
+/// with a one-shot toast if the participant has no `team_token` (no
 /// cohort means there's nothing meaningful to show on this page).
 async fn participant_team_page(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let participant: DbParticipant = match sqlx::query_as(
-        "SELECT id, name, team_token, created_at FROM participants WHERE id = ?",
-    )
-    .bind(&ulid)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(p) => p,
-        Err(_) => {
-            return axum::response::Redirect::to("/?reason=unknown-token").into_response();
-        }
-    };
+    let participant: DbParticipant =
+        match sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
+            .bind(&ulid)
+            .fetch_one(&state.pool)
+            .await
+        {
+            Ok(p) => p,
+            Err(_) => {
+                return axum::response::Redirect::to("/?reason=unknown-token").into_response();
+            }
+        };
 
-    let token = match participant.parsed_team_token() {
-        Some(t) => t,
-        None => {
-            // No cohort to show; bounce back to the personal dashboard.
-            return axum::response::Redirect::to(&format!("/dashboard/{ulid}")).into_response();
-        }
+    let Some(token) = participant.parsed_team_token() else {
+        // No cohort to show; bounce back to the personal dashboard.
+        return axum::response::Redirect::to(&format!("/dashboard/{ulid}")).into_response();
     };
 
     let back_href = format!("/dashboard/{ulid}");
@@ -1719,13 +1720,13 @@ async fn admin_remove_participant(
         return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
     }
 
-    info!("Admin removing participant: {}", participant_id);
+    info!("Admin removing participant: {participant_id}");
 
     // Start a transaction to ensure atomicity
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(err) => {
-            error!("Failed to start transaction: {}", err);
+            error!("Failed to start transaction: {err}");
             return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
         }
     };
@@ -1736,10 +1737,7 @@ async fn admin_remove_participant(
         .execute(&mut *tx)
         .await
     {
-        error!(
-            "Failed to delete submissions for participant {}: {}",
-            participant_id, err
-        );
+        error!("Failed to delete submissions for participant {participant_id}: {err}");
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             "Failed to delete submissions",
@@ -1759,7 +1757,7 @@ async fn admin_remove_participant(
             }
         }
         Err(err) => {
-            error!("Failed to delete participant {}: {}", participant_id, err);
+            error!("Failed to delete participant {participant_id}: {err}");
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to delete participant",
@@ -1770,11 +1768,11 @@ async fn admin_remove_participant(
 
     // Commit the transaction
     if let Err(err) = tx.commit().await {
-        error!("Failed to commit transaction: {}", err);
+        error!("Failed to commit transaction: {err}");
         return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
     }
 
-    info!("Successfully removed participant: {}", participant_id);
+    info!("Successfully removed participant: {participant_id}");
     (StatusCode::OK, "Participant removed successfully").into_response()
 }
 
@@ -1799,11 +1797,11 @@ async fn api_register(
         .await
     {
         Ok(_) => {
-            info!("Participant registered successfully: {}", ulid);
+            info!("Participant registered successfully: {ulid}");
             Ok(Json(RegistrationResponse { ulid }))
         }
         Err(e) => {
-            error!("Failed to register participant: {}", e);
+            error!("Failed to register participant: {e}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }
@@ -1845,8 +1843,7 @@ async fn compute_submit_progress(
     let chapter_completed = exercises
         .iter()
         .find(|e| e.name == chapter_slug)
-        .map(|e| e.completed)
-        .unwrap_or(false);
+        .is_some_and(|e| e.completed);
     let progress_total = exercises
         .iter()
         .filter(|e| !e.is_quiz && e.has_exercises)
@@ -1860,6 +1857,8 @@ async fn compute_submit_progress(
 
 /// API submission endpoint
 #[debug_handler]
+// reason: top-level request handler; splitting purely for line count adds indirection without value
+#[allow(clippy::too_many_lines)]
 async fn api_submit(
     State(state): State<AppState>,
     Json(request): Json<SubmissionRequest>,
@@ -1888,7 +1887,7 @@ async fn api_submit(
             return Err(StatusCode::UNAUTHORIZED);
         }
         Err(e) => {
-            error!("Database error while checking participant: {}", e);
+            error!("Database error while checking participant: {e}");
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     }
@@ -1924,7 +1923,7 @@ async fn api_submit(
             )
             .await
             .map_err(|e| {
-                error!("Failed to compute progress after duplicate submit: {}", e);
+                error!("Failed to compute progress after duplicate submit: {e}");
                 StatusCode::INTERNAL_SERVER_ERROR
             })?;
             return Ok(Json(SubmitResponse {
@@ -1937,20 +1936,17 @@ async fn api_submit(
             // No duplicate found, proceed with insertion
         }
         Err(e) => {
-            error!(
-                "Database error while checking for duplicate submission: {}",
-                e
-            );
+            error!("Database error while checking for duplicate submission: {e}");
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
     }
 
     // Insert new submission with hash
     match sqlx::query(
-        r#"
+        r"
         INSERT INTO submissions (id, participant_id, exercise_name, source_code, tests_passed, clippy_passed, fmt_passed, content_hash)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        "#
+        "
     )
     .bind(Ulid::new().to_string())
     .bind(&request.ulid)
@@ -1974,7 +1970,7 @@ async fn api_submit(
             )
             .await
             .map_err(|e| {
-                error!("Failed to compute progress after submit: {}", e);
+                error!("Failed to compute progress after submit: {e}");
                 StatusCode::INTERNAL_SERVER_ERROR
             })?;
             Ok(Json(SubmitResponse {
@@ -1984,7 +1980,7 @@ async fn api_submit(
             }))
         },
         Err(e) => {
-            error!("Failed to save submission: {}", e);
+            error!("Failed to save submission: {e}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
     }
@@ -1996,15 +1992,14 @@ async fn api_status(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
 ) -> Result<Json<ProgressResponse>, StatusCode> {
-    info!("Status request for participant: {}", ulid);
+    info!("Status request for participant: {ulid}");
 
     match get_exercise_progress(&state.pool, Some(&ulid), &state.exercises).await {
         Ok(exercises) => {
             let completed_count = exercises.iter().filter(|e| e.completed).count();
             let perfected_count = exercises.iter().filter(|e| e.perfected).count();
             info!(
-                "Status response: participant='{}', completed={}, perfected={}",
-                ulid, completed_count, perfected_count
+                "Status response: participant='{ulid}', completed={completed_count}, perfected={perfected_count}"
             );
 
             let exercise_statuses = exercises
@@ -2021,7 +2016,7 @@ async fn api_status(
             }))
         }
         Err(e) => {
-            error!("Failed to get exercise progress for {}: {}", ulid, e);
+            error!("Failed to get exercise progress for {ulid}: {e}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }
@@ -2067,6 +2062,13 @@ struct TestResult {
 /// returns the JSON. We intentionally keep this thin: the upstream
 /// already runs untrusted code in a sandbox and enforces its own rate
 /// limits, so we just pass status codes back through.
+#[derive(Deserialize)]
+struct PlaygroundResp {
+    success: bool,
+    stdout: String,
+    stderr: String,
+}
+
 async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, StatusCode> {
     let slug = req.slug.as_deref().unwrap_or("<unknown>");
     info!("/api/run: forwarding {} bytes for {slug}", req.code.len());
@@ -2112,13 +2114,6 @@ async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, Statu
         return Err(mapped);
     }
 
-    #[derive(Deserialize)]
-    struct PlaygroundResp {
-        success: bool,
-        stdout: String,
-        stderr: String,
-    }
-
     let parsed: PlaygroundResp = resp.json().await.map_err(|e| {
         error!("Failed to parse Playground response: {e}");
         StatusCode::BAD_GATEWAY
@@ -2162,6 +2157,13 @@ struct FormatResponse {
 /// Proxy handler for play.rust-lang.org's `/format` endpoint. Takes the
 /// editor's source, runs it through `rustfmt` upstream, and returns the
 /// reformatted code so the client can replace its buffer.
+#[derive(Deserialize)]
+struct PlaygroundFormatResp {
+    success: bool,
+    code: String,
+    stderr: String,
+}
+
 async fn api_format(Json(req): Json<FormatRequest>) -> Result<Json<FormatResponse>, StatusCode> {
     let slug = req.slug.as_deref().unwrap_or("<unknown>");
     info!(
@@ -2202,13 +2204,6 @@ async fn api_format(Json(req): Json<FormatRequest>) -> Result<Json<FormatRespons
             StatusCode::BAD_GATEWAY
         };
         return Err(mapped);
-    }
-
-    #[derive(Deserialize)]
-    struct PlaygroundFormatResp {
-        success: bool,
-        code: String,
-        stderr: String,
     }
 
     let parsed: PlaygroundFormatResp = resp.json().await.map_err(|e| {
@@ -2277,9 +2272,9 @@ async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
     .await?;
 
     Ok(AdminStats {
-        total_participants,
-        total_submissions,
-        total_perfected,
+        participants: total_participants,
+        submissions: total_submissions,
+        perfected: total_perfected,
     })
 }
 

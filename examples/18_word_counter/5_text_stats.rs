@@ -7,7 +7,7 @@ fn count_words(text: &str) -> HashMap<String, usize> {
 }
 
 /// Calculates basic text statistics.
-/// Returns (total_words, unique_words, average_word_length).
+/// Returns (`total_words`, `unique_words`, `average_word_length`).
 ///
 /// In real code you'd reach for a `struct TextStats { total: usize,
 /// unique: usize, avg_len: f64 }` here; a 3-tuple is hard to read at

@@ -9,12 +9,11 @@ endblock %} {% block content %}
         </div>
         <h1 class="book-title admin-title">Course dashboard</h1>
         <p class="book-byline">
-            {{ stats.total_participants }} participant{% if
-            stats.total_participants != 1 %}s{% endif %} in {{
-            participant_groups.len() }} cohort{% if participant_groups.len() !=
-            1 %}s{% endif %} · {{ stats.total_submissions }} submission{% if
-            stats.total_submissions != 1 %}s{% endif %} · {{
-            stats.total_perfected }} perfected
+            {{ stats.participants }} participant{% if stats.participants != 1
+            %}s{% endif %} in {{ participant_groups.len() }} cohort{% if
+            participant_groups.len() != 1 %}s{% endif %} · {{ stats.submissions
+            }} submission{% if stats.submissions != 1 %}s{% endif %} · {{
+            stats.perfected }} perfected
         </p>
     </header>
 

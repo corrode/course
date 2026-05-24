@@ -7,7 +7,7 @@ fn count_words(text: &str) -> HashMap<String, usize> {
 }
 
 /// Filters words by minimum length.
-/// Returns only words that appear at least min_count times.
+/// Returns only words that appear at least `min_count` times.
 fn frequent_words(text: &str, min_count: usize) -> Vec<String> {
     // Use count_words() then filter and collect
     todo!()

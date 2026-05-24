@@ -26,7 +26,7 @@ tokio = { version = "1.52", features = ["rt-multi-thread", "macros", "net", "fs"
 
 # CLI dependencies
 clap = { version = "4.6", features = ["derive"] }
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "http2"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "http2"] }
 
 # Server dependencies
 axum = { version = "0.8.9", features = ["macros"] }
@@ -38,28 +38,42 @@ sqlx = { version = "0.8", features = [
     "uuid",
     "migrate",
 ] }
-askama = { version = "0.13" }
+askama = { version = "0.16" }
 dotenvy = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 open = "5.3.5"
 env_logger = "0.11"
-toml = "0.8"
+toml = "1.0"
 log = "0.4"
 sha2 = "0.10"
 syn = { version = "2", features = ["full", "extra-traits"] }
-pulldown-cmark = { version = "0.12", default-features = false, features = ["html"] }
-rand = "0.8"
+pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+rand = "0.9"
 
 [profile.dev]
 # Faster dev builds: keep enough debug info for backtraces, drop the rest.
 debug = "line-tables-only"
 
 [lints.clippy]
-all = "warn"
-pedantic = "warn"
-nursery = "warn"
-cargo = "warn"
+# Lint groups need a lower priority than individual lint overrides so the
+# `allow` entries below actually win against the group-level `warn`.
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
 # Allow some pedantic lints that are too noisy
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
+# This crate is internal (course infrastructure) and isn't published to
+# crates.io, so the `cargo_common_metadata` lint about missing
+# description/license/repository/keywords/categories doesn't apply.
+cargo_common_metadata = "allow"
+# Transitive dependency version conflicts (mostly windows-sys/windows-* and
+# rand/getrandom variants pulled in by sqlx-mysql/sqlx-postgres which we don't
+# use directly, plus ulid pulling rand 0.9 alongside rand 0.8). Not something
+# we can fix in our source. Re-enable if you ever want to audit the dep graph.
+multiple_crate_versions = "allow"
+# The `#[derive(Template)]` macro from askama expands to code that
+# triggers `manual_div_ceil`. Not actionable in our source.
+manual_div_ceil = "allow"

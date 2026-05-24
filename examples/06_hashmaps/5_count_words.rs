@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 /// Counts how many times each word appears.
-/// Returns a HashMap mapping words to their counts.
+/// Returns a `HashMap` mapping words to their counts.
 ///
 /// The naive approach (`if contains_key(k) { *map.get_mut(k).unwrap() += 1 }
 /// else { map.insert(k, 1) }`) works, but it does two lookups and fights

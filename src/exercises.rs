@@ -120,7 +120,7 @@ impl Quiz {
             let mut shuffled: Vec<&Answer> = q.answers.iter().collect();
             {
                 use rand::seq::SliceRandom;
-                shuffled.shuffle(&mut rand::thread_rng());
+                shuffled.shuffle(&mut rand::rng());
             }
             for a in &shuffled {
                 let _ = write!(
@@ -162,19 +162,20 @@ impl Quiz {
 fn render_inline_markdown(md: &str) -> String {
     let html = render_markdown(md.trim());
     let trimmed = html.trim();
-    if let Some(inner) = trimmed.strip_prefix("<p>") {
-        if let Some(inner) = inner.strip_suffix("</p>") {
-            if !inner.contains("<p>") {
-                return inner.to_string();
-            }
-        }
+    if let Some(inner) = trimmed.strip_prefix("<p>")
+        && let Some(inner) = inner.strip_suffix("</p>")
+        && !inner.contains("<p>")
+    {
+        return inner.to_string();
     }
     trimmed.to_string()
 }
 
-/// A short prose note that lives next to an exercise. Notes give us a place
-/// to put preliminary information ("solve with std only", section
-/// preambles, etc.) without bloating the exercise's own `//!` block.
+/// A short prose note that lives next to an exercise.
+///
+/// Notes give us a place to put preliminary information ("solve with
+/// std only", section preambles, etc.) without bloating the exercise's
+/// own `//!` block.
 #[derive(Debug, Clone)]
 pub struct Note {
     /// In-chapter ordering taken from the leading `<n>_` of the filename.
@@ -261,10 +262,11 @@ impl Step {
 }
 
 /// Optional per-chapter UI customisation, loaded from
-/// `examples/<chapter>/.chapter.toml` if that file exists. The struct
-/// is intentionally small and additive: unknown keys are rejected (so
-/// typos surface), and every field has a sensible default so omitting
-/// the file is the same as having an empty one.
+/// `examples/<chapter>/.chapter.toml` if that file exists.
+///
+/// The struct is intentionally small and additive: unknown keys are
+/// rejected (so typos surface), and every field has a sensible default
+/// so omitting the file is the same as having an empty one.
 ///
 /// The whole struct is serialised to JSON and emitted on the exercise
 /// page root as `data-corrode-config`. Adding a new knob therefore
@@ -415,17 +417,18 @@ impl Exercise {
     /// full toolbar and then strip it down to just Run after JS boots.
     #[must_use]
     pub fn shows_button(&self, name: &str) -> bool {
-        match &self.directives.show {
-            None => true,
-            Some(allowed) => allowed.iter().any(|n| n == name),
-        }
+        self.directives
+            .show
+            .as_ref()
+            .is_none_or(|allowed| allowed.iter().any(|n| n == name))
     }
 }
 
 /// One position in a chapter's rendered output: prose or an editable
-/// code section. Built per-request by the server from a chapter's
-/// `steps` plus the participant's progress; rendered by the
-/// `exercise.html` template.
+/// code section.
+///
+/// Built per-request by the server from a chapter's `steps` plus the
+/// participant's progress; rendered by the `exercise.html` template.
 ///
 /// Lives in this module (rather than in the server binary) so that
 /// `templates/exercise.html` can pattern-match on it through Askama's
@@ -559,15 +562,14 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
         let main_rs = dir.join("main.rs");
         if main_rs.exists() {
             let (step, step_title) = parse_code_file(&main_rs, 0, &slug, &file_stem)?;
-            let chapter_title = notes.first().map(|n| n.title.clone()).unwrap_or(step_title);
+            let chapter_title = notes.first().map_or(step_title, |n| n.title.clone());
             let mut steps: Vec<Step> = notes.into_iter().map(Step::Prose).collect();
             steps.push(Step::Code(step));
             (steps, chapter_title)
         } else if !notes.is_empty() {
             let chapter_title = notes
                 .first()
-                .map(|n| n.title.clone())
-                .unwrap_or_else(|| file_stem.clone());
+                .map_or_else(|| file_stem.clone(), |n| n.title.clone());
             let steps: Vec<Step> = notes.into_iter().map(Step::Prose).collect();
             (steps, chapter_title)
         } else {
@@ -821,15 +823,15 @@ fn split_hints_markdown(md: &str) -> (String, Vec<(String, String)>) {
 /// headings like `` `quoted_line`, the state machine `` while still
 /// keying off the file slug.
 fn heading_matches_slug(heading: &str, step_slug: &str) -> bool {
-    let key = if let Some(start) = heading.find('`') {
-        let after = &heading[start + 1..];
-        match after.find('`') {
-            Some(end) => &after[..end],
-            None => heading.trim(),
-        }
-    } else {
-        heading.trim()
-    };
+    let key = heading.find('`').map_or_else(
+        || heading.trim(),
+        |start| {
+            let after = &heading[start + 1..];
+            after
+                .find('`')
+                .map_or_else(|| heading.trim(), |end| &after[..end])
+        },
+    );
     key.eq_ignore_ascii_case(step_slug)
 }
 
@@ -864,7 +866,7 @@ fn parse_code_file(
 /// Collapse trailing whitespace-only lines down to a single newline so
 /// the editor doesn't show empty padding below short step files.
 fn trim_trailing_blank_lines(s: &str) -> String {
-    let trimmed_end = s.trim_end_matches(|c: char| c == '\n' || c == '\r' || c == ' ' || c == '\t');
+    let trimmed_end = s.trim_end_matches(['\n', '\r', ' ', '\t']);
     let mut out = String::with_capacity(trimmed_end.len() + 1);
     out.push_str(trimmed_end);
     out.push('\n');
@@ -1003,20 +1005,19 @@ fn extract_inner_doc(source: &str) -> Result<String> {
         if !attr.path().is_ident("doc") {
             continue;
         }
-        if let syn::Meta::NameValue(nv) = &attr.meta {
-            if let syn::Expr::Lit(syn::ExprLit {
+        if let syn::Meta::NameValue(nv) = &attr.meta
+            && let syn::Expr::Lit(syn::ExprLit {
                 lit: syn::Lit::Str(s),
                 ..
             }) = &nv.value
-            {
-                // syn gives us the doc string with the leading space stripped
-                // by rustc, but keep it verbatim. Markdown handles whitespace.
-                let raw = s.value();
-                // Each `//! foo` becomes a single line; strip a single leading
-                // space if present (matches the convention in our examples).
-                let trimmed = raw.strip_prefix(' ').unwrap_or(&raw);
-                lines.push(trimmed.to_string());
-            }
+        {
+            // syn gives us the doc string with the leading space stripped
+            // by rustc, but keep it verbatim. Markdown handles whitespace.
+            let raw = s.value();
+            // Each `//! foo` becomes a single line; strip a single leading
+            // space if present (matches the convention in our examples).
+            let trimmed = raw.strip_prefix(' ').unwrap_or(&raw);
+            lines.push(trimmed.to_string());
         }
     }
 
@@ -1049,6 +1050,7 @@ fn split_title(md: &str) -> (Option<String>, String) {
     (title, body)
 }
 
+#[must_use]
 pub fn render_markdown(md: &str) -> String {
     use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
     let mut opts = Options::empty();

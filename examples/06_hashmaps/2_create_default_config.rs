@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 /// Creates a configuration map with default settings.
-/// Returns a HashMap with "host" -> "localhost" and "port" -> "8080".
+/// Returns a `HashMap` with "host" -> "localhost" and "port" -> "8080".
 fn create_default_config() -> HashMap<String, String> {
     todo!()
 }
