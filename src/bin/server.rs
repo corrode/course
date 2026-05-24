@@ -1946,12 +1946,23 @@ async fn api_status(
 }
 
 /// Request body for `/api/run`. We accept any source code; the slug is
-/// optional and only used for logging.
+/// optional and only used for logging. `tests` defaults to `true` so
+/// exercise editors continue to compile with `--tests` (which surfaces
+/// `#[test]` results and is also how the Playground exposes a few of
+/// our test-only diagnostics). The standalone scratchpad sends
+/// `tests = false` so it runs `main()` and the user actually sees their
+/// `println!` / `dbg!` output.
 #[derive(Deserialize)]
 struct RunRequest {
     code: String,
     #[serde(default)]
     slug: Option<String>,
+    #[serde(default = "default_tests")]
+    tests: bool,
+}
+
+const fn default_tests() -> bool {
+    true
 }
 
 /// Response type mirroring the Playground `/execute` endpoint, plus a
@@ -1983,7 +1994,7 @@ async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, Statu
         "mode": "debug",
         "edition": "2024",
         "crateType": "bin",
-        "tests": true,
+        "tests": req.tests,
         "backtrace": false,
         "code": req.code,
     });

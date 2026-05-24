@@ -16,9 +16,10 @@ endblock %} {% block content %}
             Press <strong>Run</strong> to compile and execute on
             <a href="https://play.rust-lang.org" target="_blank" rel="noopener"
                 >play.rust-lang.org</a
-            >. The <code>//!</code> at the top of the file is just a
-            doc-comment; replace it with notes to yourself or delete it
-            entirely.
+            >. Unlike the exercise editors, the scratchpad runs your
+            <code>main()</code> directly, so <code>println!</code>,
+            <code>dbg!</code>, and compiler warnings all show up in the output
+            panel below.
         </p>
     </div>
 
@@ -38,6 +39,45 @@ endblock %} {% block content %}
                     class="action-status"
                     aria-live="polite"
                 ></span>
+                <button
+                    type="button"
+                    class="btn btn-secondary btn-icon"
+                    data-role="fullscreen-btn"
+                    title="Toggle fullscreen editor (Esc to exit)"
+                    aria-pressed="false"
+                    aria-label="Toggle fullscreen editor"
+                >
+                    <svg
+                        class="icon-fullscreen-enter"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M4 9V4h5" />
+                        <path d="M20 9V4h-5" />
+                        <path d="M4 15v5h5" />
+                        <path d="M20 15v5h-5" />
+                    </svg>
+                    <svg
+                        class="icon-fullscreen-exit"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M9 4v5H4" />
+                        <path d="M15 4v5h5" />
+                        <path d="M9 20v-5H4" />
+                        <path d="M15 20v-5h5" />
+                    </svg>
+                </button>
                 <button
                     type="button"
                     class="btn btn-secondary"
@@ -169,12 +209,45 @@ endblock %} {% block content %}
                     copyButton: false,
                     urlPlugin: false,
                     syntaxHighlightOutput: false,
+                    runWithoutTests: true,
                 },
             });
         })
         .catch((err) => {
             console.error("inline-editor module failed to load:", err);
         });
+
+    // Fullscreen toggle. Pure CSS class swap on the section (no
+    // Fullscreen API): more predictable, doesn't fight the browser's
+    // own keyboard handling, and survives an unintended reload because
+    // the CodeMirror mount stays where it is in the DOM.
+    (function wireFullscreen() {
+        const section = document.querySelector(
+            '.exercise-section[data-step-id="playground"]',
+        );
+        const btn =
+            section && section.querySelector('[data-role="fullscreen-btn"]');
+        if (!section || !btn) return;
+        const setState = (on) => {
+            section.classList.toggle("is-fullscreen", on);
+            document.body.classList.toggle("playground-fullscreen", on);
+            btn.setAttribute("aria-pressed", on ? "true" : "false");
+            btn.title = on
+                ? "Exit fullscreen (Esc)"
+                : "Toggle fullscreen editor (Esc to exit)";
+        };
+        btn.addEventListener("click", () =>
+            setState(!section.classList.contains("is-fullscreen")),
+        );
+        document.addEventListener("keydown", (e) => {
+            if (
+                e.key === "Escape" &&
+                section.classList.contains("is-fullscreen")
+            ) {
+                setState(false);
+            }
+        });
+    })();
 </script>
 
 <style>
@@ -237,6 +310,75 @@ endblock %} {% block content %}
         to {
             transform: rotate(360deg);
         }
+    }
+
+    /* Icon-only toolbar button: square, currentColor SVG inside.
+       Matches `.btn.btn-secondary` height so it lines up with Vim /
+       Reset / Format in the actions row. */
+    .btn.btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.4rem;
+        width: 2rem;
+        height: 2rem;
+    }
+    .btn.btn-icon svg {
+        width: 1.05rem;
+        height: 1.05rem;
+    }
+    .btn.btn-icon .icon-fullscreen-exit {
+        display: none;
+    }
+    .exercise-section.is-fullscreen .btn.btn-icon .icon-fullscreen-enter {
+        display: none;
+    }
+    .exercise-section.is-fullscreen .btn.btn-icon .icon-fullscreen-exit {
+        display: inline;
+    }
+
+    /* Fullscreen mode: pin the section to the viewport and let the
+       CodeMirror mount stretch into the remaining vertical space.
+       `body.playground-fullscreen` hides the topbar so the editor
+       really fills the window. */
+    .exercise-section.is-fullscreen {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        margin: 0;
+        border-radius: 0;
+        border: 0;
+        padding: 1rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .exercise-section.is-fullscreen > div[style*="position: relative"] {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .exercise-section.is-fullscreen [data-role="editor-mount"],
+    .exercise-section.is-fullscreen [data-role="editor-fallback"] {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+    }
+    .exercise-section.is-fullscreen .cm-editor {
+        height: 100%;
+    }
+    .exercise-section.is-fullscreen [data-role="output-panel"] {
+        flex: 0 0 auto;
+        max-height: 30vh;
+        overflow: auto;
+    }
+    body.playground-fullscreen {
+        overflow: hidden;
+    }
+    body.playground-fullscreen .topbar,
+    body.playground-fullscreen header.topbar {
+        display: none;
     }
 </style>
 {% endblock %}
