@@ -360,8 +360,10 @@ progress_total > 0 %}
         </summary>
         <div class="chapter-prose exercise-prose hints-body">{{ h|safe }}</div>
     </details>
-    {% when None %} {% endmatch %} {% endmatch %} {% endfor %} {% match
-    exercise.hints %} {% when Some with (h) %}
+    {% when None %} {% endmatch %} {% when
+    cargo_course::exercises::RenderKind::Quiz with { html } %} {{ html|safe }}
+    {% endmatch %} {% endfor %} {% match exercise.hints %} {% when Some with (h)
+    %}
     <details class="hints-disclosure" id="hints-disclosure">
         <summary>
             <span class="hints-icon" aria-hidden="true">💡</span>
@@ -480,6 +482,11 @@ progress_total > 0 %}
             window.attachProseCopyButtons();
         })();
     </script>
+
+    {# Quiz interaction. Inert no-op on every chapter except the one that ships
+    a `quiz.toml`; the script just looks for `[data-quiz]` and bails when
+    there's nothing to wire up. #}
+    <script src="/static/js/quiz.js" defer></script>
 
     {% match next_dot %} {% when Some with (n) %} {% if ulid.is_none() &&
     exercise.wants_signup_on_pass() %} {# Anonymous welcome chapter: the inline

@@ -1,0 +1,202 @@
+# Rust Fundamentals Quiz questions.
+#
+# Loaded by `src/exercises.rs` at startup and rendered inline on the
+# quiz chapter via `RenderKind::Quiz`. One `[[questions]]` table per
+# question; the `answers` array must mark exactly one answer as
+# `correct = true`. The optional `hint` is shown above the answers; the
+# per-answer `explanation` is revealed after the visitor commits to a
+# choice.
+
+[[questions]]
+prompt = "What happens when you pass a `String` to a function in Rust?"
+hint = "Think about ownership rules."
+answers = [
+  { text = "The `String` is copied, and both caller and function own it.", correct = false, explanation = "Rust never implicitly copies heap data; that would defeat the point of single ownership." },
+  { text = "The `String`'s ownership moves into the function, and it's no longer valid in the caller.", correct = true, explanation = "Exactly. Passing a `String` by value transfers ownership; the caller can't use it again unless the function returns it." },
+  { text = "The function borrows the `String`, and ownership stays with the caller.", correct = false, explanation = "Borrowing requires an explicit `&String` (or `&str`). Bare `String` means a move." },
+  { text = "The function automatically gets a reference to the `String`.", correct = false, explanation = "References must always be explicit in Rust; there's no implicit auto-ref at call sites." },
+]
+
+[[questions]]
+prompt = "Which of these creates a *mutable* variable in Rust?"
+answers = [
+  { text = "`const x = 5;`", correct = false, explanation = "`const` is for compile-time constants and is never mutable." },
+  { text = "`let x = 5;`", correct = false, explanation = "Bindings are immutable by default; this one can't be reassigned." },
+  { text = "`let mut x = 5;`", correct = true, explanation = "The `mut` keyword opts a binding into mutability." },
+  { text = "`var x = 5;`", correct = false, explanation = "Rust has no `var` keyword." },
+]
+
+[[questions]]
+prompt = "What is `Option<T>` for?"
+hint = "Think about what other languages reach for `null` to express."
+answers = [
+  { text = "Handling errors during execution.", correct = false, explanation = "That's `Result<T, E>`. `Option` only models absence, not failure." },
+  { text = "Representing a value that may be absent.", correct = true, explanation = "Yes. `Some(value)` when the value is present, `None` when it isn't. No nulls needed." },
+  { text = "Creating optional function parameters.", correct = false, explanation = "Rust functions don't have optional parameters; callers always pass every argument." },
+  { text = "Converting between numeric types.", correct = false, explanation = "Numeric conversion is done with `as`, `From`/`Into`, or `try_from`." },
+]
+
+[[questions]]
+prompt = "How do you borrow a value immutably?"
+answers = [
+  { text = "`&mut value`", correct = false, explanation = "That's a *mutable* borrow." },
+  { text = "`&value`", correct = true, explanation = "The `&` operator produces a shared, immutable reference." },
+  { text = "`*value`", correct = false, explanation = "`*` *dereferences* a reference; it doesn't create one." },
+  { text = "`value.borrow()`", correct = false, explanation = "`.borrow()` is a `RefCell` method, not the general way to take a reference." },
+]
+
+[[questions]]
+prompt = "Which statement about Rust's ownership is correct?"
+answers = [
+  { text = "A value can have multiple owners at the same time.", correct = false, explanation = "Single ownership is the whole point; at most one owner at any moment (use `Rc`/`Arc` only for shared *handles*)." },
+  { text = "When an owner goes out of scope, the value is dropped.", correct = true, explanation = "Right. This is how Rust frees memory deterministically, without a garbage collector." },
+  { text = "Ownership can be shared via `SharedPtr`.", correct = false, explanation = "`SharedPtr` is a C++ thing. Rust uses `Rc<T>` (single-threaded) or `Arc<T>` (across threads)." },
+  { text = "Primitive types need manual memory management.", correct = false, explanation = "Primitives implement `Copy`, so they're duplicated on assignment, no manual management." },
+]
+
+[[questions]]
+prompt = "What's the difference between `String` and `&str`?"
+answers = [
+  { text = "`String` is mutable; `&str` is always immutable.", correct = false, explanation = "Mutability is real but secondary; a `String` *can* be made mutable with `let mut`, but the headline difference is ownership." },
+  { text = "`String` is heap-allocated and owned; `&str` is a borrowed string slice.", correct = true, explanation = "Exactly. `String` owns its bytes; `&str` is a view into bytes owned by somebody else (a `String`, a literal, etc.)." },
+  { text = "`String` is ASCII-only; `&str` supports Unicode.", correct = false, explanation = "Both are UTF-8 all the way down." },
+  { text = "`String` is a compile-time construct; `&str` is runtime-only.", correct = false, explanation = "Both exist at runtime. String *literals* (`\"...\"`) are baked into the binary as `&'static str`, but `String` values are very much runtime." },
+]
+
+[[questions]]
+prompt = "What does `#[derive(Debug)]` do?"
+answers = [
+  { text = "Prints debug information at runtime.", correct = false, explanation = "It doesn't print anything on its own; it just makes printing *possible*." },
+  { text = "Auto-implements the `Debug` trait for the type.", correct = true, explanation = "Right. Once `Debug` is implemented you can format the value with `{:?}` or `{:#?}`." },
+  { text = "Enables extra compiler warnings for the type.", correct = false, explanation = "Lints are configured separately (e.g. `#[warn(...)]`, `#[deny(...)]`)." },
+  { text = "Inserts a debugger breakpoint at the type's definition.", correct = false, explanation = "Breakpoints belong in the debugger, not the source." },
+]
+
+[[questions]]
+prompt = "What does the `?` operator do on a `Result<T, E>`?"
+hint = "It collapses a very common `match` pattern."
+answers = [
+  { text = "Checks whether the value is null.", correct = false, explanation = "Rust has no null. `?` only operates on `Result` (and `Option`)." },
+  { text = "Unwraps the `Ok` value, or returns the `Err` from the surrounding function.", correct = true, explanation = "Right. It's sugar for `match res { Ok(v) => v, Err(e) => return Err(e.into()) }`." },
+  { text = "Converts the `Result` into an `Option`.", correct = false, explanation = "There are methods for that (`.ok()`, `.err()`), but `?` is not one of them." },
+  { text = "Throws an exception if the `Result` is `Err`.", correct = false, explanation = "Rust doesn't have exceptions. `?` returns early, it doesn't unwind." },
+]
+
+[[questions]]
+prompt = "Which of these creates an empty `Vec`?"
+answers = [
+  { text = "`let v: Vec<i32> = vec![];`", correct = true, explanation = "Yep. The `vec!` macro with no elements gives you an empty vector." },
+  { text = "`let v = Vector::new();`", correct = false, explanation = "The type is `Vec`, not `Vector`." },
+  { text = "`let v = new Vec<i32>();`", correct = false, explanation = "Rust has no `new` keyword. Constructors are just associated functions: `Vec::new()`." },
+  { text = "`let v = [];`", correct = false, explanation = "That's an *array* literal, not a vector." },
+]
+
+[[questions]]
+prompt = "What happens if you call `HashMap::get` for a key that doesn't exist?"
+hint = "Rust prefers types over panics for expected absence."
+answers = [
+  { text = "The program panics with \"key not found\".", correct = false, explanation = "`get` never panics. Indexing (`map[\"key\"]`) does, but `get` returns an `Option`." },
+  { text = "A default value is returned based on the value type.", correct = false, explanation = "There's no implicit default. (`entry().or_default()` is opt-in.)" },
+  { text = "`get` returns `None`.", correct = true, explanation = "Exactly. The return type is `Option<&V>`, so missing keys are part of the API." },
+  { text = "A new entry with a default value is inserted automatically.", correct = false, explanation = "Insertion-on-miss is opt-in via the `entry` API, not the default behaviour of `get`." },
+]
+
+[[questions]]
+prompt = "How do you create an owned `String` from a string literal?"
+answers = [
+  { text = "`let s = \"hello\".to_owned();`", correct = true, explanation = "Right. `to_owned()` clones the `&str` into a heap-allocated `String`. `String::from(\"hello\")` and `\"hello\".to_string()` also work." },
+  { text = "`let s = new String(\"hello\");`", correct = false, explanation = "There is no `new` keyword in Rust." },
+  { text = "`let s = String(\"hello\");`", correct = false, explanation = "Type names aren't callable like that. Use `String::from(\"hello\")`." },
+  { text = "`let s = \"hello\".to_String();`", correct = false, explanation = "The method is lower-case `to_string()`, from the `ToString` trait." },
+]
+
+[[questions]]
+prompt = "Which of these is true of Rust enums?"
+hint = "Rust enums are closer to algebraic data types than to C-style enums."
+answers = [
+  { text = "They can only hold numeric values.", correct = false, explanation = "C-style enums work that way; Rust enums are much richer." },
+  { text = "Each variant can carry data of a different type.", correct = true, explanation = "Yes. That's what makes Rust enums so useful for modelling state. `Option`, `Result`, and many parser ASTs are enums." },
+  { text = "They must implement an `Enum` trait.", correct = false, explanation = "There is no `Enum` trait." },
+  { text = "They can only be compared with `==`.", correct = false, explanation = "Usually you reach for `match` instead, and `==` only works if the enum derives `PartialEq`." },
+]
+
+[[questions]]
+prompt = """
+What does the lifetime in this signature say?
+
+```rust
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str
+```
+"""
+hint = "`'a` is the *shorter* of `x`'s and `y`'s lifetimes."
+answers = [
+  { text = "Both inputs must outlive the function call.", correct = false, explanation = "That's true of every reference parameter; it's not what `'a` adds." },
+  { text = "The return value lives strictly *less* than the shorter input.", correct = false, explanation = "Close, but `'a` says \"at *least* as long as\", not \"strictly less than\"." },
+  { text = "The return value lives at least as long as the shorter of the two inputs.", correct = true, explanation = "Right. `'a` is the intersection of the two input lifetimes, and the return reference is valid for that whole window." },
+  { text = "The two inputs must have identical lifetimes.", correct = false, explanation = "They don't; the compiler picks `'a` as the shorter of the two and unifies via subtyping." },
+]
+
+[[questions]]
+prompt = "What does `.clone()` typically do?"
+answers = [
+  { text = "Shallow-copies the data into a new value.", correct = false, explanation = "Most `Clone` impls are deep; they duplicate owned heap data so the new value is fully independent." },
+  { text = "Creates a reference to the original.", correct = false, explanation = "That's `&value`. `.clone()` creates a new value." },
+  { text = "Creates an independent deep copy.", correct = true, explanation = "Yes. For collections and `String`, `clone()` allocates fresh memory and copies the contents in." },
+  { text = "Moves the value to a new memory location.", correct = false, explanation = "Move is what *assignment* does. `clone()` produces a second value alongside the original." },
+]
+
+[[questions]]
+prompt = "What is `match` primarily for?"
+answers = [
+  { text = "Matching values against a series of patterns (exhaustively).", correct = true, explanation = "Exactly. The compiler enforces that every possible shape of the scrutinee is handled." },
+  { text = "Find-and-replace on strings.", correct = false, explanation = "String mutation lives on `String`/`str` methods, not in control flow." },
+  { text = "Checking whether a value has a specific type at runtime.", correct = false, explanation = "Rust is statically typed; you usually express alternatives with an enum and `match` *on the variants*." },
+  { text = "Matching regular expressions against strings.", correct = false, explanation = "Regex lives in the `regex` crate. Not built into the language." },
+]
+
+[[questions]]
+prompt = "When is a value's `drop` method called?"
+hint = "Same answer that explains why Rust doesn't need a garbage collector."
+answers = [
+  { text = "When the value is explicitly set to null.", correct = false, explanation = "Rust has no null." },
+  { text = "When the value goes out of scope.", correct = true, explanation = "Yes. RAII: the compiler inserts the `drop` call at the end of the value's scope." },
+  { text = "When `Drop::drop` is called manually.", correct = false, explanation = "You're not allowed to call `Drop::drop` directly. Use `std::mem::drop` if you need to drop early." },
+  { text = "Only when the standalone `drop()` function is called.", correct = false, explanation = "`drop()` is one way to force early dropping, but normal end-of-scope drops happen automatically." },
+]
+
+[[questions]]
+prompt = "What does the `'static` lifetime mean?"
+answers = [
+  { text = "The value is valid for the entire program's lifetime.", correct = true, explanation = "Right. `'static` references are either to data baked into the binary (string literals, `const` data) or to leaked heap allocations." },
+  { text = "The variable cannot be modified.", correct = false, explanation = "`'static` is about *lifetime*, not mutability. A `static mut` is `'static` and mutable (but unsafe to touch)." },
+  { text = "The memory lives on the stack, not the heap.", correct = false, explanation = "`'static` says nothing about *where* the memory lives, only *how long*." },
+  { text = "The size is known at compile time.", correct = false, explanation = "That's the `Sized` trait, which is unrelated." },
+]
+
+[[questions]]
+prompt = "What is a *trait* in Rust?"
+answers = [
+  { text = "A compile-time attribute that controls codegen.", correct = false, explanation = "That sounds more like an attribute macro." },
+  { text = "A collection of methods that types can implement.", correct = true, explanation = "Yes. Like an interface in other languages, but with associated types, default methods, and generics built in." },
+  { text = "A special enum that supports inheritance.", correct = false, explanation = "Rust has no inheritance. Traits give you shared behaviour without the inheritance hierarchy." },
+  { text = "A marker for memory-managed types.", correct = false, explanation = "Marker traits (`Send`, `Sync`, `Copy`, …) are a kind of trait, but traits in general aren't about memory management." },
+]
+
+[[questions]]
+prompt = "How do you make an item visible from outside its module?"
+answers = [
+  { text = "Declare it with the `global` keyword.", correct = false, explanation = "There is no `global` keyword." },
+  { text = "Mark it `pub`.", correct = true, explanation = "Right. `pub` opens up cross-module visibility; you can also scope it with `pub(crate)` or `pub(super)`." },
+  { text = "Mark it `extern`.", correct = false, explanation = "`extern` is for FFI bindings, not module visibility." },
+  { text = "`static` items are visible everywhere automatically.", correct = false, explanation = "`static`s still default to private; they need `pub static` to escape the module." },
+]
+
+[[questions]]
+prompt = "Which of these does **not** create a reference?"
+hint = "`*` is the dereference operator."
+answers = [
+  { text = "`let r = &x;`", correct = false, explanation = "That *is* a reference, a shared one." },
+  { text = "`let r = &mut x;`", correct = false, explanation = "That's also a reference, a mutable one." },
+  { text = "`let r = *x;`", correct = true, explanation = "Right. `*x` dereferences `x` and (for `Copy` types) gives you the value. `r` is a value, not a reference." },
+  { text = "`let r = x.as_ref();`", correct = false, explanation = "`AsRef::as_ref` returns a reference." },
+]

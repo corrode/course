@@ -14,7 +14,7 @@ operate" is very helpful for your future work with numbers.
 - `f64::round()` rounds to the nearest integer; `as u32` on its own
   truncates. They give different answers for `1.7`. We used
   `as u32` for the damage-bonus calculation because we wanted
-  truncation — fractional HP is simply dropped, the way most
+  truncation; fractional HP is simply dropped, the way most
   games quantise damage.
 - `str::parse()` is the universal text-to-value method. It returns a
   `Result`; pair it with `.unwrap_or(...)` until you've met `Result`

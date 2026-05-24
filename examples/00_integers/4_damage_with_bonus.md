@@ -5,12 +5,12 @@ to multiply a `u32` by an `f64`, one of them has to change shape
 first, and you have to say so. The `as` keyword does the conversion.
 
 The function takes a base damage as `u32` and a bonus as an `f64`
-percentage (so `50.0` means "+50%" — think a critical hit, an
+percentage (so `50.0` means "+50%"; think a critical hit, an
 equipment buff, or any other damage modifier), and returns the
 final damage as a `u32`. You'll need to:
 
 1. Turn the percentage into a multiplier (divide by `100.0`).
-2. Multiply it by the base — but only after casting the base to
+2. Multiply it by the base, but only after casting the base to
    `f64`, because Rust won't mix the two for you.
 3. Add the bonus to the base.
 4. Cast back to `u32` to return.
