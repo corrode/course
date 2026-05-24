@@ -312,34 +312,38 @@ endblock %} {% block content %}
         }
     }
 
-    /* Make the editor fill the available vertical space by default,
-       not just in fullscreen mode. The container and section both
-       become flex columns so the CodeMirror mount can stretch into
-       whatever's left below the intro prose and toolbar. */
-    body:has(.exercise-section[data-step-id="playground"]) .container {
-        display: flex;
-        flex-direction: column;
-    }
+    /* On the playground, strip the section card chrome (background,
+       border, padding) so the editor itself reads as the page's
+       primary canvas instead of a small panel nested inside one. */
     .exercise-section[data-step-id="playground"] {
-        display: flex;
-        flex-direction: column;
-        flex: 1 1 auto;
-        min-height: 0;
+        background: transparent;
+        border: 0;
+        padding: 0;
     }
-    .exercise-section[data-step-id="playground"]
-        > div[style*="position: relative"] {
-        flex: 1 1 auto;
-        min-height: 24rem;
-        display: flex;
-        flex-direction: column;
-    }
-    .exercise-section[data-step-id="playground"] [data-role="editor-mount"],
-    .exercise-section[data-step-id="playground"] [data-role="editor-fallback"] {
-        flex: 1 1 auto;
-        min-height: 24rem;
-    }
+
+    /* Make the editor fill the available vertical space by default,
+       not just in fullscreen mode. CodeMirror 6 doesn't react to a
+       flex-grown parent on its own; the simplest reliable knob is an
+       explicit height on `.cm-editor`. The scroller, content, and
+       gutters then need to be told to fill that height too, otherwise
+       only the content area is visually tall and the empty space
+       below the last line looks like dead padding. */
     .exercise-section[data-step-id="playground"] .cm-editor {
-        height: 100%;
+        height: calc(100vh - 18rem) !important;
+        min-height: 24rem;
+    }
+    .exercise-section[data-step-id="playground"] .cm-scroller {
+        overflow: auto;
+        height: 100% !important;
+    }
+    .exercise-section[data-step-id="playground"] .cm-content,
+    .exercise-section[data-step-id="playground"] .cm-gutters {
+        min-height: 100% !important;
+    }
+    /* The textarea fallback (before CodeMirror takes over) should
+       match so there's no layout jump on hydration. */
+    .exercise-section[data-step-id="playground"] [data-role="editor-fallback"] {
+        min-height: calc(100vh - 18rem);
     }
 
     /* Icon-only toolbar button: square, currentColor SVG inside.
