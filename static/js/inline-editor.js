@@ -378,7 +378,8 @@ export async function mountInlineEditor(section, opts = {}) {
       Decoration,
       ViewPlugin,
     } = view;
-    const { syntaxHighlighting, bracketMatching, indentOnInput } = lang;
+    const { syntaxHighlighting, bracketMatching, indentOnInput, indentUnit } =
+      lang;
     const { defaultKeymap, history, historyKeymap, indentWithTab } = commands;
     const {
       autocompletion,
@@ -493,6 +494,10 @@ export async function mountInlineEditor(section, opts = {}) {
       history(),
       drawSelection(),
       indentOnInput(),
+      // Match Zed / rustfmt: 4-space indent. CM6 defaults to 2, which made
+      // newlines inside `fn`/`impl` blocks indent half as far as the
+      // surrounding (rustfmt'd) code in the same buffer.
+      indentUnit.of("    "),
       bracketMatching(),
       syntaxHighlighting(proseHighlightStyle, { fallback: true }),
       closeBrackets(),

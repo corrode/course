@@ -80,20 +80,20 @@ endblock %} {% block content %}
                 </button>
                 <button
                     type="button"
-                    class="btn btn-secondary"
+                    class="btn btn-secondary btn-reset"
+                    data-role="reset-btn"
+                    title="Replace the buffer with the starter snippet"
+                >
+                    Reset
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-secondary actions-cluster-start"
                     data-role="vim-btn"
                     title="Toggle Vim keybindings"
                     aria-pressed="false"
                 >
                     Vim: off
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-role="reset-btn"
-                    title="Replace the buffer with the starter snippet"
-                >
-                    Reset
                 </button>
                 <button
                     type="button"
@@ -321,41 +321,36 @@ endblock %} {% block content %}
         padding: 0;
     }
 
-    /* Make the editor fill the available vertical space by default,
-       not just in fullscreen mode. CodeMirror 6 doesn't react to a
-       flex-grown parent on its own; the simplest reliable knob is an
-       explicit height on `.cm-editor`. The scroller, content, and
-       gutters then need to be told to fill that height too, otherwise
-       only the content area is visually tall and the empty space
-       below the last line looks like dead padding. */
+    /* Give the editor a comfortable default size and let the rest of
+       the page (status row, output panel) flow naturally underneath
+       it. We intentionally avoid pinning the editor to the viewport
+       height: that broke fullscreen (the !important leaked in and
+       overlapped the output) and made the output panel feel detached
+       from the editor in the normal layout. */
     .exercise-section[data-step-id="playground"] .cm-editor {
-        height: calc(100vh - 18rem) !important;
-        min-height: 24rem;
+        min-height: 28rem;
     }
-    .exercise-section[data-step-id="playground"] .cm-scroller {
-        overflow: auto;
-        height: 100% !important;
-    }
-    .exercise-section[data-step-id="playground"] .cm-content,
-    .exercise-section[data-step-id="playground"] .cm-gutters {
-        min-height: 100% !important;
-    }
-    /* The textarea fallback (before CodeMirror takes over) should
-       match so there's no layout jump on hydration. */
     .exercise-section[data-step-id="playground"] [data-role="editor-fallback"] {
-        min-height: calc(100vh - 18rem);
+        min-height: 28rem;
     }
 
-    /* Icon-only toolbar button: square, currentColor SVG inside.
-       Matches `.btn.btn-secondary` height so it lines up with Vim /
-       Reset / Format in the actions row. */
+    /* Visually separate the destructive Reset from the helpful
+       Vim/Format/Run cluster on its right. */
+    .exercise-actions .actions-cluster-start {
+        margin-left: 1.25rem;
+    }
+    .btn.btn-reset {
+        color: var(--color-text-muted);
+    }
+    .btn.btn-reset:hover {
+        color: var(--color-text);
+    }
+
+    /* Icon-only toolbar button: square, same height as sibling `.btn`s
+       (2.25rem) so it lines up with Vim / Format / Run. */
     .btn.btn-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.4rem;
-        width: 2rem;
-        height: 2rem;
+        width: 2.25rem;
+        padding: 0;
     }
     .btn.btn-icon svg {
         width: 1.05rem;
@@ -386,6 +381,7 @@ endblock %} {% block content %}
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        background: var(--color-background);
     }
     .exercise-section.is-fullscreen > div[style*="position: relative"] {
         flex: 1 1 auto;
@@ -401,6 +397,11 @@ endblock %} {% block content %}
     }
     .exercise-section.is-fullscreen .cm-editor {
         height: 100%;
+        min-height: 0;
+    }
+    .exercise-section.is-fullscreen .cm-scroller {
+        height: 100%;
+        overflow: auto;
     }
     .exercise-section.is-fullscreen [data-role="output-panel"] {
         flex: 0 0 auto;
