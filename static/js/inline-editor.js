@@ -1065,6 +1065,26 @@ export async function mountInlineEditor(section, opts = {}) {
     }
   }
 
+  // Update the top-bar `progress_done / progress_total` counter in place
+  // so learners see their chapter count tick up the instant the last
+  // exercise's submission lands, without waiting for the next page nav.
+  // `data` is the JSON body returned by `POST /api/submit`.
+  function applyProgressUpdate(data) {
+    if (!data || typeof data.progress_done !== "number") return;
+    const wrapper = document.querySelector(".topbar-progress");
+    if (!wrapper) return;
+    const strong = wrapper.querySelector(".topbar-progress-count strong");
+    if (strong) {
+      strong.textContent = String(data.progress_done);
+    }
+    if (typeof data.progress_total === "number") {
+      wrapper.setAttribute(
+        "aria-label",
+        `Progress: ${data.progress_done} of ${data.progress_total} chapters completed`,
+      );
+    }
+  }
+
   if (submitBtn && features.submit) {
     const submitInfo = features.submit;
     async function submitOnce(code, passed, total) {
@@ -1084,12 +1104,20 @@ export async function mountInlineEditor(section, opts = {}) {
           }),
         });
         if (submitResp.ok) {
+          let respData = null;
+          try {
+            respData = await submitResp.json();
+          } catch (_) {
+            // Older server builds may not return a JSON body; that's fine,
+            // we'll just skip the progress-counter refresh.
+          }
           if (runStatus) {
             runStatus.textContent = `✓ Saved progress (${passed}/${total} tests passed).`;
             runStatus.style.color = "var(--color-success, #2e7d32)";
           }
           markAsCompleted();
           markSubmittedIndicator();
+          applyProgressUpdate(respData);
           if (typeof opts.onSubmit === "function") {
             try {
               opts.onSubmit({ section, ulid, exerciseKey: exKey });

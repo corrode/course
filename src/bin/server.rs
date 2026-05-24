@@ -1809,12 +1809,61 @@ async fn api_register(
     }
 }
 
+/// Body returned by `POST /api/submit` so the browser can refresh the
+/// chapter completion badge and the top-bar `progress_done / progress_total`
+/// counter without waiting for the next page navigation. The CLI ignores
+/// this body and only checks the HTTP status, so adding fields here is
+/// safe.
+#[derive(Serialize)]
+struct SubmitResponse {
+    /// `true` once every code step in the chapter that this submission
+    /// belongs to has at least one passing submission. Mirrors the
+    /// `completed` flag in `get_exercise_progress`.
+    chapter_completed: bool,
+    /// Number of completable chapters the participant has finished
+    /// (excludes quizzes and notes-only chapters), matching the
+    /// computation in `render_exercise_page` / `participant_dashboard`.
+    progress_done: usize,
+    /// Number of completable chapters in the course (denominator).
+    progress_total: usize,
+}
+
+/// Compute the participant's chapter-level progress for the chapter that
+/// owns `exercise_name`. Returns `(chapter_completed, progress_done,
+/// progress_total)`, using the same `!is_quiz && has_exercises` filter
+/// as the page renderers so the numbers stay consistent.
+async fn compute_submit_progress(
+    pool: &SqlitePool,
+    catalog: &[Exercise],
+    ulid: &str,
+    exercise_name: &str,
+) -> Result<(bool, usize, usize)> {
+    let exercises = get_exercise_progress(pool, Some(ulid), catalog).await?;
+    // `exercise_name` is either `<chapter>` (legacy) or `<chapter>/<step>`
+    // (multi-step); the chapter slug is whatever's before the first `/`.
+    let chapter_slug = exercise_name.split('/').next().unwrap_or(exercise_name);
+    let chapter_completed = exercises
+        .iter()
+        .find(|e| e.name == chapter_slug)
+        .map(|e| e.completed)
+        .unwrap_or(false);
+    let progress_total = exercises
+        .iter()
+        .filter(|e| !e.is_quiz && e.has_exercises)
+        .count();
+    let progress_done = exercises
+        .iter()
+        .filter(|e| !e.is_quiz && e.has_exercises && e.completed)
+        .count();
+    Ok((chapter_completed, progress_done, progress_total))
+}
+
 /// API submission endpoint
 #[debug_handler]
 async fn api_submit(
     State(state): State<AppState>,
     Json(request): Json<SubmissionRequest>,
-) -> Result<StatusCode, StatusCode> {
+) -> Result<Json<SubmitResponse>, StatusCode> {
     info!(
         "Submission attempt: participant_id='{}', exercise='{}'",
         request.ulid, request.exercise_name
@@ -1864,7 +1913,25 @@ async fn api_submit(
                 "Duplicate submission detected for participant='{}', exercise='{}'; skipping",
                 request.ulid, request.exercise_name
             );
-            return Ok(StatusCode::OK); // Return success but don't store duplicate
+            // Return success but don't store duplicate. Still recompute
+            // progress so the client can reconcile its UI even when the
+            // user re-submits an already-saved solution.
+            let (chapter_completed, progress_done, progress_total) = compute_submit_progress(
+                &state.pool,
+                &state.exercises,
+                &request.ulid,
+                &request.exercise_name,
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to compute progress after duplicate submit: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+            return Ok(Json(SubmitResponse {
+                chapter_completed,
+                progress_done,
+                progress_total,
+            }));
         }
         Ok(None) => {
             // No duplicate found, proceed with insertion
@@ -1899,7 +1966,22 @@ async fn api_submit(
         Ok(_) => {
             info!("Submission successful: participant='{}', exercise='{}', tests_passed={}", 
                   request.ulid, request.exercise_name, request.tests_passed);
-            Ok(StatusCode::OK)
+            let (chapter_completed, progress_done, progress_total) = compute_submit_progress(
+                &state.pool,
+                &state.exercises,
+                &request.ulid,
+                &request.exercise_name,
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to compute progress after submit: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+            Ok(Json(SubmitResponse {
+                chapter_completed,
+                progress_done,
+                progress_total,
+            }))
         },
         Err(e) => {
             error!("Failed to save submission: {}", e);
@@ -2013,7 +2095,7 @@ async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, Statu
         .send()
         .await
         .map_err(|e| {
-            error!("Playground request failed: {e}");
+            error!("Playground request failed: {e:?}");
             StatusCode::BAD_GATEWAY
         })?;
 
@@ -2107,7 +2189,7 @@ async fn api_format(Json(req): Json<FormatRequest>) -> Result<Json<FormatRespons
         .send()
         .await
         .map_err(|e| {
-            error!("Playground format request failed: {e}");
+            error!("Playground format request failed: {e:?}");
             StatusCode::BAD_GATEWAY
         })?;
 
