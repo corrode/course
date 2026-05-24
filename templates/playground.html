@@ -2,24 +2,13 @@
 endblock %} {% block content %}
 <div class="container">
     <div class="exercise-header">
-        <div class="chapter-eyebrow">Scratchpad</div>
-        <h1 class="exercise-title">Rust playground</h1>
+        <h1 class="exercise-title">Rust Playground</h1>
     </div>
 
     <div class="chapter-prose exercise-prose">
         <p>
-            A blank slate to experiment in. Code here is saved to your browser's
-            local storage automatically. Close the tab and come back; it'll
-            still be there.
-        </p>
-        <p>
-            Press <strong>Run</strong> to compile and execute on
-            <a href="https://play.rust-lang.org" target="_blank" rel="noopener"
-                >play.rust-lang.org</a
-            >. Unlike the exercise editors, the scratchpad runs your
-            <code>main()</code> directly, so <code>println!</code>,
-            <code>dbg!</code>, and compiler warnings all show up in the output
-            panel below.
+            Code here is saved to your browser's local storage automatically.
+            Close the tab and come back; it'll still be there.
         </p>
     </div>
 
@@ -29,10 +18,7 @@ endblock %} {% block content %}
         data-exercise-key="playground"
     >
         <div class="exercise-section-head">
-            <div>
-                <div class="section-eyebrow">Scratchpad</div>
-                <h2 class="section-title">main.rs</h2>
-            </div>
+            <div></div>
             <div class="exercise-actions">
                 <span
                     data-role="action-status"
@@ -41,7 +27,15 @@ endblock %} {% block content %}
                 ></span>
                 <button
                     type="button"
-                    class="btn btn-secondary btn-icon"
+                    class="btn btn-secondary btn-reset"
+                    data-role="reset-btn"
+                    title="Replace the buffer with the starter snippet"
+                >
+                    Reset
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-secondary btn-icon actions-cluster-start"
                     data-role="fullscreen-btn"
                     title="Toggle fullscreen editor (Esc to exit)"
                     aria-pressed="false"
@@ -80,15 +74,7 @@ endblock %} {% block content %}
                 </button>
                 <button
                     type="button"
-                    class="btn btn-secondary btn-reset"
-                    data-role="reset-btn"
-                    title="Replace the buffer with the starter snippet"
-                >
-                    Reset
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-secondary actions-cluster-start"
+                    class="btn btn-secondary"
                     data-role="vim-btn"
                     title="Toggle Vim keybindings"
                     aria-pressed="false"
@@ -99,7 +85,7 @@ endblock %} {% block content %}
                     type="button"
                     class="btn btn-secondary"
                     data-role="format-btn"
-                    title="Reformat with rustfmt via play.rust-lang.org"
+                    title="Format the code with rustfmt"
                 >
                     Format
                 </button>

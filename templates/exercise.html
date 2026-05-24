@@ -170,7 +170,16 @@ progress_total > 0 %}
                     class="action-status"
                     aria-live="polite"
                 ></span>
-                {% if exercise.shows_button("vim") %}
+                {% if exercise.shows_button("reset") %}
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-role="reset-btn"
+                    title="Replace your edits with the original starter code"
+                >
+                    Reset
+                </button>
+                {% endif %} {% if exercise.shows_button("vim") %}
                 <button
                     type="button"
                     class="btn btn-secondary"
@@ -179,15 +188,6 @@ progress_total > 0 %}
                     aria-pressed="false"
                 >
                     Vim: off
-                </button>
-                {% endif %} {% if exercise.shows_button("reset") %}
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-role="reset-btn"
-                    title="Replace your edits with the original starter code"
-                >
-                    Reset
                 </button>
                 {% endif %} {% if exercise.shows_button("vscode") %}
                 <a
@@ -205,7 +205,7 @@ progress_total > 0 %}
                     type="button"
                     class="btn btn-secondary"
                     data-role="format-btn"
-                    title="Reformat with rustfmt via play.rust-lang.org"
+                    title="Format the code with rustfmt"
                 >
                     Format
                 </button>
