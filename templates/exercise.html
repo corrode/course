@@ -183,16 +183,6 @@ endblock %} {% block content %}
                 >
                     Reset
                 </button>
-                {% endif %} {% if exercise.shows_button("vim") %}
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-role="vim-btn"
-                    title="Toggle Vim keybindings"
-                    aria-pressed="false"
-                >
-                    Vim: off
-                </button>
                 {% endif %} {% if exercise.shows_button("vscode") %}
                 <a
                     class="btn btn-secondary"

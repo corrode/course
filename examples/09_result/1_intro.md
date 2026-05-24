@@ -90,7 +90,7 @@ if let Ok(n) = safe_divide(10.0, 2.0) {
 
 `Result` has many of the same combinators as `Option`: `.map`, `.map_or`,
 `.and_then`, `.unwrap_or`. Once you're comfortable with this chapter, the
-`?` operator (chapter 17) will let you chain fallible operations without
+`?` operator (chapter 18) will let you chain fallible operations without
 the boilerplate.
 
 

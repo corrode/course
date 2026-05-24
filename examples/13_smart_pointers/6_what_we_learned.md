@@ -24,7 +24,7 @@ text-transformation commands via `Box<dyn Command>`.
   store mixed concrete types behind a single interface (a
   `Vec<Box<dyn Command>>` of pipeline stages, all different structs,
   driven through one trait) and underpins the `Box<dyn Error>`
-  pattern you'll meet in Chapter 17.
+  pattern you'll meet in Chapter 18.
 - Dynamic dispatch through a trait object costs one vtable lookup
   per call. That's usually fine. Reach for generics (`fn f<T:
   Command>`) when you want the compiler to monomorphize away the
@@ -47,6 +47,6 @@ text-transformation commands via `Box<dyn Command>`.
 
 Chapter 15 puts iterators front and center, and you'll see how a
 chain of `.iter().fold(...)` could have replaced the explicit loop
-in `apply_pipeline`. Chapter 17 brings `Box<dyn Error>` and the
+in `apply_pipeline`. Chapter 18 brings `Box<dyn Error>` and the
 `?` operator together, which is the day-to-day payoff for
 understanding `Box<dyn Trait>` here.

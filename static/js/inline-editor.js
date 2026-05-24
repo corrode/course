@@ -13,7 +13,6 @@
 //              data-exercise-key="<chapter>/<step>">
 //       <div class="exercise-section-head">
 //         <span data-role="action-status"></span>
-//         <button data-role="vim-btn">Vim: off</button>          (optional)
 //         <button data-role="reset-btn">Reset</button>           (optional)
 //         <a    data-role="vscode-btn" href="...">Open</a>       (optional)
 //         <button data-role="format-btn">Format</button>         (optional)
@@ -86,10 +85,6 @@ export function setVimGlobal(enabled) {
     localStorage.setItem(VIM_PREF_KEY, enabled ? "1" : "0");
   } catch (_) {}
   for (const m of activeMounts) m.setVim(enabled);
-  document.querySelectorAll('[data-role="vim-btn"]').forEach((b) => {
-    b.textContent = enabled ? "Vim: on" : "Vim: off";
-    b.setAttribute("aria-pressed", enabled ? "true" : "false");
-  });
 }
 
 // Curated keyword list: small enough to be useful, large enough to cover
@@ -302,7 +297,6 @@ export async function mountInlineEditor(section, opts = {}) {
   const formatBtn = $("format-btn");
   const resetBtn = $("reset-btn");
   const copyBtn = $("copy-btn");
-  const vimBtn = $("vim-btn");
 
   const exerciseKey = opts.slug || section.dataset.exerciseKey || "playground";
   const starter =
@@ -573,18 +567,6 @@ export async function mountInlineEditor(section, opts = {}) {
   }
 
   activeMounts.add(api);
-
-  // ---- Vim button (per-section but mirrors global state) -------------
-  if (vimBtn && features.vim) {
-    const initial = vimGlobalEnabled();
-    vimBtn.textContent = initial ? "Vim: on" : "Vim: off";
-    vimBtn.setAttribute("aria-pressed", initial ? "true" : "false");
-    vimBtn.addEventListener("click", () => {
-      const next = !vimGlobalEnabled();
-      setVimGlobal(next);
-      api.focus();
-    });
-  }
 
   // ---- Reset ---------------------------------------------------------
   if (resetBtn) {

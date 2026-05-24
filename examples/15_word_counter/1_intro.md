@@ -1,8 +1,12 @@
 # Putting It Together
 
-This chapter doesn't introduce a new concept. It combines strings,
-collections, and iterators into one small program: count words in a
-piece of text.
+You've just learned about iterators — so let's actually use them.
+This chapter doesn't introduce a new big concept; it combines
+strings, collections, and the iterator chains from the previous
+chapter into one small program: count words in a piece of text.
+Along the way you'll meet two new iterator tricks (`max_by_key`
+and `HashMap::into_iter`), but the bulk of the work is just you
+applying what's already in your toolbox.
 
 A few patterns you'll likely use:
 
@@ -33,7 +37,8 @@ let top = counts.iter().max_by_key(|(_, count)| *count);
 // top: Option<(&String, &usize)>
 ```
 
-**Filtering and collecting.** Same iterator chain as in chapter 15:
+**Filtering and collecting.** Same iterator chain you saw in the
+previous chapter:
 
 ```rust
 let frequent: Vec<String> = counts

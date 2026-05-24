@@ -281,7 +281,7 @@ pub struct ChapterDirectives {
     /// the default for any chapter without a `.chapter.toml`. An explicit
     /// list (including the empty list) hides any button not named in
     /// it. See the `Buttons` map in `exercise.html` for valid names
-    /// (`run`, `submit`, `format`, `reset`, `copy`, `vim`, `vscode`).
+    /// (`run`, `submit`, `format`, `reset`, `copy`, `vscode`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub show: Option<Vec<String>>,
     /// Whether the page-wide table of contents (the chapter list at
@@ -1328,8 +1328,8 @@ mod tests {
             Some((2, "strings_and_chars".to_string()))
         );
         assert_eq!(
-            split_numeric_prefix("16_question_mark_operator"),
-            Some((16, "question_mark_operator".to_string()))
+            split_numeric_prefix("17_question_mark_operator"),
+            Some((17, "question_mark_operator".to_string()))
         );
         assert_eq!(split_numeric_prefix("no_prefix"), None);
     }

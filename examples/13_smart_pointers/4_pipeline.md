@@ -17,7 +17,7 @@ let pipeline: Vec<Box<dyn Command>> = vec![
 Every entry in the vector is one box, one pointer wide, all the same
 size. Each box owns whatever concrete type it wraps. Dropping the
 vector drops the boxes, which drops the inner values. This is the
-exact same pattern you'll see in Chapter 17 as `Box<dyn Error>`:
+exact same pattern you'll see in Chapter 18 as `Box<dyn Error>`:
 "some value, I don't care which concrete type, just give me one
 owned thing that implements the trait."
 

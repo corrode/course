@@ -75,7 +75,7 @@ makes "pluggable rules" work: every rule is a different struct (and
 might carry different configuration), but the call site only knows
 "a list of things that can validate."
 
-You'll see the same idea, scaled up, in Chapter 15's password
+You'll see the same idea, scaled up, in Chapter 17's password
 validator: a configurable set of checks running against one input.
 
 ## A word about `Box<dyn Trait>`
