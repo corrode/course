@@ -59,6 +59,54 @@ block content %}
 
             <div class="settings-row">
                 <div class="settings-row-text">
+                    <h3>Programming ligatures</h3>
+                    <p>
+                        JetBrains Mono renders pairs like
+                        <code>==</code>, <code>!=</code>, <code>-&gt;</code>,
+                        and <code>=&gt;</code> as combined glyphs. Turn this off
+                        to see every character literally &mdash; helpful when
+                        teaching or pairing.
+                    </p>
+                </div>
+                <label class="settings-switch" for="settings-ligatures-toggle">
+                    <input
+                        type="checkbox"
+                        id="settings-ligatures-toggle"
+                        data-setting="ligatures"
+                    />
+                    <span class="settings-switch-track" aria-hidden="true">
+                        <span class="settings-switch-thumb"></span>
+                    </span>
+                    <span class="settings-switch-label">On</span>
+                </label>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-row-text">
+                    <h3>Highlight active line</h3>
+                    <p>
+                        Subtle background band on the line your cursor is on.
+                        Turn it off for a quieter editor view.
+                    </p>
+                </div>
+                <label
+                    class="settings-switch"
+                    for="settings-active-line-toggle"
+                >
+                    <input
+                        type="checkbox"
+                        id="settings-active-line-toggle"
+                        data-setting="active-line"
+                    />
+                    <span class="settings-switch-track" aria-hidden="true">
+                        <span class="settings-switch-thumb"></span>
+                    </span>
+                    <span class="settings-switch-label">On</span>
+                </label>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-row-text">
                     <h3>Editor font size</h3>
                     <p>
                         Affects every CodeMirror instance. Useful on small
@@ -426,6 +474,8 @@ cargo course init --token {{ u }}</code></pre>
     const SETTINGS_KEYS = {
         vim: "corrode:editor:vim",
         fontSize: "corrode:editor:font-size",
+        ligatures: "corrode:editor:ligatures",
+        activeLine: "corrode:editor:active-line",
     };
 
     function readBool(key) {
@@ -468,6 +518,54 @@ cargo course init --token {{ u }}</code></pre>
     })();
 
     // ---- Soft wrap toggle (removed) ---------------------------------
+
+    // ---- Generic on/off editor toggle --------------------------------
+    // Used by settings whose only effect is flipping a CSS attribute on
+    // <html>; the matching rules in base.html re-style every code
+    // surface. `defaultOn` is the user-visible default (the checkbox is
+    // checked when the localStorage value is missing or not "0").
+    function wireEditorToggle({ id, storageKey, htmlAttr, defaultOn }) {
+        const input = document.getElementById(id);
+        if (!input) return;
+        const label = input
+            .closest(".settings-switch")
+            .querySelector(".settings-switch-label");
+        function reflect(on) {
+            input.checked = on;
+            label.textContent = on ? "On" : "Off";
+            if (on) {
+                delete document.documentElement.dataset[htmlAttr];
+            } else {
+                document.documentElement.dataset[htmlAttr] = "off";
+            }
+        }
+        let on = defaultOn;
+        try {
+            const stored = localStorage.getItem(storageKey);
+            if (stored === "0") on = false;
+            else if (stored === "1") on = true;
+        } catch (_) {}
+        reflect(on);
+        input.addEventListener("change", () => {
+            const next = input.checked;
+            try {
+                localStorage.setItem(storageKey, next ? "1" : "0");
+            } catch (_) {}
+            reflect(next);
+        });
+    }
+    wireEditorToggle({
+        id: "settings-ligatures-toggle",
+        storageKey: SETTINGS_KEYS.ligatures,
+        htmlAttr: "editorLigatures",
+        defaultOn: true,
+    });
+    wireEditorToggle({
+        id: "settings-active-line-toggle",
+        storageKey: SETTINGS_KEYS.activeLine,
+        htmlAttr: "editorActiveLine",
+        defaultOn: true,
+    });
 
     // ---- Editor font size --------------------------------------------
     (function () {

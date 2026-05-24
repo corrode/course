@@ -22,12 +22,12 @@ font) lives on .rust-editor in base.html. #}
             >
             {% else if sub.tests_passed %}
             <span class="status-badge status-badge-pass" title="Tests passed"
-                >✓</span
-            >
+                ><span class="icon-check"></span
+            ></span>
             {% else %}
             <span class="status-badge status-badge-fail" title="Tests failed"
-                >×</span
-            >
+                ><span class="icon-cross"></span
+            ></span>
             {% endif %}
         </span>
         <span class="submission-card-who">{{ sub.participant_name }}</span>

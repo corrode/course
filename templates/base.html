@@ -40,6 +40,30 @@
             rel="stylesheet"
         />
         <style>
+            /* ---------- Reusable check icon (SVG mask) ---------- */
+            /* Source: /static/icons/check.svg. Inherits color from
+               currentColor so it adapts to surrounding text color
+               (green badges, white buttons, etc.). */
+            .icon-check,
+            .icon-cross {
+                display: inline-block;
+                width: 1em;
+                height: 1em;
+                vertical-align: -0.15em;
+                background-color: currentColor;
+                flex-shrink: 0;
+            }
+            .icon-check {
+                -webkit-mask: url("/static/icons/check.svg") no-repeat center /
+                    contain;
+                mask: url("/static/icons/check.svg") no-repeat center / contain;
+            }
+            .icon-cross {
+                -webkit-mask: url("/static/icons/cross.svg") no-repeat center /
+                    contain;
+                mask: url("/static/icons/cross.svg") no-repeat center / contain;
+            }
+
             /* ---------- Local fonts (served from /static/fonts) ---------- */
             @font-face {
                 font-family: "Happy Headline";
@@ -229,9 +253,10 @@
             }
 
             /* Editor preferences from `/settings`. The settings page
-               writes `data-editor-font-size` on `<html>` and persists
-               it to localStorage; `base.html` re-applies it before
-               paint so every page picks it up at load. The base size
+               writes `data-editor-font-size`, `data-editor-ligatures`,
+               and `data-editor-active-line` on `<html>` and persists
+               them to localStorage; `base.html` re-applies them before
+               paint so every page picks them up at load. The base size
                (`0.9rem`) used to live as an inline style on each
                editor's root in `static/js/inline-editor.js`; it now
                lives here so the user override actually wins. */
@@ -243,6 +268,35 @@
             }
             html[data-editor-font-size="large"] .cm-editor {
                 font-size: 1.05rem;
+            }
+            /* Programming ligatures (JetBrains Mono ships them on by
+               default). Some readers prefer to see the raw glyphs so
+               `==`, `!=`, `->`, `=>` etc. read as their literal tokens;
+               disable across every monospaced surface so the editor,
+               inline code, and read-only viewers stay consistent. */
+            html[data-editor-ligatures="off"] code,
+            html[data-editor-ligatures="off"] pre,
+            html[data-editor-ligatures="off"] kbd,
+            html[data-editor-ligatures="off"] samp,
+            html[data-editor-ligatures="off"] .cm-editor,
+            html[data-editor-ligatures="off"] .cm-content,
+            html[data-editor-ligatures="off"] .code-block,
+            html[data-editor-ligatures="off"] .rust-editor {
+                font-variant-ligatures: none;
+                font-feature-settings:
+                    "liga" 0,
+                    "calt" 0,
+                    "clig" 0,
+                    "dlig" 0;
+            }
+            /* The active-line + active-gutter highlight is on by
+               default (via `highlightActiveLine` / `Gutter` in
+               `static/js/inline-editor.js`). Some folks find the
+               extra band distracting; this knob hides the background
+               without touching the editor's extension list. */
+            html[data-editor-active-line="off"] .cm-activeLine,
+            html[data-editor-active-line="off"] .cm-activeLineGutter {
+                background-color: transparent !important;
             }
 
             /* CodeMirror selection. We pin this in static CSS (rather than
@@ -1320,14 +1374,18 @@
                 flex-shrink: 0;
             }
             .status-badge-pass {
-                background: var(--color-success);
+                background: transparent;
+                color: var(--color-success);
+                font-size: 1.4rem;
             }
             .status-badge-perfect {
                 background: #f1c40f;
                 color: #4a3a00;
             }
             .status-badge-fail {
-                background: var(--color-error);
+                background: transparent;
+                color: var(--color-error);
+                font-size: 1.4rem;
             }
 
             /* ---------- Shared chapter list ---------- */
@@ -1378,11 +1436,17 @@
                 font-weight: 500;
             }
             .chapter-row .chapter-mark {
-                width: 0.6rem;
-                height: 0.6rem;
+                width: 0.85rem;
+                height: 0.85rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
                 border-radius: 999px;
                 background: transparent;
                 border: 1px solid var(--color-border);
+                font-size: 0.95rem;
+                line-height: 1;
+                color: transparent;
             }
             .chapter-row.attempted {
                 background-color: rgba(125, 125, 125, 0.06);
@@ -1396,9 +1460,20 @@
                 background-color: rgba(46, 125, 50, 0.07);
             }
             .chapter-row.completed .chapter-mark {
-                background: var(--color-success, #2e7d32);
-                border-color: var(--color-success, #2e7d32);
+                background: transparent;
+                border: none;
+                color: var(--color-success, #2e7d32);
                 opacity: 1;
+            }
+            .chapter-row.completed .chapter-mark::before {
+                content: "";
+                display: inline-block;
+                width: 1em;
+                height: 1em;
+                background-color: currentColor;
+                -webkit-mask: url("/static/icons/check.svg") no-repeat center /
+                    contain;
+                mask: url("/static/icons/check.svg") no-repeat center / contain;
             }
             .chapter-row.perfected {
                 background-color: rgba(241, 196, 15, 0.1);
@@ -2015,16 +2090,58 @@
                 }
             })();
 
-            // Apply persisted editor preferences (font size) before
-            // paint so CodeMirror mounts at the right size. The
-            // settings UI lives at `/settings` and writes the same key.
+            // Apply persisted editor preferences (font size,
+            // ligatures, active-line highlight) before paint so
+            // CodeMirror mounts with the right look. The settings UI
+            // lives at `/settings` and writes the same keys. We also
+            // re-run on `pageshow` so that returning here via the
+            // back/forward cache (e.g. clicking the settings page's
+            // "← Back" link, which calls `history.back()`) picks up
+            // changes the user just made instead of restoring the
+            // stale dataset that was on `<html>` when they left.
             (function () {
-                try {
-                    var fs = localStorage.getItem("corrode:editor:font-size");
-                    if (fs === "small" || fs === "medium" || fs === "large") {
-                        document.documentElement.dataset.editorFontSize = fs;
-                    }
-                } catch (_) {}
+                function applyEditorPrefs() {
+                    var root = document.documentElement;
+                    try {
+                        var fs = localStorage.getItem(
+                            "corrode:editor:font-size",
+                        );
+                        if (
+                            fs === "small" ||
+                            fs === "medium" ||
+                            fs === "large"
+                        ) {
+                            root.dataset.editorFontSize = fs;
+                        } else {
+                            delete root.dataset.editorFontSize;
+                        }
+                    } catch (_) {}
+                    try {
+                        if (
+                            localStorage.getItem("corrode:editor:ligatures") ===
+                            "0"
+                        ) {
+                            root.dataset.editorLigatures = "off";
+                        } else {
+                            delete root.dataset.editorLigatures;
+                        }
+                    } catch (_) {}
+                    try {
+                        if (
+                            localStorage.getItem(
+                                "corrode:editor:active-line",
+                            ) === "0"
+                        ) {
+                            root.dataset.editorActiveLine = "off";
+                        } else {
+                            delete root.dataset.editorActiveLine;
+                        }
+                    } catch (_) {}
+                }
+                applyEditorPrefs();
+                window.addEventListener("pageshow", function (e) {
+                    if (e.persisted) applyEditorPrefs();
+                });
             })();
         </script>
     </head>

@@ -89,8 +89,10 @@ with (u) %}
                     <span class="chapter-picker-num">{{ d.number }}</span>
                     <span class="chapter-picker-title">{{ d.title }}</span>
                     <span class="chapter-picker-status" aria-hidden="true">
-                        {% if d.perfected %}★{% else if d.completed %}✓{% else
-                        if d.attempted %}·{% endif %}
+                        {% if d.perfected %}★{% else if d.completed %}<span
+                            class="icon-check"
+                        ></span
+                        >{% else if d.attempted %}·{% endif %}
                     </span>
                 </a>
             </li>
@@ -127,7 +129,7 @@ endblock %} {% block content %}
             >
             {% else if current_status.completed %}
             <span class="status-badge status-completed" title="Tests passed"
-                >✓ Passed</span
+                ><span class="icon-check"></span> Passed</span
             >
             {% else if current_status.attempted %}
             <span
@@ -230,7 +232,7 @@ endblock %} {% block content %}
                     title="Save this passing solution as your progress"
                     style="display: none"
                 >
-                    ✓ Submit
+                    <span class="icon-check"></span> Submit
                 </button>
                 {% endif %} {% when None %} {% endmatch %}
             </div>
@@ -1218,7 +1220,9 @@ endblock %} {% block content %}
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
-        padding: 0.15rem 0.55rem;
+        padding: 0.2rem 0.6rem;
+        width: auto;
+        height: auto;
         border-radius: 999px;
         font-size: 0.75rem;
         font-weight: 600;

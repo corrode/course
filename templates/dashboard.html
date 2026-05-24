@@ -89,14 +89,22 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         <p>
             Welcome back, <strong>{{ name }}</strong>. You're {{ progress_done
             }} of {{ progress_total }} chapters in. Pick up at chapter {{
-            next_chapter_number }}, <em>{{ next_chapter_title }}</em>, when
-            you're ready.
+            next_chapter_number }}, {% match ulid %} {% when Some with (u) %}<a
+                href="/exercise/{{ u }}/{{ next_slug }}"
+                ><em>{{ next_chapter_title }}</em></a
+            >{% when None %}<a href="/exercise/{{ next_slug }}"
+                ><em>{{ next_chapter_title }}</em></a
+            >{% endmatch %}, when you're ready.
         </p>
         {% else %}
         <p>
             Welcome, <strong>{{ name }}</strong>. Your save file is ready.
-            Chapter {{ next_chapter_number }},
-            <em>{{ next_chapter_title }}</em>, is a good place to begin.
+            Chapter {{ next_chapter_number }}, {% match ulid %} {% when Some
+            with (u) %}<a href="/exercise/{{ u }}/{{ next_slug }}"
+                ><em>{{ next_chapter_title }}</em></a
+            >{% when None %}<a href="/exercise/{{ next_slug }}"
+                ><em>{{ next_chapter_title }}</em></a
+            >{% endmatch %}, is a good place to begin.
         </p>
         {% endif %}
         <p>
@@ -511,6 +519,15 @@ fn main() {
     }
     .book-intro p:last-child {
         margin-bottom: 0;
+    }
+    .book-intro a {
+        color: var(--color-primary);
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+    }
+    .book-intro a:hover,
+    .book-intro a:focus-visible {
+        color: var(--color-primary-muted);
     }
     .book-team-link {
         margin-top: 1.4rem;

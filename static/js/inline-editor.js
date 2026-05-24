@@ -693,11 +693,22 @@ export async function mountInlineEditor(section, opts = {}) {
 
   function setActionStatus(text, tone) {
     if (!actionStatus) return;
-    actionStatus.textContent = text;
     actionStatus.classList.remove("is-pass", "is-fail", "celebrate");
     if (!text) {
+      actionStatus.textContent = "";
       actionStatus.classList.remove("is-visible");
       return;
+    }
+    if (tone === "pass" || tone === "fail") {
+      actionStatus.textContent = "";
+      const icon = document.createElement("span");
+      icon.className = tone === "pass" ? "icon-check" : "icon-cross";
+      icon.setAttribute("aria-hidden", "true");
+      icon.style.marginRight = "0.35em";
+      actionStatus.appendChild(icon);
+      actionStatus.appendChild(document.createTextNode(text));
+    } else {
+      actionStatus.textContent = text;
     }
     actionStatus.classList.add("is-visible");
     if (tone === "pass") {
@@ -735,13 +746,19 @@ export async function mountInlineEditor(section, opts = {}) {
         row.style.gap = "0.5rem";
         const icon = document.createElement("span");
         if (t.passed) {
-          icon.textContent = "✓";
+          icon.innerHTML =
+            '<span class="icon-check" aria-hidden="true"></span>';
           icon.style.color = "var(--color-success, #2e7d32)";
           icon.style.fontWeight = "700";
+          icon.style.display = "inline-flex";
+          icon.style.alignItems = "center";
         } else {
-          icon.textContent = "✗";
+          icon.innerHTML =
+            '<span class="icon-cross" aria-hidden="true"></span>';
           icon.style.color = "var(--color-error, #c62828)";
           icon.style.fontWeight = "700";
+          icon.style.display = "inline-flex";
+          icon.style.alignItems = "center";
         }
         const name = document.createElement("span");
         name.textContent = t.name;
@@ -825,15 +842,15 @@ export async function mountInlineEditor(section, opts = {}) {
       );
     } else if (passed === total) {
       setActionStatus(
-        total === 1 ? "✓ 1 test passed" : `✓ ${total} tests passed`,
+        total === 1 ? "1 test passed" : `${total} tests passed`,
         "pass",
       );
     } else {
       const failed = total - passed;
       setActionStatus(
         failed === 1
-          ? `✗ 1 test failed (${passed}/${total})`
-          : `✗ ${failed} tests failed (${passed}/${total})`,
+          ? `1 test failed (${passed}/${total})`
+          : `${failed} tests failed (${passed}/${total})`,
         "fail",
       );
     }
@@ -909,10 +926,11 @@ export async function mountInlineEditor(section, opts = {}) {
   // Remember the submit button's initial label so we can restore it after
   // the editor is edited again (the persistExt updateListener flips Submit
   // back to Run on any change; we mirror that for the "Submitted" state).
-  const submitDefaultLabel = submitBtn ? submitBtn.textContent : "";
+  const submitDefaultLabel = submitBtn ? submitBtn.innerHTML : "";
   function markSubmittedIndicator() {
     if (!submitBtn) return;
-    submitBtn.textContent = "Submitted \u2713";
+    submitBtn.innerHTML =
+      'Submitted <span class="icon-check" aria-hidden="true"></span>';
     submitBtn.classList.add("is-submitted");
     submitBtn.disabled = true;
     submitBtn.style.display = "";
@@ -922,7 +940,7 @@ export async function mountInlineEditor(section, opts = {}) {
     if (!submitBtn) return;
     if (submitBtn.classList.contains("is-submitted")) {
       submitBtn.classList.remove("is-submitted");
-      submitBtn.textContent = submitDefaultLabel;
+      submitBtn.innerHTML = submitDefaultLabel;
       submitBtn.disabled = false;
     }
   }
@@ -1058,7 +1076,7 @@ export async function mountInlineEditor(section, opts = {}) {
       );
       if (!hasPassed) {
         meta.innerHTML =
-          '<span class="status-badge status-completed" title="Tests passed">✓ Passed</span>';
+          '<span class="status-badge status-completed" title="Tests passed"><span class="icon-check"></span> Passed</span>';
       }
     }
     const row = document.getElementById("current-chapter-row");
@@ -1116,7 +1134,7 @@ export async function mountInlineEditor(section, opts = {}) {
             // we'll just skip the progress-counter refresh.
           }
           if (runStatus) {
-            runStatus.textContent = `✓ Saved progress (${passed}/${total} tests passed).`;
+            runStatus.textContent = `Saved progress (${passed}/${total} tests passed).`;
             runStatus.style.color = "var(--color-success, #2e7d32)";
           }
           markAsCompleted();
