@@ -152,9 +152,12 @@ struct UiExerciseStatus {
 struct DashboardTemplate {
     participant_name: Option<String>,
     ulid: Option<String>,
-    /// Rows for the shared `partials/chapter_list.html` partial.
-    /// Same shape as the exercise page's TOC; `current` is always
-    /// `false` here (the homepage has no current chapter).
+    /// One entry per chapter, in display order. Renders the bottom
+    /// table of contents on the homepage via the shared
+    /// `templates/partials/chapter_list.html` partial — the same one
+    /// each exercise page uses for its "All exercises" nav, so the
+    /// two stay visually identical. `current` is always `false`
+    /// here because the homepage isn't any one chapter.
     dots: Vec<ProgressDot>,
     /// Slug of the first chapter the participant hasn't completed yet,
     /// or the first chapter overall if they're brand new / fully done.
