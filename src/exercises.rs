@@ -56,7 +56,7 @@ pub struct Answer {
     /// True for exactly one answer per question.
     pub correct: bool,
     /// Per-answer commentary revealed after the visitor picks an
-    /// answer — not just for the right answer, but for every
+    /// answer, not just for the right answer, but for every
     /// distractor too, since the wrong answers are usually where the
     /// learning lives.
     pub explanation: String,
@@ -638,7 +638,7 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
 ///
 /// A missing file yields `Ok(None)` (most chapters don't have a quiz).
 /// A malformed file is a hard error so a typo can't silently strip
-/// the entire quiz off the page — we'd rather crash at startup than
+/// the entire quiz off the page; we'd rather crash at startup than
 /// serve a broken chapter.
 fn load_chapter_quiz(dir: &Path) -> Result<Option<Quiz>> {
     let path = dir.join("quiz.toml");
@@ -1283,7 +1283,7 @@ mod tests {
             .iter()
             .find(|e| e.slug == "rust_fundamentals_quiz")
             .expect("expected 21_rust_fundamentals_quiz to be present");
-        // No code editors on the quiz chapter — it's intro prose plus
+        // No code editors on the quiz chapter; it's intro prose plus
         // an interactive quiz block, nothing to submit.
         assert!(
             chapter.code_steps().is_empty(),

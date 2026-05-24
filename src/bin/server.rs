@@ -154,7 +154,7 @@ struct DashboardTemplate {
     ulid: Option<String>,
     /// One entry per chapter, in display order. Renders the bottom
     /// table of contents on the homepage via the shared
-    /// `templates/partials/chapter_list.html` partial — the same one
+    /// `templates/partials/chapter_list.html` partial: the same one
     /// each exercise page uses for its "All exercises" nav, so the
     /// two stay visually identical. `current` is always `false`
     /// here because the homepage isn't any one chapter.
