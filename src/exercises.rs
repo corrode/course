@@ -96,7 +96,7 @@ impl Quiz {
                      <span class=\"quiz-card-num\">Question {n}\
                        <span class=\"quiz-card-num-total\">\
                          of {total}</span></span>\
-                     <span class=\"quiz-card-status\" data-quiz-status\
+                     <span class=\"quiz-card-status\" data-quiz-status \
                            aria-live=\"polite\"></span>\
                    </div>\
                    <div class=\"quiz-prompt\">{prompt}</div>",
@@ -118,15 +118,15 @@ impl Quiz {
                 let _ = write!(
                     out,
                     "<li class=\"quiz-answer-wrap\">\
-                       <button type=\"button\" class=\"quiz-answer\"\
-                               data-quiz-answer\
-                               data-correct=\"{correct}\"\
+                       <button type=\"button\" class=\"quiz-answer\" \
+                               data-quiz-answer \
+                               data-correct=\"{correct}\" \
                                data-answer-index=\"{idx}\">\
                          <span class=\"quiz-answer-marker\" aria-hidden=\"true\">\
                            {letter}</span>\
                          <span class=\"quiz-answer-text\">{text}</span>\
                        </button>\
-                       <div class=\"quiz-explanation\"\
+                       <div class=\"quiz-explanation\" \
                             data-quiz-explanation hidden>\
                          {explanation}\
                        </div>\
