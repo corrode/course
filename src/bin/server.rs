@@ -1124,6 +1124,14 @@ async fn render_exercise_page(
                 });
                 prev_was_note = false;
             }
+            Step::Quiz(quiz) => {
+                items.push(RenderItem {
+                    kind: RenderKind::Quiz {
+                        html: quiz.render_html(),
+                    },
+                });
+                prev_was_note = false;
+            }
         }
     }
 

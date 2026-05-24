@@ -25,6 +25,159 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+/// Multiple-choice quiz loaded from a chapter's `quiz.toml`.
+///
+/// The quiz file format is intentionally tiny: a list of `[[questions]]`
+/// tables, each with a prompt, an optional hint, and an inline-table
+/// `answers` array. Exactly one answer per question must be marked
+/// `correct = true`; this is enforced when the chapter is parsed so a
+/// malformed quiz fails fast at startup rather than at render time.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Quiz {
+    pub questions: Vec<Question>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Question {
+    /// The question itself, in markdown (rendered server-side, so
+    /// inline code, `**bold**`, and fenced code blocks all work).
+    pub prompt: String,
+    /// Optional nudge shown above the answers.
+    #[serde(default)]
+    pub hint: Option<String>,
+    /// 2–6 answer choices. Order is preserved; we do not shuffle.
+    pub answers: Vec<Answer>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Answer {
+    /// Answer text, in markdown.
+    pub text: String,
+    /// True for exactly one answer per question.
+    pub correct: bool,
+    /// Per-answer commentary revealed after the visitor picks an
+    /// answer — not just for the right answer, but for every
+    /// distractor too, since the wrong answers are usually where the
+    /// learning lives.
+    pub explanation: String,
+}
+
+impl Quiz {
+    /// Render the whole quiz to HTML. One outer `<section data-quiz>`
+    /// wraps an `<ol>` of question cards; each card carries the
+    /// per-answer `data-correct` flag so `static/js/quiz.js` can
+    /// evaluate clicks without an extra round trip.
+    #[must_use]
+    pub fn render_html(&self) -> String {
+        use std::fmt::Write;
+        let mut out = String::with_capacity(self.questions.len() * 1024);
+        out.push_str(
+            "<section class=\"quiz-section\" data-quiz \
+             aria-label=\"Rust fundamentals quiz\">",
+        );
+        let _ = write!(
+            out,
+            "<header class=\"quiz-meta\">\
+               <span class=\"quiz-meta-progress\">\
+                 <strong data-quiz-answered>0</strong> / {total} answered\
+               </span>\
+               <span class=\"quiz-meta-score\" data-quiz-score-wrap hidden>\
+                 Score: <strong data-quiz-score>0</strong> / {total}\
+               </span>\
+             </header>",
+            total = self.questions.len(),
+        );
+        out.push_str("<ol class=\"quiz-questions\">");
+        for (i, q) in self.questions.iter().enumerate() {
+            let _ = write!(
+                out,
+                "<li class=\"quiz-card\" data-quiz-card>\
+                   <div class=\"quiz-card-head\">\
+                     <span class=\"quiz-card-num\">Question {n}\
+                       <span class=\"quiz-card-num-total\">\
+                         of {total}</span></span>\
+                     <span class=\"quiz-card-status\" data-quiz-status\
+                           aria-live=\"polite\"></span>\
+                   </div>\
+                   <div class=\"quiz-prompt\">{prompt}</div>",
+                n = i + 1,
+                total = self.questions.len(),
+                prompt = render_markdown(&q.prompt),
+            );
+            if let Some(hint) = &q.hint {
+                let _ = write!(
+                    out,
+                    "<p class=\"quiz-hint\">\
+                       <span class=\"quiz-hint-tag\" aria-hidden=\"true\">Hint</span>\
+                       {body}</p>",
+                    body = render_inline_markdown(hint),
+                );
+            }
+            out.push_str("<ol class=\"quiz-answers\">");
+            for (j, a) in q.answers.iter().enumerate() {
+                let _ = write!(
+                    out,
+                    "<li class=\"quiz-answer-wrap\">\
+                       <button type=\"button\" class=\"quiz-answer\"\
+                               data-quiz-answer\
+                               data-correct=\"{correct}\"\
+                               data-answer-index=\"{idx}\">\
+                         <span class=\"quiz-answer-marker\" aria-hidden=\"true\">\
+                           {letter}</span>\
+                         <span class=\"quiz-answer-text\">{text}</span>\
+                       </button>\
+                       <div class=\"quiz-explanation\"\
+                            data-quiz-explanation hidden>\
+                         {explanation}\
+                       </div>\
+                     </li>",
+                    correct = a.correct,
+                    idx = j,
+                    letter = letter_for(j),
+                    text = render_inline_markdown(&a.text),
+                    explanation = render_inline_markdown(&a.explanation),
+                );
+            }
+            out.push_str("</ol></li>");
+        }
+        out.push_str("</ol>");
+        out.push_str(
+            "<footer class=\"quiz-footer\" data-quiz-footer hidden>\
+               <p class=\"quiz-footer-headline\" data-quiz-headline></p>\
+               <button type=\"button\" class=\"btn quiz-reset\"\
+                       data-quiz-reset>Try again</button>\
+             </footer>",
+        );
+        out.push_str("</section>");
+        out
+    }
+}
+
+/// A-Z marker for answer buttons. Falls back to a number if a quiz
+/// ever has more than 26 answers (it shouldn't).
+fn letter_for(i: usize) -> String {
+    if i < 26 {
+        ((b'A' + u8::try_from(i).unwrap_or(0)) as char).to_string()
+    } else {
+        format!("{}", i + 1)
+    }
+}
+
+/// Render a short markdown snippet (one paragraph) and strip the
+/// outer `<p>…</p>` so the result can be spliced inline.
+fn render_inline_markdown(md: &str) -> String {
+    let html = render_markdown(md.trim());
+    let trimmed = html.trim();
+    if let Some(inner) = trimmed.strip_prefix("<p>") {
+        if let Some(inner) = inner.strip_suffix("</p>") {
+            if !inner.contains("<p>") {
+                return inner.to_string();
+            }
+        }
+    }
+    trimmed.to_string()
+}
+
 /// A short prose note that lives next to an exercise. Notes give us a place
 /// to put preliminary information ("solve with std only", section
 /// preambles, etc.) without bloating the exercise's own `//!` block.
@@ -86,13 +239,18 @@ impl CodeStep {
 }
 
 /// One position in a chapter's ordered sequence of content: either a
-/// prose note or a code step.
+/// prose note, a code step, or an interactive quiz.
 #[derive(Debug, Clone)]
 pub enum Step {
     /// A markdown note rendered as-is.
     Prose(Note),
     /// An exercise file with its own editor and tests.
     Code(CodeStep),
+    /// An interactive multiple-choice quiz loaded from `quiz.toml`.
+    /// Only used by the dedicated quiz chapter today, but the step
+    /// type is general: any chapter with a `quiz.toml` will pick one
+    /// up at the end of its render plan.
+    Quiz(Quiz),
 }
 
 impl Step {
@@ -102,6 +260,8 @@ impl Step {
         match self {
             Self::Prose(n) => n.order,
             Self::Code(c) => c.order,
+            // Quiz steps always render last in the chapter.
+            Self::Quiz(_) => u8::MAX,
         }
     }
 }
@@ -194,7 +354,7 @@ impl Exercise {
             .iter()
             .filter_map(|s| match s {
                 Step::Code(c) => Some(c),
-                Step::Prose(_) => None,
+                Step::Prose(_) | Step::Quiz(_) => None,
             })
             .collect()
     }
@@ -206,7 +366,7 @@ impl Exercise {
             .iter()
             .filter_map(|s| match s {
                 Step::Prose(n) => Some(n),
-                Step::Code(_) => None,
+                Step::Code(_) | Step::Quiz(_) => None,
             })
             .collect()
     }
@@ -326,6 +486,11 @@ pub enum RenderKind {
         /// editor section.
         hints_html: Option<String>,
     },
+    /// A rendered quiz block. The server pre-renders the full HTML
+    /// (one card per question, with prompts and explanations already
+    /// converted from markdown) so the template just splices it in.
+    /// Interaction lives in `static/js/quiz.js`.
+    Quiz { html: String },
 }
 
 /// Scan a directory for `NN_slug/` chapter dirs and parse each one.
@@ -447,6 +612,15 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
 
     let (steps, hints) = apply_hints(steps, hints, hints_path.as_deref());
 
+    // If the chapter ships a `quiz.toml`, append it as a Quiz step.
+    // It always renders last because `Step::order` returns u8::MAX
+    // for quizzes, so a stable re-sort would keep it at the bottom
+    // even if other steps had higher numeric prefixes.
+    let mut steps = steps;
+    if let Some(quiz) = load_chapter_quiz(dir)? {
+        steps.push(Step::Quiz(quiz));
+    }
+
     let directives = load_chapter_directives(dir);
 
     Ok(Exercise {
@@ -458,6 +632,44 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
         hints,
         directives,
     })
+}
+
+/// Read `quiz.toml` from a chapter directory if present.
+///
+/// A missing file yields `Ok(None)` (most chapters don't have a quiz).
+/// A malformed file is a hard error so a typo can't silently strip
+/// the entire quiz off the page — we'd rather crash at startup than
+/// serve a broken chapter.
+fn load_chapter_quiz(dir: &Path) -> Result<Option<Quiz>> {
+    let path = dir.join("quiz.toml");
+    let raw = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => return Err(anyhow!("reading {}: {e}", path.display())),
+    };
+    let quiz: Quiz = toml::from_str(&raw).with_context(|| format!("parsing {}", path.display()))?;
+    if quiz.questions.is_empty() {
+        return Err(anyhow!("{} has no questions", path.display()));
+    }
+    for (i, q) in quiz.questions.iter().enumerate() {
+        let correct = q.answers.iter().filter(|a| a.correct).count();
+        if correct != 1 {
+            return Err(anyhow!(
+                "{}: question {} has {correct} correct answers (need exactly 1)",
+                path.display(),
+                i + 1,
+            ));
+        }
+        if q.answers.len() < 2 {
+            return Err(anyhow!(
+                "{}: question {} has only {} answer(s); need at least 2",
+                path.display(),
+                i + 1,
+                q.answers.len(),
+            ));
+        }
+    }
+    Ok(Some(quiz))
 }
 
 /// Read `.chapter.toml` from a chapter directory if present.
@@ -1064,22 +1276,40 @@ mod tests {
     }
 
     #[test]
-    fn legacy_single_step_chapter_has_one_code_step() {
+    fn rust_fundamentals_quiz_has_a_quiz_step() {
         let exercises =
             scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
-        // Any chapter with only `main.rs` should produce exactly one code
-        // step ordered at 0 (which renders as the chapter's primary step).
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "rust_fundamentals_quiz")
-            .expect("expected 18_rust_fundamentals_quiz to be present");
-        let code_steps = chapter.code_steps();
-        assert_eq!(code_steps.len(), 1, "legacy chapter should have one step");
-        assert_eq!(code_steps[0].order, 0);
+            .expect("expected 21_rust_fundamentals_quiz to be present");
+        // No code editors on the quiz chapter — it's intro prose plus
+        // an interactive quiz block, nothing to submit.
         assert!(
-            !chapter.is_multi_step(),
-            "legacy chapter should report as single-step"
+            chapter.code_steps().is_empty(),
+            "quiz chapter should not expose any code steps"
         );
+        let quiz = chapter
+            .steps
+            .iter()
+            .find_map(|s| match s {
+                Step::Quiz(q) => Some(q),
+                _ => None,
+            })
+            .expect("quiz chapter should ship a Quiz step");
+        assert!(
+            quiz.questions.len() >= 10,
+            "quiz should have a reasonable number of questions"
+        );
+        for (i, q) in quiz.questions.iter().enumerate() {
+            let correct = q.answers.iter().filter(|a| a.correct).count();
+            assert_eq!(
+                correct,
+                1,
+                "question {} should have exactly one correct answer",
+                i + 1
+            );
+        }
     }
 
     #[test]

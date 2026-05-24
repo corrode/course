@@ -1,10 +1,16 @@
 # Rust Fundamentals Quiz
 
-*Rust: the language where even a mere compiler is smarter than you.*
+*If you can answer these without flipping back, you've internalised more
+Rust than you think.*
 
-Test your understanding of the key Rust concepts covered in this course!
-This interactive quiz covers ownership, borrowing, types, pattern matching,
-and other fundamental Rust principles.
+Twenty multiple-choice questions covering the ground we've walked
+together: ownership and borrowing, `Option` and `Result`, lifetimes,
+traits, enums, modules. Pick an answer to lock it in and reveal the
+explanations &mdash; not just for the right answer, but for every
+distractor too, because the wrong answers are usually where the
+learning lives.
 
-Click the link below to take the quiz in a new tab. The quiz includes
-20 questions with immediate feedback and explanations.
+> [!TIP]
+> No grade, no time limit, no record kept. Skim the explanations even
+> for the ones you got right &mdash; sometimes the *why* is more
+> interesting than the *what*.
