@@ -1,0 +1,57 @@
+{#
+    Shared chapter list partial.
+
+    Used by the homepage and every exercise page so both render the
+    same TOC markup and pick up the same `.chapter-list` / `.chapter-row`
+    styles from base.html.
+
+    Required template variables:
+      - dots: a list of ProgressDot rows (one per chapter, in order)
+      - ulid: Option of String. When Some, links carry the participant
+        prefix; when None, links go to the anonymous /exercise/SLUG.
+
+    At most one row may have `current = true`. That row renders as a
+    non-link span with id `current-chapter-row` so
+    `static/js/inline-editor.js` can refresh completion state after a
+    passing Run on the chapter page.
+#}
+<nav
+    class="chapter-list"
+    aria-label="All exercises"
+    style="--chapter-rows: {{ (dots.len() + 1) / 2 }}"
+>
+    {% for d in dots %}
+        {% if d.current %}
+        <span
+            class="chapter-row current{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
+            id="current-chapter-row"
+            aria-current="page"
+        >
+            <span class="chapter-num">{{ d.number }}</span>
+            <span class="chapter-title">{{ d.title }}</span>
+            <span class="chapter-mark" aria-hidden="true"></span>
+        </span>
+        {% else %}
+            {% match ulid %}
+            {% when Some with (u) %}
+            <a
+                href="/exercise/{{ u }}/{{ d.slug }}"
+                class="chapter-row{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
+            >
+                <span class="chapter-num">{{ d.number }}</span>
+                <span class="chapter-title">{{ d.title }}</span>
+                <span class="chapter-mark" aria-hidden="true"></span>
+            </a>
+            {% when None %}
+            <a
+                href="/exercise/{{ d.slug }}"
+                class="chapter-row{% if d.is_quiz %} quiz{% endif %}"
+            >
+                <span class="chapter-num">{{ d.number }}</span>
+                <span class="chapter-title">{{ d.title }}</span>
+                <span class="chapter-mark" aria-hidden="true"></span>
+            </a>
+            {% endmatch %}
+        {% endif %}
+    {% endfor %}
+</nav>

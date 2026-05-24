@@ -152,7 +152,10 @@ struct UiExerciseStatus {
 struct DashboardTemplate {
     participant_name: Option<String>,
     ulid: Option<String>,
-    exercises: Vec<ExerciseProgress>,
+    /// Rows for the shared `partials/chapter_list.html` partial.
+    /// Same shape as the exercise page's TOC; `current` is always
+    /// `false` here (the homepage has no current chapter).
+    dots: Vec<ProgressDot>,
     /// Slug of the first chapter the participant hasn't completed yet,
     /// or the first chapter overall if they're brand new / fully done.
     /// Used by the "Start" call-to-action.
@@ -602,6 +605,27 @@ async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
     }
 }
 
+/// Build chapter-list rows for the homepage from per-exercise
+/// progress. Mirrors the dot construction in `render_exercise_page`
+/// so both pages feed the same `partials/chapter_list.html` partial.
+/// `current` is always `false` on the homepage.
+fn dots_from_exercises(exercises: &[ExerciseProgress]) -> Vec<ProgressDot> {
+    exercises
+        .iter()
+        .map(|e| ProgressDot {
+            slug: e.name.clone(),
+            number: e.number,
+            title: e.title.clone(),
+            attempted: !e.submissions.is_empty(),
+            completed: e.completed,
+            perfected: e.perfected,
+            current: false,
+            is_quiz: e.is_quiz,
+            has_exercises: e.has_exercises,
+        })
+        .collect()
+}
+
 /// Anonymous dashboard at `/`.
 ///
 /// Renders the same `dashboard.html` template the participant view
@@ -649,7 +673,7 @@ async fn anonymous_dashboard(
     let template = DashboardTemplate {
         participant_name: None,
         ulid: None,
-        exercises,
+        dots: dots_from_exercises(&exercises),
         next_slug,
         next_label,
         next_chapter_number,
@@ -877,7 +901,7 @@ async fn participant_dashboard(
     let template = DashboardTemplate {
         participant_name: Some(participant.name),
         ulid: Some(ulid.clone()),
-        exercises,
+        dots: dots_from_exercises(&exercises),
         next_slug,
         next_label,
         next_chapter_number,
