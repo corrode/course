@@ -78,11 +78,6 @@
   }
 
   function wireCard(card, onAnswered) {
-    // Shuffle answers so the correct one isn't always in the same
-    // slot (the source file tends to put it second). Markers are
-    // re-lettered after the shuffle so the visible A/B/C/D order
-    // stays sequential.
-    shuffleAnswers(card);
     const answers = Array.from(card.querySelectorAll("[data-quiz-answer]"));
     const status = card.querySelector("[data-quiz-status]");
     answers.forEach((btn) => {
@@ -92,28 +87,6 @@
         onAnswered();
       });
     });
-  }
-
-  function shuffleAnswers(card) {
-    const list = card.querySelector(".quiz-answers");
-    if (!list) return;
-    const wraps = Array.from(list.children);
-    // Fisher-Yates on the detached array, then reattach in order.
-    for (let i = wraps.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [wraps[i], wraps[j]] = [wraps[j], wraps[i]];
-    }
-    wraps.forEach((wrap, idx) => {
-      list.appendChild(wrap);
-      const btn = wrap.querySelector("[data-quiz-answer]");
-      const marker = wrap.querySelector(".quiz-answer-marker");
-      if (btn) btn.dataset.answerIndex = String(idx);
-      if (marker) marker.textContent = letterFor(idx);
-    });
-  }
-
-  function letterFor(i) {
-    return i < 26 ? String.fromCharCode(65 + i) : String(i + 1);
   }
 
   function revealCard(card, answers, picked, status) {

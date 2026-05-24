@@ -1511,11 +1511,15 @@
                 display: flex;
                 flex-direction: column;
                 gap: 0.55rem;
+                /* Drives the A/B/C/D markers via `counter-increment`
+                   below, so the server doesn't have to emit them. */
+                counter-reset: quiz-answer;
             }
             .quiz-answer-wrap {
                 display: flex;
                 flex-direction: column;
                 gap: 0.4rem;
+                counter-increment: quiz-answer;
             }
             .quiz-answer {
                 appearance: none;
@@ -1563,6 +1567,9 @@
                 font-weight: 700;
                 color: var(--color-text-muted);
                 font-variant-numeric: tabular-nums;
+            }
+            .quiz-answer-marker::before {
+                content: counter(quiz-answer, upper-alpha);
             }
             .quiz-answer-text code {
                 font-family:

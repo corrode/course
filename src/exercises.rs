@@ -114,16 +114,22 @@ impl Quiz {
                 );
             }
             out.push_str("<ol class=\"quiz-answers\">");
-            for (j, a) in q.answers.iter().enumerate() {
+            // Shuffle answers per render so the correct option doesn't
+            // sit in the same slot every time. Re-rendered on every
+            // request, so each page load gets a fresh order.
+            let mut shuffled: Vec<&Answer> = q.answers.iter().collect();
+            {
+                use rand::seq::SliceRandom;
+                shuffled.shuffle(&mut rand::thread_rng());
+            }
+            for a in &shuffled {
                 let _ = write!(
                     out,
                     "<li class=\"quiz-answer-wrap\">\
                        <button type=\"button\" class=\"quiz-answer\" \
                                data-quiz-answer \
-                               data-correct=\"{correct}\" \
-                               data-answer-index=\"{idx}\">\
-                         <span class=\"quiz-answer-marker\" aria-hidden=\"true\">\
-                           {letter}</span>\
+                               data-correct=\"{correct}\">\
+                         <span class=\"quiz-answer-marker\" aria-hidden=\"true\"></span>\
                          <span class=\"quiz-answer-text\">{text}</span>\
                        </button>\
                        <div class=\"quiz-explanation\" \
@@ -132,8 +138,6 @@ impl Quiz {
                        </div>\
                      </li>",
                     correct = a.correct,
-                    idx = j,
-                    letter = letter_for(j),
                     text = render_inline_markdown(&a.text),
                     explanation = render_inline_markdown(&a.explanation),
                 );
@@ -150,16 +154,6 @@ impl Quiz {
         );
         out.push_str("</section>");
         out
-    }
-}
-
-/// A-Z marker for answer buttons. Falls back to a number if a quiz
-/// ever has more than 26 answers (it shouldn't).
-fn letter_for(i: usize) -> String {
-    if i < 26 {
-        ((b'A' + u8::try_from(i).unwrap_or(0)) as char).to_string()
-    } else {
-        format!("{}", i + 1)
     }
 }
 
