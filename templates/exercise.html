@@ -110,7 +110,9 @@ progress_total > 0 %}
         ><strong>{{ progress_done }}</strong> / {{ progress_total }}</span
     >
 </span>
-{% endif %} {% endblock %} {% block content %}
+{% endif %} {% endblock %} {% block topbar_settings_href %}{% match ulid %}{%
+when Some with (u) %}/settings/{{ u }}{% when None %}/settings{% endmatch %}{%
+endblock %} {% block content %}
 <div class="container" data-corrode-config="{{ exercise.directives_json() }}">
     <div class="exercise-header">
         <div class="chapter-eyebrow">Chapter {{ exercise.number }}</div>
@@ -1514,38 +1516,8 @@ progress_total > 0 %}
         border-color: var(--color-primary, #0969da);
         background-color: var(--color-background);
     }
-    .prose-code-wrap {
-        position: relative;
-    }
-    .prose-copy-btn {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        z-index: 2;
-        background: var(--color-surface);
-        color: var(--color-text-muted);
-        border: 1px solid var(--color-border);
-        border-radius: 3px;
-        padding: 0.25rem 0.4rem;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        opacity: 0;
-        transition:
-            opacity 0.15s ease,
-            color 0.15s ease;
-    }
-    .prose-code-wrap:hover .prose-copy-btn,
-    .prose-code-wrap:focus-within .prose-copy-btn,
-    .prose-copy-btn:focus-visible {
-        opacity: 0.85;
-    }
-    .prose-copy-btn:hover {
-        opacity: 1;
-    }
-    .prose-copy-btn svg {
-        width: 14px;
-        height: 14px;
-    }
+    /* `.prose-code-wrap` + `.prose-copy-btn` now live in `base.html`
+       so the settings page (and any other page) can reuse the same
+       hover-reveal copy chrome. */
 </style>
 {% endblock %}

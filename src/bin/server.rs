@@ -355,6 +355,10 @@ struct TeamPageTemplate {
     /// "move to team" form action so the form posts back with the
     /// admin token still attached.
     admin_token: Option<String>,
+    /// ULID of the participant viewing the page, when this is the
+    /// participant view. Used to deep-link the topbar Settings icon
+    /// straight at `/settings/{ulid}`.
+    viewer_ulid: Option<String>,
     /// Roster: one row per member of this team, ordered by most
     /// recent activity first.
     members: Vec<TeamMemberView>,
@@ -393,6 +397,38 @@ struct TeamMemberView {
 /// Keeps the page snappy for very active cohorts; the admin can dig
 /// into individual dashboards for the full history.
 const TEAM_SUBMISSIONS_LIMIT: i64 = 60;
+
+/// Settings page (`/settings`, `/settings/{ulid}`). Renders
+/// editor/UI preferences (Vim mode, font size, draft data) plus, when
+/// a participant ULID is supplied, a snapshot of their cohort: the
+/// roster and the most recent submissions. The team section is
+/// populated identically to [`TeamPageTemplate`] so the
+/// `partials/submission_card.html` partial stays usable across both.
+#[derive(Template)]
+#[template(path = "settings.html")]
+struct SettingsTemplate {
+    /// Participant name, when the page is rendered under
+    /// `/settings/{ulid}` for a real account. `None` for anonymous
+    /// visitors hitting `/settings` directly.
+    participant_name: Option<String>,
+    /// Participant ULID, mirrored back into back-links and the
+    /// copy-to-clipboard "Your save link" affordance.
+    ulid: Option<String>,
+    /// Cohort slug for participants who joined via `/signup/{slug}`.
+    /// `None` for unassigned participants and anonymous visitors.
+    team_token: Option<String>,
+    /// Team roster, sorted by recent activity. Empty when there is no
+    /// cohort to show.
+    members: Vec<TeamMemberView>,
+    /// Recent submissions feed across the cohort, capped to
+    /// [`TEAM_SUBMISSIONS_LIMIT`]. Empty when there is no cohort.
+    submissions: Vec<SubmissionSummary>,
+    /// `true` when the feed was clipped to the cap.
+    submissions_truncated: bool,
+    /// Distinct exercise names that show up in the feed; powers the
+    /// per-exercise filter dropdown.
+    exercises: Vec<String>,
+}
 
 /// Query parameters for admin access
 #[derive(Deserialize)]
@@ -573,6 +609,8 @@ async fn main() -> Result<()> {
         .route("/exercise/{slug}", get(public_exercise_page))
         .route("/exercise/{ulid}/{slug}", get(participant_exercise_page))
         .route("/playground", get(playground_page))
+        .route("/settings", get(settings_page))
+        .route("/settings/{ulid}", get(participant_settings_page))
         .route("/cheatsheet", get(cheatsheet_page))
         .route("/cheatsheet/fragment", get(cheatsheet_fragment))
         .route("/health", get(health_check))
@@ -1445,16 +1483,25 @@ async fn admin_set_team_token(
 /// rendered HTML response, or a 500 if any of the supporting queries
 /// fail.
 // reason: top-level request handler; splitting purely for line count adds indirection without value
+/// Snapshot of a single cohort (or the unassigned bucket): roster,
+/// recent submissions, truncation flag, and the distinct exercises
+/// present in the feed. Shared between [`render_team_page`] and the
+/// settings page so both pages see the same data and respect the same
+/// `TEAM_SUBMISSIONS_LIMIT`.
 #[allow(clippy::too_many_lines)]
-async fn render_team_page(
+async fn load_team_view(
     state: &AppState,
     team_token: Option<&TeamToken>,
-    is_admin: bool,
-    admin_token: Option<String>,
     viewer_ulid: Option<&str>,
-    back_href: String,
-    back_label: String,
-) -> axum::response::Response {
+) -> Result<
+    (
+        Vec<TeamMemberView>,
+        Vec<SubmissionSummary>,
+        bool,
+        Vec<String>,
+    ),
+    axum::response::Response,
+> {
     let total_exercises: i64 = i64::try_from(state.exercises.len()).unwrap_or(i64::MAX);
 
     // Roster: every participant in this team, with a count of their
@@ -1498,7 +1545,7 @@ async fn render_team_page(
         Ok(rows) => rows,
         Err(err) => {
             error!("team page roster query failed: {err}");
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response());
         }
     };
 
@@ -1558,7 +1605,7 @@ async fn render_team_page(
             Ok(rows) => rows,
             Err(err) => {
                 error!("team page submissions query failed: {err}");
-                return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+                return Err((StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response());
             }
         };
         let truncated = i64::try_from(rows.len()).unwrap_or(i64::MAX) > TEAM_SUBMISSIONS_LIMIT;
@@ -1582,11 +1629,6 @@ async fn render_team_page(
         (subs, truncated)
     };
 
-    let (team_label, is_unassigned) = team_token.map_or_else(
-        || ("Unassigned".to_string(), true),
-        |t| (t.as_str().to_string(), false),
-    );
-
     // Distinct exercise names from the submissions we're about to
     // render. Sorted for a stable, alphabetic dropdown.
     let mut exercises: Vec<String> = submissions
@@ -1596,11 +1638,36 @@ async fn render_team_page(
     exercises.sort();
     exercises.dedup();
 
+    Ok((members, submissions, submissions_truncated, exercises))
+}
+
+#[allow(clippy::needless_pass_by_value)]
+async fn render_team_page(
+    state: &AppState,
+    team_token: Option<&TeamToken>,
+    is_admin: bool,
+    admin_token: Option<String>,
+    viewer_ulid: Option<&str>,
+    back_href: String,
+    back_label: String,
+) -> axum::response::Response {
+    let (members, submissions, submissions_truncated, exercises) =
+        match load_team_view(state, team_token, viewer_ulid).await {
+            Ok(view) => view,
+            Err(response) => return response,
+        };
+
+    let (team_label, is_unassigned) = team_token.map_or_else(
+        || ("Unassigned".to_string(), true),
+        |t| (t.as_str().to_string(), false),
+    );
+
     let template = TeamPageTemplate {
         team_label,
         is_unassigned,
         is_admin,
         admin_token,
+        viewer_ulid: viewer_ulid.map(str::to_string),
         members,
         submissions,
         submissions_truncated,
@@ -1707,6 +1774,82 @@ async fn participant_team_page(
         "Back to your dashboard".to_string(),
     )
     .await
+}
+
+/// Settings page for anonymous visitors: editor preferences only, no
+/// team data. Routed at `/settings`.
+async fn settings_page() -> impl IntoResponse {
+    let template = SettingsTemplate {
+        participant_name: None,
+        ulid: None,
+        team_token: None,
+        members: Vec::new(),
+        submissions: Vec::new(),
+        submissions_truncated: false,
+        exercises: Vec::new(),
+    };
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+        Err(err) => {
+            error!("settings template render failed: {err}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to render template",
+            )
+                .into_response()
+        }
+    }
+}
+
+/// Settings page for a known participant: editor preferences plus
+/// their cohort snapshot (roster + recent submissions). Routed at
+/// `/settings/{ulid}`. Unknown ULIDs redirect to the anonymous
+/// dashboard with the standard one-shot toast.
+async fn participant_settings_page(
+    AxumPath(ulid): AxumPath<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    let participant: DbParticipant =
+        match sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
+            .bind(&ulid)
+            .fetch_one(&state.pool)
+            .await
+        {
+            Ok(p) => p,
+            Err(_) => {
+                return axum::response::Redirect::to("/?reason=unknown-token").into_response();
+            }
+        };
+
+    let team_token_parsed = participant.parsed_team_token();
+    let (members, submissions, submissions_truncated, exercises) = match team_token_parsed {
+        Some(ref token) => match load_team_view(&state, Some(token), Some(&ulid)).await {
+            Ok(view) => view,
+            Err(response) => return response,
+        },
+        None => (Vec::new(), Vec::new(), false, Vec::new()),
+    };
+
+    let template = SettingsTemplate {
+        participant_name: Some(participant.name),
+        ulid: Some(ulid),
+        team_token: team_token_parsed.map(|t| t.as_str().to_string()),
+        members,
+        submissions,
+        submissions_truncated,
+        exercises,
+    };
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+        Err(err) => {
+            error!("settings template render failed: {err}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to render template",
+            )
+                .into_response()
+        }
+    }
 }
 
 /// Admin participant removal endpoint

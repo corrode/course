@@ -1,0 +1,848 @@
+{% extends "base.html" %} {% block title %}Settings · corrode Rust Course{%
+endblock %} {% block topbar_settings_href %}{% match ulid %}{% when Some with
+(u) %}/settings/{{ u }}{% when None %}/settings{% endmatch %}{% endblock %} {%
+block content %}
+<div class="container admin-page settings-page">
+    <p class="settings-back">
+        {% match ulid %} {% when Some with (u) %}
+        <a href="/dashboard/{{ u }}" id="settings-back-link">← Back</a>
+        {% when None %}
+        <a href="/" id="settings-back-link">← Back</a>
+        {% endmatch %}
+    </p>
+
+    <header class="book-hero admin-hero">
+        <div class="book-eyebrow">
+            <span class="book-eyebrow-rule" aria-hidden="true"></span>
+            <span class="book-eyebrow-text">Settings</span>
+            <span class="book-eyebrow-rule" aria-hidden="true"></span>
+        </div>
+        <h1 class="book-title">Preferences &amp; Solutions</h1>
+        <p class="book-byline">
+            {% match participant_name %} {% when Some with (name) %} Signed in
+            as <strong>{{ name }}</strong>{% match team_token %}{% when Some
+            with (t) %} · cohort <strong>{{ t }}</strong>{% when None %}{%
+            endmatch %}. {% when None %} Anonymous session. Open a personal
+            dashboard link to see your team and copy your save link. {% endmatch
+            %}
+        </p>
+    </header>
+
+    {# ---------------- Editor preferences ---------------- #}
+    <section class="admin-section" aria-label="Editor preferences">
+        <div class="section-head">
+            <span class="section-eyebrow">Editor</span>
+            <span class="section-meta">Stored in this browser</span>
+        </div>
+
+        <div class="settings-grid">
+            <div class="settings-row">
+                <div class="settings-row-text">
+                    <h3>Vim keybindings</h3>
+                    <p>
+                        Modal editing across every code editor on the site.
+                        Toggling here mirrors the per-section "Vim" button.
+                    </p>
+                </div>
+                <label class="settings-switch" for="settings-vim-toggle">
+                    <input
+                        type="checkbox"
+                        id="settings-vim-toggle"
+                        data-setting="vim"
+                    />
+                    <span class="settings-switch-track" aria-hidden="true">
+                        <span class="settings-switch-thumb"></span>
+                    </span>
+                    <span class="settings-switch-label">Off</span>
+                </label>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-row-text">
+                    <h3>Editor font size</h3>
+                    <p>
+                        Affects every CodeMirror instance. Useful on small
+                        laptop screens or for projector demos.
+                    </p>
+                </div>
+                <div
+                    class="settings-segmented"
+                    role="radiogroup"
+                    aria-label="Editor font size"
+                    data-setting="font-size"
+                >
+                    <button
+                        type="button"
+                        role="radio"
+                        data-value="small"
+                        aria-checked="false"
+                    >
+                        Small
+                    </button>
+                    <button
+                        type="button"
+                        role="radio"
+                        data-value="medium"
+                        aria-checked="true"
+                    >
+                        Medium
+                    </button>
+                    <button
+                        type="button"
+                        role="radio"
+                        data-value="large"
+                        aria-checked="false"
+                    >
+                        Large
+                    </button>
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-row-text">
+                    <h3>Theme</h3>
+                    <p>
+                        Light or dark mode. The brand <kbd>?</kbd> cheatsheet
+                        and the toggle in the top bar both flip the same
+                        setting.
+                    </p>
+                </div>
+                <div class="settings-row-control">
+                    {% include "partials/theme_toggle.html" %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ---------------- Saved data ---------------- #}
+    <section class="admin-section" aria-label="Saved data">
+        <div class="section-head">
+            <span class="section-eyebrow">Your data</span>
+            <span class="section-meta">Lives in this browser</span>
+        </div>
+
+        <div class="settings-grid">
+            {% match ulid %} {% when Some with (u) %}
+            <div class="settings-row">
+                <div class="settings-row-text">
+                    <h3>Your save link</h3>
+                    <p>
+                        Bookmark this URL on any device to come back to your
+                        progress. Anyone with the link can read and submit as
+                        you, so keep it private.
+                    </p>
+                </div>
+                <div class="settings-row-control settings-save-link">
+                    <input
+                        type="text"
+                        readonly
+                        value="/dashboard/{{ u }}"
+                        id="settings-save-link"
+                        class="admin-input admin-input-mono"
+                    />
+                    <button
+                        type="button"
+                        class="btn btn-secondary admin-btn-tiny"
+                        onclick="copySettingsSaveLink()"
+                    >
+                        Copy
+                    </button>
+                </div>
+            </div>
+            {% when None %} {% endmatch %}
+
+            <div class="settings-row">
+                <div class="settings-row-text">
+                    <h3>Editor drafts</h3>
+                    <p>
+                        Each exercise's in-progress code is saved locally so
+                        reloads don't lose your work. Clear them all to start
+                        every chapter from the original starter code.
+                    </p>
+                </div>
+                <div class="settings-row-control">
+                    <button
+                        type="button"
+                        class="btn admin-btn-tiny admin-btn-danger"
+                        onclick="clearAllDrafts()"
+                        id="settings-clear-drafts"
+                    >
+                        Clear all drafts
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ---------------- Command-line workflow ---------------- #}
+    <section class="admin-section" aria-label="Command-line workflow">
+        <div class="section-head">
+            <span class="section-eyebrow">Command line</span>
+            <span class="section-meta">
+                Edit in your own IDE, submit with
+                <code>cargo&nbsp;course</code>
+            </span>
+        </div>
+
+        {% match ulid %} {% when Some with (u) %}
+        <p class="settings-cli-intro">
+            Prefer Zed, VS Code, or any other editor? The
+            <a
+                href="https://github.com/corrode/course"
+                target="_blank"
+                rel="noopener"
+                ><code>cargo course</code></a
+            >
+            CLI lets you keep your local exercise files in sync with the same
+            progress you see in the browser. Run the three steps below and
+            you're set.
+        </p>
+
+        <ol class="settings-cli-steps">
+            <li>
+                <h4>1. Set up the CLI</h4>
+                <p>
+                    Installs <code>cargo-course</code> and links this browser
+                    session to your machine in one paste. Safe to re-run — the
+                    install is a no-op if you already have the latest, and
+                    <code>init</code> just overwrites the saved token.
+                </p>
+                <div class="prose-code-wrap">
+                    <pre
+                        id="settings-cli-setup"
+                    ><code># 1. Install the CLI (one-time).
+cargo install --git https://github.com/corrode/course cargo-course
+
+# 2. Save your token so submissions land on this account.
+#    Treat the token like a password — anyone with it can submit as you.
+cargo course init --token {{ u }}</code></pre>
+                    <button
+                        type="button"
+                        class="prose-copy-btn"
+                        title="Copy to clipboard"
+                        aria-label="Copy to clipboard"
+                        data-copy-target="settings-cli-setup"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                        >
+                            <path
+                                d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
+                                fill="currentColor"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            </li>
+
+            <li>
+                <h4>2. Submit a solution</h4>
+                <p>
+                    From the course directory, point <code>submit</code> at the
+                    exercise file you've been editing. Tests run locally first;
+                    only passing solutions are uploaded.
+                </p>
+                <div class="prose-code-wrap">
+                    <pre
+                        id="settings-cli-submit"
+                    ><code>cargo course submit examples/00_integers/3_number_to_string.rs</code></pre>
+                    <button
+                        type="button"
+                        class="prose-copy-btn"
+                        title="Copy to clipboard"
+                        aria-label="Copy to clipboard"
+                        data-copy-target="settings-cli-submit"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                        >
+                            <path
+                                d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"
+                                fill="currentColor"
+                            />
+                        </svg>
+                    </button>
+                </div>
+                <p class="settings-cli-tips">
+                    Add <code>--pedantic</code> to also run
+                    <code>cargo fmt</code> and <code>cargo clippy</code>
+                    and earn a ★ perfected badge. Use
+                    <code>--all</code> to bulk-submit every exercise that
+                    currently passes. Other handy commands:
+                </p>
+                <ul class="settings-cli-list">
+                    <li>
+                        <code>cargo course status</code> — show your progress in
+                        the terminal.
+                    </li>
+                    <li>
+                        <code>cargo course open</code> — open your dashboard in
+                        the browser.
+                    </li>
+                    <li>
+                        <code>cargo course token</code> — print the token
+                        currently saved on this machine.
+                    </li>
+                </ul>
+            </li>
+        </ol>
+        {% when None %}
+        <p class="settings-cli-intro">
+            The <code>cargo course</code> CLI lets you edit exercises in your
+            own IDE and submit from the terminal. You'll need a personal token
+            to link the CLI to a course account — open the personal dashboard
+            link you were given (or <a href="/">sign up</a>) and revisit this
+            page to see the exact <code>cargo course init</code> command.
+        </p>
+        {% endmatch %}
+    </section>
+
+    {# ---------------- Team section ---------------- #} {% if
+    !members.is_empty() %}
+    <section class="admin-section" aria-label="Your team">
+        <div class="section-head">
+            <span class="section-eyebrow">Your team</span>
+            <span class="section-meta">
+                {{ members.len() }} member{% if members.len() != 1 %}s{% endif
+                %}{% match team_token %}{% when Some with (t) %} · cohort
+                <strong>{{ t }}</strong>{% when None %}{% endmatch %}
+            </span>
+        </div>
+
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Progress</th>
+                    <th>Last activity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr class="{% if member.is_self %}is-self{% endif %}">
+                    <td class="admin-cell-name">
+                        {{ member.name }} {% if member.is_self %}
+                        <span class="team-self-badge">You</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="admin-progress-done"
+                            >{{ member.completed_count }}</span
+                        >
+                        <span class="admin-progress-total"
+                            >/{{ member.total_exercises }}</span
+                        >
+                        {% if member.completed_count == member.total_exercises
+                        %}
+                        <span class="admin-progress-complete"
+                            >🎉 Complete!</span
+                        >
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if member.last_activity.is_some() %} Recent activity
+                        {% else %}
+                        <span class="admin-cell-muted">No submissions</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="admin-section" aria-label="Recent submissions">
+        <div class="section-head">
+            <span class="section-eyebrow">Recent submissions</span>
+            {% if !exercises.is_empty() %}
+            <span class="section-meta">
+                <label for="participant-filter">Participant:</label>
+                <select
+                    id="participant-filter"
+                    onchange="filterSubmissions()"
+                    class="admin-input admin-input-tiny"
+                >
+                    <option value="">All participants</option>
+                    {% for member in members %}
+                    <option value="{{ member.name }}">{{ member.name }}</option>
+                    {% endfor %}
+                </select>
+                <label for="exercise-filter">Exercise:</label>
+                <select
+                    id="exercise-filter"
+                    onchange="filterSubmissions()"
+                    class="admin-input admin-input-tiny"
+                >
+                    <option value="">All exercises</option>
+                    {% for exercise in exercises %}
+                    <option value="{{ exercise }}">{{ exercise }}</option>
+                    {% endfor %}
+                </select>
+            </span>
+            {% endif %}
+        </div>
+
+        {% if submissions.is_empty() %}
+        <p class="team-empty">No submissions on record yet.</p>
+        {% else %}
+        <ol class="submission-list" id="submissions-container">
+            {% for sub in submissions %} {% include
+            "partials/submission_card.html" %} {% endfor %}
+        </ol>
+        {% if submissions_truncated %}
+        <p class="team-truncated-note">
+            Only the {{ submissions.len() }} most recent submissions are shown.
+        </p>
+        {% endif %} {% endif %}
+    </section>
+    {% else %} {% match ulid %} {% when Some with (_u) %}
+    <section class="admin-section" aria-label="Your team">
+        <div class="section-head">
+            <span class="section-eyebrow">Your team</span>
+        </div>
+        <p class="team-empty">
+            You're not in a cohort yet. Cohorts are assigned via the signup link
+            your instructor shares — if you signed up directly, you'll stay solo
+            and that's totally fine.
+        </p>
+    </section>
+    {% when None %} {% endmatch %} {% endif %}
+</div>
+
+<script type="module" src="/static/js/readonly-rust-editor.js"></script>
+
+<script>
+    // Keep these settings in sync with the keys defined in
+    // `static/js/inline-editor.js`. Anything that ships an actual
+    // visual effect (vim, font size, line wrap) is also read on every
+    // editor mount; see `applyEditorPrefsFromStorage` below and the
+    // hooks in `inline-editor.js`.
+    const SETTINGS_KEYS = {
+        vim: "corrode:editor:vim",
+        fontSize: "corrode:editor:font-size",
+    };
+
+    function readBool(key) {
+        try {
+            return localStorage.getItem(key) === "1";
+        } catch (_) {
+            return false;
+        }
+    }
+    function writeBool(key, value) {
+        try {
+            localStorage.setItem(key, value ? "1" : "0");
+        } catch (_) {}
+    }
+
+    // ---- Vim toggle ---------------------------------------------------
+    (function () {
+        const input = document.getElementById("settings-vim-toggle");
+        if (!input) return;
+        const label = input
+            .closest(".settings-switch")
+            .querySelector(".settings-switch-label");
+        function reflect(on) {
+            input.checked = on;
+            label.textContent = on ? "On" : "Off";
+        }
+        reflect(readBool(SETTINGS_KEYS.vim));
+        input.addEventListener("change", () => {
+            const next = input.checked;
+            writeBool(SETTINGS_KEYS.vim, next);
+            reflect(next);
+            // Propagate to any editor instances mounted on this page
+            // (e.g. the read-only submission viewers ignore it, but
+            // applying via the shared helper is harmless and keeps
+            // future mounts in sync).
+            import("/static/js/inline-editor.js")
+                .then(({ setVimGlobal }) => setVimGlobal && setVimGlobal(next))
+                .catch(() => {});
+        });
+    })();
+
+    // ---- Soft wrap toggle (removed) ---------------------------------
+
+    // ---- Editor font size --------------------------------------------
+    (function () {
+        const group = document.querySelector('[data-setting="font-size"]');
+        if (!group) return;
+        function apply(value) {
+            try {
+                localStorage.setItem(SETTINGS_KEYS.fontSize, value);
+            } catch (_) {}
+            group.querySelectorAll('[role="radio"]').forEach((b) => {
+                b.setAttribute(
+                    "aria-checked",
+                    b.dataset.value === value ? "true" : "false",
+                );
+            });
+            document.documentElement.dataset.editorFontSize = value;
+        }
+        let current = "medium";
+        try {
+            const stored = localStorage.getItem(SETTINGS_KEYS.fontSize);
+            if (stored === "small" || stored === "medium" || stored === "large")
+                current = stored;
+        } catch (_) {}
+        apply(current);
+        group.querySelectorAll('[role="radio"]').forEach((b) => {
+            b.addEventListener("click", () => apply(b.dataset.value));
+        });
+    })();
+
+    // ---- Save-link copy ----------------------------------------------
+    function copySettingsSaveLink() {
+        const input = document.getElementById("settings-save-link");
+        if (!input) return;
+        const url = window.location.origin + input.value;
+        navigator.clipboard
+            .writeText(url)
+            .then(() => {
+                input.value = "Copied!";
+                setTimeout(() => {
+                    input.value = new URL(url).pathname;
+                }, 1500);
+            })
+            .catch(() => {
+                input.select();
+            });
+    }
+
+    // ---- Back link: use the actual previous page when possible -------
+    (function () {
+        const link = document.getElementById("settings-back-link");
+        if (!link) return;
+        try {
+            const ref = document.referrer;
+            if (ref) {
+                const url = new URL(ref);
+                if (
+                    url.origin === window.location.origin &&
+                    url.pathname !== window.location.pathname
+                ) {
+                    link.href = ref;
+                }
+            }
+        } catch (_) {}
+        // Prefer history.back() when there's a step to go back to, so
+        // we don't push a new entry onto the stack.
+        link.addEventListener("click", (e) => {
+            if (window.history.length > 1) {
+                e.preventDefault();
+                window.history.back();
+            }
+        });
+    })();
+
+    // ---- CLI copy helpers --------------------------------------------
+    // Delegated handler: any `<button data-copy-target="<id>">` copies
+    // the textContent of that element. Matches the look/feel of the
+    // prose copy buttons defined in `templates/exercise.html`.
+    document.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-copy-target]");
+        if (!btn) return;
+        const target = document.getElementById(btn.dataset.copyTarget);
+        if (!target) return;
+        const text = (target.innerText || target.textContent || "").replace(
+            /\n$/,
+            "",
+        );
+        navigator.clipboard
+            .writeText(text)
+            .then(() => {
+                const prevColor = btn.style.color;
+                btn.style.color = "var(--color-success, #2e7d32)";
+                btn.style.opacity = "1";
+                setTimeout(() => {
+                    btn.style.color = prevColor;
+                    btn.style.opacity = "";
+                }, 1000);
+            })
+            .catch((err) => console.error("Copy failed:", err));
+    });
+
+    // ---- Clear drafts -------------------------------------------------
+    function clearAllDrafts() {
+        if (
+            !confirm(
+                "Clear every saved exercise draft in this browser? This can't be undone.",
+            )
+        ) {
+            return;
+        }
+        let removed = 0;
+        try {
+            const toRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (
+                    k &&
+                    (k.startsWith("corrode:draft:") ||
+                        k === "corrode:playground:draft")
+                ) {
+                    toRemove.push(k);
+                }
+            }
+            toRemove.forEach((k) => {
+                localStorage.removeItem(k);
+                removed++;
+            });
+        } catch (_) {}
+        const btn = document.getElementById("settings-clear-drafts");
+        if (btn) {
+            const orig = btn.textContent;
+            btn.textContent =
+                removed > 0
+                    ? "Cleared " +
+                      removed +
+                      " draft" +
+                      (removed === 1 ? "" : "s")
+                    : "Nothing to clear";
+            setTimeout(() => {
+                btn.textContent = orig;
+            }, 1800);
+        }
+    }
+</script>
+
+<style>
+    /* Page-specific settings chrome only. Shared layout
+       (`.admin-page`, `.admin-section`, `.section-head`,
+       `.admin-table`, `.book-*`) lives in `base.html`. */
+
+    .settings-page {
+        padding-bottom: 5rem;
+    }
+
+    .settings-back {
+        margin: 2rem 0 0;
+        font-size: 0.9rem;
+    }
+    .settings-back a {
+        color: var(--color-text-muted);
+        text-decoration: none;
+    }
+    .settings-back a:hover,
+    .settings-back a:focus-visible {
+        color: var(--color-text);
+        text-decoration: underline;
+    }
+
+    /* ---------- Row layout ---------- */
+    .settings-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .settings-row {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--color-border);
+        border-radius: 0.6rem;
+        background: color-mix(in srgb, var(--color-text) 2%, transparent);
+    }
+    .settings-row-text {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .settings-row-text h3 {
+        margin: 0 0 0.25rem;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    .settings-row-text p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+    }
+    .settings-row-control {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* ---------- Switch ---------- */
+    .settings-switch {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        cursor: pointer;
+        user-select: none;
+    }
+    .settings-switch input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .settings-switch-track {
+        position: relative;
+        display: inline-block;
+        width: 38px;
+        height: 22px;
+        border-radius: 999px;
+        background: var(--color-border);
+        transition: background 120ms ease;
+    }
+    .settings-switch-thumb {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        transition: transform 120ms ease;
+    }
+    .settings-switch input:checked + .settings-switch-track {
+        background: var(--color-primary);
+    }
+    .settings-switch
+        input:checked
+        + .settings-switch-track
+        .settings-switch-thumb {
+        transform: translateX(16px);
+    }
+    .settings-switch input:focus-visible + .settings-switch-track {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+    .settings-switch-label {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        min-width: 2ch;
+    }
+
+    /* ---------- Segmented control ---------- */
+    .settings-segmented {
+        display: inline-flex;
+        border: 1px solid var(--color-border);
+        border-radius: 0.45rem;
+        overflow: hidden;
+    }
+    .settings-segmented button {
+        appearance: none;
+        background: transparent;
+        color: var(--color-text-muted);
+        border: 0;
+        padding: 0.4rem 0.85rem;
+        font: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border-right: 1px solid var(--color-border);
+    }
+    .settings-segmented button:last-child {
+        border-right: 0;
+    }
+    .settings-segmented button[aria-checked="true"] {
+        background: var(--color-primary);
+        color: #fff;
+    }
+    .settings-segmented button:hover:not([aria-checked="true"]) {
+        background: color-mix(in srgb, var(--color-text) 5%, transparent);
+        color: var(--color-text);
+    }
+
+    /* ---------- Save-link row ---------- */
+    .settings-save-link {
+        min-width: min(420px, 60vw);
+    }
+    .settings-save-link input {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /* ---------- CLI section ---------- */
+    .settings-cli-intro {
+        margin: 0 0 1.25rem;
+        color: var(--color-text-muted);
+        font-size: 0.95rem;
+        line-height: 1.55;
+    }
+    .settings-cli-steps {
+        list-style: none;
+        counter-reset: cli-step;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    .settings-cli-steps > li {
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--color-border);
+        border-radius: 0.6rem;
+        background: color-mix(in srgb, var(--color-text) 2%, transparent);
+    }
+    .settings-cli-steps h4 {
+        margin: 0 0 0.35rem;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    .settings-cli-steps p {
+        margin: 0 0 0.75rem;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    .settings-cli-steps .prose-code-wrap {
+        margin: 0 0 0.5rem;
+    }
+    .settings-cli-steps .prose-code-wrap pre {
+        margin: 0;
+        padding: 0.7rem 0.9rem;
+        background: var(--color-background);
+        border: 1px solid var(--color-border);
+        border-radius: 0.4rem;
+        overflow-x: auto;
+    }
+    .settings-cli-steps .prose-code-wrap pre code {
+        display: block;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        white-space: pre;
+        background: transparent;
+        padding: 0;
+        border: 0;
+        color: var(--color-text);
+    }
+    .settings-cli-tips {
+        margin: 0.75rem 0 0.5rem !important;
+    }
+    .settings-cli-list {
+        margin: 0;
+        padding-left: 1.25rem;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+    .settings-cli-list code {
+        font-size: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+        .settings-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+        }
+        .settings-row-control {
+            justify-content: flex-end;
+        }
+        .settings-save-link {
+            min-width: 0;
+        }
+    }
+</style>
+{% endblock %}

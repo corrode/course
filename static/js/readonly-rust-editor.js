@@ -57,7 +57,8 @@ function mountOne(el) {
   view.dom.style.border = "1px solid var(--color-border)";
   view.dom.style.borderRadius = "12px";
   view.dom.style.overflow = "hidden";
-  view.dom.style.fontSize = "0.9rem";
+  // Font size is set in CSS (see `base.html`) so the `/settings`
+  // page can override it via `html[data-editor-font-size]`.
 }
 
 export function mountAllReadonlyRustEditors(selector = "[data-rust-source]") {

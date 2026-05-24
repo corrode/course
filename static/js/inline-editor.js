@@ -533,7 +533,9 @@ export async function mountInlineEditor(section, opts = {}) {
     editor.dom.style.border = "1px solid var(--color-border)";
     editor.dom.style.borderRadius = "12px";
     editor.dom.style.overflow = "hidden";
-    editor.dom.style.fontSize = "0.9rem";
+    // Font size is set in CSS (`.cm-editor { font-size: ... }` in
+    // `base.html`) so the `/settings` page can override it via the
+    // `html[data-editor-font-size]` attribute.
 
     if (fallback) fallback.style.display = "none";
     if (mount) mount.style.display = "block";

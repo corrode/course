@@ -228,6 +228,23 @@
                     monospace;
             }
 
+            /* Editor preferences from `/settings`. The settings page
+               writes `data-editor-font-size` on `<html>` and persists
+               it to localStorage; `base.html` re-applies it before
+               paint so every page picks it up at load. The base size
+               (`0.9rem`) used to live as an inline style on each
+               editor's root in `static/js/inline-editor.js`; it now
+               lives here so the user override actually wins. */
+            .cm-editor {
+                font-size: 0.9rem;
+            }
+            html[data-editor-font-size="small"] .cm-editor {
+                font-size: 0.78rem;
+            }
+            html[data-editor-font-size="large"] .cm-editor {
+                font-size: 1.05rem;
+            }
+
             /* CodeMirror selection. We pin this in static CSS (rather than
                via EditorView.theme) so it always reflects the current
                --syn-selection-bg, even after a theme toggle. */
@@ -1001,6 +1018,45 @@
                 border-color: var(--color-text-muted);
             }
             .copy-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            /* ---------- Prose code-block copy chrome ----------
+               Wraps any `<pre>` that should get a hover-reveal copy
+               button. Used by `templates/exercise.html` (chapter
+               prose) and `templates/settings.html` (CLI commands).
+               The JS lives in those files; the look is shared here. */
+            .prose-code-wrap {
+                position: relative;
+            }
+            .prose-copy-btn {
+                position: absolute;
+                top: 0.5rem;
+                right: 0.5rem;
+                z-index: 2;
+                background: var(--color-surface);
+                color: var(--color-text-muted);
+                border: 1px solid var(--color-border);
+                border-radius: 3px;
+                padding: 0.25rem 0.4rem;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                opacity: 0;
+                transition:
+                    opacity 0.15s ease,
+                    color 0.15s ease;
+            }
+            .prose-code-wrap:hover .prose-copy-btn,
+            .prose-code-wrap:focus-within .prose-copy-btn,
+            .prose-copy-btn:focus-visible {
+                opacity: 0.85;
+            }
+            .prose-copy-btn:hover {
+                opacity: 1;
+            }
+            .prose-copy-btn svg {
                 width: 14px;
                 height: 14px;
             }
@@ -1958,6 +2014,18 @@
                     );
                 }
             })();
+
+            // Apply persisted editor preferences (font size) before
+            // paint so CodeMirror mounts at the right size. The
+            // settings UI lives at `/settings` and writes the same key.
+            (function () {
+                try {
+                    var fs = localStorage.getItem("corrode:editor:font-size");
+                    if (fs === "small" || fs === "medium" || fs === "large") {
+                        document.documentElement.dataset.editorFontSize = fs;
+                    }
+                } catch (_) {}
+            })();
         </script>
     </head>
     <body>
@@ -2030,6 +2098,27 @@
                         />
                     </svg>
                     <span>GitHub</span>
+                </a>
+                <a
+                    class="topbar-link"
+                    href="{% block topbar_settings_href %}/settings{% endblock %}"
+                    title="Preferences and your team"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                        ></path>
+                    </svg>
+                    <span>Settings</span>
                 </a>
                 {% include "partials/theme_toggle.html" %}
             </div>
