@@ -16,7 +16,7 @@
 -- `submissions.exercise_name` stores the directory prefix as part of
 -- the key (chapter slug for legacy single-step rows; `<chapter>/<step>`
 -- for multi-step). Any pre-existing rows would orphan without a
--- rewrite; this migration handles both formats.
+-- rewrite; this migration handles both shapes.
 --
 -- The DB was wiped as part of the same change, so in practice this
 -- migration is a no-op against fresh deployments. It exists for
@@ -30,8 +30,8 @@ DELETE FROM submissions WHERE exercise_name = '00_hello_rust'
                            OR exercise_name LIKE '00_hello_rust/%';
 
 -- Shift every other chapter down by one. Two UPDATEs per chapter cover
--- the legacy single-step structure and the multi-step `<chapter>/<step>`
--- structure. We rewrite from the lowest new prefix upward (00, 01, ...)
+-- the legacy single-step shape and the multi-step `<chapter>/<step>`
+-- shape. We rewrite from the lowest new prefix upward (00, 01, ...)
 -- so each statement only sees rows that haven't been touched yet.
 UPDATE submissions SET exercise_name = '00_integers'
     WHERE exercise_name = '01_integers';
