@@ -2,13 +2,13 @@
 
 `str::parse` is the universal "turn this text into a value of some
 type" method. It returns a `Result`, because the input might not be
-parseable. We don't have `Result` yet (that's chapter 10), so we'll
+parseable. We don't have `Result` yet (that's chapter 11), so we'll
 collapse failure to `0` for now.
 
 Returning `0` on failure is a *bad idea* in real code: it silently
 merges "the input was the number zero" with "the input was garbage".
-Rust has a much better tool for this in `Option` (chapter 9) and
-`Result` (chapter 10). For now, `parse().unwrap_or(0)` is the
+Rust has a much better tool for this in `Option` (chapter 10) and
+`Result` (chapter 11). For now, `parse().unwrap_or(0)` is the
 shortest way to satisfy the tests.
 
 Note that `u32` can't be negative, so `"-5".parse::<u32>()` will

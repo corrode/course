@@ -22,7 +22,7 @@ Before we go further, two words that show up everywhere in Rust:
   to end before the owner is dropped, and the compiler enforces that
   for you, ruling out use-after-free and dangling pointers.
 
-Chapter 11 is dedicated to ownership and borrowing; for now just keep
+Chapter 12 is dedicated to ownership and borrowing; for now just keep
 the mental picture of "one owner, many short-lived borrows."
 
 The split between `&str` and `String` is what makes Rust strings both
@@ -51,7 +51,7 @@ character can take more than one byte.
 
 You'll also meet `.chars()` a lot. It returns an iterator of `char`, and
 iterators have many useful adapters like `.next()`, `.count()`, and
-`.any(...)` (more on iterators in chapter 15).
+`.any(...)` (more on iterators in chapter 16).
 
 ## Building a `String` with `format!`
 

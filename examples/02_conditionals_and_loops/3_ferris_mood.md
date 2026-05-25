@@ -20,7 +20,7 @@ your compiled binary, so the text is around for as long as the
 program is running. The `'static` *lifetime* is just the compiler's
 way of saying "this reference will never dangle." If you've written
 C, it's the same intuition as a `const char *` pointing at a string
-literal. Lifetimes get a proper introduction in chapter 11 alongside
+literal. Lifetimes get a proper introduction in chapter 12 alongside
 ownership and borrowing; for now the only thing to take away is
 *"string literals are always safe to return as `&'static str`."*
 

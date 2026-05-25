@@ -18,7 +18,7 @@ operate" is very helpful for your future work with numbers.
   games quantise damage.
 - `str::parse()` is the universal text-to-value method. It returns a
   `Result`; pair it with `.unwrap_or(...)` until you've met `Result`
-  properly in chapter 10.
+  properly in chapter 11.
 - For arithmetic that might overflow, `checked_add` / `checked_sub` /
   `checked_mul` return an `Option<T>` instead of panicking. Worth
   remembering once you stop trusting your inputs.

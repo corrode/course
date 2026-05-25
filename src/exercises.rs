@@ -1278,7 +1278,7 @@ mod tests {
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "rust_fundamentals_quiz")
-            .expect("expected 21_rust_fundamentals_quiz to be present");
+            .expect("expected 22_rust_fundamentals_quiz to be present");
         // No code editors on the quiz chapter; it's intro prose plus
         // an interactive quiz block, nothing to submit.
         assert!(
@@ -1328,8 +1328,8 @@ mod tests {
             Some((2, "strings_and_chars".to_string()))
         );
         assert_eq!(
-            split_numeric_prefix("17_question_mark_operator"),
-            Some((17, "question_mark_operator".to_string()))
+            split_numeric_prefix("18_question_mark_operator"),
+            Some((18, "question_mark_operator".to_string()))
         );
         assert_eq!(split_numeric_prefix("no_prefix"), None);
     }
