@@ -51,7 +51,7 @@ the whole trio shrinks to:
 
 ```rust
 fn word_count(text: &str)   -> usize { text.split_whitespace().count() }
-fn char_count(text: &str)   -> usize { text.chars().filter(|c| !c.is_whitespace()).count() }
+fn char_count(text: &str)   -> usize { text.chars().count() }
 fn longest_word(text: &str) -> usize {
     text.split_whitespace().map(|w| w.chars().count()).max().unwrap_or(0)
 }

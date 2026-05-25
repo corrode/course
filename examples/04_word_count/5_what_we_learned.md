@@ -10,9 +10,8 @@ reaching for as the chapters get bigger.
 - `text.split_whitespace()` walks the words in a string for you.
   It handles any kind of whitespace and skips empties without
   ceremony.
-- `text.chars()` walks the characters. Combined with
-  [`char::is_whitespace`](https://doc.rust-lang.org/std/primitive.char.html#method.is_whitespace),
-  you can count anything that's not blank in one pass.
+- `text.chars()` walks every character in a string — whitespace
+  and all. It's the right tool for "how many characters?".
 - "Track the running maximum" is the same shape every time:
   `let mut max = 0; for x in xs { if x > max { max = x; } }`.
 - `word.chars().count()` measures string length in characters,
@@ -26,7 +25,7 @@ You'll meet `split_whitespace` and `chars` again in **chapter 16
 
 ```rust
 fn word_count(text: &str)    -> usize { text.split_whitespace().count() }
-fn char_count(text: &str)    -> usize { text.chars().filter(|c| !c.is_whitespace()).count() }
+fn char_count(text: &str)    -> usize { text.chars().count() }
 fn longest_word(text: &str)  -> usize { text.split_whitespace().map(|w| w.chars().count()).max().unwrap_or(0) }
 ```
 
