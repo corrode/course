@@ -341,8 +341,6 @@ export async function mountInlineEditor(section, opts = {}) {
   let themeCompartment = null;
   let vimCompartment = null;
 
-  if (vimBtn && !features.vim) vimBtn.style.display = "none";
-
   try {
     const wantsVim = !!features.vim;
     const wantsUrlPlugin = features.urlPlugin !== false;
