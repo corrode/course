@@ -5,6 +5,25 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{% block title %}corrode Rust Course{% endblock %}</title>
 
+        <!-- Social / Open Graph card. Page-specific titles and descriptions
+             can override via the `og_title` / `og_description` blocks. The
+             image is a static asset, served from /static and the same on
+             every page so platforms can cache it. -->
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="corrode Rust Course" />
+        <meta
+            property="og:title"
+            content="{% block og_title %}A Beginner's Guide to Rust{% endblock %}"
+        />
+        <meta
+            property="og:description"
+            content="{% block og_description %}A free, interactive Rust course you can take in your browser. No setup, no signup required.{% endblock %}"
+        />
+        <meta property="og:image" content="/static/assets/social.png" />
+        <meta property="og:image:width" content="1280" />
+        <meta property="og:image:height" content="640" />
+        <meta name="twitter:card" content="summary_large_image" />
+
         <!-- Shared CodeMirror 6 import map.
              Lives here so any page that extends `base.html` can mount
              a CM6 editor (the in-exercise editor on chapter pages, the
