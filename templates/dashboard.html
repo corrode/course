@@ -44,8 +44,8 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         id="unknown-token-toast"
     >
         <span>
-            We couldn't find that personal link. Sign up below or open the
-            bookmark you were given.
+            We couldn't find that account. Sign up below or open the login
+            link you were given.
         </span>
         <button
             type="button"
@@ -98,8 +98,8 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         </p>
         {% else %}
         <p>
-            Welcome, <strong>{{ name }}</strong>. Your save file is ready.
-            Chapter {{ next_chapter_number }}, {% match ulid %} {% when Some
+            Welcome, <strong>{{ name }}</strong>. You're signed in. Chapter
+            {{ next_chapter_number }}, {% match ulid %} {% when Some
             with (u) %}<a href="/exercise/{{ u }}/{{ next_slug }}"
                 ><em>{{ next_chapter_title }}</em></a
             >{% when None %}<a href="/exercise/{{ next_slug }}"
@@ -166,7 +166,7 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
                 Here's your first piece of Rust. Hit <strong>Run</strong> below
                 to send it off to the compiler &mdash; if everything's wired
                 up, you'll see <code>Hello, Rust!</code> appear underneath.
-                Then we'll get you a save file and start chapter 1.
+                Then we'll sign you up and start chapter 1.
             </p>
         </div>
 
@@ -280,8 +280,8 @@ fn main() {
                 Nicely done. What should we call you?
             </h3>
             <p class="book-acquainted-signup-sub">
-                One field, no email. Your save file is a personal link you can
-                bookmark to pick up where you left off on any device.
+                Just a name. No email or password. Sign up to save your
+                progress and continue on any device.
             </p>
             <form id="warmup-signup-form" class="book-acquainted-signup-form">
                 <input
@@ -311,7 +311,9 @@ fn main() {
             ></p>
             <p class="book-acquainted-signup-skip">
                 Or
-                <a href="/exercise/{{ next_slug }}">jump in without a save file</a>
+                <a href="/exercise/{{ next_slug }}"
+                    >jump in without signing up</a
+                >
                 &mdash; you can always sign up later from any chapter.
             </p>
         </div>
@@ -451,7 +453,7 @@ fn main() {
                 const data = await resp.json();
                 if (!data.ulid) {
                     signupError.textContent =
-                        "The server didn't return a save link. Please try again.";
+                        "Sign up failed. Please try again.";
                     signupError.hidden = false;
                     signupSubmit.disabled = false;
                     signupName.disabled = false;

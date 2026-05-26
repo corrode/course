@@ -412,7 +412,7 @@ struct SettingsTemplate {
     /// visitors hitting `/settings` directly.
     participant_name: Option<String>,
     /// Participant ULID, mirrored back into back-links and the
-    /// copy-to-clipboard "Your save link" affordance.
+    /// copy-to-clipboard "Your login link" affordance.
     ulid: Option<String>,
     /// Team slug for participants who joined via `/signup/{slug}`.
     /// `None` for unassigned participants and anonymous visitors.

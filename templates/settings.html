@@ -26,9 +26,8 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
             {% match participant_name %} {% when Some with (name) %} Signed in
             as <strong>{{ name }}</strong>{% match team_token %}{% when Some
             with (t) %} · team <strong>{{ t }}</strong>{% when None %}{%
-            endmatch %}. {% when None %} Anonymous session. Open a personal
-            dashboard link to see your team and copy your save link. {% endmatch
-            %}
+            endmatch %}. {% when None %} Not signed in. Open your login link to
+            see your team and manage your account. {% endmatch %}
         </p>
     </header>
 
@@ -177,11 +176,10 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
             {% match ulid %} {% when Some with (u) %}
             <div class="settings-row">
                 <div class="settings-row-text">
-                    <h3>Your save link</h3>
+                    <h3>Your login link</h3>
                     <p>
-                        Bookmark this URL on any device to come back to your
-                        progress. Anyone with the link can read and submit as
-                        you, so keep it private.
+                        Bookmark this link to stay signed in. Anyone with the
+                        link can sign in as you, so keep it private.
                     </p>
                 </div>
                 <div class="settings-row-control settings-save-link">
@@ -348,9 +346,9 @@ cargo course init --token {{ u }}</code></pre>
         <p class="settings-cli-intro">
             The <code>cargo course</code> CLI lets you edit exercises in your
             own IDE and submit from the terminal. You'll need a personal token
-            to link the CLI to a course account — open the personal dashboard
-            link you were given (or <a href="/">sign up</a>) and revisit this
-            page to see the exact <code>cargo course init</code> command.
+            to link the CLI to a course account — open your login link (or
+            <a href="/">sign up</a>) and revisit this page to see the exact
+            <code>cargo course init</code> command.
         </p>
         {% endmatch %}
     </section>

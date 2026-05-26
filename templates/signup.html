@@ -4,14 +4,11 @@ Rust{% endblock %} {% block topbar %}{% endblock %} {% block content %}
     <header class="signup-hero">
         <div class="signup-eyebrow">
             <span class="signup-eyebrow-rule" aria-hidden="true"></span>
-            <span class="signup-eyebrow-text">Save file</span>
+            <span class="signup-eyebrow-text">Sign up</span>
             <span class="signup-eyebrow-rule" aria-hidden="true"></span>
         </div>
-        <h1 class="signup-title">Save your progress</h1>
-        <p class="signup-byline">
-            One field, no email, no password. We give you a personal link to
-            bookmark and pick up where you left off.
-        </p>
+        <h1 class="signup-title">Sign up</h1>
+        <p class="signup-byline">Just a name. No email or password required.</p>
     </header>
 
     {% match team_slug %} {% when Some with (slug) %}
@@ -44,16 +41,14 @@ Rust{% endblock %} {% block topbar %}{% endblock %} {% block content %}
             {% match team_slug %} {% when Some with (slug) %}
             <input type="hidden" name="team_token" value="{{ slug }}" />
             {% when None %} {% endmatch %}
-            <button type="submit" class="btn signup-submit">
-                Create my save file
-            </button>
+            <button type="submit" class="btn signup-submit">Sign up</button>
         </form>
 
         <div class="signup-recover">
-            <p class="signup-recover-eyebrow">Already have a personal link?</p>
+            <p class="signup-recover-eyebrow">Already have an account?</p>
             <p class="signup-recover-body">
-                Just open it. Your progress is tied to the link itself, so the
-                bookmark is your account.
+                Open your login link to continue. It's the URL you bookmarked
+                when you signed up.
             </p>
         </div>
     </section>
