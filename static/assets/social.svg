@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <!--
+        Open Graph / Twitter social card. 1280×640, matches the site's
+        light theme (GitHub Primer light: #ffffff bg, #1f2328 text,
+        #59636e muted, #d1d9e0 border) and brand pink (#fc218a, the
+        `color-brand` CSS variable). Uses Happy Headline for the
+        title and Inter (with system fallbacks) for everything else.
+
+        To regenerate the PNG, use Inkscape (not rsvg-convert: it
+        silently falls back on Happy Headline's variable-weight woff2).
+        Inkscape needs the font visible via fontconfig, layered on top
+        of the system fonts so Inter etc. still resolve.
+
+            # one-off setup
+            mkdir -p /tmp/social-fonts
+            cp static/fonts/Happy-Headline.woff2 /tmp/social-fonts/
+            (cd /tmp/social-fonts && woff2_decompress Happy-Headline.woff2)
+            cat > /tmp/social-fonts/fonts.conf <<'EOF'
+            <?xml version="1.0"?>
+            <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+            <fontconfig>
+                <include>/opt/homebrew/etc/fonts/fonts.conf</include>
+                <dir>/tmp/social-fonts</dir>
+                <cachedir>/tmp/social-fonts/cache</cachedir>
+            </fontconfig>
+            EOF
+
+            # render
+            FONTCONFIG_FILE=/tmp/social-fonts/fonts.conf \
+                inkscape --export-type=png \
+                --export-filename=static/assets/social.png \
+                --export-width=1280 --export-height=640 \
+                static/assets/social.svg
+    -->
+    <defs>
+        <!-- Subtle dotted grid on the light surface -->
+        <pattern id="dots" width="32" height="32" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="1" fill="#d1d9e0" opacity="0.5" />
+        </pattern>
+    </defs>
+
+    <!-- Background -->
+    <rect width="1280" height="640" fill="#ffffff" />
+    <rect width="1280" height="640" fill="url(#dots)" />
+
+    <!-- Brand pink accent stripe -->
+    <rect x="0" y="0" width="8" height="640" fill="#fc218a" />
+
+    <!-- ===== Centered content ===== -->
+    <g text-anchor="middle">
+        <!-- Eyebrow: short rules either side of the kicker text -->
+        <line x1="488" y1="158" x2="544" y2="158" stroke="#d1d9e0" stroke-width="1" />
+        <line x1="736" y1="158" x2="792" y2="158" stroke="#d1d9e0" stroke-width="1" />
+        <text x="640" y="163" font-size="15" font-weight="700" letter-spacing="3.5" fill="#59636e">A COURSE BY CORRODE</text>
+
+        <!-- Title: Happy Headline in brand pink, weight 400 so we render
+             the font's native shapes rather than a synthetic bold. -->
+        <text x="640" y="290" font-family="'Happy Headline', Inter, sans-serif" font-size="116" font-weight="400" letter-spacing="-2" fill="#fc218a">A Beginner's Guide</text>
+        <text x="640" y="410" font-family="'Happy Headline', Inter, sans-serif" font-size="116" font-weight="400" letter-spacing="-2" fill="#fc218a">to Rust</text>
+
+        <!-- Subtitle in Inter -->
+        <text x="640" y="470" font-size="24" font-weight="400" fill="#59636e">A free, interactive Rust course you can take in your browser.</text>
+
+        <!-- Feature pills, centered as a row.
+             Row total width = 148 + 12 + 106 + 12 + 76 + 12 + 116 = 482,
+             so the left edge sits at (1280 - 482) / 2 = 399. -->
+        <g transform="translate(399, 514)" font-size="15" font-weight="600">
+            <g>
+                <rect width="148" height="38" rx="19" fill="#ffffff" stroke="#d1d9e0" />
+                <text x="74" y="25" fill="#1f2328">In your browser</text>
+            </g>
+            <g transform="translate(160, 0)">
+                <rect width="106" height="38" rx="19" fill="#ffffff" stroke="#d1d9e0" />
+                <text x="53" y="25" fill="#1f2328">No setup</text>
+            </g>
+            <g transform="translate(278, 0)">
+                <rect width="76" height="38" rx="19" fill="#ffffff" stroke="#d1d9e0" />
+                <text x="38" y="25" fill="#1f2328">Free</text>
+            </g>
+            <g transform="translate(366, 0)">
+                <rect width="116" height="38" rx="19" fill="#ffffff" stroke="#d1d9e0" />
+                <text x="58" y="25" fill="#1f2328">Open source</text>
+            </g>
+        </g>
+
+        <!-- Footer URL -->
+        <text x="640" y="600" font-size="16" font-weight="600" fill="#1f2328">corrode.dev<tspan fill="#59636e" font-weight="400" xml:space="preserve">   ·   github.com/corrode/course</tspan></text>
+    </g>
+</svg>
