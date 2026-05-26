@@ -37,8 +37,8 @@ struct AppState {
 #[derive(sqlx::FromRow)]
 struct DbParticipant {
     name: String,
-    /// Optional cohort label, populated when the participant signed up
-    /// via `/signup/{group_slug}`. `None` for public signups. See
+    /// Optional team label, populated when the participant signed up
+    /// via `/signup/{team_slug}`. `None` for public signups. See
     /// migration `007_add_team_token.sql`.
     team_token: Option<String>,
 }
@@ -188,7 +188,7 @@ struct DashboardTemplate {
     /// of the anonymous dashboard. `Some("unknown-token")` after a
     /// missing-ULID redirect; `None` everywhere else.
     reason: Option<String>,
-    /// Cohort label for the signed-in participant, if any. Drives the
+    /// Team label for the signed-in participant, if any. Drives the
     /// "View your team" link on the dashboard. `None` for anonymous
     /// viewers and for participants who signed up via the public form.
     team_token: Option<TeamToken>,
@@ -196,20 +196,20 @@ struct DashboardTemplate {
 
 /// Template for the slim signup form.
 ///
-/// `group_slug` is `Some` when reached via `/signup/{group_slug}`; it
+/// `team_slug` is `Some` when reached via `/signup/{team_slug}`; it
 /// renders an inline banner above the form and a hidden `team_token`
-/// input so the cohort label is round-tripped back to `/register`.
+/// input so the team label is round-tripped back to `/register`.
 #[derive(Template)]
 #[template(path = "signup.html")]
 struct SignupTemplate {
-    group_slug: Option<String>,
+    team_slug: Option<String>,
 }
 
 /// Template for admin dashboard
 #[derive(Template)]
 #[template(path = "admin.html")]
 struct AdminTemplate {
-    participant_groups: Vec<ParticipantGroup>,
+    participant_teams: Vec<ParticipantTeam>,
     recent_submissions: Vec<SubmissionSummary>,
     stats: AdminStats,
     exercises: Vec<String>,
@@ -265,7 +265,7 @@ struct ParticipantSummary {
     completed_count: i64,
     total_exercises: i64,
     last_activity: Option<chrono::DateTime<chrono::Utc>>,
-    /// Cohort label written by `/signup/{group_slug}`, or `None` for
+    /// Team label written by `/signup/{team_slug}`, or `None` for
     /// participants who came through the public `/signup` form. Used
     /// to bucket the admin participants table.
     team_token: Option<TeamToken>,
@@ -274,9 +274,9 @@ struct ParticipantSummary {
 /// One row of the admin participants view: a team bucket and the
 /// members in it. `team_token` is `None` for the synthetic
 /// "Unassigned" bucket that gathers every participant without a
-/// cohort label.
+/// team label.
 #[derive(Serialize, Clone)]
-struct ParticipantGroup {
+struct ParticipantTeam {
     team_token: Option<TeamToken>,
     members: Vec<ParticipantSummary>,
 }
@@ -322,7 +322,7 @@ fn prettify_exercise_name(name: &str) -> String {
 }
 
 /// Per-team page (`/admin/team/{slug}`, `/admin/team-unassigned`,
-/// `/dashboard/{ulid}/team`). Renders a single cohort's roster plus
+/// `/dashboard/{ulid}/team`). Renders a single team's roster plus
 /// a feed of every member's submissions, with the same chrome and
 /// the same code-editor look as the rest of the course site.
 ///
@@ -337,13 +337,13 @@ fn prettify_exercise_name(name: &str) -> String {
 #[derive(Template)]
 #[template(path = "team.html")]
 struct TeamPageTemplate {
-    /// Display label shown in the page heading. The cohort slug for
+    /// Display label shown in the page heading. The team slug for
     /// a real team, or the literal string "Unassigned" for the
-    /// no-cohort bucket.
+    /// no-team bucket.
     team_label: String,
     /// `true` for the synthetic Unassigned bucket. The template uses
     /// this to swap the eyebrow text and skip a couple of admin
-    /// affordances that only make sense for real cohorts.
+    /// affordances that only make sense for real teams.
     is_unassigned: bool,
     /// `true` when rendered for an admin operator. Drives whether
     /// admin-only chrome (ULIDs, dashboard links, the back-to-admin
@@ -364,7 +364,7 @@ struct TeamPageTemplate {
     members: Vec<TeamMemberView>,
     /// Chronological feed of every team member's most recent
     /// submissions, capped to keep the page from blowing up for a
-    /// busy cohort.
+    /// busy team.
     submissions: Vec<SubmissionSummary>,
     /// `true` when the submissions list is the cap (see
     /// [`TEAM_SUBMISSIONS_LIMIT`]) rather than the full history.
@@ -394,13 +394,13 @@ struct TeamMemberView {
 }
 
 /// Cap on the number of submissions rendered on a single team page.
-/// Keeps the page snappy for very active cohorts; the admin can dig
+/// Keeps the page snappy for very active teams; the admin can dig
 /// into individual dashboards for the full history.
 const TEAM_SUBMISSIONS_LIMIT: i64 = 60;
 
 /// Settings page (`/settings`, `/settings/{ulid}`). Renders
 /// editor/UI preferences (Vim mode, font size, draft data) plus, when
-/// a participant ULID is supplied, a snapshot of their cohort: the
+/// a participant ULID is supplied, a snapshot of their team: the
 /// roster and the most recent submissions. The team section is
 /// populated identically to [`TeamPageTemplate`] so the
 /// `partials/submission_card.html` partial stays usable across both.
@@ -414,14 +414,14 @@ struct SettingsTemplate {
     /// Participant ULID, mirrored back into back-links and the
     /// copy-to-clipboard "Your save link" affordance.
     ulid: Option<String>,
-    /// Cohort slug for participants who joined via `/signup/{slug}`.
+    /// Team slug for participants who joined via `/signup/{slug}`.
     /// `None` for unassigned participants and anonymous visitors.
     team_token: Option<String>,
     /// Team roster, sorted by recent activity. Empty when there is no
-    /// cohort to show.
+    /// team to show.
     members: Vec<TeamMemberView>,
-    /// Recent submissions feed across the cohort, capped to
-    /// [`TEAM_SUBMISSIONS_LIMIT`]. Empty when there is no cohort.
+    /// Recent submissions feed across the team, capped to
+    /// [`TEAM_SUBMISSIONS_LIMIT`]. Empty when there is no team.
     submissions: Vec<SubmissionSummary>,
     /// `true` when the feed was clipped to the cap.
     submissions_truncated: bool,
@@ -450,7 +450,7 @@ struct DashboardQuery {
 
 /// Form data for web registration.
 ///
-/// `team_token` is populated from the URL path on `/signup/{group_slug}`
+/// `team_token` is populated from the URL path on `/signup/{team_slug}`
 /// via a hidden input; it's never typed by the user. Public signups at
 /// `/signup` leave it empty / `None`.
 ///
@@ -485,23 +485,23 @@ fn resolve_register_next(next: Option<&str>, ulid: &str) -> Option<String> {
     Some(format!("/exercise/{ulid}/{slug}"))
 }
 
-/// Buckets a flat list of participants into one `ParticipantGroup`
+/// Buckets a flat list of participants into one `ParticipantTeam`
 /// per distinct `team_token`. Participants whose `team_token` is
 /// `None` are gathered into a final "Unassigned" bucket. Assumes the
 /// input is already sorted by `team_token` so a single linear pass
 /// produces stable output.
-fn group_participants_by_team(participants: Vec<ParticipantSummary>) -> Vec<ParticipantGroup> {
-    let mut groups: Vec<ParticipantGroup> = Vec::new();
+fn bucket_participants_by_team(participants: Vec<ParticipantSummary>) -> Vec<ParticipantTeam> {
+    let mut teams: Vec<ParticipantTeam> = Vec::new();
     for p in participants {
-        match groups.last_mut() {
-            Some(g) if g.team_token == p.team_token => g.members.push(p),
-            _ => groups.push(ParticipantGroup {
+        match teams.last_mut() {
+            Some(t) if t.team_token == p.team_token => t.members.push(p),
+            _ => teams.push(ParticipantTeam {
                 team_token: p.team_token.clone(),
                 members: vec![p],
             }),
         }
     }
-    groups
+    teams
 }
 
 #[tokio::main]
@@ -603,7 +603,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(anonymous_dashboard))
         .route("/signup", get(signup_page))
-        .route("/signup/{group_slug}", get(signup_page_with_group))
+        .route("/signup/{team_slug}", get(signup_page_with_team))
         .route("/register", post(web_register))
         .route("/dashboard/{ulid}", get(participant_dashboard))
         .route("/exercise/{slug}", get(public_exercise_page))
@@ -745,30 +745,30 @@ async fn anonymous_dashboard(
     )
 }
 
-/// Public signup form at `/signup` (no cohort).
+/// Public signup form at `/signup` (no team).
 async fn signup_page() -> impl IntoResponse {
     render_signup(None)
 }
 
-/// Workshop signup form at `/signup/{group_slug}`.
+/// Workshop signup form at `/signup/{team_slug}`.
 ///
 /// The slug is captured server-side and surfaced both as a banner and
 /// as a hidden `team_token` input on the form so it round-trips back
 /// to `/register` without the user typing anything.
-async fn signup_page_with_group(AxumPath(group_slug): AxumPath<String>) -> impl IntoResponse {
+async fn signup_page_with_team(AxumPath(team_slug): AxumPath<String>) -> impl IntoResponse {
     // Defensive trim. Empty slugs degrade to the public form rather
     // than rendering a banner that says "Signing up with **(blank)**".
-    let trimmed = group_slug.trim();
-    let group = if trimmed.is_empty() {
+    let trimmed = team_slug.trim();
+    let team = if trimmed.is_empty() {
         None
     } else {
         Some(trimmed.to_string())
     };
-    render_signup(group)
+    render_signup(team)
 }
 
-fn render_signup(group_slug: Option<String>) -> axum::response::Response {
-    let template = SignupTemplate { group_slug };
+fn render_signup(team_slug: Option<String>) -> axum::response::Response {
+    let template = SignupTemplate { team_slug };
     template.render().map_or_else(
         |_| {
             (
@@ -849,7 +849,7 @@ async fn web_register(
 ) -> Result<axum::response::Redirect, StatusCode> {
     let name = Name::try_from(form.name).map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    // Treat blank / whitespace-only team tokens as "no cohort" and
+    // Treat blank / whitespace-only team tokens as "no team" and
     // reject any other malformed value. The hidden input on the
     // workshop signup page only ever sends a known-good slug, so a
     // bad value here means a hand-crafted POST and a 400 is fine.
@@ -1318,10 +1318,10 @@ async fn admin_dashboard(
         });
     }
 
-    // Bucket the flat list into team groups. The query already sorted
+    // Bucket the flat list into teams. The query already sorted
     // by team_token (with NULLs last) so a single linear pass is
     // enough to produce one bucket per distinct value.
-    let participant_groups = group_participants_by_team(participants);
+    let participant_teams = bucket_participants_by_team(participants);
 
     // Get recent submissions
     let submission_rows_result = sqlx::query(
@@ -1393,7 +1393,7 @@ async fn admin_dashboard(
     );
 
     let template = AdminTemplate {
-        participant_groups,
+        participant_teams,
         recent_submissions,
         stats: admin_stats,
         exercises,
@@ -1474,7 +1474,7 @@ async fn admin_set_team_token(
     }
 }
 
-/// Builds the per-team page (`team.html`) for a given cohort label.
+/// Builds the per-team page (`team.html`) for a given team label.
 ///
 /// `team_token = None` selects the synthetic Unassigned bucket
 /// (every participant whose `participants.team_token` column is
@@ -1483,7 +1483,7 @@ async fn admin_set_team_token(
 /// rendered HTML response, or a 500 if any of the supporting queries
 /// fail.
 // reason: top-level request handler; splitting purely for line count adds indirection without value
-/// Snapshot of a single cohort (or the unassigned bucket): roster,
+/// Snapshot of a single team (or the unassigned bucket): roster,
 /// recent submissions, truncation flag, and the distinct exercises
 /// present in the feed. Shared between [`render_team_page`] and the
 /// settings page so both pages see the same data and respect the same
@@ -1564,7 +1564,7 @@ async fn load_team_view(
     }
 
     // Submissions feed: every member's latest activity, capped so a
-    // very busy cohort doesn't render thousands of editor instances.
+    // very busy team doesn't render thousands of editor instances.
     let member_ids: Vec<String> = roster_rows
         .iter()
         .map(|r| r.get::<String, _>("id"))
@@ -1689,7 +1689,7 @@ async fn render_team_page(
     }
 }
 
-/// Admin: per-team page for a real cohort slug.
+/// Admin: per-team page for a real team slug.
 async fn admin_team_page(
     AxumPath(slug): AxumPath<String>,
     Query(query): Query<AdminQuery>,
@@ -1737,11 +1737,11 @@ async fn admin_team_unassigned_page(
     .await
 }
 
-/// Participant: read-only view of their own cohort's submissions.
+/// Participant: read-only view of their own team's submissions.
 ///
 /// Returns 404 if the ULID is unknown; redirects to the dashboard
 /// with a one-shot toast if the participant has no `team_token` (no
-/// cohort means there's nothing meaningful to show on this page).
+/// team means there's nothing meaningful to show on this page).
 async fn participant_team_page(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
@@ -1759,7 +1759,7 @@ async fn participant_team_page(
         };
 
     let Some(token) = participant.parsed_team_token() else {
-        // No cohort to show; bounce back to the personal dashboard.
+        // No team to show; bounce back to the personal dashboard.
         return axum::response::Redirect::to(&format!("/dashboard/{ulid}")).into_response();
     };
 
@@ -1802,7 +1802,7 @@ async fn settings_page() -> impl IntoResponse {
 }
 
 /// Settings page for a known participant: editor preferences plus
-/// their cohort snapshot (roster + recent submissions). Routed at
+/// their team snapshot (roster + recent submissions). Routed at
 /// `/settings/{ulid}`. Unknown ULIDs redirect to the anonymous
 /// dashboard with the standard one-shot toast.
 async fn participant_settings_page(
@@ -2621,7 +2621,7 @@ mod tests {
     }
 
     #[test]
-    fn group_participants_buckets_by_team_token() {
+    fn bucket_participants_buckets_by_team_token() {
         // Pre-sorted as the SQL query produces: alphabetical teams
         // first, NULLs last.
         let participants = vec![
@@ -2631,24 +2631,24 @@ mod tests {
             make_summary("dave", None),
             make_summary("eve", None),
         ];
-        let groups = group_participants_by_team(participants);
-        assert_eq!(groups.len(), 3);
+        let teams = bucket_participants_by_team(participants);
+        assert_eq!(teams.len(), 3);
         assert_eq!(
-            groups[0].team_token.as_ref().map(TeamToken::as_str),
+            teams[0].team_token.as_ref().map(TeamToken::as_str),
             Some("alpha")
         );
-        assert_eq!(groups[0].members.len(), 2);
+        assert_eq!(teams[0].members.len(), 2);
         assert_eq!(
-            groups[1].team_token.as_ref().map(TeamToken::as_str),
+            teams[1].team_token.as_ref().map(TeamToken::as_str),
             Some("beta")
         );
-        assert_eq!(groups[1].members.len(), 1);
-        assert_eq!(groups[2].team_token, None);
-        assert_eq!(groups[2].members.len(), 2);
+        assert_eq!(teams[1].members.len(), 1);
+        assert_eq!(teams[2].team_token, None);
+        assert_eq!(teams[2].members.len(), 2);
     }
 
     #[test]
-    fn group_participants_handles_empty_input() {
-        assert!(group_participants_by_team(Vec::new()).is_empty());
+    fn bucket_participants_handles_empty_input() {
+        assert!(bucket_participants_by_team(Vec::new()).is_empty());
     }
 }

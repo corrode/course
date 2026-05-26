@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
-/// A validated team / cohort token.
+/// A validated team token.
 ///
 /// Stored on `participants.team_token`. Populated server-side from
-/// the `/signup/{group_slug}` URL (the user never types it). Used
-/// to bucket the admin participants table into one group per cohort
+/// the `/signup/{team_slug}` URL (the user never types it). Used
+/// to bucket the admin participants table into one team per token
 /// and to scope the per-team submissions view.
 ///
 /// A `TeamToken` is always a non-empty slug of up to 64 characters
@@ -80,7 +80,7 @@ impl std::error::Error for TeamTokenError {}
 impl TeamToken {
     /// Maximum allowed length for a team token, after trimming.
     ///
-    /// 64 chars is generous enough for any cohort label an instructor
+    /// 64 chars is generous enough for any team label an instructor
     /// would actually pick, and tight enough that the value fits
     /// comfortably in the admin table and any URL we route on.
     pub const MAX_LENGTH: usize = 64;
@@ -103,7 +103,7 @@ impl TeamToken {
     ///
     /// This is the right entry point for the admin's inline
     /// re-assignment form and the `team_token` hidden input on the
-    /// signup page, where blank means "no cohort" rather than "this
+    /// signup page, where blank means "no team" rather than "this
     /// is bad input".
     ///
     /// # Examples

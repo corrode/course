@@ -1,7 +1,11 @@
 {% extends "base.html" %} {% block title %}{{ team_label }} · Team · corrode
 Rust Course{% endblock %} {% block topbar_settings_href %}{% match viewer_ulid
 %}{% when Some with (u) %}/settings/{{ u }}{% when None %}/settings{% endmatch
-%}{% endblock %} {% block content %}
+%}{% endblock %} {% block topbar_team_href %}{% match viewer_ulid %}{% when Some
+with (u) %}/dashboard/{{ u }}/team{% when None %}/signup{% endmatch %}{%
+endblock %} {% block topbar_team_title %}{% match viewer_ulid %}{% when Some
+with (_u) %}Your team{% when None %}Join a team{% endmatch %}{% endblock %} {%
+block topbar_active_team %}is-active{% endblock %} {% block content %}
 <div class="container admin-page team-page">
     <p class="team-back">
         <a href="{{ back_href }}">← {{ back_label }}</a>

@@ -15,7 +15,7 @@ The course runs primarily through the website, which walks you through
 each chapter, shows the exercises in your browser, and tracks your
 progress. That's the recommended way to take it.
 
-You can start alone or with a group. If you're taking it with a team, you can share your
+You can start alone or with a team. If you're taking it with a team, you can share your
 progress with each other by submitting your solutions and seeing other people's solutions.
 The course is designed to be self-paced, so you can work through it at your own
 speed, so no rush!

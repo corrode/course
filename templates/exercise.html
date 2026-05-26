@@ -114,7 +114,10 @@ progress_total > 0 %}
 </span>
 {% endif %} {% endblock %} {% block topbar_settings_href %}{% match ulid %}{%
 when Some with (u) %}/settings/{{ u }}{% when None %}/settings{% endmatch %}{%
-endblock %} {% block content %}
+endblock %} {% block topbar_team_href %}{% match ulid %}{% when Some with (u)
+%}/dashboard/{{ u }}/team{% when None %}/signup{% endmatch %}{% endblock %} {%
+block topbar_team_title %}{% match ulid %}{% when Some with (_u) %}Your team{%
+when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
 <div class="container" data-corrode-config="{{ exercise.directives_json() }}">
     <div class="exercise-header">
         <div class="chapter-eyebrow">Chapter {{ exercise.number }}</div>

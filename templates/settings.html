@@ -1,7 +1,11 @@
 {% extends "base.html" %} {% block title %}Settings · corrode Rust Course{%
 endblock %} {% block topbar_settings_href %}{% match ulid %}{% when Some with
 (u) %}/settings/{{ u }}{% when None %}/settings{% endmatch %}{% endblock %} {%
-block content %}
+block topbar_team_href %}{% match ulid %}{% when Some with (u) %}/dashboard/{{ u
+}}/team{% when None %}/signup{% endmatch %}{% endblock %} {% block
+topbar_team_title %}{% match ulid %}{% when Some with (_u) %}Your team{% when
+None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
+%}is-active{% endblock %} {% block content %}
 <div class="container admin-page settings-page">
     <p class="settings-back">
         {% match ulid %} {% when Some with (u) %}
@@ -21,7 +25,7 @@ block content %}
         <p class="book-byline">
             {% match participant_name %} {% when Some with (name) %} Signed in
             as <strong>{{ name }}</strong>{% match team_token %}{% when Some
-            with (t) %} · cohort <strong>{{ t }}</strong>{% when None %}{%
+            with (t) %} · team <strong>{{ t }}</strong>{% when None %}{%
             endmatch %}. {% when None %} Anonymous session. Open a personal
             dashboard link to see your team and copy your save link. {% endmatch
             %}
@@ -358,7 +362,7 @@ cargo course init --token {{ u }}</code></pre>
             <span class="section-eyebrow">Your team</span>
             <span class="section-meta">
                 {{ members.len() }} member{% if members.len() != 1 %}s{% endif
-                %}{% match team_token %}{% when Some with (t) %} · cohort
+                %}{% match team_token %}{% when Some with (t) %} · team
                 <strong>{{ t }}</strong>{% when None %}{% endmatch %}
             </span>
         </div>
@@ -455,7 +459,7 @@ cargo course init --token {{ u }}</code></pre>
             <span class="section-eyebrow">Your team</span>
         </div>
         <p class="team-empty">
-            You're not in a cohort yet. Cohorts are assigned via the signup link
+            You're not on a team yet. Teams are assigned via the signup link
             your instructor shares — if you signed up directly, you'll stay solo
             and that's totally fine.
         </p>

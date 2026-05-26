@@ -14,11 +14,11 @@ Rust{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         </p>
     </header>
 
-    {% match group_slug %} {% when Some with (slug) %}
-    <div class="signup-group-banner" role="status">
-        <span class="signup-group-eyebrow">Joining</span>
-        <strong class="signup-group-name">{{ slug }}</strong>
-        <span class="signup-group-hint"
+    {% match team_slug %} {% when Some with (slug) %}
+    <div class="signup-team-banner" role="status">
+        <span class="signup-team-eyebrow">Joining</span>
+        <strong class="signup-team-name">{{ slug }}</strong>
+        <span class="signup-team-hint"
             >Your progress will be visible to whoever shared this link with
             you.</span
         >
@@ -27,7 +27,9 @@ Rust{% endblock %} {% block topbar %}{% endblock %} {% block content %}
 
     <section class="signup-card">
         <form action="/register" method="post" class="signup-form">
-            <label class="signup-label" for="name">What should we call you?</label>
+            <label class="signup-label" for="name"
+                >What should we call you?</label
+            >
             <input
                 type="text"
                 id="name"
@@ -39,7 +41,7 @@ Rust{% endblock %} {% block topbar %}{% endblock %} {% block content %}
                 autocomplete="given-name"
                 autofocus
             />
-            {% match group_slug %} {% when Some with (slug) %}
+            {% match team_slug %} {% when Some with (slug) %}
             <input type="hidden" name="team_token" value="{{ slug }}" />
             {% when None %} {% endmatch %}
             <button type="submit" class="btn signup-submit">
@@ -105,7 +107,7 @@ Rust{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         line-height: 1.55;
     }
 
-    .signup-group-banner {
+    .signup-team-banner {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -116,19 +118,19 @@ Rust{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         background: var(--color-surface);
         border-left: 3px solid var(--color-primary);
     }
-    .signup-group-eyebrow {
+    .signup-team-eyebrow {
         font-size: 0.7rem;
         font-weight: 700;
         letter-spacing: 0.2em;
         text-transform: uppercase;
         color: var(--color-text-muted);
     }
-    .signup-group-name {
+    .signup-team-name {
         font-size: 1.15rem;
         color: var(--color-text);
         font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
     }
-    .signup-group-hint {
+    .signup-team-hint {
         font-size: 0.85rem;
         color: var(--color-text-muted);
         margin-top: 0.2rem;

@@ -115,11 +115,11 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         {% match team_token %} {% when Some with (token) %} {% match ulid %} {%
         when Some with (u) %}
         <p class="book-team-link">
-            You're part of cohort
+            You're part of team
             <a href="/dashboard/{{ u }}/team"><strong>{{ token }}</strong></a
             >.
             <a href="/dashboard/{{ u }}/team"
-                >See what your group is building →</a
+                >See what your team is building →</a
             >
         </p>
         {% when None %} {% endmatch %} {% when None %} {% endmatch %}

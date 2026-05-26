@@ -165,7 +165,7 @@ Web (HTML, Askama):
 - `GET  /`: anonymous course dashboard (no signup required to browse,
   read, or run exercises)
 - `GET  /signup`: slim signup form (name only)
-- `GET  /signup/{group_slug}`: same form with a cohort banner; the slug
+- `GET  /signup/{team_slug}`: same form with a team banner; the slug
   becomes the participant's `team_token` via a hidden input
 - `POST /register`: web registration, redirects to `/dashboard/{ulid}`
 - `GET  /dashboard/{ulid}`: participant dashboard (same template as `/`,
@@ -316,7 +316,7 @@ Askama 0.13. Each `.html` file maps to one of the structs in
 `server.rs`:
 
 - `base.html`: shared layout (topbar, footer)
-- `signup.html`: slim signup form, optional cohort banner
+- `signup.html`: slim signup form, optional team banner
 - `dashboard.html`: course view, rendered in two modes (anonymous via
   `/` and participant via `/dashboard/{ulid}`)
 - `exercise.html`: prose + editor + run/test panels +

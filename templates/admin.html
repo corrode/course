@@ -10,8 +10,8 @@ endblock %} {% block content %}
         <h1 class="book-title admin-title">Course Dashboard</h1>
         <p class="book-byline">
             {{ stats.participants }} participant{% if stats.participants != 1
-            %}s{% endif %} in {{ participant_groups.len() }} cohort{% if
-            participant_groups.len() != 1 %}s{% endif %} · {{ stats.submissions
+            %}s{% endif %} in {{ participant_teams.len() }} team{% if
+            participant_teams.len() != 1 %}s{% endif %} · {{ stats.submissions
             }} submission{% if stats.submissions != 1 %}s{% endif %} · {{
             stats.perfected }} perfected
         </p>
@@ -21,34 +21,34 @@ endblock %} {% block content %}
         <div class="section-head">
             <span class="section-eyebrow">Participants</span>
             <span class="section-meta">
-                {{ participant_groups.len() }} team{% if
-                participant_groups.len() != 1 %}s{% endif %}
+                {{ participant_teams.len() }} team{% if participant_teams.len()
+                != 1 %}s{% endif %}
             </span>
         </div>
 
-        {% for group in participant_groups %}
-        <div class="team-group">
-            <div class="team-group-head">
-                {% match group.team_token %} {% when Some with (slug) %}
-                <span class="team-group-tag">Team</span>
+        {% for team in participant_teams %}
+        <div class="team-section">
+            <div class="team-section-head">
+                {% match team.team_token %} {% when Some with (slug) %}
+                <span class="team-section-tag">Team</span>
                 <a
-                    class="team-group-name"
+                    class="team-section-name"
                     href="/admin/team/{{ slug }}?token={{ admin_token }}"
                     title="Open this team's full page"
                     >{{ slug }}</a
                 >
                 {% when None %}
-                <span class="team-group-tag">Unassigned</span>
+                <span class="team-section-tag">Unassigned</span>
                 <a
-                    class="team-group-name team-group-name-muted"
+                    class="team-section-name team-section-name-muted"
                     href="/admin/team-unassigned?token={{ admin_token }}"
                     title="Open the unassigned bucket"
-                    >no cohort</a
+                    >no team</a
                 >
                 {% endmatch %}
-                <span class="team-group-meta">
-                    · {{ group.members.len() }} participant{% if
-                    group.members.len() != 1 %}s{% endif %}
+                <span class="team-section-meta">
+                    · {{ team.members.len() }} participant{% if
+                    team.members.len() != 1 %}s{% endif %}
                 </span>
             </div>
 
@@ -63,7 +63,7 @@ endblock %} {% block content %}
                     </tr>
                 </thead>
                 <tbody>
-                    {% for participant in group.members %}
+                    {% for participant in team.members %}
                     <tr>
                         <td class="admin-cell-name">{{ participant.name }}</td>
                         <td>
@@ -143,8 +143,8 @@ endblock %} {% block content %}
                     class="admin-input admin-input-tiny"
                 >
                     <option value="">All participants</option>
-                    {% for group in participant_groups %} {% for participant in
-                    group.members %}
+                    {% for team in participant_teams %} {% for participant in
+                    team.members %}
                     <option value="{{ participant.name }}">
                         {{ participant.name }}
                     </option>
@@ -180,14 +180,14 @@ endblock %} {% block content %}
        the submissions feed, and all `.book-*` / `.section-*` rules
        live in `base.html` and are shared with the team page. */
 
-    /* ---------- Team groups ---------- */
-    .team-group {
+    /* ---------- Team sections ---------- */
+    .team-section {
         margin-bottom: 3rem;
     }
-    .team-group:last-child {
+    .team-section:last-child {
         margin-bottom: 0;
     }
-    .team-group-head {
+    .team-section-head {
         display: flex;
         align-items: baseline;
         gap: 0.6rem;
@@ -196,14 +196,14 @@ endblock %} {% block content %}
         border-bottom: 1px solid var(--color-border);
         flex-wrap: wrap;
     }
-    .team-group-tag {
+    .team-section-tag {
         font-size: 0.7rem;
         font-weight: 700;
         letter-spacing: 0.18em;
         text-transform: uppercase;
         color: var(--color-text-muted);
     }
-    .team-group-name {
+    .team-section-name {
         font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
         font-size: 1rem;
         color: var(--color-text);
@@ -211,16 +211,16 @@ endblock %} {% block content %}
         text-decoration: none;
         border-bottom: 1px dashed transparent;
     }
-    .team-group-name:hover,
-    .team-group-name:focus-visible {
+    .team-section-name:hover,
+    .team-section-name:focus-visible {
         color: var(--color-primary);
         border-bottom-color: var(--color-primary);
     }
-    .team-group-name-muted {
+    .team-section-name-muted {
         font-style: italic;
         color: var(--color-text-muted);
     }
-    .team-group-meta {
+    .team-section-meta {
         font-size: 0.85rem;
         color: var(--color-text-muted);
     }

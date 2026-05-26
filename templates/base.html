@@ -981,6 +981,21 @@
                     transparent
                 );
             }
+            .topbar-link.is-active {
+                color: var(--color-text);
+                background: color-mix(
+                    in srgb,
+                    var(--color-primary) 14%,
+                    transparent
+                );
+            }
+            .topbar-link.is-active:hover {
+                background: color-mix(
+                    in srgb,
+                    var(--color-primary) 20%,
+                    transparent
+                );
+            }
             .topbar-link svg {
                 width: 0.95rem;
                 height: 0.95rem;
@@ -2155,7 +2170,7 @@
                 <div class="topbar-spacer"></div>
                 {% block topbar_progress %}{% endblock %}
                 <a
-                    class="topbar-link"
+                    class="topbar-link {% block topbar_active_playground %}{% endblock %}"
                     href="/playground"
                     title="Open the Rust scratchpad"
                 >
@@ -2173,7 +2188,7 @@
                     <span>Playground</span>
                 </a>
                 <a
-                    class="topbar-link"
+                    class="topbar-link {% block topbar_active_cheatsheet %}{% endblock %}"
                     href="/cheatsheet"
                     data-cheatsheet-toggle
                     title="Quick reference of Rust syntax (press ?)"
@@ -2217,7 +2232,30 @@
                     <span>GitHub</span>
                 </a>
                 <a
-                    class="topbar-link"
+                    class="topbar-link {% block topbar_active_team %}{% endblock %}"
+                    href="{% block topbar_team_href %}/signup{% endblock %}"
+                    title="{% block topbar_team_title %}Join a team{% endblock %}"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+                        ></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Team</span>
+                </a>
+                <a
+                    class="topbar-link {% block topbar_active_settings %}{% endblock %}"
                     href="{% block topbar_settings_href %}/settings{% endblock %}"
                     title="Preferences and your team"
                 >
