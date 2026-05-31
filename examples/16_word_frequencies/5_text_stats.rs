@@ -23,9 +23,9 @@ fn test_text_stats() {
     let (total, unique, avg_len) = text_stats(text);
     assert_eq!(total, 3);
     assert_eq!(unique, 3);
-    assert!((avg_len - 4.33).abs() < 0.1); // Average length ≈ 4.33
+    assert!((avg_len - 4.66).abs() < 0.01); // Average length ≈ 4.66
     // Side note: floats don't compare exactly (the value here is
-    // really 13/3 = 4.333...), so we check that we're close enough
+    // really 14/3 = 4.666...), so we check that we're close enough
     // by taking the absolute difference and comparing to a tolerance.
     // Direct `==` on `f64` is almost always the wrong thing.
 }
