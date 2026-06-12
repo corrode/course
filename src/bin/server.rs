@@ -142,6 +142,12 @@ struct UiExerciseStatus {
     attempted: bool,
     completed: bool,
     perfected: bool,
+    /// Source code of the most recent submission for this step, used to
+    /// re-seed the editor on a device that has no local draft. `None`
+    /// when the participant has never submitted this step. Only
+    /// populated for per-step progress (`load_step_progress`); the
+    /// per-chapter rollup leaves it empty.
+    submitted_code: Option<String>,
 }
 
 /// Template for participant dashboard.
@@ -1049,6 +1055,10 @@ async fn render_exercise_page(
                             attempted: !r.submissions.is_empty(),
                             completed: r.completed,
                             perfected: r.perfected,
+                            // Chapter rollup is only used for the header
+                            // badge and chapter list, never to seed an
+                            // editor, so the submitted source is irrelevant.
+                            submitted_code: None,
                         },
                     )
                 })
@@ -1168,6 +1178,7 @@ async fn render_exercise_page(
                         title: code.title.clone(),
                         show_title: !prev_was_note,
                         starter_code: code.starter_code.clone(),
+                        submitted_code: status.submitted_code,
                         attempted: status.attempted,
                         completed: status.completed,
                         perfected: status.perfected,
@@ -1253,6 +1264,12 @@ async fn load_step_progress(
         }
         if row.tests_passed && row.fmt_passed && row.clippy_passed {
             entry.perfected = true;
+        }
+        // Rows arrive newest-first per `exercise_name`, so the first one
+        // we see for a key is the latest submission: seed the editor
+        // with it on devices that have no local draft.
+        if entry.submitted_code.is_none() {
+            entry.submitted_code = Some(row.source_code.clone());
         }
     }
     Ok(by_key)

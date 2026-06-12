@@ -470,6 +470,12 @@ pub enum RenderKind {
         show_title: bool,
         /// Editor starter content (file with `//!` stripped).
         starter_code: String,
+        /// Source of the participant's most recent submission for this
+        /// step, if any. The editor seeds from this when the device has
+        /// no local draft, so submitted solutions follow the session
+        /// token across devices instead of living only in the
+        /// `localStorage` of whichever browser made the submission.
+        submitted_code: Option<String>,
         /// True if at least one submission exists for this step.
         attempted: bool,
         /// True if a submission has `tests_passed`.

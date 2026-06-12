@@ -301,6 +301,10 @@ export async function mountInlineEditor(section, opts = {}) {
   const exerciseKey = opts.slug || section.dataset.exerciseKey || "playground";
   const starter =
     opts.starter != null ? opts.starter : fallback ? fallback.value : "";
+  // Source of the participant's most recent server-side submission, if
+  // any. Seeds the editor on a device that has no local draft so
+  // submitted solutions follow the session token across browsers.
+  const submitted = opts.submitted != null ? opts.submitted : null;
   const draftKey = features.draftKey || null;
   const wantsTestResults = features.testResults !== false && !!testList;
   const wantsHighlightOutput = features.syntaxHighlightOutput === true;
@@ -320,8 +324,15 @@ export async function mountInlineEditor(section, opts = {}) {
       savedDraft = localStorage.getItem(draftKey);
     } catch (_) {}
   }
+  // Seeding precedence: a non-empty local draft (this device's
+  // in-progress edits) wins, then the latest server submission (so a
+  // fresh device shows the saved solution), then the chapter starter.
   const initialDoc =
-    savedDraft != null && savedDraft !== "" ? savedDraft : starter;
+    savedDraft != null && savedDraft !== ""
+      ? savedDraft
+      : submitted != null && submitted !== ""
+        ? submitted
+        : starter;
   if (fallback) fallback.value = initialDoc;
 
   // Default fallback handle (used when CodeMirror fails to load).

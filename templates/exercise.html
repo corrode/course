@@ -155,8 +155,8 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     with { html } %}
     <div class="chapter-prose exercise-prose">{{ html|safe }}</div>
     {% when cargo_course::exercises::RenderKind::Code with { dom_id,
-    exercise_key, eyebrow, title, show_title, starter_code, attempted,
-    completed, perfected, github_dev_url, hints_html } %}
+    exercise_key, eyebrow, title, show_title, starter_code, submitted_code,
+    attempted, completed, perfected, github_dev_url, hints_html } %}
 
     <section
         class="exercise-section"
@@ -289,6 +289,9 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
             >
 {{ starter_code }}</textarea
             >
+            {% match submitted_code %} {% when Some with (code) %}
+            <textarea data-role="editor-submitted" hidden>{{ code }}</textarea>
+            {% when None %} {% endmatch %}
             <div data-role="editor-mount" style="display: none"></div>
         </div>
 
@@ -673,10 +676,14 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
                     const fallback = section.querySelector(
                         '[data-role="editor-fallback"]',
                     );
+                    const submittedEl = section.querySelector(
+                        '[data-role="editor-submitted"]',
+                    );
                     const stepId = section.dataset.stepId;
                     const exerciseKey = section.dataset.exerciseKey;
                     mountInlineEditor(section, {
                         starter: fallback ? fallback.value : "",
+                        submitted: submittedEl ? submittedEl.value : null,
                         slug: exerciseKey,
                         features: {
                             vim: true,
