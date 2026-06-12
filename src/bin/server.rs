@@ -9,8 +9,8 @@ use askama::Template;
 use axum::{
     Router, debug_handler,
     extract::{Path as AxumPath, Query, State},
-    http::StatusCode,
-    response::{Html, IntoResponse, Json},
+    http::{StatusCode, header::CACHE_CONTROL},
+    response::{Html, IntoResponse, Json, Response},
     routing::{delete, get, post},
 };
 use dotenvy::dotenv;
@@ -633,6 +633,16 @@ async fn main() -> Result<()> {
         .route("/admin/team-unassigned", get(admin_team_unassigned_page))
         .route("/dashboard/{ulid}/team", get(participant_team_page))
         .nest("/api", api_routes)
+        // Every route above renders per-participant state (progress
+        // checkmarks, submitted code) keyed only by the ulid in the
+        // URL. Without an explicit policy these HTML pages are freely
+        // cacheable, so a browser or intermediary can serve a stale
+        // copy of someone's own page (e.g. a mobile browser showing an
+        // old `0 of 5` after the work was done on another device).
+        // `no-store` keeps progress always fresh. The layer only
+        // applies to routes registered before it, so the static assets
+        // nested below stay cacheable.
+        .layer(axum::middleware::map_response(no_store))
         .nest_service("/static", ServeDir::new("static"))
         .with_state(app_state);
 
@@ -643,6 +653,20 @@ async fn main() -> Result<()> {
 
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+/// Stamp `Cache-Control: no-store` on every dynamic HTML/API response.
+///
+/// These pages embed per-participant state (progress, submitted code)
+/// keyed only by the ulid in the URL, so they must never be reused from
+/// a browser, bfcache, or intermediary cache. Without this, a device
+/// that visited a page once can keep showing stale progress.
+async fn no_store(mut response: Response) -> Response {
+    response.headers_mut().insert(
+        CACHE_CONTROL,
+        axum::http::HeaderValue::from_static("no-store, must-revalidate"),
+    );
+    response
 }
 
 /// Liveness + readiness probe.
