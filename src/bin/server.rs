@@ -1285,15 +1285,16 @@ async fn admin_dashboard(
         return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
     }
 
-    // Get participant summaries
+    // Get participant summaries. We only pull identity + last-activity
+    // from SQL here; the completed/total counts are computed below with
+    // `get_exercise_progress` so they match exactly what each
+    // participant sees on their own dashboard.
     let participant_rows_result = sqlx::query(
         r"
         SELECT 
             p.id,
             p.name,
             p.team_token,
-            COUNT(s.id) as completed_count,
-            15 as total_exercises,
             MAX(s.submitted_at) as last_activity
         FROM participants p
         LEFT JOIN submissions s ON p.id = s.participant_id AND s.tests_passed = 1
@@ -1315,6 +1316,19 @@ async fn admin_dashboard(
             .into_response();
     };
 
+    // Denominator: the number of *completable* chapters in the catalog.
+    // Quizzes and notes-only chapters have no code steps and never count
+    // toward progress, so they're excluded here just like in
+    // `participant_dashboard` / `render_exercise_page`.
+    let total_exercises = i64::try_from(
+        state
+            .exercises
+            .iter()
+            .filter(|e| !e.is_quiz() && !e.code_steps().is_empty())
+            .count(),
+    )
+    .unwrap_or(i64::MAX);
+
     let mut participants = Vec::new();
     for row in participant_rows {
         let raw_token: Option<String> = row.get("team_token");
@@ -1325,11 +1339,34 @@ async fn admin_dashboard(
         let team_token = raw_token
             .as_deref()
             .and_then(|s| TeamToken::try_from(s).ok());
+        let id: String = row.get("id");
+
+        // Numerator: distinct completable chapters this participant has
+        // finished. Counting passing *submissions* (as we used to) badly
+        // overcounts, since multiple submissions per step are allowed and
+        // multi-step chapters store one row per step — hence the
+        // "42 / 15" we were seeing. A per-participant query is fine on
+        // this low-traffic admin page.
+        let completed_count =
+            match get_exercise_progress(&state.pool, Some(&id), &state.exercises).await {
+                Ok(exercises) => i64::try_from(
+                    exercises
+                        .iter()
+                        .filter(|e| !e.is_quiz && e.has_exercises && e.completed)
+                        .count(),
+                )
+                .unwrap_or(i64::MAX),
+                Err(e) => {
+                    warn!("Failed to compute progress for participant {id}: {e}");
+                    0
+                }
+            };
+
         participants.push(ParticipantSummary {
-            id: row.get("id"),
+            id,
             name: row.get("name"),
-            completed_count: row.get("completed_count"),
-            total_exercises: row.get("total_exercises"),
+            completed_count,
+            total_exercises,
             last_activity: row.get("last_activity"),
             team_token,
         });
