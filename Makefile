@@ -53,8 +53,9 @@ examples:
 	./scripts/check-examples.sh
 
 # Verify every solution in solutions/ compiles and its tests pass.
+# REQUIRE_COMPLETE=1 also fails if any exercise step lacks a solution.
 solutions:
-	./scripts/check-solutions.sh
+	REQUIRE_COMPLETE=1 ./scripts/check-solutions.sh
 
 # Spell check. Install once with: cargo install typos-cli
 typos:

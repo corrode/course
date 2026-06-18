@@ -1,0 +1,27 @@
+/// Finds all files with ".rs" extension.
+///
+/// Same idea as the previous one, but the input is a `&[&str]` (a
+/// borrowed slice of borrowed strings), so the iterator yields `&&str`.
+/// We sidestep that double-reference by returning owned `String`s; the
+/// lesson here is iterators, not lifetimes. To go from `&&str` to
+/// `String`, reach for [`str::to_string`].
+fn find_rust_files(files: &[&str]) -> Vec<String> {
+    files
+        .iter()
+        .filter(|file| file.ends_with(".rs"))
+        .map(|file| file.to_string())
+        .collect()
+}
+
+#[test]
+fn test_find_rust_files() {
+    let files = &[
+        "main.rs",
+        "README.md",
+        "lib.rs",
+        "package.json",
+        "config.rs",
+    ];
+    let rust_files = find_rust_files(files);
+    assert_eq!(rust_files, vec!["main.rs", "lib.rs", "config.rs"]);
+}

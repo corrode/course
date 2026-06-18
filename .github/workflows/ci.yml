@@ -56,10 +56,10 @@ jobs:
         run: ./scripts/check-examples.sh
 
       # Verify every solution under solutions/ compiles and its tests
-      # pass (std-only files, run via rustc --test). Coverage is not yet
-      # enforced (set REQUIRE_COMPLETE=1 once all chapters are solved).
+      # pass (std-only files, run via rustc --test). REQUIRE_COMPLETE=1
+      # also fails if any exercise step is missing a solution.
       - name: Verify solutions
-        run: ./scripts/check-solutions.sh
+        run: REQUIRE_COMPLETE=1 ./scripts/check-solutions.sh
 
   spellcheck:
     name: Spell check (typos)
