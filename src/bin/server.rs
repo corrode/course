@@ -222,6 +222,27 @@ struct AdminTemplate {
     /// Echoed back into every form action / link so the admin token
     /// stays attached as the operator clicks around.
     admin_token: String,
+    /// Default sort column / direction / filter baked into the initial
+    /// render of every team table. Subsequent sorts and filters are
+    /// served by `admin_team_members` (the htmx fragment endpoint),
+    /// which renders the same `partials/team_members.html` partial.
+    sort: String,
+    dir: String,
+    filter: String,
+}
+
+/// Fragment template for one team's members table. Rendered both for
+/// the initial `/admin` page (via `{% include %}`) and standalone by
+/// the `admin_team_members` htmx endpoint when the operator sorts a
+/// column or types into the per-team filter box.
+#[derive(Template)]
+#[template(path = "partials/team_members.html")]
+struct TeamMembersTemplate {
+    team: ParticipantTeam,
+    admin_token: String,
+    sort: String,
+    dir: String,
+    filter: String,
 }
 
 /// Admin dashboard statistics
@@ -285,6 +306,26 @@ struct ParticipantSummary {
 struct ParticipantTeam {
     team_token: Option<TeamToken>,
     members: Vec<ParticipantSummary>,
+}
+
+impl ParticipantTeam {
+    /// Value for the `team` query param that identifies this bucket to
+    /// `admin_team_members`: the team token, or an empty string for the
+    /// synthetic Unassigned bucket.
+    fn slug(&self) -> String {
+        self.team_token
+            .as_ref()
+            .map_or_else(String::new, |t| t.as_str().to_string())
+    }
+
+    /// Stable DOM-id suffix for the team's table and filter input. The
+    /// team slug for a real team, or the literal `unassigned` for the
+    /// no-team bucket (an empty string can't anchor an element id).
+    fn key(&self) -> String {
+        self.team_token
+            .as_ref()
+            .map_or_else(|| "unassigned".to_string(), |t| t.as_str().to_string())
+    }
 }
 
 /// Submission summary for admin view
@@ -510,6 +551,142 @@ fn bucket_participants_by_team(participants: Vec<ParticipantSummary>) -> Vec<Par
     teams
 }
 
+/// Number of *completable* chapters in the catalog: the denominator
+/// every participant's progress is measured against. Quizzes and
+/// notes-only chapters have no code steps and never count, matching
+/// `participant_dashboard` / `render_exercise_page`.
+fn completable_total(state: &AppState) -> i64 {
+    i64::try_from(
+        state
+            .exercises
+            .iter()
+            .filter(|e| !e.is_quiz() && !e.code_steps().is_empty())
+            .count(),
+    )
+    .unwrap_or(i64::MAX)
+}
+
+/// Build one [`ParticipantSummary`], computing the completed count with
+/// `get_exercise_progress` so it matches exactly what the participant
+/// sees on their own dashboard. A failure to compute progress degrades
+/// to `0` rather than taking the admin page down.
+async fn build_participant_summary(
+    state: &AppState,
+    id: String,
+    name: String,
+    team_token: Option<TeamToken>,
+    last_activity: Option<chrono::DateTime<chrono::Utc>>,
+    total_exercises: i64,
+) -> ParticipantSummary {
+    let completed_count =
+        match get_exercise_progress(&state.pool, Some(&id), &state.exercises).await {
+            Ok(exercises) => i64::try_from(
+                exercises
+                    .iter()
+                    .filter(|e| !e.is_quiz && e.has_exercises && e.completed)
+                    .count(),
+            )
+            .unwrap_or(i64::MAX),
+            Err(e) => {
+                warn!("Failed to compute progress for participant {id}: {e}");
+                0
+            }
+        };
+
+    ParticipantSummary {
+        id,
+        name,
+        completed_count,
+        total_exercises,
+        last_activity,
+        team_token,
+    }
+}
+
+/// Load the member summaries for a single team bucket. `team` is the
+/// validated [`TeamToken`], or `None` for the Unassigned bucket. Used
+/// by the `admin_team_members` fragment endpoint so a sort/filter only
+/// recomputes progress for the team being viewed instead of everyone.
+async fn load_team_member_summaries(
+    state: &AppState,
+    team: Option<&TeamToken>,
+) -> Result<Vec<ParticipantSummary>, sqlx::Error> {
+    let base = r"
+        SELECT
+            p.id,
+            p.name,
+            p.team_token,
+            MAX(s.submitted_at) as last_activity
+        FROM participants p
+        LEFT JOIN submissions s ON p.id = s.participant_id AND s.tests_passed = 1
+    ";
+    let rows = if let Some(token) = team {
+        sqlx::query(&format!(
+            "{base} WHERE p.team_token = ? GROUP BY p.id, p.name, p.team_token"
+        ))
+        .bind(token.as_str())
+        .fetch_all(&state.pool)
+        .await?
+    } else {
+        sqlx::query(&format!(
+            "{base} WHERE p.team_token IS NULL GROUP BY p.id, p.name, p.team_token"
+        ))
+        .fetch_all(&state.pool)
+        .await?
+    };
+
+    let total = completable_total(state);
+    let mut members = Vec::with_capacity(rows.len());
+    for row in rows {
+        let raw_token: Option<String> = row.get("team_token");
+        let team_token = raw_token
+            .as_deref()
+            .and_then(|s| TeamToken::try_from(s).ok());
+        let id: String = row.get("id");
+        let name: String = row.get("name");
+        let last_activity = row.get("last_activity");
+        members.push(
+            build_participant_summary(state, id, name, team_token, last_activity, total).await,
+        );
+    }
+    Ok(members)
+}
+
+/// Filter a team's members by a case-insensitive substring of the name,
+/// then sort by the requested column and direction in place. `sort` is
+/// one of `name` | `progress` | `activity` (anything else falls back to
+/// `name`); `dir` is `asc` unless it is exactly `desc`. Name is used as
+/// the stable tie-breaker so equal rows keep a deterministic order.
+fn apply_member_filter_sort(
+    members: &mut Vec<ParticipantSummary>,
+    sort: &str,
+    dir: &str,
+    filter: &str,
+) {
+    let needle = filter.trim().to_lowercase();
+    if !needle.is_empty() {
+        members.retain(|m| m.name.to_lowercase().contains(&needle));
+    }
+
+    match sort {
+        "progress" => members.sort_by(|a, b| {
+            a.completed_count
+                .cmp(&b.completed_count)
+                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+        }),
+        "activity" => members.sort_by(|a, b| {
+            a.last_activity
+                .cmp(&b.last_activity)
+                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+        }),
+        _ => members.sort_by_key(|m| m.name.to_lowercase()),
+    }
+
+    if dir == "desc" {
+        members.reverse();
+    }
+}
+
 #[tokio::main]
 // reason: top-level server bootstrap; splitting would only add indirection
 #[allow(clippy::too_many_lines)]
@@ -629,6 +806,7 @@ async fn main() -> Result<()> {
             "/admin/participants/{ulid}/team-token",
             post(admin_set_team_token),
         )
+        .route("/admin/team-members", get(admin_team_members))
         .route("/admin/team/{slug}", get(admin_team_page))
         .route("/admin/team-unassigned", get(admin_team_unassigned_page))
         .route("/dashboard/{ulid}/team", get(participant_team_page))
@@ -1344,14 +1522,7 @@ async fn admin_dashboard(
     // Quizzes and notes-only chapters have no code steps and never count
     // toward progress, so they're excluded here just like in
     // `participant_dashboard` / `render_exercise_page`.
-    let total_exercises = i64::try_from(
-        state
-            .exercises
-            .iter()
-            .filter(|e| !e.is_quiz() && !e.code_steps().is_empty())
-            .count(),
-    )
-    .unwrap_or(i64::MAX);
+    let total_exercises = completable_total(&state);
 
     let mut participants = Vec::new();
     for row in participant_rows {
@@ -1364,42 +1535,33 @@ async fn admin_dashboard(
             .as_deref()
             .and_then(|s| TeamToken::try_from(s).ok());
         let id: String = row.get("id");
+        let name: String = row.get("name");
+        let last_activity = row.get("last_activity");
 
-        // Numerator: distinct completable chapters this participant has
-        // finished. Counting passing *submissions* (as we used to) badly
-        // overcounts, since multiple submissions per step are allowed and
-        // multi-step chapters store one row per step — hence the
-        // "42 / 15" we were seeing. A per-participant query is fine on
+        // Numerator (inside `build_participant_summary`): distinct
+        // completable chapters this participant has finished. Counting
+        // passing *submissions* badly overcounts, since multiple
+        // submissions per step are allowed and multi-step chapters
+        // store one row per step. A per-participant query is fine on
         // this low-traffic admin page.
-        let completed_count =
-            match get_exercise_progress(&state.pool, Some(&id), &state.exercises).await {
-                Ok(exercises) => i64::try_from(
-                    exercises
-                        .iter()
-                        .filter(|e| !e.is_quiz && e.has_exercises && e.completed)
-                        .count(),
-                )
-                .unwrap_or(i64::MAX),
-                Err(e) => {
-                    warn!("Failed to compute progress for participant {id}: {e}");
-                    0
-                }
-            };
-
-        participants.push(ParticipantSummary {
-            id,
-            name: row.get("name"),
-            completed_count,
-            total_exercises,
-            last_activity: row.get("last_activity"),
-            team_token,
-        });
+        participants.push(
+            build_participant_summary(&state, id, name, team_token, last_activity, total_exercises)
+                .await,
+        );
     }
 
     // Bucket the flat list into teams. The query already sorted
     // by team_token (with NULLs last) so a single linear pass is
     // enough to produce one bucket per distinct value.
-    let participant_teams = bucket_participants_by_team(participants);
+    let mut participant_teams = bucket_participants_by_team(participants);
+
+    // Order each bucket by the default sort the template advertises
+    // (name, ascending) so the column header arrow matches what the
+    // operator first sees. Later sorts/filters are handled by
+    // `admin_team_members` over htmx.
+    for team in &mut participant_teams {
+        apply_member_filter_sort(&mut team.members, "name", "asc", "");
+    }
 
     // Get recent submissions
     let submission_rows_result = sqlx::query(
@@ -1476,6 +1638,94 @@ async fn admin_dashboard(
         stats: admin_stats,
         exercises,
         admin_token: state.admin_token.clone(),
+        sort: "name".to_string(),
+        dir: "asc".to_string(),
+        filter: String::new(),
+    };
+
+    template.render().map_or_else(
+        |_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to render template",
+            )
+                .into_response()
+        },
+        |html| Html(html).into_response(),
+    )
+}
+
+/// Query parameters for the `admin_team_members` htmx fragment. `team`
+/// is the slug (empty string = Unassigned bucket); `sort`/`dir`/`filter`
+/// carry the current table state forwarded by the column-header sort
+/// buttons and the per-team filter box.
+#[derive(Deserialize)]
+struct TeamMembersQuery {
+    token: String,
+    #[serde(default)]
+    team: String,
+    #[serde(default)]
+    sort: String,
+    #[serde(default)]
+    dir: String,
+    #[serde(default)]
+    filter: String,
+}
+
+/// htmx fragment endpoint backing per-team sorting and filtering on the
+/// admin dashboard. Returns just the `partials/team_members.html`
+/// table (the swap target), re-rendered with the requested sort column,
+/// direction, and name filter applied.
+async fn admin_team_members(
+    Query(query): Query<TeamMembersQuery>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    if query.token != state.admin_token {
+        return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
+    }
+
+    let team_token = if query.team.trim().is_empty() {
+        None
+    } else {
+        match TeamToken::try_from(query.team.as_str()) {
+            Ok(token) => Some(token),
+            Err(_) => return (StatusCode::BAD_REQUEST, "Invalid team slug").into_response(),
+        }
+    };
+
+    let Ok(mut members) = load_team_member_summaries(&state, team_token.as_ref()).await else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to fetch team members",
+        )
+            .into_response();
+    };
+
+    // Normalise the incoming state so the template's arrows and the
+    // hx-get URLs it bakes back out stay in the {name|progress|activity}
+    // x {asc|desc} space regardless of what arrived on the query string.
+    let sort = if matches!(query.sort.as_str(), "progress" | "activity") {
+        query.sort
+    } else {
+        "name".to_string()
+    };
+    let dir = if query.dir == "desc" {
+        "desc".to_string()
+    } else {
+        "asc".to_string()
+    };
+    apply_member_filter_sort(&mut members, &sort, &dir, &query.filter);
+
+    let team = ParticipantTeam {
+        team_token,
+        members,
+    };
+    let template = TeamMembersTemplate {
+        team,
+        admin_token: state.admin_token.clone(),
+        sort,
+        dir,
+        filter: query.filter,
     };
 
     template.render().map_or_else(
