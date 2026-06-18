@@ -1,0 +1,26 @@
+# Configuration for the `typos` spell checker (https://github.com/crate-ci/typos).
+# Run locally with `typos` (install via `cargo install typos-cli`).
+
+[files]
+extend-exclude = [
+    # Vendored / minified third-party assets we don't control.
+    "static/js/htmx.min.js",
+    "*.min.js",
+    # Lock file: full of base32/hex hashes that look like typos.
+    "Cargo.lock",
+    # Local SQLite database artifacts.
+    "course.db",
+    "course.db-shm",
+    "course.db-wal",
+]
+
+[default]
+extend-ignore-re = [
+    # CSS `unicode-range` hex tokens, e.g. `U+02BA`, `U+1EF2-1EFF`.
+    "U\\+[0-9A-Fa-f?]+(-[0-9A-Fa-f?]+)?",
+]
+
+[default.extend-words]
+# "UPDATEs" in migration 008's comment gets camelCase-split into "UPDAT".
+# Migrations are checksum-locked once applied, so the file must not be edited.
+UPDAT = "UPDAT"
