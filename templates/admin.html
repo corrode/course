@@ -27,108 +27,63 @@ endblock %} {% block content %}
         </div>
 
         {% for team in participant_teams %}
-        <div class="team-section">
-            <div class="team-section-head">
+        <details class="team-section">
+            <summary class="team-section-head">
+                <span class="team-section-chevron" aria-hidden="true">▸</span>
                 {% match team.team_token %} {% when Some with (slug) %}
                 <span class="team-section-tag">Team</span>
-                <a
-                    class="team-section-name"
-                    href="/admin/team/{{ slug }}?token={{ admin_token }}"
-                    title="Open this team's full page"
-                    >{{ slug }}</a
-                >
+                <span class="team-section-name">{{ slug }}</span>
                 {% when None %}
                 <span class="team-section-tag">Unassigned</span>
-                <a
-                    class="team-section-name team-section-name-muted"
-                    href="/admin/team-unassigned?token={{ admin_token }}"
-                    title="Open the unassigned bucket"
-                    >no team</a
+                <span class="team-section-name team-section-name-muted"
+                    >no team</span
                 >
                 {% endmatch %}
                 <span class="team-section-meta">
                     · {{ team.members.len() }} participant{% if
                     team.members.len() != 1 %}s{% endif %}
                 </span>
-            </div>
+            </summary>
 
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Progress</th>
-                        <th>Last activity</th>
-                        <th>Move to team</th>
-                        <th class="admin-col-actions">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for participant in team.members %}
-                    <tr>
-                        <td class="admin-cell-name">{{ participant.name }}</td>
-                        <td>
-                            <span class="admin-progress-done"
-                                >{{ participant.completed_count }}</span
-                            >
-                            <span class="admin-progress-total"
-                                >/{{ participant.total_exercises }}</span
-                            >
-                            {% if participant.completed_count ==
-                            participant.total_exercises %}
-                            <span class="admin-progress-complete"
-                                >🎉 Complete!</span
-                            >
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if participant.last_activity.is_some() %} Recent
-                            activity {% else %}
-                            <span class="admin-cell-muted">No submissions</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <form
-                                method="post"
-                                action="/admin/participants/{{ participant.id }}/team-token?token={{ admin_token }}"
-                                class="admin-inline-form"
-                            >
-                                <input
-                                    type="text"
-                                    name="team_token"
-                                    value="{% match participant.team_token %}{% when Some with (s) %}{{ s }}{% when None %}{% endmatch %}"
-                                    placeholder="team-slug"
-                                    maxlength="64"
-                                    pattern="[A-Za-z0-9_\-]*"
-                                    title="Letters, digits, underscore or hyphen. Leave blank to unassign."
-                                    class="admin-input admin-input-tiny admin-input-mono"
-                                />
-                                <button
-                                    type="submit"
-                                    class="btn btn-secondary admin-btn-tiny"
-                                >
-                                    Move
-                                </button>
-                            </form>
-                        </td>
-                        <td class="admin-col-actions">
-                            <a
-                                href="/dashboard/{{ participant.id }}"
-                                class="btn btn-secondary admin-btn-tiny"
-                            >
-                                View dashboard
-                            </a>
-                            <button
-                                onclick="removeParticipant('{{ participant.id }}', '{{ participant.name }}')"
-                                class="btn admin-btn-tiny admin-btn-danger"
-                            >
-                                Remove
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+            <div class="team-members-body">
+                <div class="team-members-toolbar">
+                    {# Filter box lives outside the htmx swap target
+                    (#team-members-…) so re-rendering rows on each keystroke
+                    never steals focus from the input. It carries the live sort
+                    state via hx-include. #}
+                    <input
+                        type="search"
+                        id="tm-filter-{{ team.key() }}"
+                        name="filter"
+                        class="admin-input admin-input-tiny"
+                        placeholder="Filter by name…"
+                        aria-label="Filter members in this team by name"
+                        autocomplete="off"
+                        hx-get="/admin/team-members?token={{ admin_token }}&team={{ team.slug() }}"
+                        hx-include="#tm-sort-{{ team.key() }},#tm-dir-{{ team.key() }}"
+                        hx-target="#team-members-{{ team.key() }}"
+                        hx-swap="outerHTML"
+                        hx-indicator="#team-members-{{ team.key() }}"
+                        hx-trigger="input changed delay:300ms, search"
+                    />
+                    {% match team.team_token %} {% when Some with (slug) %}
+                    <a
+                        class="team-section-link"
+                        href="/admin/team/{{ slug }}?token={{ admin_token }}"
+                        >Open team page →</a
+                    >
+                    {% when None %}
+                    <a
+                        class="team-section-link"
+                        href="/admin/team-unassigned?token={{ admin_token }}"
+                        >Open unassigned page →</a
+                    >
+                    {% endmatch %}
+                </div>
+
+                {% include "partials/team_members.html" %}
+            </div>
+        </details>
         {% endfor %}
     </section>
 
@@ -173,6 +128,28 @@ endblock %} {% block content %}
 
 <script type="module" src="/static/js/readonly-rust-editor.js"></script>
 
+<!-- htmx powers per-team column sorting and name filtering on this page.
+     Vendored under static/js and loaded here (not in base.html) so it
+     only ships with the admin view. -->
+<script src="/static/js/htmx.min.js"></script>
+<script>
+    // Surface a failed sort/filter fetch instead of leaving the table
+    // silently dimmed (htmx only swaps on a 2xx response). Scoped to the
+    // admin page; harmless elsewhere since the events only fire here.
+    document.addEventListener("htmx:responseError", function (event) {
+        var xhr = event.detail.xhr;
+        alert(
+            "Could not update the team table (" +
+                xhr.status +
+                "). " +
+                (xhr.responseText || "Please reload the page."),
+        );
+    });
+    document.addEventListener("htmx:sendError", function () {
+        alert("Network error while updating the team table. Please retry.");
+    });
+</script>
+
 <style>
     /* Page-specific admin chrome only. Layout rhythm (`.admin-page`,
        `.admin-hero`, `.admin-section`), the participants table
@@ -180,9 +157,14 @@ endblock %} {% block content %}
        the submissions feed, and all `.book-*` / `.section-*` rules
        live in `base.html` and are shared with the team page. */
 
-    /* ---------- Team sections ---------- */
+    /* ---------- Team sections (collapsible) ----------
+       Each team is a native <details>, collapsed by default; the
+       <summary> is the clickable header. */
     .team-section {
-        margin-bottom: 3rem;
+        margin-bottom: 1.25rem;
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        overflow: hidden;
     }
     .team-section:last-child {
         margin-bottom: 0;
@@ -191,10 +173,30 @@ endblock %} {% block content %}
         display: flex;
         align-items: baseline;
         gap: 0.6rem;
-        margin-bottom: 1rem;
-        padding-bottom: 0.6rem;
-        border-bottom: 1px solid var(--color-border);
+        padding: 0.85rem 1rem;
         flex-wrap: wrap;
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+    }
+    /* Hide the default disclosure triangle (we draw our own chevron). */
+    .team-section-head::-webkit-details-marker {
+        display: none;
+    }
+    .team-section[open] > .team-section-head {
+        border-bottom: 1px solid var(--color-border);
+    }
+    .team-section-head:hover {
+        background: var(--color-surface, rgba(127, 127, 127, 0.06));
+    }
+    .team-section-chevron {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        transition: transform 0.15s ease;
+        align-self: center;
+    }
+    .team-section[open] > .team-section-head .team-section-chevron {
+        transform: rotate(90deg);
     }
     .team-section-tag {
         font-size: 0.7rem;
@@ -208,13 +210,6 @@ endblock %} {% block content %}
         font-size: 1rem;
         color: var(--color-text);
         font-weight: 600;
-        text-decoration: none;
-        border-bottom: 1px dashed transparent;
-    }
-    .team-section-name:hover,
-    .team-section-name:focus-visible {
-        color: var(--color-primary);
-        border-bottom-color: var(--color-primary);
     }
     .team-section-name-muted {
         font-style: italic;
@@ -223,6 +218,75 @@ endblock %} {% block content %}
     .team-section-meta {
         font-size: 0.85rem;
         color: var(--color-text-muted);
+    }
+
+    /* ---------- Team body: toolbar + members table ---------- */
+    .team-members-body {
+        padding: 1rem;
+    }
+    .team-members-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.85rem;
+        flex-wrap: wrap;
+    }
+    .team-members-toolbar .admin-input {
+        min-width: 12rem;
+    }
+    .team-section-link {
+        margin-left: auto;
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        text-decoration: none;
+        border-bottom: 1px dashed transparent;
+    }
+    .team-section-link:hover,
+    .team-section-link:focus-visible {
+        color: var(--color-primary);
+        border-bottom-color: var(--color-primary);
+    }
+
+    /* ---------- Sortable column headers ----------
+       The <th> sort controls are borderless buttons that issue the
+       htmx request; `.is-active` marks the current sort column. */
+    .admin-sort {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        text-align: left;
+    }
+    .admin-sort:hover,
+    .admin-sort:focus-visible {
+        color: var(--color-primary);
+    }
+    .admin-sort.is-active {
+        color: var(--color-primary);
+    }
+    .admin-sort-arrow {
+        font-size: 0.8em;
+        min-width: 0.8em;
+    }
+    .admin-members-empty {
+        text-align: center;
+        padding: 1rem;
+    }
+    /* Dim the table (and block clicks) while a sort/filter request is
+       in flight. The sort buttons and filter box point their
+       hx-indicator at this div, so htmx toggles `htmx-request` here. */
+    .team-members {
+        transition: opacity 0.15s ease;
+    }
+    .team-members.htmx-request {
+        opacity: 0.45;
+        pointer-events: none;
     }
 </style>
 {% endblock %}
