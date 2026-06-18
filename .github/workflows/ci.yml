@@ -55,6 +55,12 @@ jobs:
       - name: Verify exercises
         run: ./scripts/check-examples.sh
 
+      # Verify every solution under solutions/ compiles and its tests
+      # pass (std-only files, run via rustc --test). Coverage is not yet
+      # enforced (set REQUIRE_COMPLETE=1 once all chapters are solved).
+      - name: Verify solutions
+        run: ./scripts/check-solutions.sh
+
   spellcheck:
     name: Spell check (typos)
     runs-on: ubuntu-latest
