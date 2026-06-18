@@ -84,7 +84,7 @@ fn process_chapter(dir: &Path) -> Result<(), String> {
          clippy::needless_pass_by_value,\n    \
          clippy::needless_pass_by_ref_mut,\n    \
          clippy::ptr_arg,\n    \
-         clippy::boxed_local,\n\
+         clippy::boxed_local\n\
          )]\n\n",
     );
     for (_n, path, module_name) in &step_files {

@@ -1,0 +1,32 @@
+# Configuration for the lychee link checker (https://lychee.cli.rs).
+# Used by the `link-check` CI job and runnable locally with:
+#   lychee --root-dir "$PWD" .
+
+# Be resilient to flaky networks and rate limiting (doc.rust-lang.org is
+# referenced ~200 times across the exercises).
+max_retries = 4
+retry_wait_time = 2
+max_concurrency = 8
+
+# Cache results between runs so CI only re-checks new or changed links.
+cache = true
+max_cache_age = "2d"
+
+# Treat rate-limited responses as success instead of failing the build.
+accept = ["200..=299", "429"]
+
+# Local server routes and dev URLs that can't be resolved as static files.
+exclude_loopback = true
+exclude = [
+    # `/cheatsheet` is a live server route (see `src/bin/server.rs`),
+    # not a file on disk, so it can't be resolved offline.
+    "/cheatsheet$",
+]
+
+# Don't descend into build output, vendored assets, or screenshots.
+exclude_path = [
+    "target",
+    "static/js",
+    ".screenshots",
+    ".corrode",
+]

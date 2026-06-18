@@ -525,7 +525,7 @@ fn extract_submission_target(file_path: &str) -> Result<SubmissionTarget> {
             .and_then(|s| s.to_str())
         {
             // Verify the stem starts with `<n>_` so we don't
-            // mis-classify a bare `examples/foo.rs`.
+            // misclassify a bare `examples/foo.rs`.
             if let Some((num, _rest)) = stem.split_once('_')
                 && num.parse::<u32>().is_ok()
             {

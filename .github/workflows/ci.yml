@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main, live]
+  pull_request:
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Formatting, linting, the binary build, unit tests, and the exercise
+  # check all share the same compiled dependency cache, so they live in
+  # one job to avoid recompiling axum/sqlx five times over.
+  rust:
+    name: rustfmt, clippy, build, test, examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry and target
+        uses: Swatinem/rust-cache@v2
+
+      # Cheapest check first: only reads the committed source. The
+      # `build.rs`-generated chapter `main.rs` files are committed and
+      # must stay rustfmt-clean.
+      - name: Formatting (cargo fmt --check)
+        run: cargo fmt --all --check
+
+      # Lint the library and binaries. The exercise examples are linted
+      # separately by scripts/check-examples.sh (some intentionally do
+      # not compile).
+      - name: Clippy (library + binaries)
+        run: cargo clippy --locked --lib --bins -- -D warnings
+
+      - name: Build binaries (cli + server)
+        run: cargo build --locked --bins
+
+      - name: Unit tests (library + binaries)
+        run: cargo test --locked --lib --bins
+
+      # Verify every exercise chapter compiles and lints clean, except the
+      # handful of deliberately-broken teaching chapters, which must still
+      # fail to compile.
+      - name: Verify exercises
+        run: ./scripts/check-examples.sh
+
+  spellcheck:
+    name: Spell check (typos)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Run typos
+        uses: crate-ci/typos@master
+
+  link-check:
+    name: Link check (lychee)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Persist lychee's response cache between runs so unchanged links
+      # aren't re-fetched on every push.
+      - name: Restore lychee cache
+        uses: actions/cache@v4
+        with:
+          path: .lycheecache
+          key: lychee-${{ github.sha }}
+          restore-keys: lychee-
+
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --root-dir .
+            --config ./lychee.toml
+            --no-progress
+            README.md
+            docs
+            examples
+            static/cheatsheet.md
+          fail: true
