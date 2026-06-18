@@ -1657,8 +1657,8 @@ async fn admin_dashboard(
 
 /// Query parameters for the `admin_team_members` htmx fragment. `team`
 /// is the slug (empty string = Unassigned bucket); `sort`/`dir`/`filter`
-/// carry the current table state forwarded by the column-header links
-/// and the per-team filter box.
+/// carry the current table state forwarded by the column-header sort
+/// buttons and the per-team filter box.
 #[derive(Deserialize)]
 struct TeamMembersQuery {
     token: String,
@@ -1702,11 +1702,12 @@ async fn admin_team_members(
     };
 
     // Normalise the incoming state so the template's arrows and the
-    // links it bakes back out stay in the {name|progress|activity} x
-    // {asc|desc} space regardless of what arrived on the query string.
-    let sort = match query.sort.as_str() {
-        "progress" | "activity" => query.sort.clone(),
-        _ => "name".to_string(),
+    // hx-get URLs it bakes back out stay in the {name|progress|activity}
+    // x {asc|desc} space regardless of what arrived on the query string.
+    let sort = if matches!(query.sort.as_str(), "progress" | "activity") {
+        query.sort
+    } else {
+        "name".to_string()
     };
     let dir = if query.dir == "desc" {
         "desc".to_string()
