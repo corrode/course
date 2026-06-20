@@ -31,56 +31,42 @@ import { rust } from "@codemirror/lang-rust";
 import { proseHighlightStyle, proseEditorTheme } from "./cm-theme.js";
 
 function mountOne(el) {
-  // Idempotent: a second call (e.g. lazy mount when a <details> opens
-  // after the page-load auto-run already handled it) is a no-op and
-  // returns the existing view so callers can still `requestMeasure()`.
-  if (el.dataset.cmMounted === "1") {
-    return el.__cmView ?? null;
-  }
+  // The exercise page re-invokes this on every `<details>` open, so skip
+  // elements we've already mounted. The view is cached on the node so
+  // callers can still `requestMeasure()` it after a re-open. Caching only
+  // after a successful mount keeps a (rare) failed mount retry-able.
+  if (el.__cmView) return el.__cmView;
 
   const source = el.textContent ?? "";
+  el.textContent = "";
 
-  let view;
-  try {
-    el.textContent = "";
-    view = new EditorView({
-      state: EditorState.create({
-        doc: source,
-        extensions: [
-          EditorView.editable.of(false),
-          EditorState.readOnly.of(true),
-          EditorView.lineWrapping,
-          lineNumbers(),
-          highlightActiveLine(),
-          highlightActiveLineGutter(),
-          drawSelection(),
-          bracketMatching(),
-          rust(),
-          syntaxHighlighting(proseHighlightStyle, { fallback: true }),
-          proseEditorTheme,
-        ],
-      }),
-      parent: el,
-    });
-  } catch (err) {
-    // Construction failed: restore the source so the styled fallback box
-    // stays readable, and leave the element unmarked so a later call
-    // (e.g. the next time the <details> opens) can retry.
-    el.textContent = source;
-    throw err;
-  }
+  const view = new EditorView({
+    state: EditorState.create({
+      doc: source,
+      extensions: [
+        EditorView.editable.of(false),
+        EditorState.readOnly.of(true),
+        EditorView.lineWrapping,
+        lineNumbers(),
+        highlightActiveLine(),
+        highlightActiveLineGutter(),
+        drawSelection(),
+        bracketMatching(),
+        rust(),
+        syntaxHighlighting(proseHighlightStyle, { fallback: true }),
+        proseEditorTheme,
+      ],
+    }),
+    parent: el,
+  });
 
-  // Match the chrome the in-exercise editor sets directly on its
-  // root DOM node (see `initSection` in `templates/exercise.html`).
+  // Match the chrome the in-exercise editor sets directly on its root DOM
+  // node (see `initSection` in `templates/exercise.html`). Font size lives
+  // in CSS (`base.html`) so `/settings` can override it.
   view.dom.style.border = "1px solid var(--color-border)";
   view.dom.style.borderRadius = "12px";
   view.dom.style.overflow = "hidden";
-  // Font size is set in CSS (see `base.html`) so the `/settings`
-  // page can override it via `html[data-editor-font-size]`.
 
-  // Only mark as mounted once construction succeeded, so a failed mount
-  // doesn't permanently block a retry.
-  el.dataset.cmMounted = "1";
   el.__cmView = view;
   return view;
 }
