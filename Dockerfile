@@ -2,7 +2,7 @@
 #
 # Stage 1 builds the `server` binary against Debian's glibc.
 # Stage 2 is a slim Debian image with just the binary and the runtime
-# assets it needs (migrations, examples, static files).
+# assets it needs (migrations, examples, solutions, static files).
 #
 # We use Debian (not Alpine/musl) so we can avoid cross-compilation
 # headaches and keep dynamic linking with the same glibc the runtime has.
@@ -27,6 +27,7 @@ RUN mkdir -p src/bin examples \
 COPY build.rs ./
 COPY src ./src
 COPY examples ./examples
+COPY solutions ./solutions
 COPY templates ./templates
 COPY migrations ./migrations
 COPY static ./static
@@ -50,6 +51,7 @@ WORKDIR /app
 COPY --from=builder /app/target/release/server /app/server
 COPY --from=builder /app/migrations /app/migrations
 COPY --from=builder /app/examples   /app/examples
+COPY --from=builder /app/solutions  /app/solutions
 COPY --from=builder /app/static     /app/static
 
 # Persistent data lives here; Coolify mounts a host directory over it.

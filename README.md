@@ -27,6 +27,10 @@ Each chapter is a directory under `examples/`. Open the files, read the
 `//!` comment at the top, replace the `todo!()` bodies, and run the
 tests until they pass. Then move on to the next chapter.
 
+If you get stuck, there's a sample solution for every exercise under `solutions/`. It's laid out
+the same way as `examples/` (same chapter folder and filename). They're what the website shows when you reveal the full solution on a hint, and if
+you're working in your editor, you can just open the matching file in `solutions/` to see one way to do it.
+
 The workflow is roughly:
 
 ```bash

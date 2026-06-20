@@ -1,5 +1,6 @@
 // Read-only CodeMirror 6 viewer for Rust source blocks on the
-// admin and team pages.
+// admin and team pages, and the "Reveal the full solution" viewer on
+// chapter pages.
 //
 // Resolves CM6 modules through the shared importmap in
 // `templates/base.html`, so this viewer and the editable editor on
@@ -30,35 +31,56 @@ import { rust } from "@codemirror/lang-rust";
 import { proseHighlightStyle, proseEditorTheme } from "./cm-theme.js";
 
 function mountOne(el) {
+  // The exercise page re-invokes this on every `<details>` open, so skip
+  // elements we've already mounted. The view is cached on the node so
+  // callers can still `requestMeasure()` it after a re-open. Caching only
+  // after a successful mount keeps a (rare) failed mount retry-able.
+  if (el.__cmView) return el.__cmView;
+
   const source = el.textContent ?? "";
   el.textContent = "";
 
-  const extensions = [
-    EditorView.editable.of(false),
-    EditorState.readOnly.of(true),
-    EditorView.lineWrapping,
-    lineNumbers(),
-    highlightActiveLine(),
-    highlightActiveLineGutter(),
-    drawSelection(),
-    bracketMatching(),
-    rust(),
-    syntaxHighlighting(proseHighlightStyle, { fallback: true }),
-    proseEditorTheme,
-  ];
-
   const view = new EditorView({
-    state: EditorState.create({ doc: source, extensions }),
+    state: EditorState.create({
+      doc: source,
+      extensions: [
+        EditorView.editable.of(false),
+        EditorState.readOnly.of(true),
+        EditorView.lineWrapping,
+        lineNumbers(),
+        highlightActiveLine(),
+        highlightActiveLineGutter(),
+        drawSelection(),
+        bracketMatching(),
+        rust(),
+        syntaxHighlighting(proseHighlightStyle, { fallback: true }),
+        proseEditorTheme,
+      ],
+    }),
     parent: el,
   });
 
-  // Match the chrome the in-exercise editor sets directly on its
-  // root DOM node (see `initSection` in `templates/exercise.html`).
+  // Match the chrome the in-exercise editor sets directly on its root DOM
+  // node (see `initSection` in `templates/exercise.html`). Font size lives
+  // in CSS (`base.html`) so `/settings` can override it.
   view.dom.style.border = "1px solid var(--color-border)";
   view.dom.style.borderRadius = "12px";
   view.dom.style.overflow = "hidden";
-  // Font size is set in CSS (see `base.html`) so the `/settings`
-  // page can override it via `html[data-editor-font-size]`.
+
+  el.__cmView = view;
+  return view;
+}
+
+// Mount a single read-only viewer on demand. Used by chapter pages to
+// lazily mount the solution viewer the first time its <details> opens
+// (mounting while hidden would measure to zero height). Idempotent.
+export function mountReadonlyRustEditor(el) {
+  try {
+    return mountOne(el);
+  } catch (err) {
+    console.warn("[corrode] readonly editor mount failed:", err, el);
+    return null;
+  }
 }
 
 export function mountAllReadonlyRustEditors(selector = "[data-rust-source]") {

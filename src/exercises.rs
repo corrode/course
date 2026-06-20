@@ -213,6 +213,12 @@ pub struct CodeStep {
     /// either the chapter has no hints at all, or the hints file has no
     /// section matching this step's slug."
     pub hints_html: Option<String>,
+    /// Full source of the reference solution for this step, loaded from
+    /// the sibling `solutions/<chapter>/<file>` tree (the `//!` inner-doc
+    /// block stripped, mirroring `starter_code`). `None` when no solution
+    /// file exists for the step. Surfaced in the UI as a separate
+    /// "Reveal the full solution" disclosure shown directly below the hints.
+    pub solution_code: Option<String>,
 }
 
 impl CodeStep {
@@ -488,6 +494,9 @@ pub enum RenderKind {
         /// surfaced as an inline `<details>` immediately under the
         /// editor section.
         hints_html: Option<String>,
+        /// Optional reference solution source for this step, surfaced as
+        /// a separate "Reveal the full solution" disclosure below the hints.
+        solution_code: Option<String>,
     },
     /// A rendered quiz block. The server pre-renders the full HTML
     /// (one card per question, with prompts and explanations already
@@ -520,9 +529,16 @@ pub fn scan_dir(dir: &Path) -> Result<Vec<Exercise>> {
 
     chapter_dirs.sort();
 
+    // Reference solutions live in a sibling `solutions/` tree that mirrors
+    // the `examples/` layout (same chapter dir + filename). Derive it from
+    // the scanned examples dir; if it doesn't exist, steps simply carry no
+    // solution.
+    let solutions_root = dir.with_file_name("solutions");
+    let solutions_root = solutions_root.is_dir().then_some(solutions_root);
+
     let mut out = Vec::with_capacity(chapter_dirs.len());
     for chapter_dir in chapter_dirs {
-        match parse_chapter(&chapter_dir) {
+        match parse_chapter(&chapter_dir, solutions_root.as_deref()) {
             Ok(ex) => out.push(ex),
             Err(e) => {
                 log::warn!("Skipping {}: {e:#}", chapter_dir.display());
@@ -537,7 +553,7 @@ pub fn load(dir: &Path) -> Result<Arc<Vec<Exercise>>> {
     Ok(Arc::new(scan_dir(dir)?))
 }
 
-fn parse_chapter(dir: &Path) -> Result<Exercise> {
+fn parse_chapter(dir: &Path, solutions_root: Option<&Path>) -> Result<Exercise> {
     let file_stem = dir
         .file_name()
         .and_then(|s| s.to_str())
@@ -624,6 +640,33 @@ fn parse_chapter(dir: &Path) -> Result<Exercise> {
     }
 
     let directives = load_chapter_directives(dir);
+
+    // Attach reference solutions. The on-disk filename is recoverable from
+    // each step's `key()` exactly as the github.dev link and submission
+    // routing reconstruct it: legacy single-step chapters use `main.rs`,
+    // multi-step files use `<order>_<slug>.rs`.
+    if let Some(sol_root) = solutions_root {
+        let sol_chapter = sol_root.join(&file_stem);
+        for step in &mut steps {
+            let Step::Code(code) = step else { continue };
+            let key = code.key();
+            let filename = if key.is_empty() {
+                "main.rs".to_string()
+            } else {
+                format!("{key}.rs")
+            };
+            match std::fs::read_to_string(sol_chapter.join(&filename)) {
+                Ok(src) => {
+                    code.solution_code = Some(trim_trailing_blank_lines(&strip_inner_doc(&src)));
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => log::warn!(
+                    "reading solution {}/{filename} failed: {e:#}",
+                    sol_chapter.display()
+                ),
+            }
+        }
+    }
 
     Ok(Exercise {
         number,
@@ -864,6 +907,7 @@ fn parse_code_file(
             title: title.clone(),
             starter_code,
             hints_html: None,
+            solution_code: None,
         },
         title,
     ))
@@ -1224,6 +1268,38 @@ mod tests {
                 || primary.starter_code.starts_with("use "),
             "starter code should begin with code, not blank lines: {:?}",
             &primary.starter_code[..40.min(primary.starter_code.len())]
+        );
+    }
+
+    #[test]
+    fn attaches_reference_solutions_from_sibling_tree() {
+        // `scan_dir` derives the `solutions/` tree as a sibling of the
+        // scanned `examples/` dir. Every code step in the integers chapter
+        // has a matching solution file, so each should carry stripped,
+        // non-empty solution source.
+        let exercises =
+            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let integers = exercises
+            .iter()
+            .find(|e| e.slug == "integers")
+            .expect("expected 00_integers to be present");
+        let mut checked = 0;
+        for step in &integers.steps {
+            let Step::Code(code) = step else { continue };
+            let solution = code
+                .solution_code
+                .as_ref()
+                .expect("each integers code step ships a reference solution");
+            assert!(
+                !solution.contains("//!"),
+                "solution should have the inner doc comment stripped"
+            );
+            assert!(!solution.trim().is_empty(), "solution should not be empty");
+            checked += 1;
+        }
+        assert!(
+            checked > 0,
+            "expected at least one code step with a solution"
         );
     }
 

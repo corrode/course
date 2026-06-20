@@ -8,13 +8,6 @@
 3. Don't forget the return: `write!` already returns
    `fmt::Result`, so its result *is* your return value. No semicolon
    on the last line, or use an explicit `return`.
-4. ```rust
-   impl fmt::Display for Temperature {
-       fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-           write!(f, "{:.1}°C", self.celsius)
-       }
-   }
-   ```
 
 ## describable
 

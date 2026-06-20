@@ -23,6 +23,10 @@ use std::sync::Arc;
 use tower_http::services::ServeDir;
 use ulid::Ulid;
 
+/// Version of the course, sourced from the crate version in `Cargo.toml`.
+/// Surfaced in the site footer so users can tell which release they're on.
+const COURSE_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 /// Application state shared across all routes
 #[derive(Clone)]
 struct AppState {
@@ -1386,6 +1390,7 @@ async fn render_exercise_page(
                         perfected: status.perfected,
                         github_dev_url,
                         hints_html: code.hints_html.clone(),
+                        solution_code: code.solution_code.clone(),
                     },
                 });
                 prev_was_note = false;

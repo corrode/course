@@ -11,9 +11,6 @@
 
 1. `into_iter()` (consume the input vec) → `map(...)` → `collect()`.
 2. The closure receives an owned `String`. Call `.to_lowercase()` on it.
-3. ```rust
-   emails.into_iter().map(|e| e.to_lowercase()).collect()
-   ```
 
 ## `filter`
 
@@ -21,9 +18,6 @@
 2. **Gotcha:** `filter`'s closure takes a *reference* to each item. Since
    the iterator yields `&str`, the closure parameter is `&&str`. Method
    calls auto-deref, so `|s| s.starts_with('a')` Just Works.
-3. ```rust
-   usernames.into_iter().filter(|s| s.starts_with('a')).collect()
-   ```
 
 ## `filter_to_string`
 
@@ -31,10 +25,3 @@
    Auto-deref still saves you for `.ends_with(".rs")`.
 2. The function returns `Vec<String>`, not `Vec<&str>`. Add a `.map(...)`
    step that converts each `&&str` into an owned `String`.
-3. ```rust
-   files
-       .iter()
-       .filter(|name| name.ends_with(".rs"))
-       .map(|name| name.to_string())
-       .collect()
-   ```

@@ -2,7 +2,7 @@
 # The course is a regular Cargo project, so every target here is a
 # thin wrapper. `make help` shows the full list.
 
-.PHONY: help dev run build test fmt clippy check clean examples typos links ci fmt-check
+.PHONY: help dev run build test fmt clippy check clean examples typos links ci fmt-check solutions
 
 help:
 	@echo "make dev      - run the server with auto-reload (needs cargo-watch)"
@@ -13,6 +13,7 @@ help:
 	@echo "make fmt      - cargo fmt"
 	@echo "make clippy   - cargo clippy"
 	@echo "make examples - verify every exercise chapter (needs clippy)"
+	@echo "make solutions- verify every solution (needs rustc)"
 	@echo "make typos    - spell check (needs typos-cli)"
 	@echo "make links    - link check (needs lychee)"
 	@echo "make ci       - run the full CI suite locally"
@@ -51,6 +52,11 @@ clippy:
 examples:
 	./scripts/check-examples.sh
 
+# Verify every solution in solutions/ compiles and its tests pass.
+# REQUIRE_COMPLETE=1 also fails if any exercise step lacks a solution.
+solutions:
+	REQUIRE_COMPLETE=1 ./scripts/check-solutions.sh
+
 # Spell check. Install once with: cargo install typos-cli
 typos:
 	typos
@@ -60,7 +66,7 @@ links:
 	lychee --root-dir . --config ./lychee.toml README.md docs examples static/cheatsheet.md
 
 # Everything CI runs, in one shot.
-ci: fmt-check clippy build test examples typos links
+ci: fmt-check clippy build test examples solutions typos links
 
 fmt-check:
 	cargo fmt --all --check
