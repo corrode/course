@@ -24,5 +24,9 @@ Cargo.lock
 .DS_Store
 Thumbs.db
 
+# lychee link-checker cache
+.lycheecache
+
 TODO/
 .screenshots/
+analysis/

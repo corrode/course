@@ -1,0 +1,139 @@
+{# Members table for a single team bucket. This is the htmx swap
+   target: the column-header sort buttons and the per-team filter box
+   (rendered in admin.html, outside this div so typing keeps focus)
+   both replace this whole div via `outerHTML`, re-rendering the arrows
+   and rows for the requested sort/filter. Also `{% include %}`-d for
+   the initial render on /admin.
+   Variables: `team`, `admin_token`, `sort`, `dir`, `filter`. #}
+<div class="team-members" id="team-members-{{ team.key() }}">
+    {# Current sort state, included by the filter box (via hx-include)
+       so a filter request preserves the active column/direction. #}
+    <input type="hidden" id="tm-sort-{{ team.key() }}" name="sort" value="{{ sort }}" />
+    <input type="hidden" id="tm-dir-{{ team.key() }}" name="dir" value="{{ dir }}" />
+
+    <table class="admin-table">
+        <thead>
+            {# The shared htmx wiring lives once on the row and is
+               inherited by every sort button below: swap this whole
+               div, dim it while the request is in flight, and forward
+               the live filter value. Only the per-column hx-get URL
+               (sort key + next direction) differs. #}
+            <tr
+                hx-target="#team-members-{{ team.key() }}"
+                hx-swap="outerHTML"
+                hx-indicator="#team-members-{{ team.key() }}"
+                hx-include="#tm-filter-{{ team.key() }}"
+            >
+                <th
+                    aria-sort="{% if sort == "name" %}{% if dir == "asc" %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                >
+                    <button
+                        type="button"
+                        class="admin-sort{% if sort == "name" %} is-active{% endif %}"
+                        hx-get="/admin/team-members?token={{ admin_token }}&team={{ team.slug() }}&sort=name&dir={% if sort == "name" && dir == "asc" %}desc{% else %}asc{% endif %}"
+                    >
+                        Name
+                        <span class="admin-sort-arrow" aria-hidden="true">{% if sort == "name" %}{% if dir == "asc" %}↑{% else %}↓{% endif %}{% endif %}</span>
+                    </button>
+                </th>
+                <th
+                    aria-sort="{% if sort == "progress" %}{% if dir == "asc" %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                >
+                    <button
+                        type="button"
+                        class="admin-sort{% if sort == "progress" %} is-active{% endif %}"
+                        hx-get="/admin/team-members?token={{ admin_token }}&team={{ team.slug() }}&sort=progress&dir={% if sort == "progress" && dir == "asc" %}desc{% else %}asc{% endif %}"
+                    >
+                        Progress
+                        <span class="admin-sort-arrow" aria-hidden="true">{% if sort == "progress" %}{% if dir == "asc" %}↑{% else %}↓{% endif %}{% endif %}</span>
+                    </button>
+                </th>
+                <th
+                    aria-sort="{% if sort == "activity" %}{% if dir == "asc" %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"
+                >
+                    <button
+                        type="button"
+                        class="admin-sort{% if sort == "activity" %} is-active{% endif %}"
+                        hx-get="/admin/team-members?token={{ admin_token }}&team={{ team.slug() }}&sort=activity&dir={% if sort == "activity" && dir == "asc" %}desc{% else %}asc{% endif %}"
+                    >
+                        Last activity
+                        <span class="admin-sort-arrow" aria-hidden="true">{% if sort == "activity" %}{% if dir == "asc" %}↑{% else %}↓{% endif %}{% endif %}</span>
+                    </button>
+                </th>
+                <th>Move to team</th>
+                <th class="admin-col-actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for participant in team.members %}
+            <tr>
+                <td class="admin-cell-name">{{ participant.name }}</td>
+                <td>
+                    <span class="admin-progress-done"
+                        >{{ participant.completed_count }}</span
+                    >
+                    <span class="admin-progress-total"
+                        >/{{ participant.total_exercises }}</span
+                    >
+                    {% if participant.completed_count ==
+                    participant.total_exercises %}
+                    <span class="admin-progress-complete">🎉 Complete!</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if participant.last_activity.is_some() %} Recent
+                    activity {% else %}
+                    <span class="admin-cell-muted">No submissions</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form
+                        method="post"
+                        action="/admin/participants/{{ participant.id }}/team-token?token={{ admin_token }}"
+                        class="admin-inline-form"
+                    >
+                        <input
+                            type="text"
+                            name="team_token"
+                            value="{% match participant.team_token %}{% when Some with (s) %}{{ s }}{% when None %}{% endmatch %}"
+                            placeholder="team-slug"
+                            maxlength="64"
+                            pattern="[A-Za-z0-9_\-]*"
+                            title="Letters, digits, underscore or hyphen. Leave blank to unassign."
+                            class="admin-input admin-input-tiny admin-input-mono"
+                        />
+                        <button
+                            type="submit"
+                            class="btn btn-secondary admin-btn-tiny"
+                        >
+                            Move
+                        </button>
+                    </form>
+                </td>
+                <td class="admin-col-actions">
+                    <a
+                        href="/dashboard/{{ participant.id }}"
+                        class="btn btn-secondary admin-btn-tiny"
+                    >
+                        View dashboard
+                    </a>
+                    <button
+                        onclick="removeParticipant('{{ participant.id }}', '{{ participant.name }}')"
+                        class="btn admin-btn-tiny admin-btn-danger"
+                    >
+                        Remove
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if team.members.is_empty() %}
+            <tr>
+                <td colspan="5" class="admin-cell-muted admin-members-empty">
+                    {% if filter.trim().is_empty() %} No participants in this
+                    team. {% else %} No members match “{{ filter }}”. {% endif %}
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>

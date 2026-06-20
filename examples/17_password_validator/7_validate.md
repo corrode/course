@@ -27,7 +27,7 @@ Map the final score to `PasswordStrength`:
 - `>= 70` → `Strong`
 
 Push a short message into `feedback` for every rule that *fails*. That
-way [`PasswordAdvisor`](super) (or your own future code) has something
+way `PasswordAdvisor` (or your own future code) has something
 to react to. The length-related complaint should mention "characters",
 "length", "short", "longer", or "at least" so the test below can
 recognise it.

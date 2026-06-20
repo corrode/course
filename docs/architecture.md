@@ -349,7 +349,9 @@ Served by `tower-http` `ServeDir` at `/static/*`. Notable:
   and `readonly-rust-editor.js` so all editors stay in sync with the
   `--syn-*` CSS variables in `base.html`.
 - `static/js/readonly-rust-editor.js`: read-only CodeMirror viewer
-  for Rust code blocks on admin and team pages.
+  for Rust code blocks on admin and team pages, and the per-step
+  "Reveal the full solution" viewer mounted lazily inside the hints
+  disclosure on `templates/exercise.html`.
 - `static/assets/`: logos, screenshots.
 - `static/fonts/`: bundled webfonts.
 
