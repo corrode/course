@@ -1179,6 +1179,12 @@
                 margin: 0;
                 line-height: 1.55;
             }
+            .site-footer-brand .site-footer-version {
+                margin-top: 0.6rem;
+                font-size: 0.8rem;
+                font-variant-numeric: tabular-nums;
+                color: var(--color-text-muted);
+            }
             .site-footer-col h3 {
                 font-size: 0.72rem;
                 font-weight: 700;
@@ -2351,6 +2357,15 @@
                             rel="noopener"
                             >corrode</a
                         >.
+                    </p>
+                    <p class="site-footer-version">
+                        Version
+                        <a
+                            href="https://github.com/corrode/course/releases"
+                            target="_blank"
+                            rel="noopener"
+                            >v{{ crate::COURSE_VERSION }}</a
+                        >
                     </p>
                 </div>
 

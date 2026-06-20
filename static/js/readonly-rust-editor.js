@@ -1,5 +1,6 @@
 // Read-only CodeMirror 6 viewer for Rust source blocks on the
-// admin and team pages.
+// admin and team pages, and the "Reveal the full solution" viewer on
+// chapter pages.
 //
 // Resolves CM6 modules through the shared importmap in
 // `templates/base.html`, so this viewer and the editable editor on
@@ -30,27 +31,44 @@ import { rust } from "@codemirror/lang-rust";
 import { proseHighlightStyle, proseEditorTheme } from "./cm-theme.js";
 
 function mountOne(el) {
+  // Idempotent: a second call (e.g. lazy mount when a <details> opens
+  // after the page-load auto-run already handled it) is a no-op and
+  // returns the existing view so callers can still `requestMeasure()`.
+  if (el.dataset.cmMounted === "1") {
+    return el.__cmView ?? null;
+  }
+
   const source = el.textContent ?? "";
-  el.textContent = "";
 
-  const extensions = [
-    EditorView.editable.of(false),
-    EditorState.readOnly.of(true),
-    EditorView.lineWrapping,
-    lineNumbers(),
-    highlightActiveLine(),
-    highlightActiveLineGutter(),
-    drawSelection(),
-    bracketMatching(),
-    rust(),
-    syntaxHighlighting(proseHighlightStyle, { fallback: true }),
-    proseEditorTheme,
-  ];
-
-  const view = new EditorView({
-    state: EditorState.create({ doc: source, extensions }),
-    parent: el,
-  });
+  let view;
+  try {
+    el.textContent = "";
+    view = new EditorView({
+      state: EditorState.create({
+        doc: source,
+        extensions: [
+          EditorView.editable.of(false),
+          EditorState.readOnly.of(true),
+          EditorView.lineWrapping,
+          lineNumbers(),
+          highlightActiveLine(),
+          highlightActiveLineGutter(),
+          drawSelection(),
+          bracketMatching(),
+          rust(),
+          syntaxHighlighting(proseHighlightStyle, { fallback: true }),
+          proseEditorTheme,
+        ],
+      }),
+      parent: el,
+    });
+  } catch (err) {
+    // Construction failed: restore the source so the styled fallback box
+    // stays readable, and leave the element unmarked so a later call
+    // (e.g. the next time the <details> opens) can retry.
+    el.textContent = source;
+    throw err;
+  }
 
   // Match the chrome the in-exercise editor sets directly on its
   // root DOM node (see `initSection` in `templates/exercise.html`).
@@ -59,6 +77,24 @@ function mountOne(el) {
   view.dom.style.overflow = "hidden";
   // Font size is set in CSS (see `base.html`) so the `/settings`
   // page can override it via `html[data-editor-font-size]`.
+
+  // Only mark as mounted once construction succeeded, so a failed mount
+  // doesn't permanently block a retry.
+  el.dataset.cmMounted = "1";
+  el.__cmView = view;
+  return view;
+}
+
+// Mount a single read-only viewer on demand. Used by chapter pages to
+// lazily mount the solution viewer the first time its <details> opens
+// (mounting while hidden would measure to zero height). Idempotent.
+export function mountReadonlyRustEditor(el) {
+  try {
+    return mountOne(el);
+  } catch (err) {
+    console.warn("[corrode] readonly editor mount failed:", err, el);
+    return null;
+  }
 }
 
 export function mountAllReadonlyRustEditors(selector = "[data-rust-source]") {

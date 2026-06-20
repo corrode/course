@@ -156,7 +156,8 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     <div class="chapter-prose exercise-prose">{{ html|safe }}</div>
     {% when cargo_course::exercises::RenderKind::Code with { dom_id,
     exercise_key, eyebrow, title, show_title, starter_code, submitted_code,
-    attempted, completed, perfected, github_dev_url, hints_html } %}
+    attempted, completed, perfected, github_dev_url, hints_html, solution_code }
+    %}
 
     <section
         class="exercise-section"
@@ -359,6 +360,56 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
             <span class="hints-hint">No spoilers, just a nudge</span>
         </summary>
         <div class="chapter-prose exercise-prose hints-body">{{ h|safe }}</div>
+    </details>
+    {% when None %} {% endmatch %} {% match solution_code %} {% when Some with
+    (sol) %}
+    <details class="hints-disclosure solution-disclosure hints-disclosure-step">
+        <summary>
+            <span class="hints-icon" aria-hidden="true">✅</span>
+            <span class="hints-summary-text">Reveal the full solution</span>
+            <span class="hints-hint">Spoiler: the complete answer</span>
+        </summary>
+        <div class="solution-body">
+            <div class="prose-code-wrap">
+                <button
+                    type="button"
+                    class="prose-copy-btn"
+                    title="Copy solution"
+                    onclick="
+                        copyToClipboard(
+                            this.parentElement.querySelector('.solution-source')
+                                .value,
+                            this,
+                        )
+                    "
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <rect
+                            x="9"
+                            y="9"
+                            width="13"
+                            height="13"
+                            rx="2"
+                            ry="2"
+                        ></rect>
+                        <path
+                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                        ></path>
+                    </svg>
+                </button>
+                <textarea class="solution-source" hidden>{{ sol }}</textarea>
+                <pre class="rust-editor solution-code" data-rust-solution>
+{{ sol }}</pre
+                >
+            </div>
+        </div>
     </details>
     {% when None %} {% endmatch %} {% when
     cargo_course::exercises::RenderKind::Quiz with { html } %} {{ html|safe }}
@@ -764,6 +815,30 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
             });
     } catch (err) {
         console.warn("prose syntax highlighting failed to load", err);
+    }
+</script>
+
+<script type="module">
+    // Solution viewers: each "Reveal the full solution" disclosure holds a
+    // read-only CodeMirror instance (same viewer as the admin/team pages).
+    // We mount it lazily the first time the <details> opens, because
+    // mounting inside a `display: none` container measures to zero height
+    // and renders a collapsed editor. On open we also `requestMeasure()`
+    // so line numbers and gutters lay out correctly the first time.
+    try {
+        const { mountReadonlyRustEditor } =
+            await import("/static/js/readonly-rust-editor.js");
+        document.querySelectorAll(".solution-disclosure").forEach((details) => {
+            details.addEventListener("toggle", () => {
+                if (!details.open) return;
+                const el = details.querySelector("[data-rust-solution]");
+                if (!el) return;
+                const view = mountReadonlyRustEditor(el);
+                if (view) requestAnimationFrame(() => view.requestMeasure());
+            });
+        });
+    } catch (err) {
+        console.warn("solution viewer failed to load", err);
     }
 </script>
 
@@ -1519,6 +1594,35 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     .hints-next-btn:focus-visible {
         border-color: var(--color-primary, #0969da);
         background-color: var(--color-background);
+    }
+    /* The solution is its own disclosure, always visible directly below
+       the hints. Keeping it separate (rather than nested inside the hints)
+       keeps the hints' "no spoilers" promise honest and means a learner
+       doesn't have to open the hints to find the answer. It reuses the
+       hints disclosure chrome (triangle marker, summary layout) but uses a
+       stronger accent so "reveal the answer" reads differently from
+       "show a nudge". */
+    .solution-disclosure {
+        margin: 1rem 0 2rem;
+    }
+    /* When the solution sits right under the hints, collapse the hints'
+       bottom margin so the two affordances read as a stacked pair. */
+    .hints-disclosure-step:has(+ .solution-disclosure) {
+        margin-bottom: 0;
+    }
+    .solution-disclosure > summary .hints-summary-text {
+        color: var(--color-primary, #0969da);
+    }
+    .solution-disclosure .solution-body {
+        margin-top: 0.75rem;
+    }
+    /* `.solution-code` is a `.rust-editor` box: a styled `<pre>` fallback
+       that the read-only CodeMirror viewer replaces in place on open.
+       Reset the `<pre>` default margin and let it grow with the solution
+       instead of capping at the shared 32rem `.rust-editor` max-height. */
+    .solution-disclosure .solution-code {
+        margin: 0;
+        max-height: none;
     }
     /* `.prose-code-wrap` + `.prose-copy-btn` now live in `base.html`
        so the settings page (and any other page) can reuse the same
