@@ -1,16 +1,13 @@
 # Counting characters
 
-Same template as `word_count`, smaller granularity.
-Count every character in the text, whitespace included.
-So `"hi there"` returns `8` (seven letters plus the space).
-
-The recipe is identical to the previous step: start a counter at `0`, walk `text.chars()` with a `for` loop, bump the counter once per iteration.
-
-The interesting wrinkle here is *what* `chars()` actually returns.
+This looks like the same exercise again, but Rust has a surprise waiting: `text.len()` does *not* return the number of characters.
 Rust strings are UTF-8 internally, so a single visible character like `é` can take more than one byte.
-`text.chars()` walks the *characters*, while `text.len()` returns the *byte* length.
-The two differ as soon as you leave plain ASCII.
-The unicode test below pins this down.
+`text.len()` gives the *byte* length, while `text.chars()` walks the actual characters.
+For `"café"` that's 5 bytes but 4 characters, and the two only agree on plain ASCII.
+
+So reach for `text.chars()`: start a counter at `0`, walk the characters with a `for` loop, and bump the counter once per iteration.
+Count every character, whitespace included, so `"hi there"` returns `8` (seven letters plus the space).
+The unicode test below pins the bytes-vs-characters difference down.
 
 ## Useful from the standard library
 

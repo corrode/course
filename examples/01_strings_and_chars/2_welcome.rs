@@ -1,4 +1,4 @@
-/// Your first exercise, how exciting!
+/// Build and return the welcome message for `name`.
 fn format_welcome_message(name: &str) -> String {
     todo!("replace this line with your code")
 }

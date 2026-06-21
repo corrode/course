@@ -12,13 +12,11 @@
     clippy::boxed_local
 )]
 
-#[path = "2_count_items.rs"]
-mod _2_count_items;
-#[path = "3_add_item.rs"]
-mod _3_add_item;
-#[path = "4_contains_item.rs"]
-mod _4_contains_item;
-#[path = "5_create_shopping_list.rs"]
-mod _5_create_shopping_list;
+#[path = "2_add_item.rs"]
+mod _2_add_item;
+#[path = "3_contains_item.rs"]
+mod _3_contains_item;
+#[path = "4_create_shopping_list.rs"]
+mod _4_create_shopping_list;
 
 fn main() {}

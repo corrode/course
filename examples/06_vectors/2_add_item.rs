@@ -1,6 +1,6 @@
 /// Adds an item to the shopping list.
 ///
-/// Now we modify the list in place. The `&mut Vec<String>` says "I need
+/// We modify the list in place. The `&mut Vec<String>` says "I need
 /// exclusive access for a moment", and that's what lets us add to it.
 fn add_item(list: &mut Vec<String>, item: &str) {
     todo!()

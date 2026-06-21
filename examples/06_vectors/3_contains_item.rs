@@ -1,6 +1,6 @@
 /// Checks if the list contains a specific item.
 ///
-/// A read-only operation again, but this time we have to compare each
+/// A read-only operation, but this time we have to compare each
 /// element against `item`.
 ///
 /// Heads-up: you'll want to reach for `Vec::contains`, but its

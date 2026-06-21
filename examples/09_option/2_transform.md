@@ -1,7 +1,7 @@
 # Transforming the inside
 
-Same idea as before, but now the fallback isn't the value itself.
-You need to call `.len()` on the inner string first.
+This time you don't want a fallback value, you want to transform whatever is inside the `Option`.
+You call `.len()` on the inner string when it's `Some`.
 A `match` makes both branches explicit; iterator-style methods on `Option` are tidier once you spot them.
 
 ## Useful from the standard library

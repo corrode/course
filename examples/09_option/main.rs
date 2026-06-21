@@ -12,13 +12,11 @@
     clippy::boxed_local
 )]
 
-#[path = "2_fallback.rs"]
-mod _2_fallback;
-#[path = "3_transform.rs"]
-mod _3_transform;
-#[path = "4_first_char.rs"]
-mod _4_first_char;
-#[path = "5_find_user.rs"]
-mod _5_find_user;
+#[path = "2_transform.rs"]
+mod _2_transform;
+#[path = "3_first_char.rs"]
+mod _3_first_char;
+#[path = "4_find_user.rs"]
+mod _4_find_user;
 
 fn main() {}

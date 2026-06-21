@@ -1,6 +1,6 @@
 # Searching a collection
 
-The trickiest of the four: produce an `Option` by searching.
+The trickiest of the three: produce an `Option` by searching.
 The iterator chapter is still ahead, but `slice::iter()` plus a search combinator already gets you most of the way; the matched tuple still needs to be reduced down to just the username.
 
 Type walk-through (this is the puzzle):
