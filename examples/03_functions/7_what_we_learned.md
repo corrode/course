@@ -9,7 +9,7 @@ Three small exercises, three new ideas:
   feeds into the caller's answer.
 - **`cap_at`** showed that function parameters are immutable bindings by
   default, and that adding `mut` to the parameter name affects only the
-  function's own copy — the caller's variable is untouched because `i32`
+  function's own copy. The caller's variable is untouched because `i32`
   is `Copy`.
 
 The thread running through all of this: the body of a function is a

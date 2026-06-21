@@ -1,6 +1,6 @@
 # Functions
 
-You've been inside a function since the first line you wrote: `fn main()` is one,
+You've been inside a function since the first line you wrote. `fn main()` is one,
 and every `println!(...)` is a call (the `!` marks it as a macro). So instead of
 explaining what a function is, this chapter covers the parts of `fn` that Rust
 does its own way: explicit parameter and return types, blocks as expressions, and
