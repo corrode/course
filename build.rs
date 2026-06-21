@@ -31,6 +31,8 @@ fn main() {
     println!("cargo:rerun-if-changed=examples");
     println!("cargo:rerun-if-changed=build.rs");
 
+    emit_git_build_info();
+
     let examples = Path::new("examples");
     if !examples.exists() {
         return;
@@ -55,6 +57,29 @@ fn main() {
             println!("cargo:warning=build.rs: skipping {}: {e}", path.display());
         }
     }
+}
+
+/// Emit `GIT_BRANCH` / `GIT_HASH` as compile-time env vars for the server footer.
+///
+/// Best-effort: if `git` isn't on PATH or `.git` isn't present (e.g. a Docker
+/// build from a tarball), we emit `unknown` and move on. `cargo:rerun-if-changed`
+/// on `.git/HEAD` refreshes the values when the checked-out commit/branch changes.
+fn emit_git_build_info() {
+    println!("cargo:rerun-if-changed=.git/HEAD");
+
+    let git = |args: &[&str]| -> Option<String> {
+        let out = std::process::Command::new("git").args(args).output().ok()?;
+        if !out.status.success() {
+            return None;
+        }
+        let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        if s.is_empty() { None } else { Some(s) }
+    };
+
+    let branch = git(&["rev-parse", "--abbrev-ref", "HEAD"]).unwrap_or_else(|| "unknown".into());
+    let hash = git(&["rev-parse", "--short", "HEAD"]).unwrap_or_else(|| "unknown".into());
+    println!("cargo:rustc-env=GIT_BRANCH={branch}");
+    println!("cargo:rustc-env=GIT_HASH={hash}");
 }
 
 fn process_chapter(dir: &Path) -> Result<(), String> {
