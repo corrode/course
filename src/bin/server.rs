@@ -2858,7 +2858,7 @@ async fn get_exercise_progress<'a>(
         };
 
         exercises.push(ExerciseProgress {
-            number: ex.number + 1,
+            number: ex.number,
             name: ex.file_stem.clone(),
             completed,
             perfected,
