@@ -1,0 +1,39 @@
+{# Shared "Next chapter" call-to-action button, used at the bottom of exercise
+pages and the quick tour. Required template fields: next_dot (the chapter to
+link to; renders nothing when absent), ulid (participant prefix on the link when
+present), and next_locked (renders hidden via `.is-locked`; exercise pages
+reveal it once the chapter is completed, the tour leaves it false). The
+`.next-chapter-*` styles live in base.html. #} {% match next_dot %} {% when Some
+with (n) %}
+<section
+    class="next-chapter-cta{% if next_locked %} is-locked{% endif %}"
+    aria-label="Continue"
+>
+    <a
+        class="btn next-chapter-btn"
+        {%
+        match
+        ulid
+        %}{%
+        when
+        Some
+        with
+        (u)
+        %}href="/exercise/{{ u }}/{{ n.slug }}"
+        {%
+        when
+        None
+        %}href="/exercise/{{ n.slug }}"
+        {%
+        endmatch
+        %}
+    >
+        <span class="next-chapter-eyebrow">Next chapter</span>
+        <span class="next-chapter-title"
+            ><span class="next-chapter-num">{{ n.number }}</span>{{ n.title
+            }}</span
+        >
+        <span class="next-chapter-arrow" aria-hidden="true">→</span>
+    </a>
+</section>
+{% when None %} {% endmatch %}
