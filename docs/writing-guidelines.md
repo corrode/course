@@ -22,7 +22,7 @@ Per-chapter prompt: *"What's the empowering / bug-preventing Rust angle here?"*
 - integers → overflow caught instead of silently wrapping
 
 Where it fits, go **problem-first**: show the bug that would compile-and-crash in
-many other languages (kept language-neutral — *"in most languages this throws at
+many other languages (kept language-neutral, *"in most languages this throws at
 runtime"*), then show Rust's fix. (A per-language interactive comparison is a
 future idea, not something to author by hand now.)
 
@@ -46,9 +46,18 @@ you, not a teacher addressing a class.
 - "you might not have noticed, but…"
 - any sentence that narrates the reader's emotional state *for* them
 
-Dry epigraph jokes (like the integers chapter's "it's pointless") are fine — that's
-wit, not condescension. The line is: joke *with* the reader, never *at* them, and
-never about how they're supposed to feel.
+Dry epigraph jokes (like the integers chapter's "it's pointless") are fine. That's
+wit, not condescension. Joke with the reader, never at them, and never about how
+they're supposed to feel.
+
+Write warm and human, the way you'd explain something to the person at the next
+desk. A few specifics that keep it that way:
+
+- No em-dashes. Use a period, a comma, or parentheses for an aside instead.
+- Go easy on colons. The "term: explanation" pattern, stacked sentence after
+  sentence, reads like clipped notes rather than writing. Prefer full sentences.
+- Keep it simple, not compressed. A slightly longer plain sentence beats a terse,
+  abbreviated one. Vary the length so it has a natural rhythm.
 
 ## 4. Density guard
 
@@ -63,13 +72,13 @@ not by number, so renumbering doesn't rot the prose.
 
 ## 6. Pacing floor
 
-Don't shrink a core chapter below ~2 hands-on exercises — it should feel like
+Don't shrink a core chapter below ~2 hands-on exercises. It should feel like
 practice, not a reading. (Pure "why" chapters like the ownership consolidation and
 the appendix are exempt.)
 
 ## 7. Difficulty honesty
 
 When a concept is genuinely hard (the borrow checker, the `?`/error-type story, the
-CSV state machine), say so in a short, reassuring inline note: *"This is a known
-hard spot — if it takes a few tries, that's the concept being hard, not you."*
-Normalize the struggle instead of pretending everything is easy.
+CSV state machine), say so in a short, reassuring inline note, e.g. *"This is a
+known hard spot. If it takes a few tries, that's the concept being hard, not
+you."* Normalize the struggle instead of pretending everything is easy.
