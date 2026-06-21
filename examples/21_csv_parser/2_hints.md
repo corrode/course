@@ -26,9 +26,3 @@
 1. `content.lines()` gives you an iterator over `&str` lines.
 2. The first line is headers; the rest are rows.
    `next()` on the iterator pulls the first one off; the rest you can `map(parse_csv_line).collect()`.
-
-## `records`
-
-1. For each row, `zip` the headers with the values to get `(header, value)` pairs, then `collect::<HashMap<_, _>>()`.
-2. You'll be cloning `String`s into the map.
-   That's expected here, the function takes shared slices.

@@ -1,9 +1,14 @@
 # State machines and stateful parsing
 
-CSV looks easy until you hit quoted fields with commas inside, or escaped quotes inside quoted fields.
-The trick is to walk the input character-by-character while tracking a small amount of state: "am I currently inside a quoted field?"
+Reach for `split(',')` and CSV looks solved in one line.
+Then a field contains a comma: the row `"a,b",c` is meant to hold two fields, `a,b` and `c`.
+Split on every comma and you get three pieces (`"a`, `b"`, `c`), the quotes still attached and the first field torn in half.
 
-This kind of "for each character, update some state, occasionally emit a result" pattern is called a *state machine*.
+The fix is to stop treating every comma as a separator.
+Walk the input one character at a time and track a single piece of state: am I currently inside a quoted field?
+A comma inside quotes is data; a comma outside quotes is a separator.
+
+This "for each character, update some state, occasionally emit a result" pattern is called a *state machine*.
 It comes up in any non-trivial parsing task: JSON, command-line arguments, terminal escape sequences, markup languages.
 
 ## A skeleton

@@ -1,6 +1,6 @@
 # Wrapping up the CSV parser
 
-You wrote the easy version of CSV with `split` and `trim`, then upgraded to a real state machine that handles quoted fields and escaped quotes, glued lines into headers + rows, and converted those rows into `HashMap` records.
+You wrote the easy version of CSV with `split` and `trim`, then upgraded to a real state machine that handles quoted fields and escaped quotes, and glued the parsed lines into headers + rows.
 
 ## What we learned
 
@@ -14,7 +14,5 @@ You wrote the easy version of CSV with `split` and `trim`, then upgraded to a re
   Cleaner than clone-then-clear when you're harvesting an accumulator.
 - The simple `split`/`trim` version is worth writing first.
   It passes the easy tests and gives you a baseline; the state-machine upgrade then has concrete failing cases to react to.
-- `iter.zip(other).collect::<HashMap<_, _>>()` is the standard "two parallel sequences -> a map" move.
-  Add `cloned()` on each side when the map needs owned data.
 - For real CSV in production, reach for the [`csv` crate](https://docs.rs/csv): it handles all the corner cases (BOMs, custom delimiters, escaped newlines inside fields) this exercise glosses over.
   Writing the parser by hand once is still worth doing for the transferable state-machine technique.
