@@ -1,6 +1,6 @@
 # Wrapping up the password validator
 
-You've put the whole standard toolkit to work in one project: a struct, an enum, methods, character iteration, vectors of feedback, a match over score ranges, and a tiny reflection of how the pieces talk to each other.
+You've put the whole standard toolkit to work in one project: a struct, an enum, methods, character iteration, vectors of feedback, and a match over score ranges.
 
 ## What we learned
 
@@ -12,6 +12,6 @@ You've put the whole standard toolkit to work in one project: a struct, an enum,
   No need for a `HashSet`.
 - A `Vec<String>` you `push` into as you check each rule is the idiomatic way to accumulate validation feedback.
 - Range patterns inside `match` arms (`0..30 => Weak`) are the cleanest way to bucket a number into categories.
-- Splitting a domain across small types (`PasswordReport`, `PasswordStrength`, `PasswordValidator`, `PasswordAdvisor`) keeps each piece focused on one job and easy to test.
+- Splitting a domain across small types (`PasswordReport`, `PasswordStrength`, `PasswordValidator`) keeps each piece focused on one job and easy to test.
 - For real randomness, reach for the [`rand`](https://docs.rs/rand) crate.
   The clock-based trick is fine for an exercise, never for a password generator that ships.

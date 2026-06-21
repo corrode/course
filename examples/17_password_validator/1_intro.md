@@ -22,6 +22,16 @@ You have two upgrades available:
 let digit_count = password.chars().filter(|c| c.is_ascii_digit()).count();
 ```
 
+**Checking for a character class.** When you only need a yes/no answer ("is there any uppercase letter?"), `.chars().any(...)` stops at the first match:
+
+```rust
+fn has_uppercase(password: &str) -> bool {
+    password.chars().any(|c| c.is_ascii_uppercase())
+}
+```
+
+The lowercase, digit, and special-character checks follow the same shape: swap in `is_ascii_lowercase`, `is_ascii_digit`, or `"!@#$%^&*".contains(c)` for the closure body.
+
 **Building a list of feedback messages.** A `Vec<String>` you push into as you check each rule keeps the validator readable:
 
 ```rust
@@ -57,6 +67,16 @@ let seed = SystemTime::now()
 ```
 
 For real randomness, the [`rand`](https://docs.rs/rand) crate is the standard answer; out of scope here, but worth knowing it exists.
+
+## Ideas to try
+
+The three steps that follow give you a warm-up (`is_strong`), a generator, and the scoring engine (`validate`).
+Once the tests pass, the chapter is yours to extend:
+
+- Turn the validator's terse feedback (`"too short"`, `"missing digit"`) into friendly advice (`"Add at least 4 more characters"`).
+- Detect common passwords, repeated runs (`aaa`, `111`), or keyboard walks (`qwerty`, `123456`) and dock points for them.
+- Reward variety: a longer character set or a wider mix of classes earns a higher score.
+- Swap the clock-based generator for the `rand` crate and compare.
 
 Take your time with this one.
 It's deliberately less guided.

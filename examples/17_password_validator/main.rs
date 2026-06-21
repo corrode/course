@@ -14,13 +14,9 @@
 
 #[path = "3_is_strong.rs"]
 mod _3_is_strong;
-#[path = "4_char_classes.rs"]
-mod _4_char_classes;
-#[path = "5_generate.rs"]
-mod _5_generate;
-#[path = "6_advisor.rs"]
-mod _6_advisor;
-#[path = "7_validate.rs"]
-mod _7_validate;
+#[path = "4_generate.rs"]
+mod _4_generate;
+#[path = "5_validate.rs"]
+mod _5_validate;
 
 fn main() {}
