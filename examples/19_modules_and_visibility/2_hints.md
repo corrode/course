@@ -7,13 +7,6 @@
 2. Functions inside a module are private by default.
    Add `pub` in front of the `fn` keyword on the one the compiler is naming.
 
-## status
-
-1. The compiler is calling `status::State` private.
-   That's the whole error.
-2. Make the enum itself `pub`.
-   The variants come along for free (unlike struct fields).
-
 ## settings
 
 1. The first error is about the `Settings` *type* being private.
@@ -26,3 +19,5 @@
    You see where this is going.
 2. `pub struct Settings` does not make the fields or methods public.
    Each item gets its own `pub`.
+3. Leave `port` itself private.
+   The test reaches it through `get_port`, which is the point: the field stays private even though the struct is public.

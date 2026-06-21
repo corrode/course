@@ -1,15 +1,15 @@
 // Module with a struct and a couple of methods.
 mod config {
-    pub struct Settings {
+    struct Settings {
         port: u32,
     }
 
     impl Settings {
-        pub fn new(port: u32) -> Self {
+        fn new(port: u32) -> Self {
             Settings { port }
         }
 
-        pub fn get_port(&self) -> u32 {
+        fn get_port(&self) -> u32 {
             self.port
         }
     }
@@ -24,5 +24,8 @@ fn create_settings() -> config::Settings {
 #[test]
 fn test_create_settings() {
     let settings = create_settings();
+
+    // `settings.port` would not compile from out here: the field is
+    // private even once `Settings` is `pub`. Go through the accessor.
     assert_eq!(settings.get_port(), 8080);
 }

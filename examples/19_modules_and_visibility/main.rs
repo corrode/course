@@ -14,9 +14,7 @@
 
 #[path = "3_calculate.rs"]
 mod _3_calculate;
-#[path = "4_status.rs"]
-mod _4_status;
-#[path = "5_settings.rs"]
-mod _5_settings;
+#[path = "4_settings.rs"]
+mod _4_settings;
 
 fn main() {}
