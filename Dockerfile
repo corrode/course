@@ -13,9 +13,11 @@ WORKDIR /app
 
 # Build-time git metadata for the footer. The build context excludes
 # `.git` (see .dockerignore), so `build.rs` can't shell out to git here.
-# The deploy passes these as build args instead; Coolify auto-injects
-# `SOURCE_COMMIT`. Set GIT_BRANCH as a build arg in Coolify (e.g. `main`).
-ARG GIT_BRANCH=unknown
+# Production only ever deploys `main`, so default the branch to `main`
+# (override with `--build-arg GIT_BRANCH=...` for a one-off branch build).
+# The commit comes from Coolify's auto-injected `SOURCE_COMMIT`; set
+# `GIT_HASH` explicitly to override it.
+ARG GIT_BRANCH=main
 ARG GIT_HASH=
 ARG SOURCE_COMMIT=
 ENV GIT_BRANCH=${GIT_BRANCH} \
