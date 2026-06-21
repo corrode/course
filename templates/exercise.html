@@ -15,8 +15,10 @@ with (u) %}
         data-chapter-picker-toggle
     >
         <span class="chapter-picker-label"
-            ><span class="chapter-picker-num">{{ exercise.number }}</span>{{
-            exercise.title }}</span
+            ><span class="chapter-picker-num"
+                >{% if exercise.is_bonus() %}★{% else %}{{ exercise.number }}{%
+                endif %}</span
+            >{{ exercise.title }}</span
         >
         <svg
             class="chapter-picker-chevron"
@@ -54,7 +56,7 @@ with (u) %}
             </button>
         </div>
         <ul class="chapter-picker-list">
-            {% for d in dots %}
+            {% for d in dots %}{% if !d.is_bonus %}
             <li>
                 <a
                     role="option"
@@ -96,7 +98,7 @@ with (u) %}
                     </span>
                 </a>
             </li>
-            {% endfor %}
+            {% endif %}{% endfor %}
         </ul>
     </div>
 </div>
@@ -120,7 +122,10 @@ block topbar_team_title %}{% match ulid %}{% when Some with (_u) %}Your team{%
 when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
 <div class="container" data-corrode-config="{{ exercise.directives_json() }}">
     <div class="exercise-header">
-        <div class="chapter-eyebrow">Chapter {{ exercise.number }}</div>
+        <div class="chapter-eyebrow">
+            {% if exercise.is_bonus() %}Bonus chapter{% else %}Chapter {{
+            exercise.number }}{% endif %}
+        </div>
         <h1 class="exercise-title">{{ exercise.title }}</h1>
         {% match ulid %} {% when Some with (_u) %}
         <div class="exercise-meta" id="exercise-meta">

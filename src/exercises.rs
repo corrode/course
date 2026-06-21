@@ -309,17 +309,24 @@ pub struct ChapterDirectives {
     /// on. `None` / `Some(false)` is the default (no inline signup).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signup_on_pass: Option<bool>,
+    /// When `true`, this chapter is an optional "bonus": hidden from the
+    /// table of contents and the chapter picker, excluded from progress
+    /// totals and the next-chapter flow, and rendered without a number.
+    /// It stays reachable by direct URL. `None` / `Some(false)` is the
+    /// default.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bonus: Option<bool>,
 }
 
 /// A single chapter, parsed from one `examples/NN_slug/` directory.
 #[derive(Debug, Clone)]
 pub struct Exercise {
     /// 1-based, human-facing chapter number used in headings, the TOC,
-    /// and the chapter picker. Derived from the directory prefix as
-    /// `prefix + 1`, so `00_integers` (the first chapter on disk) is
-    /// displayed as **Chapter 1**. The shift exists because the dashboard
-    /// landing experience is itself an unnumbered "Chapter 0" (the
-    /// `println!` warm-up), and the on-disk chapters pick up at 1.
+    /// and the chapter picker. Assigned in [`scan_dir`] as a running
+    /// ordinal over the non-bonus chapters in disk order, so the first
+    /// chapter is **1** and hiding a bonus chapter leaves no gap in the
+    /// sequence. Bonus chapters get `0`, which templates render as
+    /// "Bonus" instead of a number.
     pub number: u8,
     /// Slug without the numeric prefix, e.g. `integers` for `00_integers`.
     pub slug: String,
@@ -347,6 +354,15 @@ impl Exercise {
     #[must_use]
     pub fn is_quiz(&self) -> bool {
         self.slug.contains("quiz")
+    }
+
+    /// True for optional "bonus" chapters (`bonus = true` in
+    /// `.chapter.toml`). Bonus chapters are hidden from the TOC, the
+    /// chapter picker, progress totals, and the next-chapter flow, but
+    /// stay reachable by direct URL. See [`ChapterDirectives::bonus`].
+    #[must_use]
+    pub fn is_bonus(&self) -> bool {
+        self.directives.bonus.unwrap_or(false)
     }
 
     /// All code steps in render order. Useful for progress calculations.
@@ -545,6 +561,21 @@ pub fn scan_dir(dir: &Path) -> Result<Vec<Exercise>> {
             }
         }
     }
+
+    // Assign human-facing chapter numbers as a running ordinal over the
+    // non-bonus chapters (in disk order), so hiding a bonus chapter leaves
+    // no gap. Bonus chapters get `0`, which templates render as "Bonus".
+    // This overrides the provisional `prefix + 1` set in `parse_chapter`.
+    let mut display = 0u8;
+    for ex in &mut out {
+        if ex.is_bonus() {
+            ex.number = 0;
+        } else {
+            display += 1;
+            ex.number = display;
+        }
+    }
+
     Ok(out)
 }
 
@@ -1268,6 +1299,35 @@ mod tests {
                 || primary.starter_code.starts_with("use "),
             "starter code should begin with code, not blank lines: {:?}",
             &primary.starter_code[..40.min(primary.starter_code.len())]
+        );
+    }
+
+    #[test]
+    fn bonus_chapters_are_unnumbered_and_excluded_from_the_sequence() {
+        let exercises =
+            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+
+        // The two bonus chapters carry `bonus = true` in `.chapter.toml`.
+        for slug in ["smart_pointers", "password_validator"] {
+            let ex = exercises
+                .iter()
+                .find(|e| e.slug == slug)
+                .unwrap_or_else(|| panic!("expected chapter `{slug}` to be present"));
+            assert!(ex.is_bonus(), "`{slug}` should be a bonus chapter");
+            assert_eq!(ex.number, 0, "bonus chapter `{slug}` should be unnumbered");
+        }
+
+        // Non-bonus chapters get a gap-free 1..=N ordinal in disk order, so
+        // hiding a bonus chapter never leaves a hole in the numbering.
+        let numbered: Vec<u8> = exercises
+            .iter()
+            .filter(|e| !e.is_bonus())
+            .map(|e| e.number)
+            .collect();
+        let expected: Vec<u8> = (1..=u8::try_from(numbered.len()).unwrap()).collect();
+        assert_eq!(
+            numbered, expected,
+            "non-bonus chapters should be numbered 1..=N with no gaps"
         );
     }
 

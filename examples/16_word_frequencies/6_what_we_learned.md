@@ -25,3 +25,12 @@ the map, and a few aggregations to compute summary stats.
 - Tuples like `(usize, usize, f64)` work for tiny ad-hoc returns,
   but a named struct (`TextStats { total, unique, avg_len }`) reads
   better at the call site as soon as a function takes off in scope.
+
+## An optional detour
+
+You now have every tool you need to build a small program from scratch:
+structs, enums, iterators, `Option`, `Result`, vectors, and strings.
+There's an optional **Creative Break** chapter — an open-ended password
+validator project rather than a guided lesson. It isn't part of the main
+sequence and nothing later depends on it, so take it whenever you want a
+change of pace, or skip straight ahead.

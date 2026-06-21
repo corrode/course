@@ -1,0 +1,7 @@
+# The password validator is the optional "Creative Break" project: an
+# open-ended chapter rather than a focused lesson. Marking it `bonus`
+# hides it from the table of contents and chapter picker, drops it from
+# progress totals, and skips it in the next-chapter flow. It stays
+# reachable by direct URL and via the forward mention at the end of the
+# word-frequencies chapter.
+bonus = true
