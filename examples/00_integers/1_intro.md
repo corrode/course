@@ -68,5 +68,6 @@ Parsing a string can fail, because the input might not be a number at all. So
 let n: u32 = "123".parse().unwrap_or(0);
 ```
 
-We haven't talked about `Result` yet, but the idea is that Rust forces you to deal with the possibility of failure instead of ignoring it. For now, `.unwrap_or(0)` is fine for now. 
-There's a dedicated chapter on `Result` later. 
+We haven't talked about `Result` yet, but the idea is that Rust forces you to deal with the possibility of failure instead of ignoring it.
+For now, `.unwrap_or(0)` is fine.
+There's a dedicated chapter on `Result` later.
