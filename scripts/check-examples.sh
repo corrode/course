@@ -23,8 +23,8 @@ set -uo pipefail
 # Chapters whose `--example` target intentionally does not compile.
 # Keyed by the chapter directory name (the cargo example target name).
 EXPECTED_BROKEN=(
-    "03_functions"               # 3_stray_semicolon.rs, 6_cap_at.rs
-    "19_modules_and_visibility"  # 3_calculate.rs (privacy error)
+    "04_functions"               # 3_stray_semicolon.rs, 6_cap_at.rs
+    "20_modules_and_visibility"  # 3_calculate.rs (privacy error)
 )
 
 is_expected_broken() {

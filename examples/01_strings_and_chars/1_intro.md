@@ -20,7 +20,10 @@ Before we go further, two words that show up everywhere in Rust:
   Borrows are written with an `&` (or `&mut` if you also want to mutate).
   The borrow has to end before the owner is dropped, and the compiler enforces that for you, ruling out use-after-free and dangling pointers.
 
-The ownership chapter covers this in depth; for now just keep the mental picture of "one owner, many short-lived borrows."
+The ownership model is why Rust has two string types in the first place: it tracks who owns each piece of data.
+The 30-second version: every value has one owner, the value is dropped when that owner goes out of scope, and you can borrow a value without taking it.
+The next chapter (moves and `Copy`) and the borrowing chapter make this hands-on, and a later memory chapter ties it together.
+For now just keep the mental picture of "one owner, many short-lived borrows."
 
 The split between `&str` and `String` is what makes Rust strings both fast and safe.
 A function that just *reads* text takes `&str`; a function that *produces* new text returns `String`.
