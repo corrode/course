@@ -2,7 +2,7 @@
 
 Implement `generate_secure_password(length)` that returns a `String` of the requested length, mixing uppercase letters, lowercase letters, digits, and special characters so it would pass a strict validator.
 
-For variability without pulling in `rand`, you can use `std::time::SystemTime::now().duration_since(UNIX_EPOCH)?.subsec_nanos()` as a seed and cycle through your character sets.
+For variability without pulling in `rand`, you can use `std::time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap().subsec_nanos()` as a seed and cycle through your character sets.
 This is **not** cryptographically secure, but it's plenty for this exercise.
 In real code, use the `rand` crate.
 

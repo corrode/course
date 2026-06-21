@@ -15,7 +15,7 @@ You boxed an integer and added it back out, defined a recursive expression-tree 
   The compiler can lay it out, and recursion mirrors the data exactly.
   The same concept underpins parsers, interpreters, and ASTs everywhere.
 - `Box<dyn Trait>` is the owned form of a trait object.
-  It lets you store mixed concrete types behind a single interface (a `Vec<Box<dyn Command>>` of pipeline stages, all different structs, driven through one trait) and underpins the `Box<dyn Error>` pattern you'll meet in the `?` operator chapter.
+  It lets you store mixed concrete types behind a single interface (a `Vec<Box<dyn Command>>` of pipeline stages, all different structs, driven through one trait) and underpins the `Box<dyn Error>` pattern from the env-file parser chapter.
 - Dynamic dispatch through a trait object costs one vtable lookup per call.
   That's usually fine.
   Reach for generics (`fn f<T: Command>`) when you want the compiler to monomorphize away the indirection.
@@ -34,4 +34,4 @@ You boxed an integer and added it back out, defined a recursive expression-tree 
 ## Where this goes next
 
 The iterators chapter puts iterators front and center, and you'll see how a chain of `.iter().fold(...)` could have replaced the explicit loop in `apply_pipeline`.
-The `?` operator chapter brings `Box<dyn Error>` and the `?` operator together, which is the day-to-day payoff for understanding `Box<dyn Trait>` here.
+The env-file parser chapter brings `Box<dyn Error>` and the `?` operator together, which is the day-to-day payoff for understanding `Box<dyn Trait>` here.
