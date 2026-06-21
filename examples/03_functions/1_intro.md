@@ -1,13 +1,10 @@
 # Functions
 
-The elephant in the room is that you've been writing a function since chapter
-one... 😬👉👈
-
-Every `fn main() { ... }` is one. And every `println!(...)` is a *call*,
-though `println!` is a macro, which is why it has the `!`. So this chapter isn't
-really introducing functions. It's introducing the parts of `fn` we've quietly
-skipped: parameters, return types, the body, and a few small Rust-specific
-quirks.
+You've been inside a function since the first line you wrote: `fn main()` is one,
+and every `println!(...)` is a call (the `!` marks it as a macro). So instead of
+explaining what a function is, this chapter covers the parts of `fn` that Rust
+does its own way: explicit parameter and return types, blocks as expressions, and
+the trailing-semicolon rule that decides what gets returned.
 
 ## Anatomy
 
@@ -59,9 +56,8 @@ the body into "do this, then return `()`" and the compiler will
 complain that the types don't match. The first exercise lets you feel
 that error first-hand.
 
-The three exercises after that each pull at one more thread: returning
-nothing, returning a value built recursively, and modifying a parameter
-inside the body.
+The two exercises after it each pull at one more thread: returning a value
+built recursively, and modifying a parameter inside the body.
 
 ## A few good habits
 
