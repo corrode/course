@@ -42,15 +42,15 @@ answers = [
   { text = "`&mut value`", correct = false, explanation = "That's a *mutable* borrow." },
   { text = "`&value`", correct = true, explanation = "The `&` operator produces a shared, immutable reference." },
   { text = "`*value`", correct = false, explanation = "`*` *dereferences* a reference; it doesn't create one." },
-  { text = "`value.borrow()`", correct = false, explanation = "`.borrow()` is a `RefCell` method, not the general way to take a reference." },
+  { text = "`value.clone()`", correct = false, explanation = "`.clone()` makes an independent owned copy, not a reference to the original." },
 ]
 
 [[questions]]
 prompt = "Which statement about Rust's ownership is correct?"
 answers = [
-  { text = "A value can have multiple owners at the same time.", correct = false, explanation = "Single ownership is the whole point; at most one owner at any moment (use `Rc`/`Arc` only for shared *handles*)." },
+  { text = "A value can have multiple owners at the same time.", correct = false, explanation = "Single ownership is the whole point: at most one owner at any moment." },
   { text = "When an owner goes out of scope, the value is dropped.", correct = true, explanation = "Right. This is how Rust frees memory deterministically, without a garbage collector." },
-  { text = "Ownership can be shared via `SharedPtr`.", correct = false, explanation = "`SharedPtr` is a C++ thing. Rust uses `Rc<T>` (single-threaded) or `Arc<T>` (across threads)." },
+  { text = "Assigning a value to a second variable always copies it.", correct = false, explanation = "For non-`Copy` types, assignment *moves* ownership; the original binding can't be used afterwards." },
   { text = "Primitive types need manual memory management.", correct = false, explanation = "Primitives implement `Copy`, so they're duplicated on assignment, no manual management." },
 ]
 
@@ -131,8 +131,8 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str
 hint = "`'a` is the *shorter* of `x`'s and `y`'s lifetimes."
 answers = [
   { text = "Both inputs must outlive the function call.", correct = false, explanation = "That's true of every reference parameter; it's not what `'a` adds." },
-  { text = "The return value lives strictly *less* than the shorter input.", correct = false, explanation = "Close, but `'a` says \"at *least* as long as\", not \"strictly less than\"." },
-  { text = "The return value lives at least as long as the shorter of the two inputs.", correct = true, explanation = "Right. `'a` is the intersection of the two input lifetimes, and the return reference is valid for that whole window." },
+  { text = "The return value lives strictly *less* than the shorter input.", correct = false, explanation = "Not quite: the returned reference can be valid for that whole window, so the bound is \"no longer than\" (it may be equal), not \"strictly less than\"." },
+  { text = "The return value can't outlive the shorter of the two inputs.", correct = true, explanation = "Right. `'a` is the intersection of the two input lifetimes, so the returned reference is tied to whichever input is dropped first and can't be used past it." },
   { text = "The two inputs must have identical lifetimes.", correct = false, explanation = "They don't; the compiler picks `'a` as the shorter of the two and unifies via subtyping." },
 ]
 
