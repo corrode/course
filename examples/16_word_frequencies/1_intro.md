@@ -36,16 +36,6 @@ let top = counts.iter().max_by_key(|(_, count)| *count);
 // top: Option<(&String, &usize)>
 ```
 
-**Filtering and collecting.** Same iterator chain you saw in the previous chapter:
-
-```rust
-let frequent: Vec<String> = counts
-    .iter()
-    .filter(|(_, &n)| n >= min)
-    .map(|(word, _)| word.clone())
-    .collect();
-```
-
 **Computing an average.** Sum the lengths, divide by the count, watch out for the integer-division trap:
 
 ```rust

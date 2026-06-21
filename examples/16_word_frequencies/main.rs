@@ -16,9 +16,7 @@
 mod _2_count_words;
 #[path = "3_most_common_word.rs"]
 mod _3_most_common_word;
-#[path = "4_frequent_words.rs"]
-mod _4_frequent_words;
-#[path = "5_text_stats.rs"]
-mod _5_text_stats;
+#[path = "4_text_stats.rs"]
+mod _4_text_stats;
 
 fn main() {}
