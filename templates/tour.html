@@ -1,0 +1,407 @@
+{% extends "base.html" %} {% block title %}A Quick Tour of Rust | corrode Rust
+Course{% endblock %} {% block content %}
+<div class="container">
+    <div class="exercise-header">
+        <div class="chapter-eyebrow">Preamble</div>
+        <h1 class="exercise-title">A Quick Tour of Rust</h1>
+    </div>
+
+    <div class="chapter-prose exercise-prose">
+        <p>
+            Here is most of Rust on a single page, told as a tiny game. Don't
+            try to understand every detail. Just read it top to bottom and let
+            the shapes sink in. The whole rest of the course is spent slowing
+            each of these ideas down, one chapter at a time.
+        </p>
+        <p>
+            <strong>Hover over any keyword or type</strong> for a one-line
+            explanation, and press <strong>Run</strong> to watch World 1-1 play
+            out. The code is yours to edit, too.
+        </p>
+    </div>
+
+    <section
+        class="exercise-section"
+        data-step-id="tour"
+        data-exercise-key="tour"
+    >
+        <div class="exercise-section-head">
+            <div></div>
+            <div class="exercise-actions">
+                <span
+                    data-role="action-status"
+                    class="action-status"
+                    aria-live="polite"
+                ></span>
+                <button
+                    type="button"
+                    class="btn btn-secondary btn-reset"
+                    data-role="reset-btn"
+                    title="Restore the original tour code"
+                >
+                    Reset
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-role="format-btn"
+                    title="Format the code with rustfmt"
+                >
+                    Format
+                </button>
+                <button
+                    type="button"
+                    class="btn"
+                    data-role="run-btn"
+                    title="Run on play.rust-lang.org (⌘/Ctrl+Enter)"
+                >
+                    ▶ Run
+                </button>
+            </div>
+        </div>
+
+        <div style="position: relative">
+            <textarea
+                data-role="editor-fallback"
+                spellcheck="false"
+                style="
+                    width: 100%;
+                    min-height: 32rem;
+                    font-family:
+                        &quot;JetBrains Mono&quot;, &quot;SF Mono&quot;, Monaco,
+                        monospace;
+                    font-size: 0.9rem;
+                    padding: 1rem;
+                    border: 1px solid var(--color-border);
+                    border-radius: 12px;
+                    background-color: var(--color-background);
+                    color: var(--color-text);
+                    resize: vertical;
+                "
+            >
+{{ starter }}</textarea
+            >
+            <div data-role="editor-mount" style="display: none"></div>
+        </div>
+
+        <div
+            data-role="run-status-row"
+            style="
+                margin-top: 0.75rem;
+                min-height: 1.2rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            "
+        >
+            <span
+                data-role="run-spinner"
+                class="run-spinner"
+                aria-hidden="true"
+                style="display: none"
+            ></span>
+            <span
+                data-role="run-status"
+                style="color: var(--color-text-muted); font-size: 0.9rem"
+                aria-live="polite"
+            ></span>
+        </div>
+
+        <div data-role="output-panel" style="display: none; margin-top: 1rem">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem">Output</h3>
+            <pre
+                data-role="output-stderr"
+                style="
+                    margin: 0;
+                    padding: 0.85rem 1rem;
+                    background-color: var(--color-background);
+                    border: 1px solid var(--color-border);
+                    border-radius: 12px;
+                    overflow-x: auto;
+                    font-family:
+                        &quot;JetBrains Mono&quot;, &quot;SF Mono&quot;, Monaco,
+                        monospace;
+                    font-size: 0.8rem;
+                    white-space: pre-wrap;
+                "
+            ></pre>
+        </div>
+    </section>
+
+    {% include "partials/next_chapter_cta.html" %}
+</div>
+
+<script type="module">
+    // One annotated, runnable code box. We reuse the playground's
+    // inline editor (CodeMirror + the /api/run proxy) in run-only mode,
+    // and layer concept-class hover explanations on top via the
+    // `buildExtraExtensions` hook. The lookup is deliberately text-based
+    // (grab the token under the pointer, look it up in EXPLAIN) so it
+    // stays robust and minimal instead of depending on Lezer node names.
+
+    // Each entry is the canonical, one-line meaning of a language
+    // construct. Same word, same explanation, wherever it appears.
+    const EXPLAIN = {
+        // Bindings and mutability
+        let: "Binds a name to a value. Immutable unless you add `mut`.",
+        mut: "Makes a binding or reference mutable, so its value can change.",
+        // Functions and flow
+        fn: "Defines a function.",
+        if: "A conditional. In Rust `if` is an expression: it evaluates to a value.",
+        else: "The branch taken when the `if` condition is false.",
+        for: "Loops once over each item of a collection or iterator.",
+        while: "Loops for as long as its condition stays true.",
+        match: "Compares a value against patterns. Must be exhaustive: every case handled.",
+        return: "Returns a value early from a function.",
+        // Types that define data
+        enum: "A type with a fixed set of variants. Variants can carry their own data.",
+        struct: "A type that groups related fields together under one name.",
+        trait: "A set of methods a type can implement. Shared behavior, like an interface.",
+        impl: "Implements methods, or a trait, for a type.",
+        self: "The receiver: the instance the method was called on.",
+        // Primitive and standard types
+        bool: "A boolean: either `true` or `false`.",
+        u8: "An unsigned 8-bit integer, holding 0 to 255.",
+        u32: "An unsigned 32-bit integer (can't be negative).",
+        i32: "A signed 32-bit integer, Rust's everyday default.",
+        str: "A borrowed string slice. You usually see it as `&str`.",
+        String: "An owned, growable, heap-allocated string.",
+        // The two pillars of error handling
+        Option: "A value that's either present (`Some`) or absent (`None`). Rust's answer to null.",
+        Result: "The outcome of something that can fail: `Ok` on success, `Err` on failure.",
+        Some: "The `Option` variant that wraps a present value.",
+        None: "The `Option` variant for an absent value.",
+        Ok: "The `Result` variant carrying a success value.",
+        Err: "The `Result` variant carrying an error.",
+        // Macros and operators
+        "println!":
+            "Prints a line to standard output. The `!` marks it as a macro.",
+        println:
+            "Prints a line to standard output. The `!` marks it as a macro.",
+        "&": "A reference: borrows a value instead of taking ownership.",
+        "&mut": "A mutable borrow: exclusive, writable access. Only one at a time.",
+        "*": "Dereferences a reference to read or write the value it points to.",
+        "::": "Path separator, e.g. `PowerUp::Star` or `String::from`.",
+        "->": "Introduces the type a function returns.",
+        // The example's own types, for orientation
+        PowerUp: "This tour's example enum: Mario's current power state.",
+        Player: "This tour's example struct: a name plus a power state.",
+        Jump: "This tour's example trait: the shared `jump` behavior.",
+    };
+
+    const WORD = /[A-Za-z0-9_]/;
+
+    // Resolve the token under `pos` to a { from, to, key } we can explain,
+    // or null. If the cursor sits on a word character we grab the whole
+    // identifier (plus a trailing `!` so `println!` reads as one token);
+    // otherwise we recognise a few operators by their characters, so
+    // hovering directly on `::`, `->`, `&`, or `*` works too.
+    function tokenAt(state, pos) {
+        const line = state.doc.lineAt(pos);
+        const text = line.text;
+        const i = pos - line.from;
+        const here = text[i] || "";
+
+        if (WORD.test(here) || (here === "!" && WORD.test(text[i - 1] || ""))) {
+            let a = i;
+            let b = i;
+            while (a > 0 && WORD.test(text[a - 1])) a--;
+            while (b < text.length && WORD.test(text[b])) b++;
+            let end = b;
+            if (text[end] === "!") end++;
+            return {
+                from: line.from + a,
+                to: line.from + end,
+                key: text.slice(a, end),
+            };
+        }
+
+        if (here === "&") {
+            if (text.slice(i, i + 4) === "&mut")
+                return {
+                    from: line.from + i,
+                    to: line.from + i + 4,
+                    key: "&mut",
+                };
+            return { from: line.from + i, to: line.from + i + 1, key: "&" };
+        }
+        if (here === "*")
+            return { from: line.from + i, to: line.from + i + 1, key: "*" };
+        for (const op of ["::", "->"]) {
+            if (text.slice(i, i + 2) === op)
+                return { from: line.from + i, to: line.from + i + 2, key: op };
+            if (text.slice(i - 1, i + 1) === op)
+                return {
+                    from: line.from + i - 1,
+                    to: line.from + i + 1,
+                    key: op,
+                };
+        }
+        return null;
+    }
+
+    function buildTourHover(cm) {
+        const view = cm && cm.view;
+        const hoverTooltip = view && view.hoverTooltip;
+        if (typeof hoverTooltip !== "function") {
+            console.warn(
+                "tour: hoverTooltip unavailable; explanations disabled",
+            );
+            return [];
+        }
+        const ext = hoverTooltip(
+            (cmView, pos) => {
+                const tok = tokenAt(cmView.state, pos);
+                if (!tok) return null;
+                const body = EXPLAIN[tok.key];
+                if (!body) return null;
+                return {
+                    pos: tok.from,
+                    end: tok.to,
+                    above: true,
+                    create() {
+                        const dom = document.createElement("div");
+                        dom.className = "tour-tip";
+                        const k = document.createElement("code");
+                        k.className = "tour-tip-key";
+                        k.textContent = tok.key;
+                        const p = document.createElement("span");
+                        p.textContent = body;
+                        dom.appendChild(k);
+                        dom.appendChild(p);
+                        return { dom };
+                    },
+                };
+            },
+            { hoverTime: 80 },
+        );
+        // The inline editor sets `overflow: hidden` on `.cm-editor`, which
+        // clips tooltips rendered as its children. Render them into
+        // `document.body` so they're always visible.
+        const exts = [ext];
+        if (typeof view.tooltips === "function") {
+            exts.unshift(view.tooltips({ parent: document.body }));
+        }
+        return exts;
+    }
+
+    import("/static/js/inline-editor.js")
+        .then(({ mountInlineEditor }) => {
+            const section = document.querySelector(
+                '.exercise-section[data-step-id="tour"]',
+            );
+            if (!section) return;
+            const fallback = section.querySelector(
+                '[data-role="editor-fallback"]',
+            );
+            mountInlineEditor(section, {
+                starter: fallback ? fallback.value : "",
+                slug: "tour",
+                features: {
+                    vim: true,
+                    draftKey: "corrode:tour:draft",
+                    submit: null,
+                    testResults: false,
+                    copyButton: false,
+                    urlPlugin: false,
+                    syntaxHighlightOutput: false,
+                    runWithoutTests: true,
+                    buildExtraExtensions: buildTourHover,
+                },
+            });
+        })
+        .catch((err) => {
+            console.error("inline-editor module failed to load:", err);
+        });
+</script>
+
+<style>
+    .exercise-header {
+        margin: 1rem 0 1.5rem;
+    }
+    .chapter-eyebrow {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+        margin-bottom: 0.4rem;
+    }
+    .exercise-title {
+        font-size: 2rem;
+    }
+    .exercise-section {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .exercise-section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    .exercise-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .run-spinner {
+        width: 0.9rem;
+        height: 0.9rem;
+        border: 2px solid var(--color-border);
+        border-top-color: var(--color-primary);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .btn.btn-reset {
+        color: var(--color-text-muted);
+    }
+    .btn.btn-reset:hover {
+        color: var(--color-text);
+    }
+
+    .exercise-section[data-step-id="tour"] .cm-editor {
+        min-height: 32rem;
+    }
+
+    /* Hover-explanation tooltip. CodeMirror wraps it in `.cm-tooltip`;
+       we only style the inner `.tour-tip` content. */
+    .tour-tip {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        max-width: 22rem;
+        padding: 0.5rem 0.65rem;
+        font-size: 0.82rem;
+        line-height: 1.35;
+        color: var(--color-text);
+    }
+    .tour-tip-key {
+        align-self: flex-start;
+        font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+        font-size: 0.78rem;
+        color: var(--color-primary);
+        background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+        padding: 0.05rem 0.35rem;
+        border-radius: 5px;
+    }
+    .cm-tooltip:has(.tour-tip) {
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        background: var(--color-surface);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    }
+</style>
+{% endblock %}

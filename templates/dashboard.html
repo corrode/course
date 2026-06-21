@@ -112,6 +112,11 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
             tell you when you're done. Most take five to ten minutes. Skip ahead
             if a chapter feels familiar, come back when something clicks.
         </p>
+        <p class="book-tour-link">
+            Want the big picture again?
+            <a href="/tour">A Quick Tour of Rust →</a> shows the whole language
+            on a single page.
+        </p>
         {% match team_token %} {% when Some with (token) %} {% match ulid %} {%
         when Some with (u) %}
         <p class="book-team-link">
@@ -141,6 +146,11 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
             four hands-on mini-projects: a password validator, a word counter,
             an env-file parser, and a CSV parser. Skip ahead if a chapter feels
             familiar; come back when something clicks.
+        </p>
+        <p class="book-tour-link">
+            New to Rust? Start with
+            <a href="/tour">A Quick Tour of Rust →</a>, the whole language on a
+            single page before the chapters slow it all down.
         </p>
     </section>
 
@@ -265,10 +275,10 @@ fn main() {
         {#
           Inline signup card. Hidden until the warm-up's first successful
           run. Once visible, the form posts the chosen name to
-          `/api/register` (JSON), gets a fresh ULID back, and redirects to
-          chapter 1 (`00_integers`) under that ULID. The fallback `<a>`
-          right below the form lets visitors who'd rather skip the save
-          file jump straight in as anonymous.
+          `/api/register` (JSON), gets a fresh ULID back, and sends the
+          learner into the quick tour (`/tour/{ulid}`) under that ULID.
+          The fallback `<a>` right below the form lets visitors who'd
+          rather skip the save file head to the tour as anonymous.
         #}
         <div
             id="warmup-signup"
@@ -300,7 +310,7 @@ fn main() {
                     class="btn book-acquainted-signup-submit"
                     id="warmup-signup-submit"
                 >
-                    Continue to chapter 1 →
+                    Start the quick tour →
                 </button>
             </form>
             <p
@@ -311,9 +321,7 @@ fn main() {
             ></p>
             <p class="book-acquainted-signup-skip">
                 Or
-                <a href="/exercise/{{ next_slug }}"
-                    >jump in without signing up</a
-                >
+                <a href="/tour">jump in without signing up</a>
                 &mdash; you can always sign up later from any chapter.
             </p>
         </div>
@@ -354,7 +362,6 @@ fn main() {
         const signupName = document.getElementById("warmup-signup-name");
         const signupSubmit = document.getElementById("warmup-signup-submit");
         const signupError = document.getElementById("warmup-signup-error");
-        const NEXT_SLUG = "{{ next_slug }}";
 
         function revealSignup() {
             if (!signupCard.hasAttribute("hidden")) return;
@@ -418,10 +425,10 @@ fn main() {
         });
 
         // ---- Inline signup ---------------------------------------------
-        // POSTs the chosen name to /api/register (JSON), then redirects
-        // to chapter 1 under the freshly minted ULID. The endpoint
-        // validates the name server-side via `Name::try_from`; we surface
-        // any 4xx as inline error text rather than alerting.
+        // POSTs the chosen name to /api/register (JSON), then sends the
+        // learner into the quick tour under the freshly minted ULID. The
+        // endpoint validates the name server-side via `Name::try_from`;
+        // we surface any 4xx as inline error text rather than alerting.
         signupForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const name = (signupName.value || "").trim();
@@ -459,7 +466,7 @@ fn main() {
                     signupName.disabled = false;
                     return;
                 }
-                window.location.href = `/exercise/${data.ulid}/${NEXT_SLUG}`;
+                window.location.href = `/tour/${data.ulid}`;
             } catch (err) {
                 console.error(err);
                 signupError.textContent =

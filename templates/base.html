@@ -1550,6 +1550,78 @@
                 font-style: italic;
             }
 
+            /* ---------- Next-chapter CTA ---------- */
+            /* Rendered by `templates/partials/next_chapter_cta.html` at
+               the bottom of exercise pages and the quick tour. Exercise
+               pages add `.is-locked` to hide it until the chapter is
+               completed (revealed by the run-success hook in
+               `exercise.html`); the tour leaves it always visible. */
+            .next-chapter-cta {
+                margin: 3rem auto 0;
+                max-width: 32rem;
+                text-align: center;
+            }
+            .next-chapter-cta.is-locked {
+                display: none;
+            }
+            .next-chapter-btn {
+                display: inline-grid;
+                grid-template-columns: 1fr auto;
+                grid-template-rows: auto auto;
+                column-gap: 1rem;
+                row-gap: 0.15rem;
+                align-items: center;
+                text-align: left;
+                text-decoration: none;
+                padding: 1rem 1.5rem;
+                min-height: auto;
+                height: auto;
+                font-size: 1rem;
+            }
+            .next-chapter-btn:hover,
+            .next-chapter-btn:focus-visible {
+                text-decoration: none;
+            }
+            .next-chapter-eyebrow {
+                grid-column: 1;
+                grid-row: 1;
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.18em;
+                font-weight: 600;
+                opacity: 0.8;
+            }
+            .next-chapter-title {
+                grid-column: 1;
+                grid-row: 2;
+                display: inline-flex;
+                align-items: baseline;
+                gap: 0.55rem;
+                font-size: 1.1rem;
+                font-weight: 600;
+                line-height: 1.2;
+            }
+            .next-chapter-num {
+                font-family:
+                    "JetBrains Mono", "SF Mono", Monaco, Menlo, Consolas,
+                    monospace;
+                font-size: 0.95rem;
+                font-weight: 600;
+                opacity: 0.85;
+                font-variant-numeric: tabular-nums;
+            }
+            .next-chapter-arrow {
+                grid-column: 2;
+                grid-row: 1 / span 2;
+                font-size: 1.4rem;
+                line-height: 1;
+                transition: transform 0.15s ease;
+            }
+            .next-chapter-btn:hover .next-chapter-arrow,
+            .next-chapter-btn:focus-visible .next-chapter-arrow {
+                transform: translateX(0.2rem);
+            }
+
             /* ---------- Quiz block (inline on quiz chapters) ---------- */
             /* Rendered by `Quiz::render_html` in src/exercises.rs and
                wired up by `static/js/quiz.js`. Lives inside the chapter

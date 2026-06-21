@@ -10,7 +10,7 @@ template variables: - dots: Vec<ProgressDot>
             <nav
                 class="chapter-list"
                 aria-label="All exercises"
-                style="--chapter-rows: {{ (dots.len() + 1) / 2 }}"
+                style="--chapter-rows: {{ chapter_rows }}"
             >
                 {% for d in dots %} {% if !d.is_bonus %} {% if d.current %}
                 <span
@@ -22,7 +22,16 @@ template variables: - dots: Vec<ProgressDot>
                     <span class="chapter-title">{{ d.title }}</span>
                     <span class="chapter-mark" aria-hidden="true"></span>
                 </span>
-                {% else %} {% match ulid %} {% when Some with (u) %}
+                {% else %} {% match d.href %} {% when Some with (h) %}
+                <a
+                    href="{{ h }}"
+                    class="chapter-row{% if d.is_quiz %} quiz{% endif %}"
+                >
+                    <span class="chapter-num">{{ d.number }}</span>
+                    <span class="chapter-title">{{ d.title }}</span>
+                    <span class="chapter-mark" aria-hidden="true"></span>
+                </a>
+                {% when None %} {% match ulid %} {% when Some with (u) %}
                 <a
                     href="/exercise/{{ u }}/{{ d.slug }}"
                     class="chapter-row{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
@@ -40,7 +49,8 @@ template variables: - dots: Vec<ProgressDot>
                     <span class="chapter-title">{{ d.title }}</span>
                     <span class="chapter-mark" aria-hidden="true"></span>
                 </a>
-                {% endmatch %} {% endif %} {% endif %} {% endfor %}
+                {% endmatch %} {% endmatch %} {% endif %} {% endif %} {% endfor
+                %}
             </nav></span
         ></String
     ></ProgressDot

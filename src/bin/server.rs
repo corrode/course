@@ -136,6 +136,24 @@ struct PlaygroundTemplate {
     starter: String,
 }
 
+/// Template for the read-only "A Quick Tour of Rust" preamble page.
+/// Renders one editable, runnable code box (the Mario tour) with
+/// concept-class hover explanations.
+#[derive(Template)]
+#[template(path = "tour.html")]
+struct TourTemplate {
+    /// The annotated tour source shown in the editor.
+    starter: String,
+    /// Always `None`: the tour is anonymous preamble with no participant
+    /// context. Present so it can share `partials/next_chapter_cta.html`.
+    ulid: Option<String>,
+    /// The first real chapter, rendered as the closing "Next chapter"
+    /// CTA via the shared partial. `None` if the catalog is empty.
+    next_dot: Option<ProgressDot>,
+    /// Always `false`: the tour's CTA is never locked behind completion.
+    next_locked: bool,
+}
+
 /// Template for the cheatsheet page. Just renders pre-built HTML
 /// produced from `static/cheatsheet.md` at startup.
 #[derive(Template)]
@@ -157,6 +175,8 @@ struct ExerciseTemplate {
     /// One entry per exercise in the catalog, ordered by `number`.
     /// Used to render the bottom "chapter list" navigation.
     dots: Vec<ProgressDot>,
+    /// Rows in the first TOC column; see [`chapter_rows`].
+    chapter_rows: usize,
     /// Ordered render plan: prose blocks and code sections in display
     /// order. Each `Code` carries the per-step status and the database
     /// key (`<chapter>/<step_key>` or just `<chapter>` for legacy).
@@ -165,6 +185,11 @@ struct ExerciseTemplate {
     /// or `None` when this is the last chapter. Used for the
     /// "Next chapter" call-to-action at the bottom of the page.
     next_dot: Option<ProgressDot>,
+    /// When `true`, the next-chapter CTA renders hidden (`.is-locked`)
+    /// until the participant completes the current chapter. Always
+    /// `false` on the public route. Consumed by
+    /// `partials/next_chapter_cta.html`.
+    next_locked: bool,
     /// Number of completable chapters the participant has finished.
     /// Quizzes and notes-only chapters don't count toward either total.
     progress_done: usize,
@@ -194,6 +219,32 @@ struct ProgressDot {
     /// `true` for optional bonus chapters: hidden from the TOC/picker and
     /// excluded from progress and the next-chapter flow.
     is_bonus: bool,
+    /// Optional explicit link target. When `Some`, the TOC partial and
+    /// chapter picker link straight here instead of deriving an
+    /// `/exercise/{slug}` URL. Used for non-exercise entries like the
+    /// read-only "Quick Tour" preamble (`/tour`).
+    href: Option<String>,
+}
+
+/// Synthetic chapter-list entry for the read-only "A Quick Tour of
+/// Rust" preamble. It isn't a real exercise (no code steps, no tests,
+/// no progress), so it carries an explicit `/tour` href and
+/// `has_exercises = false` to stay out of the progress totals while
+/// still showing as the first row of the table of contents.
+fn tour_dot() -> ProgressDot {
+    ProgressDot {
+        slug: "tour".to_string(),
+        number: 0,
+        title: "A Quick Tour of Rust".to_string(),
+        attempted: false,
+        completed: false,
+        perfected: false,
+        current: false,
+        is_quiz: false,
+        has_exercises: false,
+        is_bonus: false,
+        href: Some("/tour".to_string()),
+    }
 }
 
 /// Per-exercise progress used by the chapter list and current-status badge.
@@ -230,6 +281,8 @@ struct DashboardTemplate {
     /// two stay visually identical. `current` is always `false`
     /// here because the homepage isn't any one chapter.
     dots: Vec<ProgressDot>,
+    /// Rows in the first TOC column; see [`chapter_rows`].
+    chapter_rows: usize,
     /// Slug of the first chapter the participant hasn't completed yet,
     /// or the first chapter overall if they're brand new / fully done.
     /// Used by the "Start" call-to-action.
@@ -854,6 +907,8 @@ async fn main() -> Result<()> {
         .route("/exercise/{slug}", get(public_exercise_page))
         .route("/exercise/{ulid}/{slug}", get(participant_exercise_page))
         .route("/playground", get(playground_page))
+        .route("/tour", get(tour_page))
+        .route("/tour/{ulid}", get(tour_page_with_ulid))
         .route("/settings", get(settings_page))
         .route("/settings/{ulid}", get(participant_settings_page))
         .route("/cheatsheet", get(cheatsheet_page))
@@ -929,9 +984,8 @@ async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
 /// so both pages feed the same `partials/chapter_list.html` partial.
 /// `current` is always `false` on the homepage.
 fn dots_from_exercises(exercises: &[ExerciseProgress]) -> Vec<ProgressDot> {
-    exercises
-        .iter()
-        .map(|e| ProgressDot {
+    std::iter::once(tour_dot())
+        .chain(exercises.iter().map(|e| ProgressDot {
             slug: e.name.clone(),
             number: e.number,
             title: e.title.clone(),
@@ -942,8 +996,19 @@ fn dots_from_exercises(exercises: &[ExerciseProgress]) -> Vec<ProgressDot> {
             is_quiz: e.is_quiz,
             has_exercises: e.has_exercises,
             is_bonus: e.is_bonus,
-        })
+            href: None,
+        }))
         .collect()
+}
+
+/// Number of rows in the first column of the two-column table of
+/// contents (`partials/chapter_list.html`). The list uses
+/// `grid-auto-flow: column` with `--chapter-rows` rows, filling the
+/// first column before the second, so this is `ceil(visible / 2)`.
+/// Counts only rendered (non-bonus) rows so the two columns stay
+/// balanced as chapters are added or removed.
+fn chapter_rows(dots: &[ProgressDot]) -> usize {
+    dots.iter().filter(|d| !d.is_bonus).count().div_ceil(2)
 }
 
 /// Anonymous dashboard at `/`.
@@ -991,10 +1056,12 @@ async fn anonymous_dashboard(
         .filter(|e| !e.is_quiz && e.has_exercises && !e.is_bonus)
         .count();
 
+    let dots = dots_from_exercises(&exercises);
     let template = DashboardTemplate {
         participant_name: None,
         ulid: None,
-        dots: dots_from_exercises(&exercises),
+        chapter_rows: chapter_rows(&dots),
+        dots,
         next_slug,
         next_label,
         next_chapter_number,
@@ -1050,6 +1117,64 @@ fn render_signup(team_slug: Option<String>) -> axum::response::Response {
         },
         |html| Html(html).into_response(),
     )
+}
+
+/// Read-only "A Quick Tour of Rust" preamble page at `/tour`.
+///
+/// Ships the annotated Mario tour source (embedded at compile time)
+/// into one editable, runnable code box. Like the playground, edits
+/// live in `localStorage` and "Run" proxies to play.rust-lang.org; the
+/// page adds concept-class hover explanations on top.
+async fn tour_page(State(state): State<AppState>) -> impl IntoResponse {
+    render_tour(&state, None)
+}
+
+/// Same tour page, but reached with a participant ULID (e.g. straight
+/// after signing up on the dashboard warm-up). The ULID is threaded
+/// into the closing "Next chapter" CTA so the learner keeps their
+/// progress context when they move on to chapter 1.
+async fn tour_page_with_ulid(
+    AxumPath(ulid): AxumPath<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    render_tour(&state, Some(ulid))
+}
+
+fn render_tour(state: &AppState, ulid: Option<String>) -> axum::response::Html<String> {
+    const STARTER: &str = include_str!("../../static/tour_starter.rs");
+    // Derive the first real chapter the same way the dashboard does, so
+    // the closing CTA keeps pointing at the right place even if chapters
+    // are renamed or reordered.
+    let first = state
+        .exercises
+        .iter()
+        .find(|e| !e.is_quiz() && !e.is_bonus() && !e.code_steps().is_empty());
+    let next_dot = first.map(|e| ProgressDot {
+        slug: e.slug.clone(),
+        number: e.number,
+        title: e.title.clone(),
+        attempted: false,
+        completed: false,
+        perfected: false,
+        current: false,
+        is_quiz: e.is_quiz(),
+        has_exercises: !e.code_steps().is_empty(),
+        is_bonus: e.is_bonus(),
+        href: None,
+    });
+    let template = TourTemplate {
+        starter: STARTER.to_string(),
+        ulid,
+        next_dot,
+        next_locked: false,
+    };
+    match template.render() {
+        Ok(html) => Html(html),
+        Err(e) => {
+            error!("tour template render failed: {e}");
+            Html("Error rendering template".to_string())
+        }
+    }
 }
 
 /// Standalone Rust scratchpad. Code is persisted client-side in
@@ -1221,10 +1346,12 @@ async fn participant_dashboard(
         .count();
 
     let team_token = participant.parsed_team_token();
+    let dots = dots_from_exercises(&exercises);
     let template = DashboardTemplate {
         participant_name: Some(participant.name),
         ulid: Some(ulid.clone()),
-        dots: dots_from_exercises(&exercises),
+        chapter_rows: chapter_rows(&dots),
+        dots,
         next_slug,
         next_label,
         next_chapter_number,
@@ -1353,11 +1480,8 @@ async fn render_exercise_page(
         .cloned()
         .unwrap_or_default();
 
-    let dots: Vec<ProgressDot> = state
-        .exercises
-        .iter()
-        .enumerate()
-        .map(|(i, e)| {
+    let dots: Vec<ProgressDot> = std::iter::once(tour_dot())
+        .chain(state.exercises.iter().enumerate().map(|(i, e)| {
             let s = chapter_progress
                 .get(&e.file_stem)
                 .cloned()
@@ -1373,8 +1497,9 @@ async fn render_exercise_page(
                 is_quiz: e.is_quiz(),
                 has_exercises: !e.code_steps().is_empty(),
                 is_bonus: e.is_bonus(),
+                href: None,
             }
-        })
+        }))
         .collect();
 
     // Build the ordered render plan from the chapter's steps.
@@ -1469,8 +1594,14 @@ async fn render_exercise_page(
     // Next chapter for the bottom CTA: the first non-bonus dot after the
     // current one. We don't skip quizzes or appendices (the picker shows
     // them), but bonus chapters are hidden from the picker, so the CTA
-    // skips them too.
-    let next_dot = dots.iter().skip(idx + 1).find(|d| !d.is_bonus).cloned();
+    // skips them too. Locate the current dot by its flag rather than by
+    // `idx`, since `dots` is prefixed with the synthetic tour entry.
+    let next_dot = dots
+        .iter()
+        .skip_while(|d| !d.current)
+        .skip(1)
+        .find(|d| !d.is_bonus)
+        .cloned();
 
     // Progress: how many completable chapters has the participant
     // finished? Quizzes and notes-only chapters never "complete", so
@@ -1484,13 +1615,16 @@ async fn render_exercise_page(
         .filter(|d| !d.is_quiz && d.has_exercises && !d.is_bonus && d.completed)
         .count();
 
+    let next_locked = ulid.is_some() && !current_status.completed;
     let template = ExerciseTemplate {
         exercise,
         ulid,
         current_status,
+        chapter_rows: chapter_rows(&dots),
         dots,
         items,
         next_dot,
+        next_locked,
         progress_done,
         progress_total,
     };

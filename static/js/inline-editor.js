@@ -527,6 +527,15 @@ export async function mountInlineEditor(section, opts = {}) {
       ...(urlPlugin ? [urlPlugin, urlTheme] : []),
       themeCompartment.of(proseEditorTheme),
       persistExt,
+      // Page-specific extras (e.g. the tour's hover-explanation
+      // tooltips). Built here so callers reuse the exact CM module
+      // instances resolved through the shared importmap. The value may
+      // be a single extension or an array; CodeMirror flattens nested
+      // arrays, so we include it as one element rather than spreading
+      // (spreading a non-iterable single extension would throw).
+      typeof features.buildExtraExtensions === "function"
+        ? features.buildExtraExtensions(cmModules) || []
+        : [],
     ];
 
     editor = new EditorView({
