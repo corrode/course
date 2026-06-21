@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::{Row, Sqlite, SqlitePool, migrate::MigrateDatabase, sqlite::SqlitePoolOptions};
 use std::env;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use tower_http::services::ServeDir;
 use ulid::Ulid;
 
@@ -27,19 +27,58 @@ use ulid::Ulid;
 /// Surfaced in the site footer so users can tell which release they're on.
 const COURSE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Git branch and short commit the running server was built from, injected by
-/// `build.rs` via `cargo:rustc-env`. `option_env!` keeps the build working when
-/// `.git` isn't available (e.g. some Docker builds); we fall back to "unknown".
-/// Surfaced next to `COURSE_VERSION` in the footer so we can tell which branch
-/// and commit a given deploy is on during the restructure.
-const GIT_BRANCH: &str = match option_env!("GIT_BRANCH") {
-    Some(b) => b,
-    None => "unknown",
-};
-const GIT_HASH: &str = match option_env!("GIT_HASH") {
-    Some(h) => h,
-    None => "unknown",
-};
+/// Build-time git metadata baked in by `build.rs` via `cargo:rustc-env`.
+/// `option_env!` keeps the build working when `.git` isn't available (the
+/// Docker build context excludes it), in which case these are `None`.
+const GIT_BRANCH_BUILD: Option<&str> = option_env!("GIT_BRANCH");
+const GIT_HASH_BUILD: Option<&str> = option_env!("GIT_HASH");
+
+/// Git branch and short commit shown in the footer, resolved once at startup.
+///
+/// We prefer a runtime environment variable over the build-time value. The
+/// production deploy (Coolify) builds the image with `.git` excluded and, since
+/// Coolify v450, no longer injects `SOURCE_COMMIT` as a build arg by default
+/// (it would bust the Docker layer cache), so `build.rs` bakes in "unknown".
+/// Coolify still exposes the commit and branch to the running container as the
+/// env vars `SOURCE_COMMIT` and `COOLIFY_BRANCH`, so we read those at runtime.
+/// Precedence: explicit runtime override, then the build-time value, then
+/// "unknown".
+static GIT_BRANCH: LazyLock<String> = LazyLock::new(|| {
+    git_env("GIT_BRANCH")
+        .or_else(|| git_env("COOLIFY_BRANCH"))
+        .or_else(|| usable(GIT_BRANCH_BUILD.map(str::to_owned)))
+        .unwrap_or_else(|| "unknown".into())
+});
+
+static GIT_HASH: LazyLock<String> = LazyLock::new(|| {
+    git_env("GIT_HASH")
+        .or_else(|| git_env("SOURCE_COMMIT").map(|s| s.chars().take(7).collect()))
+        .or_else(|| usable(GIT_HASH_BUILD.map(str::to_owned)))
+        .unwrap_or_else(|| "unknown".into())
+});
+
+/// A runtime environment variable, normalised: trimmed, and treated as absent
+/// when empty or the literal "unknown".
+fn git_env(key: &str) -> Option<String> {
+    usable(std::env::var(key).ok())
+}
+
+/// Drop values that carry no information (empty or "unknown"), trim the rest.
+fn usable(value: Option<String>) -> Option<String> {
+    value
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty() && s != "unknown")
+}
+
+/// Footer accessors used by `base.html`. Askama can't render a `LazyLock`
+/// directly, so hand it a plain `&str`.
+fn git_branch() -> &'static str {
+    GIT_BRANCH.as_str()
+}
+
+fn git_hash() -> &'static str {
+    GIT_HASH.as_str()
+}
 
 /// Application state shared across all routes
 #[derive(Clone)]
@@ -3006,5 +3045,18 @@ mod tests {
     #[test]
     fn bucket_participants_handles_empty_input() {
         assert!(bucket_participants_by_team(Vec::new()).is_empty());
+    }
+
+    #[test]
+    fn usable_filters_out_uninformative_git_values() {
+        // Real values pass through, trimmed.
+        assert_eq!(usable(Some("main".into())), Some("main".into()));
+        assert_eq!(usable(Some("  abc1234 ".into())), Some("abc1234".into()));
+        // Absent, empty, whitespace-only, and the "unknown" sentinel all
+        // collapse to None so the next source in the chain is tried.
+        assert_eq!(usable(None), None);
+        assert_eq!(usable(Some(String::new())), None);
+        assert_eq!(usable(Some("   ".into())), None);
+        assert_eq!(usable(Some("unknown".into())), None);
     }
 }
