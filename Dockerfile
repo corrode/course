@@ -11,18 +11,20 @@ FROM rust:1-trixie AS builder
 
 WORKDIR /app
 
-# Build-time git metadata for the footer. The build context excludes
-# `.git` (see .dockerignore), so `build.rs` can't shell out to git here.
-# Production only ever deploys `main`, so default the branch to `main`
-# (override with `--build-arg GIT_BRANCH=...` for a one-off branch build).
-# The commit comes from Coolify's auto-injected `SOURCE_COMMIT`; set
-# `GIT_HASH` explicitly to override it.
+# Build-time git metadata for the footer, used only as a fallback. The
+# build context excludes `.git` (see .dockerignore) so `build.rs` can't
+# shell out to git here, and since Coolify v450 `SOURCE_COMMIT` is no
+# longer injected as a build arg by default (it busts the layer cache).
+# The server therefore resolves the branch and commit from the *runtime*
+# environment first (Coolify exposes `SOURCE_COMMIT` and `COOLIFY_BRANCH`
+# to the container), falling back to these baked-in values. Production
+# only ever deploys `main`, so default the branch to `main`. Pass
+# `--build-arg GIT_HASH=...` (and/or `GIT_BRANCH=...`) to bake values in
+# for a one-off build outside Coolify.
 ARG GIT_BRANCH=main
 ARG GIT_HASH=
-ARG SOURCE_COMMIT=
 ENV GIT_BRANCH=${GIT_BRANCH} \
-    GIT_HASH=${GIT_HASH} \
-    SOURCE_COMMIT=${SOURCE_COMMIT}
+    GIT_HASH=${GIT_HASH}
 
 # Cache dependencies separately from source. Copy just the manifests
 # first, build a dummy main so cargo downloads + compiles deps, then
