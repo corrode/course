@@ -1,0 +1,5 @@
+# Smart pointers (Box/Rc/RefCell) are opt-in depth, not part of the core
+# spine. Marking the chapter `bonus` hides it from the table of contents
+# and chapter picker, drops it from progress totals, and skips it in the
+# next-chapter flow. It stays reachable by direct URL.
+bonus = true
