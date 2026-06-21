@@ -1,4 +1,4 @@
-# Your first function: a welcome message
+# A welcome message
 
 Time to put `&str` and `String` together.
 Implement `format_welcome_message` so it returns the string `"Welcome, {name}!"`.

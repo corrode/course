@@ -29,7 +29,7 @@ fn min_max(values: &[i32]) -> (i32, i32) {
 let (lo, hi) = min_max(&[3, 1, 4, 1, 5, 9]);
 ```
 
-That `min_max` body has three pieces of syntax we haven't formally introduced yet.
+That `min_max` body has three pieces of syntax worth a quick note.
 Don't let them trip you up here:
 
 - `values.iter()` walks the slice one element at a time.
@@ -37,7 +37,7 @@ Don't let them trip you up here:
 - `.min()` / `.max()` return an `Option` (they'd return `None` for an empty slice).
   `.unwrap()` says "I'm sure it's `Some`, give me the value or panic."
   `Option` is the next chapter.
-- The leading `*` *dereferences* the `&i32` that the iterator hands back, so we end up with an owned `i32` instead of a reference.
+- The leading `*` *dereferences* the `&i32` the iterator hands back (the same dereference you met in the hashmaps chapter), so we end up with an owned `i32` instead of a reference.
 
 When you only care about some fields, use `_` to ignore the rest:
 
