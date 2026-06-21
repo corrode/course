@@ -1,15 +1,15 @@
 # Hints
 
-This chapter is open-ended. The hints below are scaffolding, not a
-solution. They're here to keep you moving when you're stuck on *where
-to start*, not on *which trick to use*.
+This chapter is open-ended.
+The hints below are scaffolding, not a solution.
+They're here to keep you moving when you're stuck on *where to start*, not on *which trick to use*.
 
 ## Where to start
 
-1. Implement `PasswordReport::is_strong` first. It's a one-liner: `self.score >= 70`.
-2. Implement `PasswordValidator::validate` with the **base requirements
-   only** (length + uppercase + lowercase + digit + special). Skip the
-   advanced ideas until the four base tests pass.
+1. Implement `PasswordReport::is_strong` first.
+   It's a one-liner: `self.score >= 70`.
+2. Implement `PasswordValidator::validate` with the **base requirements only** (length + uppercase + lowercase + digit + special).
+   Skip the advanced ideas until the four base tests pass.
 
 ## Skeleton for `validate`
 
@@ -46,7 +46,5 @@ let strength = match score {
 
 ## On `PasswordGenerator::generate_secure_password`
 
-The exercise text suggests using
-`SystemTime::now().duration_since(UNIX_EPOCH)?.subsec_nanos()` as a
-source of variability. That's enough to pass the test; in real code,
-reach for the [`rand`](https://docs.rs/rand) crate.
+The exercise text suggests using `SystemTime::now().duration_since(UNIX_EPOCH)?.subsec_nanos()` as a source of variability.
+That's enough to pass the test; in real code, reach for the [`rand`](https://docs.rs/rand) crate.

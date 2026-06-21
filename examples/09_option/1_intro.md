@@ -1,9 +1,9 @@
-# Option<T>: When a Value Might Be Missing
+# Option<T>: When a value might be missing
 
 *I looked for a joke about null pointers in Rust, but there was `None`.*
 
-Rust has no `null`. Instead, when a value might be absent, the type makes
-that explicit using `Option<T>`:
+Rust has no `null`.
+Instead, when a value might be absent, the type makes that explicit using `Option<T>`:
 
 ```rust
 enum Option<T> {
@@ -12,12 +12,12 @@ enum Option<T> {
 }
 ```
 
-The compiler will not let you accidentally use a `None` as if it were a
-real value. Every time you have an `Option`, you have to deal with both
-cases. That's the whole point.
+The compiler will not let you accidentally use a `None` as if it were a real value.
+Every time you have an `Option`, you have to deal with both cases.
+That's the whole point.
 
-There are two main ways to unwrap an option. Pattern matching is the
-fundamental tool:
+There are two main ways to unwrap an option.
+Pattern matching is the fundamental tool:
 
 ```rust
 match find_user(id) {
@@ -36,9 +36,8 @@ let len = maybe_str.map_or(0, |s| s.len());   // transform-or-default
 
 ### A note on `|x| ...` (closures)
 
-Those `|s| s.to_uppercase()` and `|s| s.len()` bits are *closures*:
-anonymous functions you can pass as arguments. The pipes hold the
-parameters; everything after them is the body:
+Those `|s| s.to_uppercase()` and `|s| s.len()` bits are *closures*: anonymous functions you can pass as arguments.
+The pipes hold the parameters; everything after them is the body:
 
 ```rust
 let add_one = |x| x + 1;
@@ -54,12 +53,10 @@ let greet = |name: &str| {
 };
 ```
 
-Closures show up properly in chapter 15. For this chapter, just read
-`|s| s.len()` as "a tiny one-shot function that takes `s` and returns
-`s.len()`."
+Closures show up properly in the closures chapter.
+For this chapter, just read `|s| s.len()` as "a tiny one-shot function that takes `s` and returns `s.len()`."
 
-A useful one to know: `if let` lets you handle just the `Some` case
-without writing a full `match`:
+A useful one to know: `if let` lets you handle just the `Some` case without writing a full `match`:
 
 ```rust
 if let Some(user) = find_user(id) {
@@ -67,8 +64,7 @@ if let Some(user) = find_user(id) {
 }
 ```
 
-Many standard-library methods return `Option`. `.first()`, `.last()`,
-`.next()` on iterators, `.get()` on slices and maps, `.find(...)` on
-iterators. You'll meet `Option` everywhere.
-
+Many standard-library methods return `Option`.
+`.first()`, `.last()`, `.next()` on iterators, `.get()` on slices and maps, `.find(...)` on iterators.
+You'll meet `Option` everywhere.
 

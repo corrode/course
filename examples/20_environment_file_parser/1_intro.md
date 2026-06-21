@@ -1,19 +1,17 @@
-# Parsing Structured Text and Generics
+# Parsing structured text and generics
 
 *You have a problem. You decide to use generics. Now you have a `Problem<T> where T: Clone + Send + Sync + 'static`.*
 
-This chapter parses `.env`-style configuration files. Two new things show
-up:
+This chapter parses `.env`-style configuration files.
+Two new things show up:
 
 1. **Splitting a string at the first occurrence of a separator.**
-2. **A generic function** that works for any type the caller wants to
-   parse into.
+2. **A generic function** that works for any type the caller wants to parse into.
 
 ## Splitting once
 
-`split` returns an iterator of *all* parts. For "key=value" you usually
-want to split *once* and keep the rest of the line intact (in case the
-value itself contains the separator):
+`split` returns an iterator of *all* parts.
+For "key=value" you usually want to split *once* and keep the rest of the line intact (in case the value itself contains the separator):
 
 ```rust
 let line = "DATABASE_URL=postgres://user:pass@host/db";
@@ -23,13 +21,13 @@ match line.split_once('=') {
 }
 ```
 
-`split_once` returns `Option<(&str, &str)>`. The two halves are slices of
-the original string; no allocation.
+`split_once` returns `Option<(&str, &str)>`.
+The two halves are slices of the original string; no allocation.
 
 ## Generic functions
 
-Sometimes you want one function that works for many types. Here, "parse
-this string into whatever the caller asks for" is a perfect fit:
+Sometimes you want one function that works for many types.
+Here, "parse this string into whatever the caller asks for" is a perfect fit:
 
 ```rust
 fn get<T>(env: &HashMap<String, String>, key: &str) -> Option<T>
@@ -43,11 +41,9 @@ let port: Option<u16> = get(&env, "PORT");
 let debug: Option<bool> = get(&env, "DEBUG");
 ```
 
-`<T>` declares a type parameter. The `where T: FromStr` clause says "T
-must implement the `FromStr` trait", which is what makes `.parse()` work.
-`.parse()` returns `Result<T, T::Err>`; `.ok()` discards the error type
-and gives back `Option<T>`, which combines nicely with the `?` on the
-preceding line.
+`<T>` declares a type parameter.
+The `where T: FromStr` clause says "T must implement the `FromStr` trait", which is what makes `.parse()` work.
+`.parse()` returns `Result<T, T::Err>`; `.ok()` discards the error type and gives back `Option<T>`, which combines nicely with the `?` on the preceding line.
 
 ## Trim and skip
 
@@ -64,13 +60,12 @@ for line in content.lines() {
 }
 ```
 
-`continue` skips the rest of the current loop iteration and jumps to the
-next one. Its sibling, `break`, exits the loop entirely.
+`continue` skips the rest of the current loop iteration and jumps to the next one.
+Its sibling, `break`, exits the loop entirely.
 
 ## A note on raw strings: `r#"..."#`
 
-The tests in this chapter use raw string literals to embed a multi-line
-`.env` snippet without escaping anything:
+The tests in this chapter use raw string literals to embed a multi-line `.env` snippet without escaping anything:
 
 ```rust
 let content = r#"
@@ -79,9 +74,9 @@ PORT=5432
 "#;
 ```
 
-A raw string starts with `r` and zero or more `#`s, then a quote. It
-ends with the matching closing quote and `#`s. Inside, backslashes and
-quotes are literal: no escape sequences. Use more `#`s on each side if
-the content itself contains `"#`.
+A raw string starts with `r` and zero or more `#`s, then a quote.
+It ends with the matching closing quote and `#`s.
+Inside, backslashes and quotes are literal: no escape sequences.
+Use more `#`s on each side if the content itself contains `"#`.
 
 
