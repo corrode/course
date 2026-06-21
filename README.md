@@ -9,6 +9,13 @@ dozen exercises you start to get the hang of it.
 This is an official course repository by [corrode](https://corrode.dev), a Rust
 consultancy that helps teams adopt Rust in production.
 
+> [!NOTE]
+> **The course is being restructured.** Active work happens on `main` and may be
+> mid-rewrite (chapters reordered, renumbered, or in flux). The **stable version
+> is [`v1`](https://github.com/corrode/course/tree/v1)** — use that if you want a
+> coherent run through the course. The live site runs the stable version; `main`
+> is for the restructure.
+
 ## How it works
 
 The course runs primarily through the website, which walks you through

@@ -27,6 +27,20 @@ use ulid::Ulid;
 /// Surfaced in the site footer so users can tell which release they're on.
 const COURSE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Git branch and short commit the running server was built from, injected by
+/// `build.rs` via `cargo:rustc-env`. `option_env!` keeps the build working when
+/// `.git` isn't available (e.g. some Docker builds); we fall back to "unknown".
+/// Surfaced next to `COURSE_VERSION` in the footer so we can tell which branch
+/// and commit a given deploy is on during the restructure.
+const GIT_BRANCH: &str = match option_env!("GIT_BRANCH") {
+    Some(b) => b,
+    None => "unknown",
+};
+const GIT_HASH: &str = match option_env!("GIT_HASH") {
+    Some(h) => h,
+    None => "unknown",
+};
+
 /// Application state shared across all routes
 #[derive(Clone)]
 struct AppState {
