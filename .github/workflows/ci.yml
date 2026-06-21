@@ -96,3 +96,25 @@ jobs:
             examples
             static/cheatsheet.md
           fail: true
+
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build the runtime image so a broken Dockerfile fails CI instead of the
+      # next deploy. Build-only (no push); the `.git` directory is excluded by
+      # .dockerignore, so this also exercises the `unknown` git-info fallback in
+      # build.rs. Layer cache is persisted via the GitHub Actions cache backend.
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: cargo-course:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
