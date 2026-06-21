@@ -19,5 +19,5 @@ You glued together the chapters so far: a `HashMap` keyed by lowercased words, a
 ## An optional detour
 
 You now have every tool you need to build a small program from scratch: structs, enums, iterators, `Option`, `Result`, vectors, and strings.
-There's an optional **Creative Break** chapter — an open-ended password validator project rather than a guided lesson.
+There's an optional **Creative Break** chapter, an open-ended password validator project rather than a guided lesson.
 It isn't part of the main sequence and nothing later depends on it, so take it whenever you want a change of pace, or skip straight ahead.

@@ -5,7 +5,8 @@ Back in the word count chapter you built `word_count`, `char_count`, and `longes
 The iterators chapter then showed how iterators collapse those into one-liners.
 This chapter goes one level deeper: instead of asking *how many* words a text has, we'll ask *which* words appear and *how often each one* shows up.
 
-There's no big new concept here either — it puts iterators, hashmaps, and `Option` to work together.
+There's no big new concept here either.
+It puts iterators, hashmaps, and `Option` to work together.
 Along the way you'll meet two new iterator tricks (`max_by_key` and `HashMap::into_iter`); the rest is just applying what's already in your toolbox.
 
 A few patterns you'll likely use:

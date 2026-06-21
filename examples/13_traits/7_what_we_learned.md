@@ -23,7 +23,8 @@ You implemented an stdlib trait (`Display`), defined your own (`Describable`), w
   Slower per call but lets one slice or `Vec` hold values of multiple concrete types at once.
   Reach for them when you need heterogeneity.
 - `Box<dyn Trait>` solves the "trait objects have no known size" problem so they can live in owning containers like `Vec`.
-  That's the headline of the optional **smart pointers** bonus chapter (`Box`, `Rc`, `RefCell`) — dip into it whenever you want to go deeper.
+  That's the headline of the optional **smart pointers** bonus chapter (`Box`, `Rc`, `RefCell`).
+  Dip into it whenever you want to go deeper.
 - Many stdlib traits you already use (`Iterator`, `From`, `Into`, `PartialEq`, ...) are just regular traits.
   Nothing magic.
   You can define your own or implement the standard ones for your own types.

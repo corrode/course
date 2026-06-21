@@ -55,7 +55,7 @@ fn longest_word(text: &str) -> usize {
 }
 ```
 
-The loops, the `mut` counters, the running-maximum bookkeeping — all gone.
+The loops, the `mut` counters, the running-maximum bookkeeping: all gone.
 That's the payoff for spending a chapter on iterators: every "walk a collection and reduce it to one number, or to one new collection" problem gets shorter and harder to get wrong.
 
 
