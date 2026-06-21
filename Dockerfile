@@ -11,6 +11,17 @@ FROM rust:1-trixie AS builder
 
 WORKDIR /app
 
+# Build-time git metadata for the footer. The build context excludes
+# `.git` (see .dockerignore), so `build.rs` can't shell out to git here.
+# The deploy passes these as build args instead; Coolify auto-injects
+# `SOURCE_COMMIT`. Set GIT_BRANCH as a build arg in Coolify (e.g. `main`).
+ARG GIT_BRANCH=unknown
+ARG GIT_HASH=
+ARG SOURCE_COMMIT=
+ENV GIT_BRANCH=${GIT_BRANCH} \
+    GIT_HASH=${GIT_HASH} \
+    SOURCE_COMMIT=${SOURCE_COMMIT}
+
 # Cache dependencies separately from source. Copy just the manifests
 # first, build a dummy main so cargo downloads + compiles deps, then
 # overwrite with the real source.
