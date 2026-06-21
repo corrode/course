@@ -1,8 +1,8 @@
 # Adding items
 
-Vectors earn their keep when you can change them after building them.
-This step modifies the list in place: it pushes a new item onto the end.
-The `&mut Vec<String>` says "I need exclusive access for a moment", and that's what lets us do that.
+A `Vec` isn't frozen once you build it.
+This step changes the list in place: it pushes a new item onto the end.
+The `&mut Vec<String>` says "I need exclusive access for a moment", and that exclusive borrow is what lets us push.
 
 ## Useful from the standard library
 
