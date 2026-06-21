@@ -6,6 +6,23 @@ fn take_ownership(s: String) -> String {
     s
 }
 
+// Alternative:
+//
+//     fn take_ownership(s: String) -> String {
+//         format!("{s} - owned by Rust!")
+//     }
+//
+// This reuses `s` only to read it, and builds a brand-new String for the
+// result. Under the hood `format!` expands to roughly:
+//
+//     let mut buf = String::new();
+//     buf.write_fmt(format_args!("{s} - owned by Rust!")).unwrap();
+//     buf
+//
+// So instead of growing the moved-in buffer in place (the `push_str`
+// version), it allocates a fresh buffer and writes both pieces into it.
+// The original `s` is dropped at the end of the function either way.
+
 #[test]
 fn test_take_ownership() {
     let s = String::from("Rust");
