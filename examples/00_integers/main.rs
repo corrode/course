@@ -12,8 +12,8 @@
     clippy::boxed_local
 )]
 
-#[path = "3_number_to_string.rs"]
-mod _3_number_to_string;
+#[path = "3_add_health.rs"]
+mod _3_add_health;
 #[path = "4_damage_with_bonus.rs"]
 mod _4_damage_with_bonus;
 #[path = "5_parse_positive_integer.rs"]

@@ -27,6 +27,20 @@ use ulid::Ulid;
 /// Surfaced in the site footer so users can tell which release they're on.
 const COURSE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Git branch and short commit the running server was built from, injected by
+/// `build.rs` via `cargo:rustc-env`. `option_env!` keeps the build working when
+/// `.git` isn't available (e.g. some Docker builds); we fall back to "unknown".
+/// Surfaced next to `COURSE_VERSION` in the footer so we can tell which branch
+/// and commit a given deploy is on during the restructure.
+const GIT_BRANCH: &str = match option_env!("GIT_BRANCH") {
+    Some(b) => b,
+    None => "unknown",
+};
+const GIT_HASH: &str = match option_env!("GIT_HASH") {
+    Some(h) => h,
+    None => "unknown",
+};
+
 /// Application state shared across all routes
 #[derive(Clone)]
 struct AppState {
@@ -138,6 +152,9 @@ struct ProgressDot {
     /// `false` for notes-only chapters (the appendix). Used to skip
     /// them when building the "next chapter" CTA and progress totals.
     has_exercises: bool,
+    /// `true` for optional bonus chapters: hidden from the TOC/picker and
+    /// excluded from progress and the next-chapter flow.
+    is_bonus: bool,
 }
 
 /// Per-exercise progress used by the chapter list and current-status badge.
@@ -275,6 +292,8 @@ struct ExerciseProgress {
     /// can't be "completed". The dashboard skips them when choosing
     /// the next chapter to resume.
     has_exercises: bool,
+    /// `true` for optional bonus chapters (hidden from nav and progress).
+    is_bonus: bool,
 }
 
 /// Individual submission for an exercise
@@ -564,7 +583,7 @@ fn completable_total(state: &AppState) -> i64 {
         state
             .exercises
             .iter()
-            .filter(|e| !e.is_quiz() && !e.code_steps().is_empty())
+            .filter(|e| !e.is_quiz() && !e.is_bonus() && !e.code_steps().is_empty())
             .count(),
     )
     .unwrap_or(i64::MAX)
@@ -587,7 +606,7 @@ async fn build_participant_summary(
             Ok(exercises) => i64::try_from(
                 exercises
                     .iter()
-                    .filter(|e| !e.is_quiz && e.has_exercises && e.completed)
+                    .filter(|e| !e.is_quiz && e.has_exercises && !e.is_bonus && e.completed)
                     .count(),
             )
             .unwrap_or(i64::MAX),
@@ -883,6 +902,7 @@ fn dots_from_exercises(exercises: &[ExerciseProgress]) -> Vec<ProgressDot> {
             current: false,
             is_quiz: e.is_quiz,
             has_exercises: e.has_exercises,
+            is_bonus: e.is_bonus,
         })
         .collect()
 }
@@ -907,7 +927,7 @@ async fn anonymous_dashboard(
 
     let first = exercises
         .iter()
-        .find(|e| !e.is_quiz && e.has_exercises)
+        .find(|e| !e.is_quiz && e.has_exercises && !e.is_bonus)
         .or_else(|| exercises.first());
     let (next_slug, next_label, next_chapter_number, next_chapter_title) = first.map_or_else(
         || {
@@ -929,7 +949,7 @@ async fn anonymous_dashboard(
     );
     let progress_total = exercises
         .iter()
-        .filter(|e| !e.is_quiz && e.has_exercises)
+        .filter(|e| !e.is_quiz && e.has_exercises && !e.is_bonus)
         .count();
 
     let template = DashboardTemplate {
@@ -1129,7 +1149,7 @@ async fn participant_dashboard(
     // a graceful default.
     let first_unfinished = exercises
         .iter()
-        .find(|e| !e.completed && !e.is_quiz && e.has_exercises)
+        .find(|e| !e.completed && !e.is_quiz && e.has_exercises && !e.is_bonus)
         .or_else(|| exercises.first());
     let any_completed = exercises.iter().any(|e| e.completed);
     let (next_slug, next_label, next_chapter_number, next_chapter_title) = match first_unfinished {
@@ -1154,11 +1174,11 @@ async fn participant_dashboard(
     };
     let progress_total = exercises
         .iter()
-        .filter(|e| !e.is_quiz && e.has_exercises)
+        .filter(|e| !e.is_quiz && e.has_exercises && !e.is_bonus)
         .count();
     let progress_done = exercises
         .iter()
-        .filter(|e| !e.is_quiz && e.has_exercises && e.completed)
+        .filter(|e| !e.is_quiz && e.has_exercises && !e.is_bonus && e.completed)
         .count();
 
     let team_token = participant.parsed_team_token();
@@ -1313,6 +1333,7 @@ async fn render_exercise_page(
                 current: i == idx,
                 is_quiz: e.is_quiz(),
                 has_exercises: !e.code_steps().is_empty(),
+                is_bonus: e.is_bonus(),
             }
         })
         .collect();
@@ -1406,21 +1427,22 @@ async fn render_exercise_page(
         }
     }
 
-    // Next chapter for the bottom CTA: the first dot that comes after
-    // the current one. We don't skip quizzes or appendices here so the
-    // CTA always points to whatever the picker would show next.
-    let next_dot = dots.get(idx + 1).cloned();
+    // Next chapter for the bottom CTA: the first non-bonus dot after the
+    // current one. We don't skip quizzes or appendices (the picker shows
+    // them), but bonus chapters are hidden from the picker, so the CTA
+    // skips them too.
+    let next_dot = dots.iter().skip(idx + 1).find(|d| !d.is_bonus).cloned();
 
     // Progress: how many completable chapters has the participant
     // finished? Quizzes and notes-only chapters never "complete", so
     // they're excluded from both numerator and denominator.
     let progress_total = dots
         .iter()
-        .filter(|d| !d.is_quiz && d.has_exercises)
+        .filter(|d| !d.is_quiz && d.has_exercises && !d.is_bonus)
         .count();
     let progress_done = dots
         .iter()
-        .filter(|d| !d.is_quiz && d.has_exercises && d.completed)
+        .filter(|d| !d.is_quiz && d.has_exercises && !d.is_bonus && d.completed)
         .count();
 
     let template = ExerciseTemplate {
@@ -2845,6 +2867,7 @@ async fn get_exercise_progress<'a>(
             submissions: exercise_submissions,
             is_quiz,
             has_exercises: !code_steps.is_empty(),
+            is_bonus: ex.is_bonus(),
         });
     }
 

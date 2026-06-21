@@ -12,7 +12,7 @@ template variables: - dots: Vec<ProgressDot>
                 aria-label="All exercises"
                 style="--chapter-rows: {{ (dots.len() + 1) / 2 }}"
             >
-                {% for d in dots %} {% if d.current %}
+                {% for d in dots %} {% if !d.is_bonus %} {% if d.current %}
                 <span
                     class="chapter-row current{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
                     id="current-chapter-row"
@@ -40,7 +40,7 @@ template variables: - dots: Vec<ProgressDot>
                     <span class="chapter-title">{{ d.title }}</span>
                     <span class="chapter-mark" aria-hidden="true"></span>
                 </a>
-                {% endmatch %} {% endif %} {% endfor %}
+                {% endmatch %} {% endif %} {% endif %} {% endfor %}
             </nav></span
         ></String
     ></ProgressDot
