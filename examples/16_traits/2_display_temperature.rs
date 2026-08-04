@@ -10,9 +10,6 @@ struct Temperature {
 ///   - `Temperature { celsius: 21.5 }`  → `"21.5°C"`
 ///   - `Temperature { celsius: -3.0 }`  → `"-3.0°C"`
 ///   - `Temperature { celsius: 100.0 }` → `"100.0°C"`
-///
-/// Hint: `write!(f, "{:.1}°C", self.celsius)` does the whole job.
-/// The `:.1` is the same format specifier you'd use in `println!`.
 impl fmt::Display for Temperature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         todo!()
