@@ -61,6 +61,22 @@ jobs:
       - name: Verify solutions
         run: REQUIRE_COMPLETE=1 ./scripts/check-solutions.sh
 
+  javascript:
+    name: JavaScript bundles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts
+      - name: Rebuild local CodeMirror and Lezer bundles
+        run: npm run build:js
+      - name: Verify generated bundles are current
+        run: git diff --exit-code -- static/dist
+
   spellcheck:
     name: Spell check (typos)
     runs-on: ubuntu-latest

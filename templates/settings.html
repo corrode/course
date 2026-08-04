@@ -465,7 +465,7 @@ cargo course init --token {{ u }}</code></pre>
     {% when None %} {% endmatch %} {% endif %}
 </div>
 
-<script type="module" src="/static/js/readonly-rust-editor.js"></script>
+<script type="module" src="/static/dist/readonly-rust-editor.js"></script>
 
 <script>
     // Keep these settings in sync with the keys defined in
@@ -513,7 +513,7 @@ cargo course init --token {{ u }}</code></pre>
             // (e.g. the read-only submission viewers ignore it, but
             // applying via the shared helper is harmless and keeps
             // future mounts in sync).
-            import("/static/js/inline-editor.js")
+            import("/static/dist/inline-editor.js")
                 .then(({ setVimGlobal }) => setVimGlobal && setVimGlobal(next))
                 .catch(() => {});
         });

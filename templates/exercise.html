@@ -721,7 +721,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     // CodeMirror mount + button wiring lives in the shared module.
     // Each `.exercise-section[data-step-id]` on the page gets its own
     // mount; multi-step chapters render multiple sections.
-    import("/static/js/inline-editor.js")
+    import("/static/dist/inline-editor.js")
         .then(({ mountInlineEditor }) => {
             document
                 .querySelectorAll(".exercise-section[data-step-id]")
@@ -791,29 +791,9 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     );
     if (proseCodeBlocks.length > 0) {
         try {
-            const [{ parser }, { highlightTree, classHighlighter }] =
-                await Promise.all([
-                    import("@lezer/rust"),
-                    import("@lezer/highlight"),
-                ]);
-
-            const highlightRust = (code) => {
-                const tree = parser.parse(code);
-                let out = "";
-                let pos = 0;
-                const escape = (s) =>
-                    s
-                        .replace(/&/g, "&amp;")
-                        .replace(/</g, "&lt;")
-                        .replace(/>/g, "&gt;");
-                highlightTree(tree, classHighlighter, (from, to, cls) => {
-                    if (from > pos) out += escape(code.slice(pos, from));
-                    out += `<span class="${cls}">${escape(code.slice(from, to))}</span>`;
-                    pos = to;
-                });
-                if (pos < code.length) out += escape(code.slice(pos));
-                return out;
-            };
+            const { highlightRust } = await import(
+                "/static/dist/rust-highlight.js"
+            );
 
             proseCodeBlocks.forEach((el) => {
                 const langClass = [...el.classList].find((c) =>
@@ -846,7 +826,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
             if (!el) return;
             try {
                 solutionViewer ??= import(
-                    "/static/js/readonly-rust-editor.js"
+                    "/static/dist/readonly-rust-editor.js"
                 );
                 const { mountReadonlyRustEditor } = await solutionViewer;
                 const view = mountReadonlyRustEditor(el);

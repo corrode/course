@@ -24,40 +24,8 @@
         <meta property="og:image:height" content="640" />
         <meta name="twitter:card" content="summary_large_image" />
 
-        <!-- Shared CodeMirror 6 import map.
-             Lives here so any page that extends `base.html` can mount
-             a CM6 editor (the in-exercise editor on chapter pages, the
-             read-only viewer on admin and team pages) and they all
-             resolve to the same single instance per module. The leading
-             `*` on each esm.sh URL keeps the resolver from bundling
-             dependencies, so transitive `@codemirror/state` references
-             route back through this map and we don't end up with two
-             copies fighting `instanceof` checks. -->
-        <script type="importmap">
-            {
-                "imports": {
-                    "@codemirror/state": "https://esm.sh/*@codemirror/state@6.4.1",
-                    "@codemirror/view": "https://esm.sh/*@codemirror/view@6.26.3",
-                    "@codemirror/language": "https://esm.sh/*@codemirror/language@6.10.2",
-                    "@codemirror/commands": "https://esm.sh/*@codemirror/commands@6.6.0",
-                    "@codemirror/lang-rust": "https://esm.sh/*@codemirror/lang-rust@6.0.1",
-                    "@codemirror/autocomplete": "https://esm.sh/*@codemirror/autocomplete@6.18.0",
-                    "@codemirror/search": "https://esm.sh/*@codemirror/search@6.5.6",
-                    "@replit/codemirror-vim": "https://esm.sh/*@replit/codemirror-vim@6.2.1",
-                    "@lezer/common": "https://esm.sh/*@lezer/common@1.2.1",
-                    "@lezer/highlight": "https://esm.sh/*@lezer/highlight@1.2.0",
-                    "@lezer/lr": "https://esm.sh/*@lezer/lr@1.4.1",
-                    "@lezer/rust": "https://esm.sh/*@lezer/rust@1.0.2",
-                    "style-mod": "https://esm.sh/style-mod@4.1.2",
-                    "w3c-keyname": "https://esm.sh/w3c-keyname@2.2.8",
-                    "crelt": "https://esm.sh/crelt@1.0.6"
-                }
-            }
-        </script>
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-            rel="stylesheet"
-        />
+
+
         <link rel="stylesheet" href="/static/css/base.css" />
         <script>
             // Apply the saved theme before paint to avoid a flash.
@@ -511,42 +479,17 @@
 
                 async function highlight() {
                     try {
-                        var mods = await Promise.all([
-                            import("https://esm.sh/*@lezer/rust@1.0.2"),
-                            import("https://esm.sh/*@lezer/highlight@1.2.0"),
-                        ]);
-                        var parser = mods[0].parser;
-                        var highlightTree = mods[1].highlightTree;
-                        var classHighlighter = mods[1].classHighlighter;
+                        var highlighter = await import(
+                            "/static/dist/rust-highlight.js"
+                        );
                         body.querySelectorAll("pre > code").forEach(
                             function (el) {
                                 var cls = el.className || "";
                                 if (cls && cls.indexOf("language-rust") === -1)
                                     return;
-                                var code = el.textContent;
-                                var tree = parser.parse(code);
-                                var out = "";
-                                var pos = 0;
-                                highlightTree(
-                                    tree,
-                                    classHighlighter,
-                                    function (from, to, klass) {
-                                        if (from > pos)
-                                            out += escapeHtml(
-                                                code.slice(pos, from),
-                                            );
-                                        out +=
-                                            '<span class="' +
-                                            klass +
-                                            '">' +
-                                            escapeHtml(code.slice(from, to)) +
-                                            "</span>";
-                                        pos = to;
-                                    },
+                                el.innerHTML = highlighter.highlightRust(
+                                    el.textContent,
                                 );
-                                if (pos < code.length)
-                                    out += escapeHtml(code.slice(pos));
-                                el.innerHTML = out;
                             },
                         );
                     } catch (e) {

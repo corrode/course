@@ -9,8 +9,9 @@ course.db
 course.db-wal
 course.db-shm
 
-# Rust build artifacts
+# Build artifacts and local dependencies
 /target/
+/node_modules/
 exercises/*/target
 Cargo.lock
 

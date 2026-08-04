@@ -1,7 +1,7 @@
 // Shared CodeMirror 6 theme + Lezer highlight style.
 //
 // Reads the same `--syn-*` CSS variables defined in
-// `templates/base.html`, so any editor that uses these picks up
+// `static/css/base.css`, so any editor that uses these picks up
 // light/dark mode for free when the user flips `[data-theme]` on
 // the document element.
 //
