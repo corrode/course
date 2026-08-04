@@ -5,6 +5,7 @@
 extend-exclude = [
     # Vendored / minified third-party assets we don't control.
     "static/js/htmx.min.js",
+    "static/dist/",
     "*.min.js",
     # Lock file: full of base32/hex hashes that look like typos.
     "Cargo.lock",
