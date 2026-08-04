@@ -401,7 +401,7 @@ fn main() {
             }
         }
 
-        import("/static/js/inline-editor.js").then(({ mountInlineEditor }) => {
+        import("/static/dist/inline-editor.js").then(({ mountInlineEditor }) => {
             const fallback = section.querySelector(
                 '[data-role="editor-fallback"]',
             );

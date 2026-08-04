@@ -61,8 +61,8 @@
 // all. We use a module-local set rather than DOM events so a future page
 // can mount editors after the toggle was already flipped.
 //
-// Fallback path: if any of the CodeMirror imports fail (esm.sh blocked,
-// offline, etc.) the module wires Run/Format/Reset/Submit against the
+// Fallback path: if any of the local CodeMirror chunks fail to load, the
+// module wires Run/Format/Reset/Submit against the
 // plain `<textarea data-role="editor-fallback">` and returns the same
 // handle so call sites don't need to branch.
 
@@ -529,7 +529,7 @@ export async function mountInlineEditor(section, opts = {}) {
       persistExt,
       // Page-specific extras (e.g. the tour's hover-explanation
       // tooltips). Built here so callers reuse the exact CM module
-      // instances resolved through the shared importmap. The value may
+      // instances from the shared bundle chunks. The value may
       // be a single extension or an array; CodeMirror flattens nested
       // arrays, so we include it as one element rather than spreading
       // (spreading a non-iterable single extension would throw).

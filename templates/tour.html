@@ -297,7 +297,7 @@ Course{% endblock %} {% block content %}
         return exts;
     }
 
-    import("/static/js/inline-editor.js")
+    import("/static/dist/inline-editor.js")
         .then(({ mountInlineEditor }) => {
             const section = document.querySelector(
                 '.exercise-section[data-step-id="tour"]',

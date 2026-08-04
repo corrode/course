@@ -167,7 +167,7 @@ content %}
     // in `static/js/inline-editor.js`. The `corrode:playground:draft`
     // key matches the previous standalone STORAGE_KEY so users keep
     // their existing scratchpad contents across this refactor.
-    import("/static/js/inline-editor.js")
+    import("/static/dist/inline-editor.js")
         .then(({ mountInlineEditor }) => {
             const section = document.querySelector(
                 '.exercise-section[data-step-id="playground"]',

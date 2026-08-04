@@ -24,6 +24,13 @@
 
 /* ---------- Local fonts (served from /static/fonts) ---------- */
 @font-face {
+    font-family: "Inter";
+    src: url("/static/fonts/Inter-roman-latin.woff2") format("woff2");
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
     font-family: "Happy Headline";
     src: url("/static/fonts/Happy-Headline.woff2") format("woff2");
     font-weight: 400 900;
@@ -1314,7 +1321,7 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
 }
 /* The .rust-editor element starts as a styled <pre>-like
    box so the source is readable even if CodeMirror fails
-   to load (network blocked, esm.sh down, etc.). Once the
+   to load (network blocked or a local chunk missing). Once the
    read-only viewer mounts and adds a `.cm-editor` child,
    we drop our padding/border so the editor's own chrome
    isn't double-wrapped. */

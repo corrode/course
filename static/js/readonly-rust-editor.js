@@ -2,9 +2,8 @@
 // admin and team pages, and the "Reveal the full solution" viewer on
 // chapter pages.
 //
-// Resolves CM6 modules through the shared importmap in
-// `templates/base.html`, so this viewer and the editable editor on
-// chapter pages share a single instance per CM6 module (no duplicate
+// Built with the editable editor as split esbuild entry points, so both
+// viewers share the same generated CodeMirror chunks (no duplicate
 // `@codemirror/state`, no broken `instanceof` checks).
 //
 // Markup contract:

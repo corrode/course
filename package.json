@@ -1,0 +1,20 @@
+{
+  "private": true,
+  "scripts": {
+    "build:js": "rm -rf static/dist && esbuild static/js/inline-editor.js static/js/readonly-rust-editor.js static/js/rust-highlight.js --bundle --splitting --format=esm --minify --outdir=static/dist --entry-names=[name] --chunk-names=chunks/[name]-[hash]"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.8"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "6.18.0",
+    "@codemirror/commands": "6.6.0",
+    "@codemirror/lang-rust": "6.0.1",
+    "@codemirror/language": "6.10.2",
+    "@codemirror/state": "6.7.1",
+    "@codemirror/view": "6.43.7",
+    "@lezer/highlight": "1.2.0",
+    "@lezer/rust": "1.0.2",
+    "@replit/codemirror-vim": "6.2.1"
+  }
+}

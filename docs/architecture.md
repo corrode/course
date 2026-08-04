@@ -50,7 +50,9 @@ course/
 │       ├── server.rs      # Axum web server (default `cargo run`)
 │       └── cli.rs         # `cargo course …` subcommands
 ├── templates/             # Askama templates rendered by the server
-├── static/                # served at `/static/*` (assets, fonts, quiz.html)
+├── static/                # served at `/static/*` (assets, local fonts, JS bundles)
+├── package.json           # pinned frontend deps + reproducible esbuild command
+├── package-lock.json      # exact frontend dependency graph
 └── target/                # cargo build output (ignored)
 ```
 
@@ -336,24 +338,26 @@ submissions.
 
 Served by `tower-http` `ServeDir` at `/static/*`. Notable:
 
-- `static/quiz.html`: the chapter 18 quiz. Self-contained HTML/JS;
-  no backend involvement. The chapter's `main.rs` is essentially a
-  pointer to this file.
+
 - `static/js/inline-editor.js`: shared CodeMirror 6 mount used by
   `templates/exercise.html`, `templates/dashboard.html`, and
   `templates/playground.html`. Owns Run/Format/Reset/Submit wiring,
   draft persistence, vim toggle (global across mounts), test result
   rendering, and the textarea fallback. Each call site supplies its
   own DOM (per the `data-role` contract documented at the top of the
-  module) and an optional `onRunSuccess` callback.
+  module) and an optional `onRunSuccess` callback. Templates load the
+  generated `static/dist/inline-editor.js`, not this source file directly.
 - `static/js/cm-theme.js`: the shared `proseHighlightStyle` /
   `proseEditorTheme` CodeMirror exports, read by `inline-editor.js`
   and `readonly-rust-editor.js` so all editors stay in sync with the
-  `--syn-*` CSS variables in `base.html`.
+  `--syn-*` CSS variables in `static/css/base.css`.
 - `static/js/readonly-rust-editor.js`: read-only CodeMirror viewer
   for Rust code blocks on admin and team pages, and the per-step
   "Reveal the full solution" viewer mounted lazily inside the hints
   disclosure on `templates/exercise.html`.
+- `static/dist/`: checked-in, minified esbuild output for CodeMirror,
+  Lezer, Vim mode, and Rust highlighting. Rebuild with `npm run build:js`;
+  CI verifies the generated chunks match the source modules.
 - `static/assets/`: logos, screenshots.
 - `static/fonts/`: bundled webfonts.
 
