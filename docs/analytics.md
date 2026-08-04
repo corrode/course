@@ -2,8 +2,14 @@
 
 The course records a small set of first-party events in SQLite's
 `course_events` table. The goal is to answer where learners stop or ask for
-help without collecting source code, names, URLs, user agents, or arbitrary
-client metadata.
+help without persisting source code, names, URLs, user agents, or arbitrary
+client metadata in the analytics table.
+
+Running code still sends the source through this server to the third-party Rust
+Playground at `play.rust-lang.org`, just as it did before analytics were added.
+The source is needed to execute the program but is not written to
+`course_events`; only the resulting counts, timing, and first structured error
+code are retained.
 
 ## Events
 
@@ -14,7 +20,7 @@ client metadata.
 | `hint_opened` | A hint disclosure is first opened | — |
 | `solution_revealed` | A full solution is first opened | — |
 | `next_chapter_clicked` | The next-chapter CTA is clicked | — |
-| `exercise_run` | The server receives a Rust Playground response | result, tests passed/total, duration, first structured Rust error code |
+| `exercise_run` | The server attempts a Rust Playground run | result (`passed`, `test_failed`, `compile_failed`, `no_tests`, `ran`, or `upstream_failed`), tests passed/total, duration, first structured Rust error code |
 
 UI events are deduplicated per `(session_id, event_type, exercise_name)`. Runs
 are never deduplicated because repeated runs are the primary difficulty signal.
@@ -36,7 +42,7 @@ SELECT
     ROUND(AVG(result != 'passed') * 100, 1) AS unsuccessful_pct,
     ROUND(AVG(duration_ms)) AS average_duration_ms
 FROM course_events
-WHERE event_type = 'exercise_run'
+WHERE event_type = 'exercise_run' AND result != 'ran'
 GROUP BY exercise_name
 HAVING learners >= 3
 ORDER BY unsuccessful_pct DESC, runs DESC;

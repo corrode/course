@@ -2896,15 +2896,19 @@ async fn api_run(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    let resp = client
+    let resp = match client
         .post("https://play.rust-lang.org/execute")
         .json(&body)
         .send()
         .await
-        .map_err(|e| {
-            error!("Playground request failed: {e:?}");
-            StatusCode::BAD_GATEWAY
-        })?;
+    {
+        Ok(response) => response,
+        Err(error) => {
+            error!("Playground request failed: {error:?}");
+            record_upstream_failure(&state.pool, &req, started_at).await;
+            return Err(StatusCode::BAD_GATEWAY);
+        }
+    };
 
     let status = resp.status();
     if !status.is_success() {
@@ -2916,13 +2920,18 @@ async fn api_run(
         } else {
             StatusCode::BAD_GATEWAY
         };
+        record_upstream_failure(&state.pool, &req, started_at).await;
         return Err(mapped);
     }
 
-    let parsed: PlaygroundResp = resp.json().await.map_err(|e| {
-        error!("Failed to parse Playground response: {e}");
-        StatusCode::BAD_GATEWAY
-    })?;
+    let parsed: PlaygroundResp = match resp.json().await {
+        Ok(response) => response,
+        Err(error) => {
+            error!("Failed to parse Playground response: {error}");
+            record_upstream_failure(&state.pool, &req, started_at).await;
+            return Err(StatusCode::BAD_GATEWAY);
+        }
+    };
 
     let test_results = parse_test_results(&parsed.stdout);
     info!(
@@ -2931,7 +2940,15 @@ async fn api_run(
         parsed.success
     );
 
-    record_run_event(&state.pool, &req, &parsed, &test_results, started_at).await;
+    record_run_event(
+        &state.pool,
+        &req,
+        Some(&parsed),
+        &test_results,
+        started_at,
+        None,
+    )
+    .await;
 
     Ok(Json(RunResponse {
         success: parsed.success,
@@ -2941,12 +2958,29 @@ async fn api_run(
     }))
 }
 
+async fn record_upstream_failure(
+    pool: &SqlitePool,
+    request: &RunRequest,
+    started_at: std::time::Instant,
+) {
+    record_run_event(
+        pool,
+        request,
+        None,
+        &[],
+        started_at,
+        Some("upstream_failed"),
+    )
+    .await;
+}
+
 async fn record_run_event(
     pool: &SqlitePool,
     request: &RunRequest,
-    response: &PlaygroundResp,
+    response: Option<&PlaygroundResp>,
     test_results: &[TestResult],
     started_at: std::time::Instant,
+    result_override: Option<&str>,
 ) {
     let Some(session_id) = request
         .session_id
@@ -2970,14 +3004,17 @@ async fn record_run_event(
     let tests_passed_count =
         i64::try_from(test_results.iter().filter(|test| test.passed).count()).unwrap_or(i64::MAX);
     let tests_total = i64::try_from(test_results.len()).unwrap_or(i64::MAX);
-    let result = if tests_total > 0 && tests_passed_count < tests_total {
-        "test_failed"
-    } else if !response.success {
-        "compile_failed"
-    } else {
-        "passed"
-    };
-    let diagnostic = first_rust_error_code(&response.stderr);
+    let result = result_override.unwrap_or_else(|| {
+        response.map_or("upstream_failed", |response| {
+            classify_run_result(
+                request.tests,
+                response.success,
+                tests_passed_count,
+                tests_total,
+            )
+        })
+    });
+    let diagnostic = response.and_then(|value| first_rust_error_code(&value.stderr));
     let duration_ms = i64::try_from(started_at.elapsed().as_millis()).unwrap_or(i64::MAX);
     let event = CourseEvent {
         participant_id,
@@ -2997,6 +3034,25 @@ async fn record_run_event(
         // Analytics is best-effort and must never prevent a learner from
         // receiving their compiler/test result.
         warn!("Failed to store run analytics: {error}");
+    }
+}
+
+const fn classify_run_result(
+    tests_requested: bool,
+    response_success: bool,
+    tests_passed: i64,
+    tests_total: i64,
+) -> &'static str {
+    if tests_total > 0 && tests_passed < tests_total {
+        "test_failed"
+    } else if !response_success {
+        "compile_failed"
+    } else if !tests_requested {
+        "ran"
+    } else if tests_total == 0 {
+        "no_tests"
+    } else {
+        "passed"
     }
 }
 
@@ -3397,6 +3453,15 @@ mod tests {
         assert!(!valid_exercise_name(""));
         assert!(!valid_exercise_name("chapter?participant=secret"));
         assert!(!valid_exercise_name("../chapter"));
+    }
+
+    #[test]
+    fn classifies_run_results_without_treating_missing_tests_as_a_pass() {
+        assert_eq!(classify_run_result(true, true, 2, 2), "passed");
+        assert_eq!(classify_run_result(true, true, 1, 2), "test_failed");
+        assert_eq!(classify_run_result(true, false, 0, 0), "compile_failed");
+        assert_eq!(classify_run_result(true, true, 0, 0), "no_tests");
+        assert_eq!(classify_run_result(false, true, 0, 0), "ran");
     }
 
     #[test]

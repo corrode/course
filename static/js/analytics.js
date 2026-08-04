@@ -5,16 +5,23 @@
 
 const SESSION_KEY = "corrode:analytics-session";
 
+function newSessionId() {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+  return `session-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function analyticsSessionId() {
   try {
     let id = sessionStorage.getItem(SESSION_KEY);
     if (!id) {
-      id = crypto.randomUUID();
+      id = newSessionId();
       sessionStorage.setItem(SESSION_KEY, id);
     }
     return id;
   } catch (_) {
-    return crypto.randomUUID();
+    return newSessionId();
   }
 }
 
@@ -53,8 +60,13 @@ export function bindCourseAnalytics(root = document) {
 
   root.querySelectorAll(".exercise-section[data-exercise-key]").forEach((section) => {
     let focused = false;
-    section.addEventListener("focusin", () => {
-      if (focused) return;
+    section.addEventListener("focusin", (event) => {
+      if (
+        focused ||
+        !event.target.closest(".cm-editor, [data-role=editor-fallback]")
+      ) {
+        return;
+      }
       focused = true;
       trackCourseEvent("editor_focus", section.dataset.exerciseKey);
     });
