@@ -88,6 +88,47 @@ struct AppState {
     exercises: Arc<Vec<Exercise>>,
 }
 
+/// A privacy-conscious analytics row. Deliberately excludes source code,
+/// participant names, URLs, user agents, and free-form client metadata.
+struct CourseEvent<'a> {
+    participant_id: Option<&'a str>,
+    session_id: &'a str,
+    event_type: &'a str,
+    exercise_name: Option<&'a str>,
+    result: Option<&'a str>,
+    tests_passed: Option<i64>,
+    tests_total: Option<i64>,
+    duration_ms: Option<i64>,
+    diagnostic_code: Option<&'a str>,
+}
+
+async fn store_course_event(pool: &SqlitePool, event: CourseEvent<'_>) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r"
+        INSERT OR IGNORE INTO course_events (
+            id, participant_id, session_id, event_type, exercise_name, result,
+            tests_passed, tests_total, duration_ms, diagnostic_code,
+            course_version, git_hash
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ",
+    )
+    .bind(Ulid::new().to_string())
+    .bind(event.participant_id)
+    .bind(event.session_id)
+    .bind(event.event_type)
+    .bind(event.exercise_name)
+    .bind(event.result)
+    .bind(event.tests_passed)
+    .bind(event.tests_total)
+    .bind(event.duration_ms)
+    .bind(event.diagnostic_code)
+    .bind(COURSE_VERSION)
+    .bind(git_hash())
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 /// Database model for participants. Only the fields we actually read
 /// in Rust live here; the SQL queries below select exactly these columns
 /// so `sqlx::FromRow` stays in lockstep.
@@ -893,6 +934,7 @@ async fn main() -> Result<()> {
         .route("/register", post(api_register))
         .route("/submit", post(api_submit))
         .route("/status/{ulid}", get(api_status))
+        .route("/events", post(api_course_event))
         .route("/run", post(api_run))
         .route("/format", post(api_format))
         .with_state(app_state.clone());
@@ -2693,6 +2735,90 @@ async fn api_status(
     }
 }
 
+#[derive(Deserialize)]
+struct CourseEventRequest {
+    #[serde(default)]
+    participant_id: Option<String>,
+    session_id: String,
+    event_type: String,
+    #[serde(default)]
+    exercise_name: Option<String>,
+}
+
+const UI_EVENT_TYPES: [&str; 5] = [
+    "chapter_view",
+    "editor_focus",
+    "hint_opened",
+    "solution_revealed",
+    "next_chapter_clicked",
+];
+
+async fn api_course_event(
+    State(state): State<AppState>,
+    Json(request): Json<CourseEventRequest>,
+) -> StatusCode {
+    if !UI_EVENT_TYPES.contains(&request.event_type.as_str())
+        || !valid_analytics_identifier(&request.session_id, 64)
+        || request
+            .exercise_name
+            .as_deref()
+            .is_some_and(|name| !valid_exercise_name(name))
+    {
+        return StatusCode::BAD_REQUEST;
+    }
+
+    if let Some(participant_id) = request.participant_id.as_deref() {
+        match participant_exists(&state.pool, participant_id).await {
+            Ok(true) => {}
+            Ok(false) => return StatusCode::UNAUTHORIZED,
+            Err(error) => {
+                error!("Failed to validate analytics participant: {error}");
+                return StatusCode::INTERNAL_SERVER_ERROR;
+            }
+        }
+    }
+
+    let event = CourseEvent {
+        participant_id: request.participant_id.as_deref(),
+        session_id: &request.session_id,
+        event_type: &request.event_type,
+        exercise_name: request.exercise_name.as_deref(),
+        result: None,
+        tests_passed: None,
+        tests_total: None,
+        duration_ms: None,
+        diagnostic_code: None,
+    };
+    if let Err(error) = store_course_event(&state.pool, event).await {
+        error!("Failed to store course event: {error}");
+        return StatusCode::INTERNAL_SERVER_ERROR;
+    }
+    StatusCode::NO_CONTENT
+}
+
+fn valid_analytics_identifier(value: &str, max_length: usize) -> bool {
+    !value.is_empty()
+        && value.len() <= max_length
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
+}
+
+fn valid_exercise_name(value: &str) -> bool {
+    value.len() <= 128
+        && !value.is_empty()
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'/'))
+}
+
+async fn participant_exists(pool: &SqlitePool, participant_id: &str) -> Result<bool, sqlx::Error> {
+    sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM participants WHERE id = ?)")
+        .bind(participant_id)
+        .fetch_one(pool)
+        .await
+}
+
 /// Request body for `/api/run`. We accept any source code; the slug is
 /// optional and only used for logging. `tests` defaults to `true` so
 /// exercise editors continue to compile with `--tests` (which surfaces
@@ -2705,6 +2831,10 @@ struct RunRequest {
     code: String,
     #[serde(default)]
     slug: Option<String>,
+    #[serde(default)]
+    participant_id: Option<String>,
+    #[serde(default)]
+    session_id: Option<String>,
     #[serde(default = "default_tests")]
     tests: bool,
 }
@@ -2740,7 +2870,11 @@ struct PlaygroundResp {
     stderr: String,
 }
 
-async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, StatusCode> {
+async fn api_run(
+    State(state): State<AppState>,
+    Json(req): Json<RunRequest>,
+) -> Result<Json<RunResponse>, StatusCode> {
+    let started_at = std::time::Instant::now();
     let slug = req.slug.as_deref().unwrap_or("<unknown>");
     info!("/api/run: forwarding {} bytes for {slug}", req.code.len());
 
@@ -2762,15 +2896,19 @@ async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, Statu
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    let resp = client
+    let resp = match client
         .post("https://play.rust-lang.org/execute")
         .json(&body)
         .send()
         .await
-        .map_err(|e| {
-            error!("Playground request failed: {e:?}");
-            StatusCode::BAD_GATEWAY
-        })?;
+    {
+        Ok(response) => response,
+        Err(error) => {
+            error!("Playground request failed: {error:?}");
+            record_upstream_failure(&state.pool, &req, started_at).await;
+            return Err(StatusCode::BAD_GATEWAY);
+        }
+    };
 
     let status = resp.status();
     if !status.is_success() {
@@ -2782,13 +2920,18 @@ async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, Statu
         } else {
             StatusCode::BAD_GATEWAY
         };
+        record_upstream_failure(&state.pool, &req, started_at).await;
         return Err(mapped);
     }
 
-    let parsed: PlaygroundResp = resp.json().await.map_err(|e| {
-        error!("Failed to parse Playground response: {e}");
-        StatusCode::BAD_GATEWAY
-    })?;
+    let parsed: PlaygroundResp = match resp.json().await {
+        Ok(response) => response,
+        Err(error) => {
+            error!("Failed to parse Playground response: {error}");
+            record_upstream_failure(&state.pool, &req, started_at).await;
+            return Err(StatusCode::BAD_GATEWAY);
+        }
+    };
 
     let test_results = parse_test_results(&parsed.stdout);
     info!(
@@ -2797,12 +2940,128 @@ async fn api_run(Json(req): Json<RunRequest>) -> Result<Json<RunResponse>, Statu
         parsed.success
     );
 
+    record_run_event(
+        &state.pool,
+        &req,
+        Some(&parsed),
+        &test_results,
+        started_at,
+        None,
+    )
+    .await;
+
     Ok(Json(RunResponse {
         success: parsed.success,
         stdout: parsed.stdout,
         stderr: parsed.stderr,
         test_results,
     }))
+}
+
+async fn record_upstream_failure(
+    pool: &SqlitePool,
+    request: &RunRequest,
+    started_at: std::time::Instant,
+) {
+    record_run_event(
+        pool,
+        request,
+        None,
+        &[],
+        started_at,
+        Some("upstream_failed"),
+    )
+    .await;
+}
+
+async fn record_run_event(
+    pool: &SqlitePool,
+    request: &RunRequest,
+    response: Option<&PlaygroundResp>,
+    test_results: &[TestResult],
+    started_at: std::time::Instant,
+    result_override: Option<&str>,
+) {
+    let Some(session_id) = request
+        .session_id
+        .as_deref()
+        .filter(|id| valid_analytics_identifier(id, 64))
+    else {
+        return;
+    };
+    let participant_id = if let Some(id) = request.participant_id.as_deref() {
+        match participant_exists(pool, id).await {
+            Ok(true) => Some(id),
+            Ok(false) => None,
+            Err(error) => {
+                warn!("Could not validate run analytics participant: {error}");
+                None
+            }
+        }
+    } else {
+        None
+    };
+    let tests_passed_count =
+        i64::try_from(test_results.iter().filter(|test| test.passed).count()).unwrap_or(i64::MAX);
+    let tests_total = i64::try_from(test_results.len()).unwrap_or(i64::MAX);
+    let result = result_override.unwrap_or_else(|| {
+        response.map_or("upstream_failed", |response| {
+            classify_run_result(
+                request.tests,
+                response.success,
+                tests_passed_count,
+                tests_total,
+            )
+        })
+    });
+    let diagnostic = response.and_then(|value| first_rust_error_code(&value.stderr));
+    let duration_ms = i64::try_from(started_at.elapsed().as_millis()).unwrap_or(i64::MAX);
+    let event = CourseEvent {
+        participant_id,
+        session_id,
+        event_type: "exercise_run",
+        exercise_name: request
+            .slug
+            .as_deref()
+            .filter(|name| valid_exercise_name(name)),
+        result: Some(result),
+        tests_passed: Some(tests_passed_count),
+        tests_total: Some(tests_total),
+        duration_ms: Some(duration_ms),
+        diagnostic_code: diagnostic.as_deref(),
+    };
+    if let Err(error) = store_course_event(pool, event).await {
+        // Analytics is best-effort and must never prevent a learner from
+        // receiving their compiler/test result.
+        warn!("Failed to store run analytics: {error}");
+    }
+}
+
+const fn classify_run_result(
+    tests_requested: bool,
+    response_success: bool,
+    tests_passed: i64,
+    tests_total: i64,
+) -> &'static str {
+    if tests_total > 0 && tests_passed < tests_total {
+        "test_failed"
+    } else if !response_success {
+        "compile_failed"
+    } else if !tests_requested {
+        "ran"
+    } else if tests_total == 0 {
+        "no_tests"
+    } else {
+        "passed"
+    }
+}
+
+fn first_rust_error_code(stderr: &str) -> Option<String> {
+    let marker = "error[E";
+    let start = stderr.find(marker)? + "error[".len();
+    let code = stderr.get(start..start + 5)?;
+    (code.starts_with('E') && code[1..].bytes().all(|byte| byte.is_ascii_digit()))
+        .then(|| code.to_string())
 }
 
 /// Request body for `/api/format`. Same request as `/api/run` minus the
@@ -3179,6 +3438,40 @@ mod tests {
     #[test]
     fn bucket_participants_handles_empty_input() {
         assert!(bucket_participants_by_team(Vec::new()).is_empty());
+    }
+
+    #[test]
+    fn analytics_identifiers_are_narrowly_validated() {
+        assert!(valid_analytics_identifier("session-123_ABC", 64));
+        assert!(!valid_analytics_identifier("", 64));
+        assert!(!valid_analytics_identifier("session with spaces", 64));
+        assert!(!valid_analytics_identifier("../session", 64));
+        assert!(!valid_analytics_identifier(&"x".repeat(65), 64));
+
+        assert!(valid_exercise_name("11_option/4_find_user"));
+        assert!(valid_exercise_name("tour"));
+        assert!(!valid_exercise_name(""));
+        assert!(!valid_exercise_name("chapter?participant=secret"));
+        assert!(!valid_exercise_name("../chapter"));
+    }
+
+    #[test]
+    fn classifies_run_results_without_treating_missing_tests_as_a_pass() {
+        assert_eq!(classify_run_result(true, true, 2, 2), "passed");
+        assert_eq!(classify_run_result(true, true, 1, 2), "test_failed");
+        assert_eq!(classify_run_result(true, false, 0, 0), "compile_failed");
+        assert_eq!(classify_run_result(true, true, 0, 0), "no_tests");
+        assert_eq!(classify_run_result(false, true, 0, 0), "ran");
+    }
+
+    #[test]
+    fn extracts_only_structured_rust_error_codes() {
+        assert_eq!(
+            first_rust_error_code("error[E0308]: mismatched types"),
+            Some("E0308".to_string())
+        );
+        assert_eq!(first_rust_error_code("error: expected expression"), None);
+        assert_eq!(first_rust_error_code("all tests passed"), None);
     }
 
     #[test]

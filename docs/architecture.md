@@ -14,7 +14,8 @@ Two things in one crate:
 2. **A small Axum server + CLI** that hosts the same exercises in a
    browser and tracks per-participant progress against a SQLite
    database. Optional for self-study, required for instructor-led
-   workshops.
+   workshops. Privacy-conscious learning events are stored separately in
+   `course_events`; see `docs/analytics.md`.
 
 The Cargo package is `cargo-course` (Rust edition 2024). It exposes a
 library plus two binaries (`server`, `cargo-course` aka the CLI).
@@ -39,6 +40,7 @@ course/
 │       ├── 4_<slug>.rs    # another step
 │       └── 5_hints.md     # optional; slug `hints` is special (see below)
 ├── migrations/            # SQLx migrations, applied in order at startup
+├── docs/analytics.md      # Event schema, privacy boundaries, report queries
 ├── src/
 │   ├── lib.rs             # re-exports `exercises` and `types`
 │   ├── types.rs           # API request/response + newtype wrappers

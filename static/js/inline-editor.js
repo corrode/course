@@ -876,6 +876,10 @@ export async function mountInlineEditor(section, opts = {}) {
     clearActionStatus();
     try {
       const payload = { code, slug: exerciseKey };
+      if (features.analytics) {
+        payload.participant_id = features.analytics.participantId;
+        payload.session_id = features.analytics.sessionId;
+      }
       if (runWithoutTests) payload.tests = false;
       const resp = await fetch("/api/run", {
         method: "POST",
