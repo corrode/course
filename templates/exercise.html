@@ -565,10 +565,9 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         })();
     </script>
 
-    {# Quiz interaction. Inert no-op on every chapter except the one that ships
-    a `quiz.toml`; the script just looks for `[data-quiz]` and bails when
-    there's nothing to wire up. #}
+    {% if exercise.is_quiz() %}
     <script src="/static/js/quiz.js" defer></script>
+    {% endif %}
 
     {% if next_dot.is_some() && ulid.is_none() &&
     exercise.wants_signup_on_pass() %} {% match next_dot %} {% when Some with
@@ -650,25 +649,15 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     // Map of named effects fired when a section's tests all pass.
     // Each handler receives `{ section, data }` (the run-result payload).
     const PassHooks = {
-        confetti() {
-            if (typeof window.confetti !== "function") {
-                console.warn(
-                    "[corrode] confetti hook fired but window.confetti is not loaded (CDN blocked?)",
+        async confetti() {
+            try {
+                const { celebrateWithConfetti } = await import(
+                    "/static/js/confetti.js"
                 );
-                return;
+                await celebrateWithConfetti();
+            } catch (err) {
+                console.warn("[corrode] confetti failed to load", err);
             }
-            const fire = (originX) =>
-                window.confetti({
-                    particleCount: 120,
-                    spread: 80,
-                    startVelocity: 55,
-                    ticks: 250,
-                    zIndex: 10000,
-                    origin: { x: originX, y: 0.7 },
-                });
-            fire(0.2);
-            fire(0.5);
-            fire(0.8);
         },
     };
 
@@ -795,35 +784,38 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
 </script>
 <script type="module">
     // Syntax-highlight code blocks in chapter prose (notes + intro)
-    // using the same Lezer Rust grammar that powers the editor.
-    try {
-        const [{ parser }, { highlightTree, classHighlighter }] =
-            await Promise.all([
-                import("@lezer/rust"),
-                import("@lezer/highlight"),
-            ]);
+    // using the same Lezer Rust grammar that powers the editor. Check for
+    // blocks first so prose-free pages don't fetch the parser at all.
+    const proseCodeBlocks = document.querySelectorAll(
+        ".exercise-prose pre > code",
+    );
+    if (proseCodeBlocks.length > 0) {
+        try {
+            const [{ parser }, { highlightTree, classHighlighter }] =
+                await Promise.all([
+                    import("@lezer/rust"),
+                    import("@lezer/highlight"),
+                ]);
 
-        const highlightRust = (code) => {
-            const tree = parser.parse(code);
-            let out = "";
-            let pos = 0;
-            const escape = (s) =>
-                s
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;");
-            highlightTree(tree, classHighlighter, (from, to, cls) => {
-                if (from > pos) out += escape(code.slice(pos, from));
-                out += `<span class="${cls}">${escape(code.slice(from, to))}</span>`;
-                pos = to;
-            });
-            if (pos < code.length) out += escape(code.slice(pos));
-            return out;
-        };
+            const highlightRust = (code) => {
+                const tree = parser.parse(code);
+                let out = "";
+                let pos = 0;
+                const escape = (s) =>
+                    s
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;");
+                highlightTree(tree, classHighlighter, (from, to, cls) => {
+                    if (from > pos) out += escape(code.slice(pos, from));
+                    out += `<span class="${cls}">${escape(code.slice(from, to))}</span>`;
+                    pos = to;
+                });
+                if (pos < code.length) out += escape(code.slice(pos));
+                return out;
+            };
 
-        document
-            .querySelectorAll(".exercise-prose pre > code")
-            .forEach((el) => {
+            proseCodeBlocks.forEach((el) => {
                 const langClass = [...el.classList].find((c) =>
                     c.startsWith("language-"),
                 );
@@ -833,33 +825,37 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
                 if (lang && lang !== "rust" && lang !== "rs") return;
                 el.innerHTML = highlightRust(el.textContent);
             });
-    } catch (err) {
-        console.warn("prose syntax highlighting failed to load", err);
+        } catch (err) {
+            console.warn("prose syntax highlighting failed to load", err);
+        }
     }
 </script>
 
 <script type="module">
-    // Solution viewers: each "Reveal the full solution" disclosure holds a
-    // read-only CodeMirror instance (same viewer as the admin/team pages).
-    // We mount it lazily the first time the <details> opens, because
-    // mounting inside a `display: none` container measures to zero height
-    // and renders a collapsed editor. On open we also `requestMeasure()`
-    // so line numbers and gutters lay out correctly the first time.
-    try {
-        const { mountReadonlyRustEditor } =
-            await import("/static/js/readonly-rust-editor.js");
-        document.querySelectorAll(".solution-disclosure").forEach((details) => {
-            details.addEventListener("toggle", () => {
-                if (!details.open) return;
-                const el = details.querySelector("[data-rust-solution]");
-                if (!el) return;
+    // Load the read-only CodeMirror viewer only when a learner reveals a
+    // solution. Its transitive CodeMirror modules are otherwise one of the
+    // largest avoidable requests on an exercise page.
+    const solutionDisclosures = document.querySelectorAll(
+        ".solution-disclosure",
+    );
+    let solutionViewer;
+    solutionDisclosures.forEach((details) => {
+        details.addEventListener("toggle", async () => {
+            if (!details.open) return;
+            const el = details.querySelector("[data-rust-solution]");
+            if (!el) return;
+            try {
+                solutionViewer ??= import(
+                    "/static/js/readonly-rust-editor.js"
+                );
+                const { mountReadonlyRustEditor } = await solutionViewer;
                 const view = mountReadonlyRustEditor(el);
                 if (view) requestAnimationFrame(() => view.requestMeasure());
-            });
+            } catch (err) {
+                console.warn("solution viewer failed to load", err);
+            }
         });
-    } catch (err) {
-        console.warn("solution viewer failed to load", err);
-    }
+    });
 </script>
 
 <style>

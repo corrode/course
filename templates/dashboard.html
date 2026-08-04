@@ -388,27 +388,17 @@ fn main() {
 
         // Three-burst confetti, identical to the chapter editor's
         // `PassHooks.confetti` so the celebration on the warm-up feels
-        // continuous with the rest of the course. canvas-confetti is
-        // loaded once via CDN at the bottom of `base.html`.
-        function celebrate() {
-            if (typeof window.confetti !== "function") {
-                console.warn(
-                    "[corrode] confetti not loaded on dashboard (CDN blocked?)",
+        // continuous with the rest of the course. The library is fetched
+        // only after the first successful run.
+        async function celebrate() {
+            try {
+                const { celebrateWithConfetti } = await import(
+                    "/static/js/confetti.js"
                 );
-                return;
+                await celebrateWithConfetti();
+            } catch (err) {
+                console.warn("[corrode] confetti failed to load", err);
             }
-            const fire = (originX) =>
-                window.confetti({
-                    particleCount: 120,
-                    spread: 80,
-                    startVelocity: 55,
-                    ticks: 250,
-                    zIndex: 10000,
-                    origin: { x: originX, y: 0.7 },
-                });
-            fire(0.2);
-            fire(0.5);
-            fire(0.8);
         }
 
         import("/static/js/inline-editor.js").then(({ mountInlineEditor }) => {
