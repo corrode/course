@@ -1,6 +1,10 @@
 {% extends "base.html" %} {% block title %}A Quick Tour of Rust | corrode Rust
 Course{% endblock %} {% block content %}
-<div class="container">
+<div
+    class="container"
+    data-course-chapter="tour"
+    {% match ulid %}{% when Some with (u) %}data-participant-id="{{ u }}"{% when None %}{% endmatch %}
+>
     <div class="exercise-header">
         <div class="chapter-eyebrow">Preamble</div>
         <h1 class="exercise-title">A Quick Tour of Rust</h1>
@@ -132,6 +136,14 @@ Course{% endblock %} {% block content %}
 </div>
 
 <script type="module">
+    import {
+        analyticsSessionId,
+        bindCourseAnalytics,
+        participantId,
+    } from "/static/js/analytics.js";
+
+    bindCourseAnalytics();
+
     // One annotated, runnable code box. We reuse the playground's
     // inline editor (CodeMirror + the /api/run proxy) in run-only mode,
     // and layer concept-class hover explanations on top via the
@@ -307,6 +319,10 @@ Course{% endblock %} {% block content %}
                     syntaxHighlightOutput: false,
                     runWithoutTests: true,
                     buildExtraExtensions: buildTourHover,
+                    analytics: {
+                        participantId: participantId(),
+                        sessionId: analyticsSessionId(),
+                    },
                 },
             });
         })

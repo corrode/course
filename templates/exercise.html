@@ -135,7 +135,12 @@ endblock %} {% block topbar_team_href %}{% match ulid %}{% when Some with (u)
 %}/dashboard/{{ u }}/team{% when None %}/signup{% endmatch %}{% endblock %} {%
 block topbar_team_title %}{% match ulid %}{% when Some with (_u) %}Your team{%
 when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
-<div class="container" data-corrode-config="{{ exercise.directives_json() }}">
+<div
+    class="container"
+    data-corrode-config="{{ exercise.directives_json() }}"
+    data-course-chapter="{{ exercise.file_stem }}"
+    {% match ulid %}{% when Some with (u) %}data-participant-id="{{ u }}"{% when None %}{% endmatch %}
+>
     <div class="exercise-header">
         <div class="chapter-eyebrow">
             {% if exercise.is_bonus() %}Bonus chapter{% else %}Chapter {{
@@ -373,7 +378,10 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         </div>
     </section>
     {% match hints_html %} {% when Some with (h) %}
-    <details class="hints-disclosure hints-disclosure-step">
+    <details
+        class="hints-disclosure hints-disclosure-step"
+        data-exercise-key="{{ exercise_key }}"
+    >
         <summary>
             <span class="hints-icon" aria-hidden="true">💡</span>
             <span class="hints-summary-text">Stuck? Show a hint</span>
@@ -383,7 +391,10 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     </details>
     {% when None %} {% endmatch %} {% match solution_code %} {% when Some with
     (sol) %}
-    <details class="hints-disclosure solution-disclosure hints-disclosure-step">
+    <details
+        class="hints-disclosure solution-disclosure hints-disclosure-step"
+        data-exercise-key="{{ exercise_key }}"
+    >
         <summary>
             <span class="hints-icon" aria-hidden="true">✅</span>
             <span class="hints-summary-text">Reveal the full solution</span>
@@ -606,6 +617,14 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
 </div>
 
 <script type="module">
+    import {
+        analyticsSessionId,
+        bindCourseAnalytics,
+        participantId,
+    } from "/static/js/analytics.js";
+
+    bindCourseAnalytics();
+
     // The CodeMirror mount, button wiring, draft persistence, vim toggle,
     // submit flow, and fallback path all live in
     // `static/js/inline-editor.js`. This block is just chapter-page glue:
@@ -746,6 +765,10 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
                             copyButton: true,
                             urlPlugin: true,
                             syntaxHighlightOutput: true,
+                            analytics: {
+                                participantId: participantId(),
+                                sessionId: analyticsSessionId(),
+                            },
                         },
                         onRunSuccess: ({ section, data }) => {
                             document
