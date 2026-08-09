@@ -1,11 +1,11 @@
 # Counting characters
 
-This is where byte length and character count part ways.
-In many languages, asking for the "length" of a string gives you back the number of characters.
-In Rust, `str::len` returns the number of *bytes* in the underlying UTF-8 buffer, which only matches the character count for plain ASCII.
-
+In many languages, asking for the "length" of a string gives you back the number of **characters**.
+In Rust, `str::len` returns the number of **bytes** in the underlying UTF-8 buffer.
 For "hello" the byte count and char count both happen to be 5, but "café" is 5 bytes and 4 chars.
-Reach for `chars()` when you want the character count.
+That's because the `é` is two bytes in UTF-8.
+
+To get the actual character count, always use `chars()`.
 
 ## Useful from the standard library
 

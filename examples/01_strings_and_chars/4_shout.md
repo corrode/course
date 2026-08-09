@@ -1,8 +1,8 @@
 # Borrow in, own out
 
-Here you borrow text to read it, then return a new `String` that the caller can keep.
-The signature captures that handoff: `&str` in, owned `String` out.
-This shape is common when a function reads existing text to produce different text.
+Here you borrow text to read it, then return a new `String` that the caller can own (i.e. use however they like).
+The signature is very typical: you often get a `&str` in and an owned `String` out.
+This is common when a function reads existing string and does some processing to create a new string. 
 
 ## Useful from the standard library
 
