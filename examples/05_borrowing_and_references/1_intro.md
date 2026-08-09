@@ -1,7 +1,5 @@
 # Borrowing and references
 
-*Why are Rust developers so frugal? They prefer to borrow.*
-
 The functions chapter had a nuisance baked in.
 Pass a `String` to a function and the move rules say you've handed it over.
 Want to use it afterwards? Too bad, it's gone.

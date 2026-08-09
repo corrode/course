@@ -1,7 +1,5 @@
 # Option<T>: When a value might be missing
 
-*I looked for a joke about null pointers in Rust, but there was `None`.*
-
 Rust has no `null`.
 Instead, when a value might be absent, the type makes that explicit using `Option<T>`:
 

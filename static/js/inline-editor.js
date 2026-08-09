@@ -61,8 +61,8 @@
 // all. We use a module-local set rather than DOM events so a future page
 // can mount editors after the toggle was already flipped.
 //
-// Fallback path: if any of the local CodeMirror chunks fail to load, the
-// module wires Run/Format/Reset/Submit against the
+// Fallback path: if any of the CodeMirror imports fail (esm.sh blocked,
+// offline, etc.) the module wires Run/Format/Reset/Submit against the
 // plain `<textarea data-role="editor-fallback">` and returns the same
 // handle so call sites don't need to branch.
 
@@ -389,6 +389,8 @@ export async function mountInlineEditor(section, opts = {}) {
       completionKeymap,
       closeBrackets,
       closeBracketsKeymap,
+      acceptCompletion,
+      completionStatus,
     } = autocomplete;
 
     themeCompartment = new Compartment();
@@ -497,10 +499,8 @@ export async function mountInlineEditor(section, opts = {}) {
       history(),
       drawSelection(),
       indentOnInput(),
-      // Match Zed / rustfmt: 4-space indent. CM6 defaults to 2, which made
-      // newlines inside `fn`/`impl` blocks indent half as far as the
-      // surrounding (rustfmt'd) code in the same buffer.
-      indentUnit.of("    "),
+      // Match the course's code examples: 2-space indent.
+      indentUnit.of("  "),
       bracketMatching(),
       syntaxHighlighting(proseHighlightStyle, { fallback: true }),
       closeBrackets(),
@@ -520,6 +520,17 @@ export async function mountInlineEditor(section, opts = {}) {
         ...defaultKeymap,
         ...historyKeymap,
         ...completionKeymap,
+        // Tab accepts the open completion (like Enter); otherwise it
+        // falls through to `indentWithTab` to indent the line.
+        {
+          key: "Tab",
+          run: (v) => {
+            if (completionStatus(v.state) === "active") {
+              return acceptCompletion(v);
+            }
+            return false;
+          },
+        },
         indentWithTab,
       ]),
       langRust.rust(),
@@ -529,7 +540,7 @@ export async function mountInlineEditor(section, opts = {}) {
       persistExt,
       // Page-specific extras (e.g. the tour's hover-explanation
       // tooltips). Built here so callers reuse the exact CM module
-      // instances from the shared bundle chunks. The value may
+      // instances resolved through the shared importmap. The value may
       // be a single extension or an array; CodeMirror flattens nested
       // arrays, so we include it as one element rather than spreading
       // (spreading a non-iterable single extension would throw).

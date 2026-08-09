@@ -1,15 +1,15 @@
 # Parsing strings into numbers
 
 `str::parse` turns text into the type you ask for.
-It returns a `Result` because not every input can become the type you asked for.
-`Result` represents parse success or failure, while this exercise deliberately maps failure to `0`.
+It returns a `Result` because not every input can, in fact, become the correct type you asked for.
 
 Returning `0` on failure is a *bad idea* in real code because it makes valid input `"0"` indistinguishable from garbage.
-`Option` and `Result` preserve the distinction between valid zero and invalid input.
-The tests define `0` as the fallback.
+In Rust, `Option` and `Result` preserve the distinction between valid zero and invalid input.
+For scenarios, where the absence of a value is an error, `Result` is the right choice.
+In our case, we have a problem if we try to parse a string that isn't a number. What should be the fallback value?
+For this simple case, we will use `0` as the fallback.
 
 Note that `u32` can't be negative, so `"-5".parse::<u32>()` will fail and we should also return `0`.
-If you reach for `i32` first, the test for `"-5"` may surprise you.
 
 ## Useful from the standard library
 
