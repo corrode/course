@@ -1,21 +1,23 @@
 # Wrapping up conditionals and loops
 
-You wrote a three-way classifier with `if`/`else if`/`else`, two accumulator-style loops (a `for` over a range and a `for` over a slice with `continue`), and a `while` loop where the iteration count isn't known up front.
+You used each kind of control flow for a slightly different job.
+The mood classifier chose one branch, the two `for` loops walked through values you already had, and the `while` loop kept going until there was nothing left to divide.
 
 ## What we learned
 
 - `if`/`else` is an *expression*, not just a statement.
   It can sit on the right of `let`, be returned from a function, or appear anywhere a value is expected.
   Both branches must have the same type.
-- Conditions are bare `bool` expressions.
-  No parentheses required, no implicit conversion from integers or strings.
-- `for x in iter` is the default loop.
-  Ranges (`0..n`, `0..=n`), slices, vectors, and most other collections all produce iterators you can put on the right.
+- Conditions are `bool` expressions written without surrounding parentheses.
+  Rust does not quietly treat an integer or a string as true or false.
+- `for x in iter` is the type of loop to use when you already have something to walk through.
+  Ranges (`0..n`, `0..=n`), slices, vectors, and most other collections all work here.
 - `while cond` runs as long as the condition is true.
   Reach for it when the iteration count depends on values computed inside the loop (like "divide until zero").
 - `loop` runs forever until you `break`.
   It can also produce a value: `let x = loop { ...; break value; };`.
 - `break` exits the innermost loop; `continue` skips to the next iteration.
-  A `continue` to early-out the boring case usually reads better than nesting the work inside an `if`.
-- The accumulator pattern (`let mut acc = ...; for ... { acc = ...; }`) is the how you can "compute one value from many".
-  Once you meet iterators in the iterators chapter, methods like `sum`, `count`, and `fold` will replace many of these by-hand loops.
+  In `count_evens`, `continue` handled the odd numbers first and kept the counter outside a nested `if`.
+- An accumulator lets you compute one value from many inputs.
+  You start with a value, update it once per loop iteration, and return it when the loop is done.
+  When we get to iterators, we'll use methods such as `sum`, `count`, and `fold` for many of the same jobs.
