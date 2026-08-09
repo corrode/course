@@ -1,9 +1,7 @@
 # Conditionals and loops
 
-*Why did the Rust loop break up with the condition? It said "I just need some space."*
-
 You've already seen `if` and `for` in passing.
-This chapter slows down and looks at them on purpose, plus the other two loop forms (`while` and `loop`) and the keywords that control them (`break` and `continue`).
+Now we'll slow down and look at them on purpose, along with the other two loop forms (`while` and `loop`) and the keywords that control them (`break` and `continue`).
 
 ## `if` / `else` / `else if`
 
@@ -19,7 +17,7 @@ if x > 0 {
 }
 ```
 
-Two things to call out:
+You might notice two things:
 
 - The condition is a `bool`.
   No truthy strings, no zero-as-false, no parentheses required around the condition.
@@ -34,7 +32,9 @@ Two things to call out:
 
 ## `for` loops
 
-`for` walks anything that produces an iterator. Here's how it works: 
+A `for` loop can walk through a range of numbers, the elements of an array, or the items in a collection.
+Rust supports all of these through iterators, but you do not need to understand iterators yet to use the loop.
+For example:
 
 ```rust
 for i in 0..5 {            // 0, 1, 2, 3, 4
@@ -48,10 +48,11 @@ for word in ["hi", "rust"] {
 
 `0..5` is a *range*: a value that produces the integers from `0` up to (but not including) `5`.
 The inclusive form is `0..=5`, which also yields `5`.
-Both work as iterators and as patterns in `match` (seen in the password chapter later).
+Both work as iterators and as patterns in `match` (we'll use ranges that way later in the password chapter).
 
 For larger collections, you'll usually iterate over a `Vec`, a slice, a `HashMap`, or the result of `s.chars()`.
-Iterators get their own chapter; for now, "anything you can put on the right of `for x in ...`" is enough.
+We'll take a closer look at iterators later.
+For now, "anything you can put on the right of `for x in ...`" is enough.
 
 ## `while` and `loop`
 
@@ -66,7 +67,7 @@ while n > 0 {
 ```
 
 `loop` runs forever, until you `break` out of it.
-Useful when the exit condition isn't a simple boolean check at the top:
+It is useful when the exit condition is not a simple boolean check at the top, or when you only know whether to stop after doing some work:
 
 ```rust
 let mut attempts = 0;
@@ -103,11 +104,11 @@ for n in 0..10 {
 
 ## Picking the right loop
 
-A useful rule of thumb:
+When you need to pick one:
 
 - Use `for` when you know what you're iterating over (a range, a slice, a map, the chars of a string).
 - Use `while` when the exit condition is a simple "keep going while X is true".
 - Use `loop` only when neither of the above fits, usually because the exit condition is in the middle of the body.
 
-Most code reaches for `for`.
-Iterators (covered later in the course) make `for` even more powerful.
+If you are unsure, start with `for` when there is already a collection or range to walk through.
+When we get to iterators, we'll see how ranges, slices, and collections all plug into this same syntax.
