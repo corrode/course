@@ -1,8 +1,8 @@
 # Borrow in, own out
 
-This step is the canonical "borrowed in, owned out" pattern.
-The caller hands you a cheap `&str` view, and you give back a brand new `String` that they get to keep.
-You'll see this pattern over and over in real Rust code, so it's worth getting comfortable with the signature now.
+Here you borrow text to read it, then return a new `String` that the caller can keep.
+The signature captures that handoff: `&str` in, owned `String` out.
+You'll see the same shape whenever a function reads existing text to produce different text.
 
 ## Useful from the standard library
 

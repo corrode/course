@@ -26,14 +26,14 @@ fn parse_port(input: &str) -> Result<u16, &'static str> {
 }
 ```
 
-The snippet above sneaks in three pieces of syntax that don't have their own chapter, so it's worth pausing on each:
+You only need a working reading of three details in this example: `&'static str`, the `::<u16>` after `parse`, and the `if` guard on the first match arm.
 
 ### `&'static str`
 
 This is a `&str` whose lifetime is `'static`: a fancy way of saying "this string lives for the entire duration of the program."
 String literals like `"port must be greater than 0"` are baked into the binary, so they qualify.
 For now, treat `&'static str` as the right type to use for hard-coded error messages.
-Lifetimes in general get a more careful treatment in later chapters.
+We'll build a more complete model of lifetimes later.
 
 ### Turbofish: `parse::<u16>()`
 
@@ -62,12 +62,9 @@ match n {
 }
 ```
 
-### Back to `Result`
+### Handling the two variants
 
-The `&'static str` you see for the error type is the simplest possible error: a borrowed string literal.
-Real applications usually define their own error enums, but `&'static str` is fine while you're learning.
-
-Patterns to handle a `Result`:
+As with `Option`, you can handle a `Result` with `match`, `if let`, or a combinator when you have a simple fallback:
 
 ```rust
 match safe_divide(10.0, 0.0) {
@@ -83,5 +80,5 @@ if let Ok(n) = safe_divide(10.0, 2.0) {
 ```
 
 `Result` has many of the same combinators as `Option`: `.map`, `.map_or`, `.and_then`, `.unwrap_or`.
-Once you're comfortable with this chapter, the `?` operator (which gets its own chapter) will let you chain fallible operations without the boilerplate.
+Next, we'll use the `?` operator to chain fallible operations without writing the same `match` boilerplate each time.
 

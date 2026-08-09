@@ -1,7 +1,7 @@
 # Transforming with `map`
 
 Now you need to transform every element instead of collapsing the sequence.
-The pattern is `vec.into_iter()` -> some combinator that applies a closure -> back to a `Vec` via `collect()`.
+Read this pipeline from left to right: take ownership of the vector's items, transform each one, then collect the results into a new vector.
 
 `map` is lazy: it just describes the transformation.
 Nothing runs until `collect` (or another consumer) asks for the results.

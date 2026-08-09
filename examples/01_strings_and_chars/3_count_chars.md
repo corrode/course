@@ -1,6 +1,6 @@
 # Counting characters
 
-Your first encounter with `&str`.
+This is where byte length and character count part ways.
 In many languages, asking for the "length" of a string gives you back the number of characters.
 In Rust, `str::len` returns the number of *bytes* in the underlying UTF-8 buffer, which only matches the character count for plain ASCII.
 

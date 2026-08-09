@@ -1,6 +1,8 @@
 # Wrapping up traits
 
-You implemented an stdlib trait (`Display`), defined your own (`Describable`), wrote a generic function with a trait bound, gave a trait a default method that one type inherited and another overrode (the `Logger` step), and finally swapped a generic for a trait object so a single slice could hold a mix of validation rules.
+You implemented the standard library's `Display` trait and defined a `Describable` trait of your own.
+You used `Describable` as a generic bound, then shared behavior through default methods.
+Finally, you switched from a generic to a trait object so one slice could hold several kinds of validation rule.
 
 ## What we learned
 
@@ -16,15 +18,11 @@ You implemented an stdlib trait (`Display`), defined your own (`Describable`), w
   `fn f<T: Trait>(x: &T)` is the basic form, `T: A + B` combines bounds, and `where` clauses let you push long bounds out of the signature.
 - **Default methods** in the trait body give every implementor a baseline behavior.
   Override per type when you need to.
-- **Generics** dispatch statically: one specialized copy of the function per concrete `T`.
-  Fast, but one call can only see one concrete type.
-  Great default.
+- **Generics** dispatch statically, so the compiler creates one specialized copy of the function per concrete `T`.
+  Use them when each call only needs one concrete type.
 - **Trait objects (`dyn Trait`)** dispatch dynamically through a vtable.
-  Slower per call but lets one slice or `Vec` hold values of multiple concrete types at once.
-  Reach for them when you need heterogeneity.
+  Use them when one slice or `Vec` needs to hold several concrete types at once.
 - `Box<dyn Trait>` solves the "trait objects have no known size" problem so they can live in owning containers like `Vec`.
-  That's the headline of the optional **smart pointers** bonus chapter (`Box`, `Rc`, `RefCell`).
-  Dip into it whenever you want to go deeper.
-- Many stdlib traits you already use (`Iterator`, `From`, `Into`, `PartialEq`, ...) are just regular traits.
-  Nothing magic.
-  You can define your own or implement the standard ones for your own types.
+  We'll unpack that pattern alongside `Box`, `Rc`, and `RefCell` in the optional **smart pointers** material.
+- Many standard library traits you already use (`Iterator`, `From`, `Into`, `PartialEq`, ...) follow the same rules.
+  You can define traits of your own or implement standard traits for your own types.

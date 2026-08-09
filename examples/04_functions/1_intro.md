@@ -2,7 +2,7 @@
 
 You've been inside a function since the first line you wrote.
 `fn main()` is one, and every `println!(...)` is a call (the `!` marks it as a macro).
-So instead of explaining what a function is, this chapter covers the parts of `fn` that Rust does its own way: explicit parameter and return types, blocks as expressions, and the trailing-semicolon rule that decides what gets returned.
+So instead of explaining what a function is, we'll focus on the parts Rust does its own way: explicit parameter and return types, blocks as expressions, and the trailing-semicolon rule that decides what gets returned.
 
 ## Anatomy
 
@@ -24,8 +24,9 @@ let sum = add(2, 3);   // sum: i32 = 5
 
 ## Expressions, not statements
 
-The body of a function is a *block*, and a block is one or more statements followed by an optional final expression.
-The final expression (if there is one, and it has no trailing semicolon) becomes the value of the block, which becomes the return value of the function.
+The body of a function is a *block*: zero or more statements followed by an optional final expression.
+When that final expression has no trailing semicolon, its value becomes the value of the block.
+For a function body, that block value is also the function's return value.
 
 ```rust
 fn double(n: i32) -> i32 {
@@ -45,9 +46,7 @@ That semicolon thing trips up newcomers.
 The rule is short: a semicolon turns an expression into a statement (which has no value).
 Forgetting one at the end of the function is the *correct* thing to do when you want the value to be returned.
 Adding one accidentally turns the body into "do this, then return `()`" and the compiler will complain that the types don't match.
-The first exercise lets you feel that error first-hand.
-
-The two exercises after it each pull at one more thread: returning a value built recursively, and modifying a parameter inside the body.
+In the first exercise, you'll make that error disappear by changing a single character.
 
 ## A few good habits
 
@@ -55,14 +54,11 @@ The two exercises after it each pull at one more thread: returning a value built
   Single-purpose functions are easier to test and easier to read.
 - Use parameter names that say what the value *is*, not what type it is: `width: u32`, not `w: u32`.
 - Prefer the *least demanding* parameter type that still lets you do the job.
-  "Least demanding" means: ask the caller for as little as possible.
+  In other words, ask the caller for as little as possible.
   If you only need to *read* a string, take `&str`, not `String`.
-  Three reasons this matters:
-  1. Taking `String` would force the caller to hand over their value (or `.clone()` it).
-     Taking `&str` lets them keep it.
-  2. A `&str` parameter accepts string literals (`"hi"`), borrows of owned strings (`&my_string` coerces from `&String` to `&str`), and slices of larger buffers, all without conversion at the call site.
-  3. A `&str` is just a pointer and a length; passing one costs nothing.
-     A `String` parameter would mean moving (or cloning) a heap buffer on every call.
+  Taking `String` would force the caller to hand over the value or clone it, while `&str` lets them keep it.
+  A `&str` parameter also accepts string literals, borrowed `String` values, and slices of larger text buffers without conversion at the call site.
+  Borrowing does not clone the string, and moving a `String` would transfer ownership without moving its heap allocation.
 
-  The same idea extends to other types: take `&[T]` instead of `&Vec<T>`, `&Path` instead of `&PathBuf`, and so on.
-  We'll come back to this pattern in the vectors and ownership chapters.
+  The same idea extends to other types, such as `&[T]` instead of `&Vec<T>` and `&Path` instead of `&PathBuf`.
+  We'll use this pattern again with vectors and when we revisit ownership.

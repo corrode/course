@@ -15,7 +15,7 @@ That's enough to build a real, useful tool, and it's the same shape you'll keep 
 
 ## What comes next
 
-You'll meet `split_whitespace` and `chars` again in **the iterators chapter**, where the three loops you just wrote collapse to:
+When we get to **iterators**, we'll collapse the three loops you just wrote to:
 
 ```rust
 fn word_count(text: &str)    -> usize { text.split_whitespace().count() }
@@ -23,4 +23,4 @@ fn char_count(text: &str)    -> usize { text.chars().count() }
 fn longest_word(text: &str)  -> usize { text.split_whitespace().map(|w| w.chars().count()).max().unwrap_or(0) }
 ```
 
-Then in **the word frequencies chapter** we'll go further and ask not just *how many* words a text contains, but *which* words appear and *how often* each one shows up.
+Later, we'll extend this example from counting all words to recording which words appear and how often.

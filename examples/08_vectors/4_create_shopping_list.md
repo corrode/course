@@ -1,8 +1,7 @@
 # Building a list from borrowed slices
 
-The trickiest of the three: each input is a `&str`, but the output is a `Vec<String>`.
-Each borrowed slice has to become an owned `String` somewhere along the way.
-The `String::from` / `.to_string()` / `.to_owned()` family all do this conversion.
+This time the input and output hold different string types: each input is a borrowed `&str`, while the output must own its `String`s.
+That means every item needs to become an owned `String` before it can live in the result.
 
 ## Useful from the standard library
 

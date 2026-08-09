@@ -7,7 +7,7 @@ The signature is the interesting part: `&'static str` for the error is the simpl
 ## Useful from the standard library
 
 - The `Result` constructors `Ok(value)` and `Err(message)` are in the prelude, so you can use them without importing anything.
-- `f64 == 0.0` is the bounds check.
-  Floating-point comparison has plenty of nasty edge cases in general, but exact zero is fine.
+- `f64 == 0.0` detects the failure case.
+  Floating-point comparison has plenty of nasty edge cases in general, but checking for exact zero is fine here.
 - [`Result::is_err`](https://doc.rust-lang.org/std/result/enum.Result.html#method.is_err)
   is what the test uses; you don't need it inside the function.

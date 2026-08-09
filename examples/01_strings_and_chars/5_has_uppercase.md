@@ -1,7 +1,8 @@
 # Iterating over characters
 
-Strings aren't directly indexable in Rust (because UTF-8 characters have varying widths), but you can iterate over their `char`s.
-A plain `for c in text.chars()` loop will work, and so will the iterator combinators like `any` or `find`, which usually express "is there at least one ..." checks more directly.
+Strings aren't directly indexable in Rust because UTF-8 characters have varying widths, but you can walk through their `char`s.
+A plain `for c in text.chars()` loop works.
+When the question is "does at least one character match?", `any` expresses that directly and can stop as soon as it finds one.
 
 ## Useful from the standard library
 

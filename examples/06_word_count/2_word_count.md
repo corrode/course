@@ -1,9 +1,10 @@
 # Counting words
 
-Your first function: given a string of text, return how many words it contains.
-Words are anything separated by whitespace, so `"hello world"` has two words and `"   "` has zero.
+Start with the smallest piece of the library: given some text, return how many words it contains.
+For this exercise, words are anything separated by whitespace, so `"hello world"` has two and `"   "` has none.
 
-The recipe is the simplest possible: keep a counter, walk the text with `for ... in text.split_whitespace()`, bump the counter on each iteration, return it at the end.
+Keep the implementation deliberately manual.
+Walk the pieces from `text.split_whitespace()`, bump a counter for each one, and return the counter when the loop ends.
 
 ## Useful from the standard library
 

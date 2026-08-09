@@ -1,6 +1,6 @@
 # Mixed types behind one trait: `Box<dyn Trait>`
 
-The traits chapter introduced trait objects (`dyn Trait`) and ended on a puzzle: a `dyn Trait` doesn't have a known size at compile time (different implementors are different sizes), so the compiler won't let you put one directly in a `Vec` or return one from a function.
+When we worked with traits, `dyn Trait` left us with one puzzle: different implementors have different sizes, so the compiler won't let you put a trait object directly in a `Vec` or return one from a function.
 The fix is to put it behind a pointer, and the *owned* pointer is `Box<dyn Trait>`.
 
 ```rust
@@ -13,15 +13,15 @@ let pipeline: Vec<Box<dyn Command>> = vec![
 Every entry in the vector is one box, one pointer wide, all the same size.
 Each box owns whatever concrete type it wraps.
 Dropping the vector drops the boxes, which drops the inner values.
-This is the exact same pattern the env-file parser chapter uses as `Box<dyn Error>`: "some value, I don't care which concrete type, just give me one owned thing that implements the trait."
+You've already seen the same pattern as `Box<dyn Error>` in the env-file parser: "some value, I don't care which concrete type, just give me one owned thing that implements the trait."
 
 Calling a method on a `Box<dyn Command>` looks like calling it on the concrete type: `cmd.run(input)`.
 Under the hood, Rust does a *vtable lookup* (the same trick C++ uses for virtual methods) to pick the right implementation.
-The cost is one extra indirection per call; the benefit is the heterogeneity above.
+You pay one extra indirection per call in exchange for storing different concrete types in one vector.
 
 ## What you're building
 
-A tiny text-transformation pipeline.
+You'll build a tiny text-transformation pipeline.
 The trait is one method:
 
 ```rust
@@ -36,11 +36,10 @@ Three commands are already implemented for you:
 - `Reverse` reverses the input.
 - `Append { suffix }` appends a configured suffix.
 
-The exercise is the orchestrator: `apply_pipeline` threads an input string through every command in order, feeding each command's output into the next command's input, and returns the final result.
+Your job is the orchestration: `apply_pipeline` threads an input string through every command in order, feeding each command's output into the next command's input, and returns the final result.
 An empty pipeline returns the input unchanged.
 
-The reason this works is `Box<dyn Command>`.
-The pipeline can mix `Uppercase` (a unit struct), `Reverse` (also a unit struct), and `Append { suffix: String }` (carries a field) in the same `Vec`, because each one is hidden behind the same fat pointer.
+Because each command sits behind `Box<dyn Command>`, the same `Vec` can hold `Uppercase`, `Reverse`, and `Append { suffix: String }` even though their concrete types have different sizes.
 A generic `Vec<C>` where `C: Command` would only let you pick *one* concrete command type per pipeline.
 
 ## Useful from the standard library

@@ -19,27 +19,26 @@ This site is that path, with an editor attached.
 
 ## How to keep going
 
-The course covers the core mechanics.
-Real fluency comes from using those mechanics on problems that matter to you.
-A few suggestions:
+You've covered the core mechanics.
+Now give them a problem that matters to you:
 
 - **Build something tiny.** A CLI that does one thing for you.
   A scraper.
   A toy interpreter.
   The smaller and more personal, the better.
   Finishing it teaches more than reading another tutorial.
-- **Read other people's Rust.** Pick a small crate you find useful and read its source.
-  The Rust ecosystem leans toward clean, idiomatic code; you'll absorb a lot just by skimming.
+- **Read other people's Rust.**
+  Pick a small crate you use and trace one path through its source, from a public function to its return value.
+  You do not need to understand the whole crate to pick up an idiom or two.
 - **Use it for the next thing you'd otherwise do in another language.** The first project will be slow.
-  The second will be noticeably less slow.
-  By the fifth, Rust feels like home.
-- **Stay curious.** Rust is a deep language; nobody knows all of it.
-  When something surprises you, that's the language inviting you to dig in.
+  On the next one, you'll already have decisions to reuse for errors, modules, and tests.
+- **Follow surprises.**
+  When behavior or a compiler message catches you off guard, reduce it to a small example and change one thing at a time.
 
 ## A note from corrode
 
 This course is open source on [github.com/corrode/course](https://github.com/corrode/course).
-Issues and pull requests welcome.
+Issues and pull requests are welcome.
 If you'd like Rust training, code review, or consulting for your team, see [corrode.dev](https://corrode.dev).
 
 Thanks for spending time here.

@@ -11,5 +11,5 @@ You met Rust's stance on numbers: overflow is caught rather than ignored, type c
   Use `as` for a truncating cast, or `.into()` / `.try_into()` when you want a checked conversion.
 - `as u32` on a float truncates toward zero (`1.7 as u32` is `1`); `f64::round` rounds to the nearest integer.
   We used truncation for the damage bonus because games drop fractional HP.
-- `str::parse()` is the universal text-to-value method.
-  It returns a `Result`; pair it with `.unwrap_or(...)` until you've met `Result` properly in its own chapter.
+- `str::parse()` turns text into a value of a requested type.
+  It returns a `Result`; for now, pair it with `.unwrap_or(...)` when you need a fallback.

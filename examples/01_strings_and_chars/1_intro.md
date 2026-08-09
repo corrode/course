@@ -22,8 +22,8 @@ Before we go further, two words that show up everywhere in Rust:
 
 The ownership model is why Rust has two string types in the first place: it tracks who owns each piece of data.
 The 30-second version: every value has one owner, the value is dropped when that owner goes out of scope, and you can borrow a value without taking it.
-The next chapter (moves and `Copy`) and the borrowing chapter make this hands-on, and a later memory chapter ties it together.
-For now just keep the mental picture of "one owner, many short-lived borrows."
+Next we'll move `String` values and copy integers, then add borrowing after functions and revisit the full memory model later.
+For now, keep the mental picture of "one owner, many short-lived borrows."
 
 The split between `&str` and `String` is what makes Rust strings both fast and safe.
 A function that just *reads* text takes `&str`; a function that *produces* new text returns `String`.
@@ -48,11 +48,13 @@ For character counts use `s.chars().count()`.
 UTF-8 means a single visible character can take more than one byte.
 
 You'll also meet `.chars()` a lot.
-It returns an iterator of `char`, and iterators have many useful adapters like `.next()`, `.count()`, and `.any(...)` (more on iterators in the iterators chapter).
+It lets you walk through the `char` values in a string, one at a time.
+Rust calls the value it returns an *iterator*, but you do not need the full iterator model yet.
+We'll spend more time with methods such as `.next()`, `.count()`, and `.any(...)` later.
 
 ## Building a `String` with `format!`
 
-The fastest way to assemble a new `String` is the `format!` macro.
+A convenient way to assemble a new `String` is the `format!` macro.
 It works like `println!`, except instead of printing, it returns the formatted text:
 
 ```rust
@@ -60,14 +62,12 @@ let name = "Alice";
 let greeting: String = format!("Hello, {name}!");
 ```
 
-A few things worth noticing:
-
-- The `{name}` inside the string is a **captured identifier**.
-  Rust pulls the variable from the surrounding scope.
-  (Pre-2021 code uses `format!("Hello, {}!", name)` instead; both still work.)
-- The macro returns a `String`, ready to return from your function.
-- The exclamation mark (`!`) means it's a macro, not a regular function call.
-  You'll learn what that distinction buys you later; for now, treat it as a quirky bit of punctuation.
+In the format string, `{name}` is a **captured identifier**.
+Rust pulls the variable from the surrounding scope.
+Pre-2021 code often writes `format!("Hello, {}!", name)` instead, and both forms still work.
+The macro returns a `String`, ready to return from your function.
+The exclamation mark (`!`) means `format!` is a macro rather than a regular function call.
+We'll see what that distinction buys us later, so for now you can treat it as a quirky bit of punctuation.
 
 ## A note on `for` loops
 
@@ -79,14 +79,15 @@ for c in "hello".chars() {
 }
 ```
 
-You can read it as "for each `c` produced by the iterator on the right, run the body once."
+You can read it as "for each `c` produced on the right, run the body once."
 The loop variable is a fresh binding scoped to each iteration.
-Anything that produces an iterator (a `Vec`, a slice, a `HashMap`, `0..10`, ...) works on the right-hand side.
+Ranges, arrays, and collections can also go on the right-hand side because each can produce an iterator.
+For now, it is enough to recognize that `.chars()` gives a `for` loop characters to walk through.
 
 ## Where to look things up
 
 You won't memorize Rust's `std` library, and you don't need to.
-Two things you can open in separate tabs right now:
+Keep these two reference pages handy:
 
 - [`std::fmt`](https://doc.rust-lang.org/std/fmt/) contains everything the formatting macros can do (padding, precision, hex, debug output…).
 - [`str`](https://doc.rust-lang.org/std/primitive.str.html): the inventory of operations available on any `&str`.

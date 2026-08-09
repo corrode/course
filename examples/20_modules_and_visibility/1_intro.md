@@ -1,7 +1,7 @@
 # Modules and visibility
 
 Modules are how Rust organizes code into namespaces.
-They give you two things: a way to group related items together, and a way to control which of those items are visible from the outside.
+They let you group related items and control which ones outside code can use.
 
 The default is private.
 Add `pub` to expose something:
@@ -24,11 +24,12 @@ fn main() {
 You can declare a module inline (as above) or in a separate file.
 The syntax `mod foo;` (no body) tells the compiler to look for `foo.rs` or `foo/mod.rs` next to the current file.
 
-## Visibility for fields and variants
+## Visibility for struct fields
 
 Marking a `struct` `pub` only makes the *type* public.
-The fields are still private unless individually marked.
-Same for `enum` variants:
+Its fields are still private unless you mark them individually.
+Enums work differently: once an enum is public, its variants are public too.
+For a struct, you choose field by field:
 
 ```rust
 mod config {
@@ -45,8 +46,8 @@ mod config {
 }
 ```
 
-This is how you build clean APIs: expose the bare minimum (constructors, methods, sometimes a few fields), keep everything else private.
-Callers can't reach into your internals, so you're free to refactor them later.
+A narrow public surface keeps callers from depending on details you may want to change later.
+Expose the constructors, methods, and fields they need, and leave the rest private.
 
 ## Path syntax
 
@@ -58,5 +59,5 @@ Callers can't reach into your internals, so you're free to refactor them later.
 ## Useful resources
 
 - [The Rust Book on modules](https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html) is the long-form reference, including how packages and crates fit in.
-- [The Rust Reference on visibility](https://doc.rust-lang.org/reference/visibility-and-privacy.html) is the precise rules, when you need them.
+- [The Rust Reference on visibility](https://doc.rust-lang.org/reference/visibility-and-privacy.html) has the precise rules for when you need them.
 - [`pub(crate)`](https://doc.rust-lang.org/reference/visibility-and-privacy.html#pubin-path-pubcrate-pubsuper-and-pubself) is a useful middle ground: visible everywhere in your crate, hidden from external users.

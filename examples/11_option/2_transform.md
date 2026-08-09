@@ -2,7 +2,7 @@
 
 This time you don't want a fallback value, you want to transform whatever is inside the `Option`.
 You call `.len()` on the inner string when it's `Some`.
-A `match` makes both branches explicit; iterator-style methods on `Option` are tidier once you spot them.
+A `match` makes both branches explicit, while `Option`'s combinator methods keep this common case shorter.
 
 ## Useful from the standard library
 
@@ -12,5 +12,5 @@ A `match` makes both branches explicit; iterator-style methods on `Option` are t
 - [`Option::map_or`](https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or)
   collapses both steps into one call: a default for `None` and a closure for `Some`.
   Reads as `maybe.map_or(0, |s| s.len())`.
-- The chapter intro explains the `|s| ...` closure syntax.
-  For now read it as a tiny one-shot function from `s` to its body.
+- You met the `|s| ...` closure syntax in the introduction.
+  For now, read it as a tiny one-shot function from `s` to its body.

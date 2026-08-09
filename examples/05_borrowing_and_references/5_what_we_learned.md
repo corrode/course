@@ -11,5 +11,5 @@ You borrowed a `String` read-only as `&str`, mutated one through `&mut String`, 
 - Mutability is opt-in at every layer: the binding (`let mut x`), the parameter (`&mut T`), and the call site (`&mut x`).
 - Default to `&str` over `&String` (and `&[T]` over `&Vec<T>`) for read-only parameters.
   Slice types accept more callers thanks to deref coercion.
-- The compiler errors are the lesson.
-  Once you can say in one sentence why the compiler is complaining, you've built the muscle this chapter is for.
+- The compiler errors are part of the lesson.
+  Once you can explain one in a sentence, you can decide what ownership or borrow needs to change instead of guessing.

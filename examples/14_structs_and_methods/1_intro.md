@@ -32,14 +32,14 @@ impl User {
 }
 ```
 
-The three flavors of `self` are the heart of methods:
+The form of `self` tells you what access the method receives:
 
-- `&self` reads the struct without modifying it.
-  Most methods.
-- `&mut self` modifies the struct in place.
-  Requires the caller to have a mutable binding.
+- `&self` takes a shared borrow.
+  You'll use this form for methods that only need to inspect fields.
+- `&mut self` takes a mutable borrow, allowing the method to modify the struct in place.
+  The caller therefore needs a mutable binding.
 - `self` (no reference) consumes the struct, taking ownership.
-  Use this when the method returns a transformed version and the original shouldn't be reused.
+  Choose this form when the method returns a transformed value and the original shouldn't be reused.
 
 Field access uses dot notation (`user.name`).
 Inside `impl` you write `self.field` for the same thing.
@@ -49,7 +49,7 @@ Inside `impl` you write `self.field` for the same thing.
 
 ## A note on ranges: `0..5`
 
-One of the tests in this chapter calls `record_login()` five times in a loop:
+The `record_login` test calls the method five times in a loop:
 
 ```rust
 for _ in 0..5 {

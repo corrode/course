@@ -9,10 +9,10 @@ You defined a struct, wrote a `new` constructor, added a `&self` method that for
 - An `impl` block attaches functions to the type.
   Without `self`, it's an associated function (called as `User::new(..)`); with `self`, it's a method (called as `user.method()`).
 - The three flavors of `self` say what the method intends to do: `&self` reads, `&mut self` mutates in place, plain `self` consumes.
-  The same ownership rules from the moves and borrowing chapters apply.
+  These are the same ownership choices you've already made with function parameters.
 - `Self` (capital S) inside an `impl` block is shorthand for the type.
   Returning `Self` keeps the constructor signature stable if the type is later renamed.
 - `format!` is the idiomatic way to build a `String` from a template; same syntax as `println!` but returns the string.
 - `#[derive(Debug, PartialEq)]` covers the common pair: `{:?}` printing for debugging and `==` for tests.
-  Reach for `Default`, `Clone`, and `Copy` when they fit.
+  Derive `Default`, `Clone`, or `Copy` only when the generated behavior matches the type.
 - Encoding business rules as predicates on the type (`user.can_access_premium()`) keeps the rule in one place and makes call sites self-documenting.

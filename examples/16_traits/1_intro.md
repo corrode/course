@@ -30,31 +30,29 @@ Every time you wrote `#[derive(Debug, PartialEq)]` on an enum or struct, you wer
 That's all `derive` is: a macro that emits the obvious implementation so you don't have to type it out.
 We'll revisit this in a moment.
 
-## What's in this chapter
+## From familiar traits to trait objects
 
-1. **Implementing an existing trait.** You'll write `impl Display for Temperature` so a value formats itself as `"21.5°C"` in `println!` and `format!`.
-2. **Defining your own trait.** A `Describable` trait with two implementations, plus a generic function with a *trait bound* that accepts any `T: Describable`.
-3. **Default methods.** Traits can ship a default body for a method, which implementors inherit unless they override it.
-   This is where traits start to feel like mixins.
-4. **Trait objects (`dyn Trait`).** Generics give you one specialized copy of a function per concrete type ("static dispatch").
-   Trait objects give you one function that dispatches at runtime ("dynamic dispatch") and let you put *different* types into the same `Vec`.
+We'll start by implementing `Display`, a trait from the standard library, for a temperature type.
+Then we'll define `Describable` and use it as a bound on a generic function.
+Default methods will let us share behavior between implementations without repeating it.
+Finally, `dyn Trait` will let one collection hold values of different concrete types.
 
-## A quick map of stdlib traits you've already met
+## Standard library traits you've already met
 
-| Trait | What it gives you | First seen |
+| Trait | What it gives you | Where you know it from |
 | --- | --- | --- |
-| `Debug` | `{:?}` formatting | the enums chapter |
-| `Display` | `{}` formatting | this chapter |
-| `PartialEq`, `Eq` | `==` and `!=` | the enums chapter |
-| `Clone`, `Copy` | `.clone()` and implicit copies | the structs and methods chapter |
-| `Default` | `T::default()` | mentioned in passing |
-| `Iterator` | `for x in iter`, all the combinators | the iterators chapter |
-| `From`, `Into` | `T::from(x)` and `x.into()` conversions | sprinkled throughout |
+| `Debug` | `{:?}` formatting | enums |
+| `Display` | `{}` formatting | the exercises below |
+| `PartialEq`, `Eq` | `==` and `!=` | enums |
+| `Clone`, `Copy` | `.clone()` and implicit copies | structs and methods |
+| `Default` | `T::default()` | earlier mentions |
+| `Iterator` | `for x in iter`, all the combinators | the iterator pipelines we'll use next |
+| `From`, `Into` | `T::from(x)` and `x.into()` conversions | earlier conversions |
 
 None of those are magic.
-Each is a regular trait defined in `std`, and the standard library `impl`s it for the obvious built-in types.
-When you `derive` one, the compiler writes the impl.
-When you can't derive (maybe the auto-generated version isn't what you want), you write `impl Display for MyType { ... }` by hand, just like in step 2.
+Each is a regular trait defined in `std`, with implementations for the built-in types where they make sense.
+When you `derive` one, the compiler writes the implementation.
+When the generated behavior isn't what you want, you write the implementation by hand.
 
 ## Static vs. dynamic dispatch: a sneak preview
 
@@ -70,5 +68,5 @@ fn print_all<T: Display>(items: &[T]) { /* ... */ }
 fn print_all_dyn(items: &[&dyn Display]) { /* ... */ }
 ```
 
-You'll write both in this chapter.
-The `Box<dyn Trait>` form, which solves the "but trait objects don't have a known size" problem you'll bump into, is the headline act of the smart pointers chapter.
+You'll use both forms in the exercises below.
+When we get to the optional smart pointers material, we'll unpack how `Box<dyn Trait>` gives an unsized trait object an owning, fixed-size handle.

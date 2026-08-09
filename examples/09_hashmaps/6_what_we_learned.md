@@ -14,4 +14,4 @@ You built a configuration map from scratch, updated and read values, and used th
 - `entry(key).or_insert(default)` is the idiomatic "look up; if missing, insert a default; then return a `&mut V`" pattern.
   It does one lookup instead of two and sidesteps the borrow checker.
 - Reach through a `&mut T` with `*` to update the value it points at: `*map.entry(k).or_insert(0) += 1`.
-  References get a proper treatment in the borrowing chapter.
+  This is the same dereference operation you met in the borrowing chapter.

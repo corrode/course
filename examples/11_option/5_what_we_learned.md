@@ -16,4 +16,4 @@ You consumed `Option`s with fallbacks and combinators, produced new ones from st
   Use them in tests or when you've already ruled out `None`; otherwise prefer the safer combinators.
 - The `|x| ...` syntax is a closure: a tiny anonymous function.
   It shows up everywhere with `Option` and iterators.
-  The closures chapter covers closures in their own right.
+  We'll return to closures in their own right later.

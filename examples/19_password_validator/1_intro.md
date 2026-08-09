@@ -2,19 +2,19 @@
 
 By now you've picked up enough Rust to write a lot of genuinely useful programs.
 
-This chapter is an open-ended project rather than a focused lesson.
-You already have the tools you need: structs, enums, iterators, `Option`, `Result`, vectors, and strings.
-The fun part is putting them together.
+This time, instead of adding one new concept, you'll combine the tools you already have in an open-ended project.
+You already know the pieces: structs, enums, iterators, `Option`, `Result`, vectors, and strings.
+The fun part is deciding how they fit together.
 
-From this chapter onward the files get longer, and the in-browser editor starts feeling cramped.
-You have two upgrades available:
+The files get longer from here, and the in-browser editor may start to feel cramped.
+When that happens, you can open the same work in a roomier editor:
 
 - **Open in Web Editor** (the button above each editor) opens the current file on [github.dev](https://github.dev/corrode/course): a full browser-based VS Code with proper find-in-file, multi-cursor, and the keyboard shortcuts you'd expect.
   No install, no clone.
 - **Run it locally.** Clone [the repo](https://github.com/corrode/course), open a chapter under `examples/NN_slug/`, and run `cargo test --example NN_slug` (or `cargo check` for a faster compile-only loop).
   Local gets you `rust-analyzer`, on-save formatting, and the proper Rust workflow you'll want once you start writing real projects.
 
-## A few patterns that come up
+## Patterns you can reuse
 
 **Counting with iterators.** The `.filter(...).count()` combo is a quick way to ask "how many of these match?":
 
@@ -70,8 +70,8 @@ For real randomness, the [`rand`](https://docs.rs/rand) crate is the standard an
 
 ## Ideas to try
 
-The three steps that follow give you a warm-up (`is_strong`), a generator, and the scoring engine (`validate`).
-Once the tests pass, the chapter is yours to extend:
+Start with the `is_strong` warm-up, then move on to the generator and scoring engine.
+Once those tests pass, take the validator in any direction that sounds interesting:
 
 - Turn the validator's terse feedback (`"too short"`, `"missing digit"`) into friendly advice (`"Add at least 4 more characters"`).
 - Detect common passwords, repeated runs (`aaa`, `111`), or keyboard walks (`qwerty`, `123456`) and dock points for them.

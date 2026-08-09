@@ -4,9 +4,9 @@ With a working line parser, the file-level parser is mostly plumbing: split on n
 
 Use [`str::lines`](https://doc.rust-lang.org/std/primitive.str.html#method.lines) to split: it handles trailing newlines gracefully, so `"a,b\n"` gives one line, not two.
 
-This step composes on top of `parse_csv_line` from the previous step.
-To keep each step independently runnable, the signature is re-declared here as a stub with `todo!()`.
-Replace it with your solution from step 4 (or just call into it).
+You'll reuse `parse_csv_line` from the previous page.
+To keep this page independently runnable, its signature is re-declared here as a stub with `todo!()`.
+Paste your earlier solution into the stub or call into it.
 
 ## Useful from the standard library
 

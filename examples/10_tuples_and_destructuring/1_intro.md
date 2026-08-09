@@ -29,14 +29,14 @@ fn min_max(values: &[i32]) -> (i32, i32) {
 let (lo, hi) = min_max(&[3, 1, 4, 1, 5, 9]);
 ```
 
-That `min_max` body has three pieces of syntax worth a quick note.
-Don't let them trip you up here:
+You only need a rough reading of the `min_max` body for now.
+We'll spend more time with iterators and `Option` soon, but these details are enough to follow the example:
 
 - `values.iter()` walks the slice one element at a time.
-  Iterators get a full chapter later; for now read it as "give me each element in turn."
+  For now, read it as "give me each element in turn."
 - `.min()` / `.max()` return an `Option` (they'd return `None` for an empty slice).
   `.unwrap()` says "I'm sure it's `Some`, give me the value or panic."
-  `Option` is the next chapter.
+  We'll look at `Option` next.
 - The leading `*` *dereferences* the `&i32` the iterator hands back (the same dereference you met in the hashmaps chapter), so we end up with an owned `i32` instead of a reference.
 
 When you only care about some fields, use `_` to ignore the rest:
@@ -46,5 +46,6 @@ let (first, _) = ("Alice", "Smith");
 ```
 
 Tuples are great for short-lived "two or three values that belong together" situations.
-When the tuple grows or you find yourself passing it around a lot, that's a hint to define a `struct` instead (the structs chapter).
+When the tuple grows or you keep passing the same shape around, give those fields names with a `struct` instead.
+We'll work with structs after `Result`.
 

@@ -5,16 +5,17 @@ That's a shared borrow, written `&T` in the signature.
 The caller keeps ownership; the callee gets temporary read-only access.
 
 This function takes `&str` rather than `&String`.
-`&str` is the universal "borrowed string slice" type: a string literal is already a `&'static str`, and `&String` automatically coerces to `&str`, so `&str` parameters accept both without forcing the caller to convert.
-Reach for `&str` by default when you're just reading.
+A string literal is already a `&str`, and a borrowed `String` automatically becomes one at the call site.
+That means the same parameter accepts both without making the caller convert anything.
+Reach for `&str` by default when you only need to read text.
 
-The body is a one-liner: call `.len()` on the slice.
-The point of the exercise is the signature: notice that after the call, the caller's `s` is still usable in the test below.
+The body only needs to call `.len()` on the slice.
+Pay more attention to the signature and the test: after the call, the caller can still use `s` because the function only borrowed it.
 
 ## Useful from the standard library
 
 - [`str::len`](https://doc.rust-lang.org/std/primitive.str.html#method.len)
   is the byte length of the slice.
   The chapter on strings covers why that's not the same as a character count.
-- The "deref coercion" from `&String` to `&str` is what lets the test pass `&s` directly.
-  No `.as_str()` needed.
+- Rust calls the automatic conversion from `&String` to `&str` a "deref coercion."
+  It is why the test can pass `&s` directly, with no `.as_str()` call.
