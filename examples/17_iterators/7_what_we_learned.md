@@ -4,7 +4,9 @@ You collapsed a numeric vector with `sum`, transformed every element with `map`,
 
 ## What we learned
 
-- An iterator is a pipeline: get one with `.iter()` / `.iter_mut()` / `.into_iter()` (or directly from things like `.chars()` and `.lines()`), chain lazy adapters, then finish with a consumer.
+- An iterator pipeline starts with `.iter()`, `.iter_mut()`, `.into_iter()`, or a method such as `.chars()` or `.lines()`.
+  Lazy adapters describe what should happen to each item.
+  A consumer finishes the pipeline by asking for results.
 - `iter` yields `&T`, `iter_mut` yields `&mut T`, `into_iter` moves out of the collection and yields `T`.
   Pick the one that matches what you intend to do with each item.
 - Adapters (`map`, `filter`, `take`, `skip`, ...) describe the pipeline but do nothing on their own.

@@ -1,7 +1,7 @@
 # Mapping variants to values
 
-Your first `match`: turn each `HttpStatus` variant into the numeric code it represents.
-The compiler will complain if you forget a variant, which is exactly what you want.
+Write your first `match` by turning each `HttpStatus` variant into the numeric code it represents.
+If you forget one, the compiler points to the incomplete `match` before the program can run.
 
 ## Useful from the standard library
 

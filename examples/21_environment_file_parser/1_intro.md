@@ -2,11 +2,8 @@
 
 *You have a problem. You decide to use generics. Now you have a `Problem<T> where T: Clone + Send + Sync + 'static`.*
 
-This chapter parses `.env`-style configuration files.
-Two new things show up:
-
-1. **Splitting a string at the first occurrence of a separator.**
-2. **A generic function** that works for any type the caller wants to parse into.
+The project is a parser for `.env`-style configuration files.
+It splits a string only once and uses a generic function to parse the type requested by the caller.
 
 ## Splitting once
 
@@ -48,7 +45,7 @@ The `where T: FromStr` clause says "T must implement the `FromStr` trait", which
 ## Trim and skip
 
 Real config files have empty lines, comments, and trailing whitespace.
-The usual handling chain is:
+A small loop handles all three cases:
 
 ```rust
 for line in content.lines() {
@@ -65,7 +62,7 @@ Its sibling, `break`, exits the loop entirely.
 
 ## When errors mix: `Box<dyn Error>`
 
-This chapter's parser uses one error type, the custom `ParseError` enum you'll build below, so `?` propagates it cleanly.
+The parser uses one error type, the custom `ParseError` enum, so `?` propagates it cleanly.
 Real programs often mix error types: read the file from disk and you get a `std::io::Error`; parse its contents and you get your own `ParseError`.
 A function using `?` insists on one error type, so you need something both can turn into.
 
@@ -87,7 +84,7 @@ For quick programs, [`anyhow`](https://docs.rs/anyhow) wraps the `Box<dyn Error>
 
 ## A note on raw strings: `r#"..."#`
 
-The tests in this chapter use raw string literals to embed a multi-line `.env` snippet without escaping anything:
+The tests use raw string literals so you can embed a multi-line `.env` snippet without escaping anything:
 
 ```rust
 let content = r#"

@@ -1,10 +1,10 @@
 # Summing with an iterator
 
-Iterators were popularised by functional languages like Lisp (created by John McCarthy in 1958), and today they're a core building block in most modern languages.
-Rust's iterators are lazy: they don't do any work until you ask for a result.
+A running total is a good first place to see what an iterator consumer does.
+Rust's iterators are lazy, so they don't do any work until you ask for a result.
 
-The simplest pattern is to take a sequence and collapse it down to a single value.
-You could write a `for` loop with a running total, but the standard library can do this for you in one call.
+You could add the values with a `for` loop and an accumulator.
+Here, `sum` asks the iterator for each value and collapses the sequence into one total.
 
 ## Useful from the standard library
 

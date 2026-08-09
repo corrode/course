@@ -1,6 +1,6 @@
 # Wrapping up
 
-Ownership isn't a single feature you switch on; it's the model underneath everything else in the language.
+Ownership is the model underneath the moves, borrows, and references you've been using throughout the course.
 
 ## The whole picture
 
@@ -15,7 +15,6 @@ Ownership isn't a single feature you switch on; it's the model underneath everyt
 
 ## Why it's worth the friction
 
-Every other memory model asks you to either manage memory by hand and get it right every single time, or accept a garbage collector's runtime cost.
-Rust moves that work to compile time.
-The borrow checker can be frustrating while you're still learning its rules, but what you get back is a whole class of bugs (use-after-free, double-free, data races) that simply can't reach production.
-That trade, an argument with the compiler now instead of a crash later, is the core bet the language makes.
+C++ uses RAII and destructors for deterministic cleanup, while garbage-collected languages track which values are still alive at runtime.
+Rust adds compile-time ownership and borrowing rules, so safe Rust turns use-after-free, double-free, and data races into compile errors.
+The borrow checker can be frustrating while you're still learning its rules, but that trade, an argument with the compiler now instead of a crash later, is the core bet the language makes.

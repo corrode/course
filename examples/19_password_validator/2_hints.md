@@ -1,6 +1,6 @@
 # Hints
 
-This chapter is open-ended.
+There are several reasonable ways to build this project.
 The hints below are scaffolding, not a solution.
 They're here to keep you moving when you're stuck on *where to start*, not on *which trick to use*.
 

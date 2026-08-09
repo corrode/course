@@ -16,20 +16,21 @@ A `String` in Java is a reference to a heap object that the garbage collector re
 Those references are not smart pointers in the Rust sense: there is no single *owner*, and you don't know when (or whether) cleanup happens.
 Rust's smart pointers give you the heap allocation without the GC, because ownership tells the compiler exactly when to drop.
 
-## What's in this chapter
+## Where `Box` earns its keep
 
 1. **`Box<T>`: heap allocation with a single owner.** The simplest smart pointer.
    You give it a value, it puts it on the heap, and it frees it when the box goes out of scope.
 2. **Recursive types.** Some types are impossible to write without indirection.
    A linked-list node that contains *another* node would be infinitely sized; `Box` gives the compiler a fixed-size handle to put in the struct.
-3. **`Box<dyn Trait>`.** Picking up where the traits chapter left off.
+3. **`Box<dyn Trait>`.**
+   You met `dyn Trait` earlier; now you'll give the trait object an owner.
    A trait object like `dyn Shape` doesn't have a known size, so it has to live behind a pointer.
    `Box<dyn Shape>` is the owned form, and it's what lets you store a `Vec` of mixed concrete types that all implement the same trait.
-   The env-file parser chapter uses the same trick with `Box<dyn Error>`.
+   You saw the same trick with `Box<dyn Error>` in the env-file parser.
 
-## Two more smart pointers worth knowing about
+## Recognizing `Rc` and `RefCell`
 
-Real codebases reach for two other smart pointers often enough that they deserve a mention here, even though the exercises in this chapter focus on `Box`.
+The exercises focus on `Box`, but `Rc` and `RefCell` appear often enough in Rust code that you should know what their names promise.
 
 ### `Rc<T>`: shared ownership, single-threaded
 
@@ -47,7 +48,7 @@ let c = Rc::clone(&a);   // count is now 3
 ```
 
 `Rc` is single-threaded.
-The multi-threaded equivalent is `Arc<T>` ("atomically reference counted"), which you'll meet when concurrency shows up.
+`Arc<T>` ("atomically reference counted") provides shared ownership across threads, as long as the value inside is itself safe to share between threads.
 C++ devs: `Rc` is `shared_ptr` without the atomic overhead, `Arc` is `shared_ptr` with it.
 
 ### `RefCell<T>`: interior mutability
@@ -59,4 +60,4 @@ If the borrowing rules are violated, the program panics instead of failing to co
 If you're coming from Java, this is close to a field with a private setter: outside code holds an immutable handle to the object, but the object can still mutate itself.
 You will not need `RefCell` for a long time.
 It pairs with `Rc` to build graph-shaped data, and it shows up in some testing patterns.
-Mentioned here so you recognize the name when you see it.
+For now, recognizing the name is enough.

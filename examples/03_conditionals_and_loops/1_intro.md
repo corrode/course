@@ -48,10 +48,9 @@ for word in ["hi", "rust"] {
 
 `0..5` is a *range*: a value that produces the integers from `0` up to (but not including) `5`.
 The inclusive form is `0..=5`, which also yields `5`.
-Both work as iterators and as patterns in `match` (we'll use ranges that way later in the password chapter).
+Ranges also work as patterns in `match`, such as `1..=10 => ...`.
 
 For larger collections, you'll usually iterate over a `Vec`, a slice, a `HashMap`, or the result of `s.chars()`.
-We'll take a closer look at iterators later.
 For now, "anything you can put on the right of `for x in ...`" is enough.
 
 ## `while` and `loop`
@@ -111,4 +110,4 @@ When you need to pick one:
 - Use `loop` only when neither of the above fits, usually because the exit condition is in the middle of the body.
 
 If you are unsure, start with `for` when there is already a collection or range to walk through.
-When we get to iterators, we'll see how ranges, slices, and collections all plug into this same syntax.
+Ranges, slices, and collections all fit this syntax because each can produce an iterator.

@@ -10,8 +10,8 @@ println!("{s}");    // ERROR: borrow of moved value: `s`
 ```
 
 Assigning `s` to `t` *moves* the string.
-There's now one owner, `t`, and `s` is dead.
-Reach for `s` again and the compiler refuses, naming the exact line.
+There's now one owner, `t`, and `s` no longer names a value you can use.
+Reach for `s` again and the compiler points to the exact move that made it unavailable.
 In a language with shared mutable pointers this would be a silent bug (two variables aliasing one buffer, one of them freeing it first), and Rust turns it into a compile error.
 
 Why move instead of copy?
@@ -30,9 +30,9 @@ let b = a;           // a is copied, not moved
 println!("{a} {b}"); // both fine
 ```
 
-The rule of thumb: a type that owns nothing on the heap and is cheap to duplicate is `Copy`, and the move rules never bite it.
-Everything else moves.
+Integers and `bool` are `Copy`, while heap-owning values such as `String` move by default.
+A type's documentation tells you whether it implements `Copy` when the distinction is not obvious.
 
-This is the first chapter where moves matter, because `String` is the first heap-owning type you've met.
-Borrowing, using a value without taking it, is the next chapter.
-Here we just get comfortable with ownership changing hands.
+`String` makes moves visible because it owns a heap allocation.
+These exercises trace how ownership changes hands.
+Borrowing lets a function use a value while its caller keeps ownership.

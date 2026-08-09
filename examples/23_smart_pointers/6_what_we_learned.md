@@ -1,6 +1,6 @@
 # Wrapping up smart pointers
 
-You boxed an integer and added it back out, defined a recursive expression-tree type that only compiles because of `Box`, and threaded an input string through a heterogeneous pipeline of text-transformation commands via `Box<dyn Command>`.
+The examples use `Box` for a heap-allocated integer, a recursive expression tree, and different command types stored behind `Box<dyn Command>`.
 
 ## What we learned
 
@@ -15,9 +15,9 @@ You boxed an integer and added it back out, defined a recursive expression-tree 
   The compiler can lay it out, and recursion mirrors the data exactly.
   The same concept underpins parsers, interpreters, and ASTs everywhere.
 - `Box<dyn Trait>` is the owned form of a trait object.
-  It lets you store mixed concrete types behind a single interface (a `Vec<Box<dyn Command>>` of pipeline stages, all different structs, driven through one trait) and underpins the `Box<dyn Error>` pattern from the env-file parser chapter.
+  It lets one vector own different concrete types behind a shared interface, just as `Box<dyn Error>` held different error types in the env-file parser.
 - Dynamic dispatch through a trait object costs one vtable lookup per call.
-  That's usually fine.
+  For this small command pipeline, one lookup per stage is unlikely to matter.
   Reach for generics (`fn f<T: Command>`) when you want the compiler to monomorphize away the indirection.
 
 ## Other smart pointers, briefly
@@ -25,13 +25,13 @@ You boxed an integer and added it back out, defined a recursive expression-tree 
 - `Rc<T>` ("reference counted") gives you multiple owners on a single thread.
   The value is dropped when the last `Rc` goes away.
   C++ analogue: `std::shared_ptr<T>` without the atomic overhead.
-- `Arc<T>` is the same idea but safe to share across threads.
-  It shows up when concurrency does.
+- `Arc<T>` uses atomic reference counting for shared ownership across threads.
+  The value inside still has to be safe to share between threads.
 - `RefCell<T>` provides *interior mutability*: borrow checking moves from compile time to runtime, so you can mutate through a shared reference.
   It pairs with `Rc` for graph-shaped data and shows up in some testing patterns.
   You can go a long way without needing it.
 
-## Where this goes next
+## Connections to earlier chapters
 
-The iterators chapter puts iterators front and center, and you'll see how a chain of `.iter().fold(...)` could have replaced the explicit loop in `apply_pipeline`.
-The env-file parser chapter brings `Box<dyn Error>` and the `?` operator together, which is the day-to-day payoff for understanding `Box<dyn Trait>` here.
+The explicit loop in `apply_pipeline` has the same shape as `.fold(...)`: each command receives the previous output and produces the next one.
+`Box<dyn Error>` in the env-file parser uses the same owned trait-object pattern to hold different error types.

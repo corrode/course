@@ -1,17 +1,14 @@
 # Wrapping up the password validator
 
-You've put the whole standard toolkit to work in one project: a struct, an enum, methods, character iteration, vectors of feedback, and a match over score ranges.
+This project uses a struct, an enum, methods, character iteration, vectors of feedback, and a `match` over score ranges.
 
 ## What we learned
 
-- Open-ended projects are where the chapters since the integers chapter start to feel cohesive.
-  The same handful of types (struct, enum, `Vec`, `String`, `Option`) keep showing up.
-- Per-character checks are almost always `s.chars().any(|c| c.is_ascii_*())` or `s.chars().filter(...).count()`.
-  Internalise this call chain.
+
+- Use `s.chars().any(|c| c.is_ascii_*())` for a yes-or-no question and `s.chars().filter(...).count()` when you need the number of matches.
 - Membership in a small set of literal characters is one `"!@#$%^&*".contains(c)` call.
   No need for a `HashSet`.
-- A `Vec<String>` you `push` into as you check each rule is the idiomatic way to accumulate validation feedback.
-- Range patterns inside `match` arms (`0..30 => Weak`) are the cleanest way to bucket a number into categories.
+- Range patterns inside `match` arms (`0..30 => Weak`) bucket a number into categories without a chain of `if`/`else` checks.
 - Splitting a domain across small types (`PasswordReport`, `PasswordStrength`, `PasswordValidator`) keeps each piece focused on one job and easy to test.
 - For real randomness, reach for the [`rand`](https://docs.rs/rand) crate.
   The clock-based trick is fine for an exercise, never for a password generator that ships.

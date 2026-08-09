@@ -8,8 +8,8 @@ In Rust, the body of a function is an expression, so you can just write the bool
 
 ## Useful from the standard library
 
-- The `&&` operator short-circuits: if the left side is `false`, the right side isn't evaluated.
-  Cheap and matches what you'd write in any other language.
-- The body is a single expression, so leave off the trailing semicolon.
-  `self.is_verified && self.login_count >= 5` is a complete function body.
-- The expression is idempotent for the caller (`&self`), so it's safe to call as many times as you want without worrying about accidental mutation.
+- The `&&` operator short-circuits, so a `false` condition on the left skips the condition on the right.
+  Here an unverified user doesn't need a login-count check.
+- Since the method returns the value of its final expression, leave off the trailing semicolon.
+  You don't need an explicit `return` for the boolean.
+- Taking `&self` means callers can ask the question without giving up ownership or providing a mutable borrow.

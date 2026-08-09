@@ -2,11 +2,12 @@
 
 When a function parameter has an owned type like `String` (no `&` in front), calling the function *moves* the argument in.
 The caller's binding is no longer usable afterwards.
-The value lives at the callee now, and will be dropped when the callee finishes (unless it hands ownership back via the return value, which is exactly what happens here).
+The value now belongs to the called function.
+It will be dropped when that function finishes unless the function hands ownership back, which is exactly what the return value does here.
 
-Note the signature: `String` in, `String` out.
-Implement the body by mutating the parameter (`s.push_str(...)`) and then returning `s`.
-Because you own `s`, you're free to mutate it directly: ownership implies the right to modify.
+Read the signature as `String` in, `String` out.
+The function can choose to mutate the value it owns, but the parameter binding still needs `mut` before you can change it.
+Append the text to `s`, then return the same `String` so the caller owns it again.
 
 ## Useful from the standard library
 

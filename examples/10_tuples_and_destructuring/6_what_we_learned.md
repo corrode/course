@@ -9,7 +9,7 @@ You used tuples to return multiple values, destructured them in parameter lists 
 - Build a tuple with parentheses; access fields with `.0`, `.1`, etc.
   Destructuring with `let (a, b) = pair;` is usually clearer.
 - Tuples are the lightest-weight way to return more than one value from a function.
-  When the same tuple shows up in many places or grows past two or three fields, switch to a `struct` (the structs chapter).
+  When the same tuple shows up in many places or grows past two or three fields, a `struct` can give the fields names.
 - Use `_` in a pattern to ignore a field: `let (first, _) = pair;`.
 - Move vs. copy still applies: a tuple of `String`s moves on destructure, a tuple of integers copies.
   The element types decide.

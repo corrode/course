@@ -3,8 +3,8 @@
 Congratulations, you've covered enough of Rust to write a small, useful program without any extra ceremony!
 Time for a short break to enjoy the view.
 
-The next three steps build a tiny word-count library.
-The whole chapter is just strings (the strings chapter), `for` loops (the conditionals and loops chapter), and functions (the functions chapter) applied together.
+A small word-count library puts these concepts to work.
+Its implementation combines strings, `for` loops, and functions without introducing another language feature.
 
 This first version is the running example we'll keep refactoring throughout the course.
 
@@ -20,7 +20,8 @@ for word in "hello  world\nrust".split_whitespace() {
 ```
 
 It splits on any run of whitespace (spaces, tabs, newlines) and skips empties, which is what you want for natural text.
-Don't worry yet about what kind of thing `.split_whitespace()` returns (it's an *iterator*, which we will cover later). 
+`.split_whitespace()` returns an iterator over the words.
+A `for` loop consumes that iterator without requiring its concrete type.
 
 ## Walking characters
 
@@ -32,4 +33,4 @@ for c in "hi".chars() {
 }
 ```
 
-Both `.split_whitespace()` and `.chars()` are exactly the tools we need to count words and characters in a string. 
+With `.split_whitespace()` for words and `.chars()` for characters, a `for` loop can count either one.

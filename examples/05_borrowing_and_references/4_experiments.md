@@ -1,7 +1,8 @@
 # Experiments: get the errors on purpose
 
-Passing the previous tests is the easy part of this chapter.
-Ownership only really clicks once you've seen the canonical errors with your own eyes, so the messages feel familiar later (the iterators chapter, the `?` operator chapter, ...) instead of like a brick wall.
+Passing the previous tests verifies the basic borrowing syntax.
+These experiments focus on reading ownership errors and identifying the rule each one violates.
+
 
 Each test below is paired with a commented-out line.
 Uncomment one at a time, run the tests, read the error carefully, then comment it out again before moving on.
@@ -15,7 +16,7 @@ The three errors you'll trigger correspond to the three rules of the borrow chec
 3. You can't have a mutable reference while a shared reference is still in use.
 
 Re-read each compiler message until you can explain in one sentence *why* the compiler is complaining.
-That's the muscle this chapter is building.
+Once you can do that, you can change the code for a reason instead of guessing.
 
 ## Useful from the standard library
 

@@ -20,4 +20,4 @@ The mood classifier chose one branch, the two `for` loops walked through values 
   In `count_evens`, `continue` handled the odd numbers first and kept the counter outside a nested `if`.
 - An accumulator lets you compute one value from many inputs.
   You start with a value, update it once per loop iteration, and return it when the loop is done.
-  When we get to iterators, we'll use methods such as `sum`, `count`, and `fold` for many of the same jobs.
+  Iterator methods such as `sum`, `count`, and `fold` cover many of the same jobs.

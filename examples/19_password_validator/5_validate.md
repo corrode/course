@@ -1,7 +1,6 @@
 # The orchestrator: `validate`
 
-Time to combine everything.
-`PasswordValidator::validate(password)` returns a `PasswordReport` with a numeric score, a list of feedback messages, and a `PasswordStrength` label.
+`PasswordValidator::validate(password)` combines the character checks and scoring rules into a `PasswordReport` with a numeric score, a list of feedback messages, and a `PasswordStrength` label.
 
 The shared types and the four `has_*` character-class helpers are stubbed below.
 Fill them in (the intro shows the `.chars().any(...)` pattern) and then write `validate` on top of them.

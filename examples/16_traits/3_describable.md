@@ -26,7 +26,7 @@ This is Rust's answer to "polymorphism."
 The compiler stamps out one specialized copy of `print_one` per type you call it with (called *monomorphization*; the C++ template crowd will feel at home).
 There's no runtime dispatch and no boxing.
 
-A few variations you'll meet in real code, just so you recognize them:
+Real code often spells the same kind of bound in one of these forms:
 
 ```rust
 // Multiple bounds with `+`:
@@ -46,12 +46,12 @@ where
 fn show(item: &impl Describable) { /* ... */ }
 ```
 
-You'll write the simple `<T: Describable>` form in this step.
-The others are sugar for the same underlying machinery.
+For this exercise, use the simple `<T: Describable>` form.
+You only need to recognize the others as different spellings of the same machinery.
 
 ## Useful from the standard library
 
 - [The Rust Book on traits](https://doc.rust-lang.org/book/ch10-02-traits.html) walks through definitions, implementations, and bounds with more examples than fit here.
 - `Vec<String>::join("\n")` (and any `&[String].join(...)`) is handy for the `print_descriptions` exercise: build a `Vec<String>` of per-item descriptions, then join them with newlines.
 - The standard `Iterator::map` plus `.collect::<Vec<_>>()` is the idiomatic way to turn a `&[T]` into a `Vec<String>`.
-  You met both in passing; the iterators chapter covers iterators properly.
+  `Iterator::map` and `collect` appear throughout the iterator exercises.

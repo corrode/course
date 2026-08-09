@@ -1,9 +1,9 @@
 # A stray semicolon
 
-This function takes an `i32`, declares an `i32` return type, multiplies by two.
-Yet, the compiler refuses to compile. 
+This function takes an `i32`, promises to return an `i32`, and multiplies the input by two.
+Still, the compiler refuses to compile it.
 
-Run the tests, read the error, and fix it.
+Run the tests and read the error before you change anything.
 
-The lesson hiding behind that error is the difference between an *expression* (which has a value) and a *statement* (which doesn't).
-One character decides which a line is, and that character decides what your function returns. 
+The error points to the difference between an *expression*, which has a value, and a *statement*, which doesn't.
+One character decides which one the final line is, and therefore what the function returns.

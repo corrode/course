@@ -9,7 +9,7 @@ Dad is right, enums are the best.
 If you know the crippled form of enums in other languages (*cough* C), I'm so sorry for you.
 In Rust, they are a pure delight to work with.
 
-But first things first: an `enum` is a type whose value is one of a fixed set of variants.
+An `enum` is a type whose value is one of a fixed set of variants.
 Think of it as a "this or that or that" type.
 
 ```rust
@@ -60,9 +60,10 @@ enum HttpStatus {
 The `#[...]` syntax is an *attribute*: extra instructions for the compiler attached to the item below.
 `derive` is the most common one.
 It says "please write the boilerplate for these capabilities for me."
-Each name inside the parentheses is a *trait* (Rust's name for a shared interface, similar to a Java interface or a Haskell type class; traits get their own chapter later).
+Each name inside the parentheses is a *trait*, Rust's name for a shared interface, similar to a Java interface or a Haskell type class.
+Traits are covered in more detail later.
 
-The two we use right away:
+For now, you need two:
 
 - **`Debug`** lets you print the value with the `{:?}` formatter, so `println!("{status:?}")` prints `NotFound` instead of refusing to compile.
   Useful in `dbg!`, `assert_eq!` failure messages, and quick log lines.
@@ -70,8 +71,7 @@ The two we use right away:
   Without it, comparing two `HttpStatus` values is a compile error; with it, `status == HttpStatus::Ok` just works, and `assert_eq!` in tests can compare whole enum values.
 
 Derive works on enums and structs whose fields all implement the same traits.
-The compiler writes the obvious implementation.
-For `PartialEq` on an enum, that means "two values are equal if they're the same variant with equal payloads."
+For `PartialEq` on an enum, the generated implementation considers two values equal when they have the same variant and equal payloads.
 You can always write the implementation by hand instead when you need different behaviour.
 
 

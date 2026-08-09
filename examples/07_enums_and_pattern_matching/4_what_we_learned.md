@@ -11,6 +11,6 @@ You defined an enum with a fixed set of variants, mapped each variant to a value
 - `match` is exhaustive: leave a variant unhandled and the compiler refuses to build.
   Add a new variant later and every `match` that needs updating tells you exactly where.
 - `|` lets multiple patterns share an arm (`200 | 201 | 204 => ...`), and `_` is the catch-all when you want to ignore the rest.
-- `#[derive(Debug, PartialEq)]` is the usual pair on a plain enum: one for `{:?}` printing, one for `==`.
+- Derive `Debug` when you want `{:?}` printing and `PartialEq` when you want `==` comparisons.
   Add `Clone, Copy` when the variants carry no heap data so values can be passed around freely.
 - For a single-variant check, `matches!(value, Variant)` is the compact form; `value == Variant` works equally well when `PartialEq` is derived.

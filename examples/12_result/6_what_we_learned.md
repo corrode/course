@@ -1,6 +1,7 @@
 # Wrapping up `Result`
 
-You produced `Result`s with simple `if` checks, returned an owned `String` in the `Ok` arm, borrowed from the input via lifetime elision, and combined `strip_suffix`, `parse`, and a bounds check into a real validating parser.
+The examples use simple `if` checks to build `Result`s with owned and borrowed success values.
+Combining `strip_suffix`, `parse`, and a bounds check produces a validating parser with several failure cases.
 
 ## What we learned
 
@@ -9,10 +10,10 @@ You produced `Result`s with simple `if` checks, returned an owned `String` in th
 - `Ok(value)` and `Err(error)` are the constructors.
   Both are in the prelude.
 - `Result` has the same combinator family as `Option`: `unwrap_or`, `map`, `map_or`, plus `map_err` for transforming the error side and `ok` to drop the error and convert to `Option<T>`.
-- `&'static str` is the cheapest error type: a borrowed string literal that lives forever.
-  Real applications usually graduate to enums or `String`-based errors, but this is a fine starting point.
+- `&'static str` is a convenient error type when every message is a fixed string literal.
+  Applications often use error enums or owned `String`s once errors need data of their own.
 - The turbofish (`parse::<u8>()`) spells out a generic type argument at the call site when the type isn't clear from context.
 - Match guards (`Ok(n) if n > 0 => ...`) attach a boolean condition to a pattern.
   The arm only fires when both hold.
-- The `?` operator (which gets its own chapter) will let you chain fallible calls without writing `match` every time.
-  For now, `match` is fine.
+- The `?` operator chains fallible calls without requiring a `match` each time.
+  For now, `match` keeps both paths visible.

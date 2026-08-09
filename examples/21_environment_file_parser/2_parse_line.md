@@ -7,7 +7,7 @@ The `.env` format is `KEY=value`, but real-world files have surrounding whitespa
 `str::split_once('=')` is the right tool: it gives back `Option<(&str, &str)>` containing the part before and after the first `=`.
 From there it's `trim` plus a couple of validity checks.
 
-We also introduce a small `ParseError` enum that the rest of the chapter will reuse.
+Later pages reuse the small `ParseError` enum introduced here.
 
 ## Useful from the standard library
 

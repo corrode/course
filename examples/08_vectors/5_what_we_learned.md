@@ -7,7 +7,7 @@ You worked through every form a `Vec` parameter can take: a shared borrow for re
 - `Vec<T>` is a growable, heap-allocated array.
   The `<T>` is generic, but a single `Vec` only holds one type at a time.
 - Build them with `Vec::new()` for an empty one, or the `vec![...]` macro when you already have the contents.
-- The parameter version says what you intend to do: `&[T]` or `&Vec<T>` to read, `&mut Vec<T>` to add or remove, plain `Vec<T>` to consume the whole thing.
+- Choose the parameter from the operation: `&[T]` to read, `&mut Vec<T>` to add or remove, and plain `Vec<T>` to consume the whole vector.
 - `push` appends, `pop` removes the last item and returns `Option<T>`, `len` and `is_empty` answer the obvious questions.
 - Index access (`list[i]`) panics on out-of-bounds; `list.get(i)` returns `Option<&T>` and is the safer default.
 - A `for item in &list` loop yields `&T`.

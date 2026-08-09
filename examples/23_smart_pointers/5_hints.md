@@ -22,4 +22,4 @@
    That gets the empty-pipeline test for free.
 3. Method calls go through the box automatically.
    `cmd.run(...)` is the only thing you call inside the loop.
-4. Once you reach the iterators chapter, this same loop collapses into a single `.fold()` over `commands`.
+4. The same loop can also be written as the `.fold()` you met in the iterators chapter.

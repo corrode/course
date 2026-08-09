@@ -3,7 +3,7 @@
 A `HashMap<K, V>` stores key-value pairs and lets you look up a value by its key in (on average) constant time.
 Nobody ever got fired for using it for caches, indexes, counters, configuration, and anything else where "given X, find Y" is the question.
 
-Contrary to `Vec<T>`, `HashMap` is not in scope by default, so you have to import it first:
+Unlike `Vec<T>`, `HashMap` is not in scope by default, so you have to import it first:
 
 ```rust
 use std::collections::HashMap;
@@ -14,13 +14,11 @@ config.insert("host".to_string(), "localhost".to_string());
 let host = config.get("host"); // Option<&String>
 ```
 
-Two things to notice:
+The type annotation says that every key in this map is a `String`, and so is every value.
+If you need several possible value types in one map, an enum can represent those choices.
 
-- Keys and values can be any type, but **all keys share one type and all values share one type**.
-  Mix-and-match goes through enums.
-- `.get(key)` returns `Option<&V>`, not `V`.
-  Missing keys are explicit, no null.
-  Use `.unwrap_or(...)` or pattern matching to handle absence.
+The `.get(key)` call returns `Option<&V>`, not `V`.
+A missing key becomes `None` instead of a null value, so you handle the absence with `.unwrap_or(...)` or pattern matching.
 
 A common pattern is "increment a counter for this key, default to 0":
 
@@ -45,5 +43,6 @@ let r: &mut i32 = &mut n;
 ```
 
 Without the `*`, you'd be trying to add `1` to a reference, which the compiler won't let you do.
-References were introduced back in the borrowing chapter; for now it's enough to know that when a function returns `&mut T`, you reach the `T` through `*`.
+You met references in the borrowing chapter.
+Here, the practical rule is that when a function returns `&mut T`, you reach the `T` through `*`.
 

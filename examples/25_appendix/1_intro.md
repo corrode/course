@@ -1,4 +1,3 @@
 # Appendix
 
-> This is an appendix to the course.
-> It contains additional material that may or may not be interesting to you.
+> The following pages cover how the course was built and why the exercises are arranged this way.

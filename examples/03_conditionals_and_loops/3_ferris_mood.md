@@ -16,7 +16,6 @@ Implement `ferris_mood(hunger, naps)` returning a `&'static str`, following thes
 String literals like `"Hangry"` are baked into your compiled binary, so the text is around for as long as the program is running.
 The `'static` *lifetime* is just the compiler's way of saying "this reference will never dangle."
 If you've written C, it's the same intuition as a `const char *` pointing at a string literal.
-We'll spend more time with lifetimes in the memory and ownership chapter.
 For now, the only thing to take away is *"string literals are always safe to return as `&'static str`."*
 
 **Combining conditions.** The `"Grumpy"` rule needs *both* parts to be true.

@@ -17,8 +17,9 @@ for x in candidates {
 }
 ```
 
-This is the manual version of "max by some property".
-The iterators chapter shows it as a one-liner; doing it once by hand makes the shortcut feel like a reward rather than magic.
+This is the manual version of "max by some property."
+The iterator version expresses the same search as a one-liner.
+Doing it once by hand first makes each part of that shortcut recognizable.
 
 ## Useful from the standard library
 

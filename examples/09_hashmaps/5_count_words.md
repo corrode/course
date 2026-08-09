@@ -1,8 +1,8 @@
 # Counting with `entry`
 
-Counting occurrences is the canonical "look up; if missing, insert a default; then update" workflow.
-Doing it by hand with `contains_key` and `get_mut` works but does two lookups and fights the borrow checker.
-The `entry` API does it in one step.
+A word counter needs to look up each word, start missing counts at zero, and then increment them.
+Doing that by hand with `contains_key` and `get_mut` works, but it takes two lookups.
+The `entry` API combines the lookup and default insertion.
 
 ## Useful from the standard library
 
