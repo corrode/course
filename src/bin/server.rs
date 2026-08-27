@@ -2070,7 +2070,7 @@ async fn load_team_view(
         bool,
         Vec<String>,
     ),
-    axum::response::Response,
+    Box<axum::response::Response>,
 > {
     let total_exercises: i64 = i64::try_from(state.exercises.len()).unwrap_or(i64::MAX);
 
@@ -2115,7 +2115,9 @@ async fn load_team_view(
         Ok(rows) => rows,
         Err(err) => {
             error!("team page roster query failed: {err}");
-            return Err((StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response());
+            return Err(Box::new(
+                (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response(),
+            ));
         }
     };
 
@@ -2175,7 +2177,9 @@ async fn load_team_view(
             Ok(rows) => rows,
             Err(err) => {
                 error!("team page submissions query failed: {err}");
-                return Err((StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response());
+                return Err(Box::new(
+                    (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response(),
+                ));
             }
         };
         let truncated = i64::try_from(rows.len()).unwrap_or(i64::MAX) > TEAM_SUBMISSIONS_LIMIT;
@@ -2224,7 +2228,7 @@ async fn render_team_page(
     let (members, submissions, submissions_truncated, exercises) =
         match load_team_view(state, team_token, viewer_ulid).await {
             Ok(view) => view,
-            Err(response) => return response,
+            Err(response) => return *response,
         };
 
     let (team_label, is_unassigned) = team_token.map_or_else(
@@ -2395,7 +2399,7 @@ async fn participant_settings_page(
     let (members, submissions, submissions_truncated, exercises) = match team_token_parsed {
         Some(ref token) => match load_team_view(&state, Some(token), Some(&ulid)).await {
             Ok(view) => view,
-            Err(response) => return response,
+            Err(response) => return *response,
         },
         None => (Vec::new(), Vec::new(), false, Vec::new()),
     };
