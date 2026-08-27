@@ -42,7 +42,7 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
     </div>
     {% match reason %} {% when Some with (r) %} {% if r == "unknown-token" %}
     <div
-        class="unknown-token-toast"
+        class="unknown-token-toast accent-callout"
         role="status"
         aria-live="polite"
         id="unknown-token-toast"
@@ -711,7 +711,6 @@ fn main() {
         margin: 1.25rem auto 0;
         max-width: 38rem;
         padding: 0.85rem 1rem;
-        border-radius: 8px;
         background: var(--color-surface);
         border-left: 3px solid var(--color-primary);
         color: var(--color-text);

@@ -12,7 +12,7 @@ Rust{% endblock %} {% block topbar %}{% endblock %} {% block content %}
     </header>
 
     {% match team_slug %} {% when Some with (slug) %}
-    <div class="signup-team-banner" role="status">
+    <div class="signup-team-banner accent-callout" role="status">
         <span class="signup-team-eyebrow">Joining</span>
         <strong class="signup-team-name">{{ slug }}</strong>
         <span class="signup-team-hint"
@@ -109,7 +109,6 @@ Rust{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         gap: 0.25rem;
         padding: 1rem 1.2rem;
         margin: 0 0 2rem;
-        border-radius: 8px;
         background: var(--color-surface);
         border-left: 3px solid var(--color-primary);
     }

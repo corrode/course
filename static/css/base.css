@@ -306,6 +306,11 @@ html[data-editor-active-line="off"] .cm-activeLineGutter {
     padding: 1.5rem;
     margin-bottom: 1.25rem;
 }
+/* Colored side rules are dividers, not decorative corners. Keep accent
+   callouts square so the rule terminates cleanly at the panel edges. */
+.accent-callout {
+    border-radius: 0;
+}
 .form-group {
     margin-bottom: 1.25rem;
 }
