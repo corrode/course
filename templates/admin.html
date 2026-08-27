@@ -23,7 +23,79 @@ endblock %} {% block content %}
             <span class="section-meta">
                 {{ participant_teams.len() }} team{% if participant_teams.len()
                 != 1 %}s{% endif %}
+                <button
+                    type="button"
+                    class="btn btn-secondary admin-btn-tiny"
+                    aria-expanded="false"
+                    aria-controls="create-team-panel"
+                    onclick="toggleCreateTeamPanel(this)"
+                >
+                    Create team link
+                </button>
             </span>
+        </div>
+
+        <div id="create-team-panel" class="create-team-panel" hidden>
+            <p class="create-team-intro">
+                Choose a slug to generate a signup link. A new slug appears as a
+                team after its first participant signs up; reusing a slug adds
+                people to that existing team.
+            </p>
+            <form class="create-team-form" onsubmit="createTeamLink(event)">
+                <label for="create-team-slug">Team slug</label>
+                <div class="create-team-controls">
+                    <input
+                        type="text"
+                        id="create-team-slug"
+                        class="admin-input admin-input-mono"
+                        placeholder="acme-september"
+                        maxlength="64"
+                        pattern="[A-Za-z0-9_\-]+"
+                        title="Letters, digits, underscore or hyphen."
+                        autocomplete="off"
+                        required
+                    />
+                    <button type="submit" class="btn">Create link</button>
+                </div>
+            </form>
+            <div
+                id="create-team-result"
+                class="create-team-result"
+                aria-live="polite"
+                hidden
+            >
+                <label for="create-team-url">Signup link</label>
+                <div class="create-team-controls">
+                    <input
+                        type="url"
+                        id="create-team-url"
+                        class="admin-input admin-input-mono create-team-url"
+                        readonly
+                    />
+                    <button
+                        type="button"
+                        id="copy-team-url"
+                        class="btn btn-secondary"
+                        aria-live="polite"
+                        onclick="
+                            copyToClipboard(
+                                document.getElementById('create-team-url').value,
+                                this,
+                            )
+                        "
+                    >
+                        Copy link
+                    </button>
+                    <a
+                        id="open-team-url"
+                        class="btn btn-secondary"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        Open
+                    </a>
+                </div>
+            </div>
         </div>
 
         {% for team in participant_teams %}
@@ -133,6 +205,38 @@ endblock %} {% block content %}
      only ships with the admin view. -->
 <script src="/static/js/htmx.min.js"></script>
 <script>
+    function toggleCreateTeamPanel(button) {
+        var panel = document.getElementById("create-team-panel");
+        var isOpening = panel.hidden;
+        panel.hidden = !isOpening;
+        button.setAttribute("aria-expanded", String(isOpening));
+        if (isOpening) {
+            document.getElementById("create-team-slug").focus();
+        }
+    }
+
+    function createTeamLink(event) {
+        event.preventDefault();
+        var slug = document.getElementById("create-team-slug").value;
+        var url = window.location.origin + "/signup/" + encodeURIComponent(slug);
+        var urlInput = document.getElementById("create-team-url");
+        var openLink = document.getElementById("open-team-url");
+        var copyButton = document.getElementById("copy-team-url");
+        clearTimeout(copyButton.copyResetTimer);
+        copyButton.innerHTML = copyButton.dataset.copyLabel || "Copy link";
+        urlInput.value = url;
+        openLink.href = url;
+        document.getElementById("create-team-result").hidden = false;
+        urlInput.focus();
+        urlInput.select();
+    }
+
+    document
+        .getElementById("create-team-slug")
+        .addEventListener("input", function () {
+            document.getElementById("create-team-result").hidden = true;
+        });
+
     // Surface a failed sort/filter fetch instead of leaving the table
     // silently dimmed (htmx only swaps on a 2xx response). Scoped to the
     // admin page; harmless elsewhere since the events only fire here.
@@ -156,6 +260,51 @@ endblock %} {% block content %}
        (`.admin-table`, `.admin-input*`, tiny/danger button variants),
        the submissions feed, and all `.book-*` / `.section-*` rules
        live in `base.html` and are shared with the team page. */
+
+    /* ---------- Create team link ---------- */
+    .create-team-panel {
+        margin: -0.25rem 0 1.5rem;
+        padding: 1rem;
+        border: 1px solid var(--color-border);
+        border-radius: 10px;
+        background: var(--color-surface);
+    }
+    .create-team-intro {
+        margin: 0 0 0.85rem;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+    }
+    .create-team-form,
+    .create-team-result {
+        display: grid;
+        gap: 0.4rem;
+    }
+    .create-team-result {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--color-border);
+    }
+    .create-team-form label,
+    .create-team-result label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+    }
+    .create-team-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .create-team-controls .admin-input {
+        flex: 1 1 16rem;
+        min-width: 0;
+    }
+    .create-team-url {
+        font-size: 0.78rem;
+    }
 
     /* ---------- Team sections (collapsible) ----------
        Each team is a native <details>, collapsed by default; the

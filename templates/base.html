@@ -338,18 +338,24 @@
             }
 
             // ---- Clipboard helpers used by admin/dashboard pages ----
+            function showCopyFeedback(button, message) {
+                if (!button) return;
+                var original = button.dataset.copyLabel || button.innerHTML;
+                button.dataset.copyLabel = original;
+                clearTimeout(button.copyResetTimer);
+                button.innerHTML = message;
+                button.copyResetTimer = setTimeout(function () {
+                    button.innerHTML = original;
+                }, 1500);
+            }
+
             async function copyToClipboard(text, button) {
                 try {
                     await navigator.clipboard.writeText(text);
-                    if (button) {
-                        var orig = button.innerHTML;
-                        button.innerHTML = "Copied!";
-                        setTimeout(function () {
-                            button.innerHTML = orig;
-                        }, 1500);
-                    }
+                    showCopyFeedback(button, "Copied!");
                 } catch (err) {
                     console.error("Failed to copy:", err);
+                    showCopyFeedback(button, "Copy failed");
                 }
             }
             function copyCodeFromElement(codeElement) {
