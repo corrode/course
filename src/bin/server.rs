@@ -35,14 +35,11 @@ const GIT_HASH_BUILD: Option<&str> = option_env!("GIT_HASH");
 
 /// Git branch and short commit shown in the footer, resolved once at startup.
 ///
-/// We prefer a runtime environment variable over the build-time value. The
-/// production deploy (Coolify) builds the image with `.git` excluded and, since
-/// Coolify v450, no longer injects `SOURCE_COMMIT` as a build arg by default
-/// (it would bust the Docker layer cache), so `build.rs` bakes in "unknown".
-/// Coolify still exposes the commit and branch to the running container as the
-/// env vars `SOURCE_COMMIT` and `COOLIFY_BRANCH`, so we read those at runtime.
-/// Precedence: explicit runtime override, then the build-time value, then
-/// "unknown".
+/// We prefer explicit runtime metadata, then informative Coolify metadata,
+/// then the value baked into the image by CI. Coolify source deployments expose
+/// the commit through `SOURCE_COMMIT`, but Docker-image deployments set it to
+/// the uninformative sentinel `HEAD`; [`usable`] filters that value so the baked
+/// immutable revision wins. The final fallback is "unknown".
 static GIT_BRANCH: LazyLock<String> = LazyLock::new(|| {
     git_env("GIT_BRANCH")
         .or_else(|| git_env("COOLIFY_BRANCH"))
@@ -58,16 +55,16 @@ static GIT_HASH: LazyLock<String> = LazyLock::new(|| {
 });
 
 /// A runtime environment variable, normalised: trimmed, and treated as absent
-/// when empty or the literal "unknown".
+/// when empty or a known placeholder.
 fn git_env(key: &str) -> Option<String> {
     usable(std::env::var(key).ok())
 }
 
-/// Drop values that carry no information (empty or "unknown"), trim the rest.
+/// Drop values that carry no information, trim the rest.
 fn usable(value: Option<String>) -> Option<String> {
     value
         .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty() && s != "unknown")
+        .filter(|s| !s.is_empty() && !matches!(s.as_str(), "unknown" | "HEAD"))
 }
 
 /// Footer accessors used by `base.html`. Askama can't render a `LazyLock`
@@ -3483,11 +3480,12 @@ mod tests {
         // Real values pass through, trimmed.
         assert_eq!(usable(Some("main".into())), Some("main".into()));
         assert_eq!(usable(Some("  abc1234 ".into())), Some("abc1234".into()));
-        // Absent, empty, whitespace-only, and the "unknown" sentinel all
+        // Absent, empty, whitespace-only, and placeholder sentinels all
         // collapse to None so the next source in the chain is tried.
         assert_eq!(usable(None), None);
         assert_eq!(usable(Some(String::new())), None);
         assert_eq!(usable(Some("   ".into())), None);
         assert_eq!(usable(Some("unknown".into())), None);
+        assert_eq!(usable(Some("HEAD".into())), None);
     }
 }
