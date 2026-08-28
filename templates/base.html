@@ -563,31 +563,33 @@
             })();
 
             // ----- Admin / team page helpers ------------------------------
-            // Both `/admin` and `/admin/team/{slug}` (plus the participant
-            // team view) include a submissions feed and a filter dropdown,
-            // and the admin views additionally render "Remove" buttons.
-            // The filter remains global for inline `onchange=` attributes.
+            // Admin, team, settings, and per-participant pages can include a
+            // submissions feed with participant and/or exercise filters. The
+            // filter remains global for inline `oninput=`/`onchange=` handlers.
             // Removal uses a delegated listener so htmx-swapped buttons work
             // without placing participant data in JavaScript source.
             function filterSubmissions() {
                 var exerciseSelect = document.getElementById("exercise-filter");
-                var participantSelect =
+                var participantInput =
                     document.getElementById("participant-filter");
-                if (!exerciseSelect && !participantSelect) return;
+                if (!exerciseSelect && !participantInput) return;
                 var exerciseFilter = exerciseSelect ? exerciseSelect.value : "";
-                var participantFilter = participantSelect
-                    ? participantSelect.value
+                var participantFilter = participantInput
+                    ? participantInput.value.trim().toLowerCase()
                     : "";
                 document
                     .querySelectorAll("#submissions-container .submission-card")
                     .forEach(function (card) {
                         var exercise = card.getAttribute("data-exercise");
-                        var participant = card.getAttribute("data-participant");
+                        var participant =
+                            card.getAttribute("data-participant") || "";
                         var matchesExercise =
                             !exerciseFilter || exercise === exerciseFilter;
                         var matchesParticipant =
                             !participantFilter ||
-                            participant === participantFilter;
+                            participant
+                                .toLowerCase()
+                                .includes(participantFilter);
                         card.style.display =
                             matchesExercise && matchesParticipant ? "" : "none";
                     });

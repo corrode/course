@@ -1,9 +1,10 @@
-{# Shared submission card. Included by admin.html and team.html. The caller sets
+{# Shared submission card. Included by admin, participant, team, and settings
+pages. The caller sets
 a loop variable `sub` of type `SubmissionSummary` (fields: participant_name,
-exercise_name, tests_passed, perfected, submitted_at, source_code). The
-data-exercise and data-participant attributes on the list item are what
-filterSubmissions() in base.html reads to show/hide cards when the user picks an
-exercise or participant from the dropdowns. The .rust-editor element is replaced
+participant_href, exercise_name, exercise_href, tests_passed, perfected,
+submitted_at, source_code). The data-exercise and data-participant attributes
+are what filterSubmissions() in base.html reads to show/hide cards as the user
+filters by exercise or participant. The .rust-editor element is replaced
 in-place with a read-only CodeMirror 6 viewer by
 static/js/readonly-rust-editor.js. The styled fallback lives on .rust-editor in
 `static/css/base.css`. #}
@@ -30,10 +31,22 @@ static/js/readonly-rust-editor.js. The styled fallback lives on .rust-editor in
             ></span>
             {% endif %}
         </span>
+        {% match sub.participant_href %} {% when Some with (href) %}
+        <a
+            class="submission-card-who"
+            href="{{ href }}"
+            title="View all submissions by {{ sub.participant_name }}"
+            >{{ sub.participant_name }}</a
+        >
+        {% when None %}
         <span class="submission-card-who">{{ sub.participant_name }}</span>
+        {% endmatch %}
         <span class="submission-card-sep">·</span>
-        <span class="submission-card-exercise" title="{{ sub.exercise_name }}"
-            >{{ sub.exercise_label }}</span
+        <a
+            class="submission-card-exercise"
+            href="{{ sub.exercise_href }}"
+            title="Open {{ sub.exercise_name }} in the course"
+            >{{ sub.exercise_label }}</a
         >
         <span class="submission-card-time">{{ sub.submitted_at }}</span>
     </header>

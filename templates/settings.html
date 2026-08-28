@@ -410,18 +410,17 @@ cargo course init --token {{ u }}</code></pre>
         <div class="section-head">
             <span class="section-eyebrow">Recent submissions</span>
             {% if !exercises.is_empty() %}
-            <span class="section-meta">
+            <span class="section-meta submission-filters">
                 <label for="participant-filter">Participant:</label>
-                <select
+                <input
+                    type="search"
                     id="participant-filter"
-                    onchange="filterSubmissions()"
-                    class="admin-input admin-input-tiny"
-                >
-                    <option value="">All participants</option>
-                    {% for member in members %}
-                    <option value="{{ member.name }}">{{ member.name }}</option>
-                    {% endfor %}
-                </select>
+                    oninput="filterSubmissions()"
+                    class="admin-input admin-input-tiny submission-participant-filter"
+                    placeholder="Filter by name…"
+                    aria-label="Filter submissions by participant name"
+                    autocomplete="off"
+                />
                 <label for="exercise-filter">Exercise:</label>
                 <select
                     id="exercise-filter"

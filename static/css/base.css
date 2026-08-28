@@ -356,12 +356,10 @@ html[data-editor-active-line="off"] .cm-activeLineGutter {
     color: var(--color-warning);
 }
 
-/* ---------- Admin / team page layout rhythm ----------
-   Both `/admin` and the per-team pages add `.admin-page` to
-   the outer container so they share the same column width,
-   vertical padding, and section spacing. The rules live here
-   (rather than in either page's scoped `<style>` block) so
-   the two views can't drift visually. */
+/* ---------- Admin page layout rhythm ----------
+   Admin dashboards, team pages, and participant-history pages add
+   `.admin-page` to the outer container so they share the same column
+   width, vertical padding, and section spacing. */
 .admin-page {
     max-width: 60rem;
     padding-top: 1rem;
@@ -378,6 +376,19 @@ html[data-editor-active-line="off"] .cm-activeLineGutter {
 }
 .admin-section:last-of-type {
     margin-bottom: 0;
+}
+.team-back {
+    margin: 2rem 0 0;
+    font-size: 0.9rem;
+}
+.team-back a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+}
+.team-back a:hover,
+.team-back a:focus-visible {
+    color: var(--color-text);
+    text-decoration: underline;
 }
 
 .admin-table {
@@ -405,6 +416,15 @@ html[data-editor-active-line="off"] .cm-activeLineGutter {
 .admin-cell-name {
     font-weight: 500;
     color: var(--color-text);
+}
+.admin-participant-link {
+    color: inherit;
+    text-decoration: none;
+}
+.admin-participant-link:hover,
+.admin-participant-link:focus-visible {
+    color: var(--color-primary);
+    text-decoration: underline;
 }
 .admin-cell-muted {
     color: var(--color-text-muted);
@@ -470,6 +490,9 @@ html[data-editor-active-line="off"] .cm-activeLineGutter {
     height: 1.85rem;
     font-size: 0.82rem;
     padding: 0 0.55rem;
+}
+.submission-participant-filter {
+    min-width: 12rem;
 }
 .admin-input-mono {
     font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
@@ -1093,13 +1116,15 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
     align-items: center;
     gap: 0.5rem;
 }
+.submission-filters {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
 
 /* ---------- Submission card ----------
-   Shared markup is in `templates/partials/submission_card.html`,
-   included by the admin, team, and settings pages. The read-only
+   Shared markup is in `templates/partials/submission_card.html`, included by
+   admin, participant-history, team, and settings pages. The read-only
    CodeMirror viewer mounts inside `.rust-editor`. */
-/* Submissions feed list, shared by `/admin` and the
-   per-team pages. Cards themselves are styled below. */
 .submission-list {
     list-style: none;
     margin: 0;
@@ -1107,6 +1132,25 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
     display: flex;
     flex-direction: column;
     gap: 3rem;
+}
+.admin-pagination {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 3rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+.admin-pagination > :last-child {
+    justify-self: end;
+}
+.participant-submissions-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
 }
 
 .submission-card {
@@ -1124,6 +1168,14 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
     font-weight: 600;
     color: var(--color-text);
 }
+a.submission-card-who {
+    text-decoration: none;
+}
+a.submission-card-who:hover,
+a.submission-card-who:focus-visible {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
 .submission-card-sep {
     color: var(--color-text-muted);
 }
@@ -1131,6 +1183,11 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
     font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
     color: var(--color-primary);
     font-size: 0.92rem;
+    text-decoration: none;
+}
+.submission-card-exercise:hover,
+.submission-card-exercise:focus-visible {
+    text-decoration: underline;
 }
 .submission-card-time {
     margin-left: auto;

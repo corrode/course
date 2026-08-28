@@ -48,6 +48,7 @@ sha2 = "0.10"
 syn = { version = "2", features = ["full", "extra-traits"] }
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
 rand = "0.9"
+url = "2.5"
 
 [profile.dev]
 # Faster dev builds: keep enough debug info for backtraces, drop the rest.

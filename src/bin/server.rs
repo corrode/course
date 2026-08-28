@@ -17,7 +17,11 @@ use dotenvy::dotenv;
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use sqlx::{Row, Sqlite, SqlitePool, migrate::MigrateDatabase, sqlite::SqlitePoolOptions};
+use sqlx::{
+    Row, Sqlite, SqlitePool,
+    migrate::MigrateDatabase,
+    sqlite::{SqlitePoolOptions, SqliteRow},
+};
 use std::env;
 use std::sync::{Arc, LazyLock};
 use tower_http::services::ServeDir;
@@ -385,6 +389,22 @@ struct AdminTemplate {
     filter: String,
 }
 
+/// Paginated admin view of one participant's complete submission history.
+#[derive(Template)]
+#[template(path = "participant_submissions.html")]
+struct AdminParticipantSubmissionsTemplate {
+    participant_name: String,
+    submissions: Vec<SubmissionSummary>,
+    total_submissions: i64,
+    page: usize,
+    previous_href: Option<String>,
+    next_href: Option<String>,
+    back_href: String,
+    dashboard_href: String,
+    team_href: String,
+    team_label: String,
+}
+
 /// Fragment template for one team's members table. Rendered both for
 /// the initial `/admin` page (via `{% include %}`) and standalone by
 /// the `admin_team_members` htmx endpoint when the operator sorts a
@@ -452,6 +472,7 @@ fn exercise_progress_counts(exercises: &[ExerciseProgress]) -> (usize, usize) {
 struct ParticipantSummary {
     id: String,
     name: String,
+    submissions_href: String,
     completed_count: i64,
     total_exercises: i64,
     last_activity: Option<chrono::DateTime<chrono::Utc>>,
@@ -491,10 +512,13 @@ impl ParticipantTeam {
     }
 }
 
-/// Submission summary for admin view
+/// Submission card data shared by admin, team, settings, and history views.
 #[derive(Serialize, Clone)]
 struct SubmissionSummary {
     participant_name: String,
+    /// Admin-only link to this participant's complete submissions page.
+    /// Omitted from participant-facing views and that participant's history page.
+    participant_href: Option<String>,
     exercise_name: String,
     /// Human-readable version of `exercise_name`. The DB value is
     /// `<chapter_file_stem>` for legacy single-step chapters and
@@ -503,6 +527,9 @@ struct SubmissionSummary {
     /// numeric ordering prefixes and turn underscores into spaces so
     /// readers see "Strings and chars · Shout" instead of the raw key.
     exercise_label: String,
+    /// Course URL for this exact exercise step. Participant-facing views keep
+    /// the learner ULID in the route; admin views use the public route.
+    exercise_href: String,
     tests_passed: bool,
     perfected: bool,
     submitted_at: chrono::DateTime<chrono::Utc>,
@@ -529,6 +556,119 @@ fn prettify_slug_segment(seg: &str) -> String {
 fn prettify_exercise_name(name: &str) -> String {
     let parts: Vec<String> = name.split('/').map(prettify_slug_segment).collect();
     parts.join(" · ")
+}
+
+/// Build a course URL that targets the exact code section represented by a
+/// submission key. Participant-facing views preserve the learner ULID so their
+/// submitted code and progress remain available after following the link.
+fn exercise_course_href(exercise_name: &str, participant_id: Option<&str>) -> String {
+    let (chapter, anchor) = exercise_name.split_once('/').map_or_else(
+        || (exercise_name, exercise_name.to_string()),
+        |(chapter, step)| (chapter, format!("{chapter}__{step}")),
+    );
+    let path = participant_id.map_or_else(
+        || format!("/exercise/{chapter}"),
+        |id| format!("/exercise/{id}/{chapter}"),
+    );
+    format!("{path}#{anchor}")
+}
+
+fn encode_query_value(value: &str) -> String {
+    url::form_urlencoded::byte_serialize(value.as_bytes()).collect()
+}
+
+fn admin_participant_submissions_href(participant_id: &str, admin_token: &str) -> String {
+    let token = encode_query_value(admin_token);
+    format!("/admin/participants/{participant_id}/submissions?token={token}")
+}
+
+/// Convert a submissions query row into the shared card view model. Every
+/// caller selects the same aliases, including `participant_id` for the optional
+/// admin-only participant link.
+fn submission_summary(
+    row: &SqliteRow,
+    admin_token: Option<&str>,
+    viewer_ulid: Option<&str>,
+) -> SubmissionSummary {
+    let participant_id: String = row.get("participant_id");
+    let exercise_name: String = row.get("exercise_name");
+    let fmt_passed: bool = row.get("fmt_passed");
+    let clippy_passed: bool = row.get("clippy_passed");
+
+    SubmissionSummary {
+        participant_name: row.get("participant_name"),
+        participant_href: admin_token
+            .map(|token| admin_participant_submissions_href(&participant_id, token)),
+        exercise_label: prettify_exercise_name(&exercise_name),
+        exercise_href: exercise_course_href(&exercise_name, viewer_ulid),
+        exercise_name,
+        tests_passed: row.get("tests_passed"),
+        perfected: fmt_passed && clippy_passed,
+        submitted_at: row.get("submitted_at"),
+        source_code: row.get("source_code"),
+    }
+}
+
+struct SubmissionHistoryPage {
+    submissions: Vec<SubmissionSummary>,
+    total: i64,
+    page: usize,
+    offset: i64,
+}
+
+fn clamp_submission_history_page(requested_page: usize, total_submissions: i64) -> usize {
+    let total_pages = total_submissions.saturating_add(PARTICIPANT_SUBMISSIONS_PAGE_SIZE - 1)
+        / PARTICIPANT_SUBMISSIONS_PAGE_SIZE;
+    let last_page = usize::try_from(total_pages).unwrap_or(usize::MAX).max(1);
+    requested_page.clamp(1, last_page)
+}
+
+async fn load_submission_history_page(
+    pool: &SqlitePool,
+    participant_id: &str,
+    requested_page: usize,
+) -> Result<SubmissionHistoryPage, sqlx::Error> {
+    let total = sqlx::query_scalar("SELECT COUNT(*) FROM submissions WHERE participant_id = ?")
+        .bind(participant_id)
+        .fetch_one(pool)
+        .await?;
+    let page = clamp_submission_history_page(requested_page, total);
+    let page_size = usize::try_from(PARTICIPANT_SUBMISSIONS_PAGE_SIZE).unwrap_or(50);
+    let offset =
+        i64::try_from(page.saturating_sub(1).saturating_mul(page_size)).unwrap_or(i64::MAX);
+    let rows = sqlx::query(
+        r"
+        SELECT p.id AS participant_id,
+               p.name AS participant_name,
+               s.exercise_name,
+               s.tests_passed,
+               s.fmt_passed,
+               s.clippy_passed,
+               s.submitted_at,
+               s.source_code
+        FROM submissions s
+        JOIN participants p ON s.participant_id = p.id
+        WHERE s.participant_id = ?
+        ORDER BY s.submitted_at DESC, s.id DESC
+        LIMIT ? OFFSET ?
+        ",
+    )
+    .bind(participant_id)
+    .bind(PARTICIPANT_SUBMISSIONS_PAGE_SIZE)
+    .bind(offset)
+    .fetch_all(pool)
+    .await?;
+    let submissions = rows
+        .iter()
+        .map(|row| submission_summary(row, None, None))
+        .collect();
+
+    Ok(SubmissionHistoryPage {
+        submissions,
+        total,
+        page,
+        offset,
+    })
 }
 
 /// Per-team page (`/admin/team/{slug}`, `/admin/team-unassigned`,
@@ -594,6 +734,7 @@ struct TeamPageTemplate {
 struct TeamMemberView {
     id: String,
     name: String,
+    submissions_href: Option<String>,
     completed_count: i64,
     total_exercises: i64,
     last_activity: Option<chrono::DateTime<chrono::Utc>>,
@@ -604,8 +745,8 @@ struct TeamMemberView {
 }
 
 /// Cap on the number of submissions rendered on a single team page.
-/// Keeps the page snappy for very active teams; the admin can dig
-/// into individual dashboards for the full history.
+/// Keeps the page snappy for very active teams; admins can open a
+/// participant's paginated submissions page for the full history.
 const TEAM_SUBMISSIONS_LIMIT: i64 = 60;
 
 /// Settings page (`/settings`, `/settings/{ulid}`). Renders
@@ -645,6 +786,19 @@ struct SettingsTemplate {
 struct AdminQuery {
     token: String,
 }
+
+#[derive(Deserialize)]
+struct AdminParticipantSubmissionsQuery {
+    token: String,
+    #[serde(default = "default_page")]
+    page: usize,
+}
+
+const fn default_page() -> usize {
+    1
+}
+
+const PARTICIPANT_SUBMISSIONS_PAGE_SIZE: i64 = 50;
 
 /// Optional query parameters on the anonymous dashboard at `/`.
 ///
@@ -752,6 +906,7 @@ async fn build_participant_summary(
     };
 
     ParticipantSummary {
+        submissions_href: admin_participant_submissions_href(&id, &state.admin_token),
         id,
         name,
         completed_count,
@@ -960,6 +1115,10 @@ async fn main() -> Result<()> {
         .route(
             "/admin/participants/{ulid}/team-token",
             post(admin_set_team_token),
+        )
+        .route(
+            "/admin/participants/{ulid}/submissions",
+            get(admin_participant_submissions_page),
         )
         .route("/admin/team-members", get(admin_team_members))
         .route("/admin/team/{slug}", get(admin_team_page))
@@ -1791,8 +1950,9 @@ async fn admin_dashboard(
     // Get recent submissions
     let submission_rows_result = sqlx::query(
         r"
-        SELECT 
-            p.name as participant_name,
+        SELECT
+            p.id AS participant_id,
+            p.name AS participant_name,
             s.exercise_name,
             s.tests_passed,
             s.fmt_passed,
@@ -1801,7 +1961,7 @@ async fn admin_dashboard(
             s.source_code
         FROM submissions s
         JOIN participants p ON s.participant_id = p.id
-        ORDER BY s.submitted_at DESC
+        ORDER BY s.submitted_at DESC, s.id DESC
         LIMIT 20
         ",
     )
@@ -1816,22 +1976,10 @@ async fn admin_dashboard(
             .into_response();
     };
 
-    let mut recent_submissions = Vec::new();
-    for row in submission_rows {
-        let fmt_passed: bool = row.get("fmt_passed");
-        let clippy_passed: bool = row.get("clippy_passed");
-        let exercise_name: String = row.get("exercise_name");
-        let exercise_label = prettify_exercise_name(&exercise_name);
-        recent_submissions.push(SubmissionSummary {
-            participant_name: row.get("participant_name"),
-            exercise_name,
-            exercise_label,
-            tests_passed: row.get("tests_passed"),
-            perfected: fmt_passed && clippy_passed,
-            submitted_at: row.get("submitted_at"),
-            source_code: row.get("source_code"),
-        });
-    }
+    let recent_submissions = submission_rows
+        .iter()
+        .map(|row| submission_summary(row, Some(&state.admin_token), None))
+        .collect();
 
     // Get admin statistics with proper SQL queries
     let Ok(admin_stats) = get_admin_stats(&state.pool).await else {
@@ -1878,6 +2026,95 @@ async fn admin_dashboard(
         },
         |html| Html(html).into_response(),
     )
+}
+
+/// Admin: paginated submission history for one participant.
+async fn admin_participant_submissions_page(
+    AxumPath(ulid): AxumPath<String>,
+    Query(query): Query<AdminParticipantSubmissionsQuery>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    if query.token != state.admin_token {
+        return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
+    }
+
+    let participant: DbParticipant =
+        match sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
+            .bind(&ulid)
+            .fetch_one(&state.pool)
+            .await
+        {
+            Ok(participant) => participant,
+            Err(sqlx::Error::RowNotFound) => {
+                return (StatusCode::NOT_FOUND, "Participant not found").into_response();
+            }
+            Err(err) => {
+                error!("participant submissions lookup failed: {err}");
+                return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+            }
+        };
+
+    let history = match load_submission_history_page(&state.pool, &ulid, query.page).await {
+        Ok(history) => history,
+        Err(err) => {
+            error!("participant submissions query failed: {err}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+    let SubmissionHistoryPage {
+        submissions,
+        total: total_submissions,
+        page,
+        offset,
+    } = history;
+
+    let admin_token = encode_query_value(&state.admin_token);
+    let back_href = format!("/admin?token={admin_token}");
+    let dashboard_href = format!("/dashboard/{ulid}");
+    let page_href =
+        |page| format!("/admin/participants/{ulid}/submissions?token={admin_token}&page={page}");
+    let previous_href = (page > 1).then(|| page_href(page - 1));
+    let next_href = (offset.saturating_add(PARTICIPANT_SUBMISSIONS_PAGE_SIZE) < total_submissions)
+        .then(|| page_href(page.saturating_add(1)));
+    let (team_href, team_label) = participant.parsed_team_token().map_or_else(
+        || {
+            (
+                format!("/admin/team-unassigned?token={admin_token}"),
+                "View unassigned participants".to_string(),
+            )
+        },
+        |team| {
+            (
+                format!("/admin/team/{}?token={admin_token}", team.as_str()),
+                format!("View team {}", team.as_str()),
+            )
+        },
+    );
+
+    let template = AdminParticipantSubmissionsTemplate {
+        participant_name: participant.name,
+        submissions,
+        total_submissions,
+        page,
+        previous_href,
+        next_href,
+        back_href,
+        dashboard_href,
+        team_href,
+        team_label,
+    };
+
+    match template.render() {
+        Ok(html) => Html(html).into_response(),
+        Err(err) => {
+            error!("participant submissions template render failed: {err}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to render template",
+            )
+                .into_response()
+        }
+    }
 }
 
 /// Query parameters for the `admin_team_members` htmx fragment. `team`
@@ -2038,6 +2275,7 @@ async fn load_team_view(
     state: &AppState,
     team_token: Option<&TeamToken>,
     viewer_ulid: Option<&str>,
+    admin_token: Option<&str>,
 ) -> Result<
     (
         Vec<TeamMemberView>,
@@ -2110,6 +2348,8 @@ async fn load_team_view(
             };
         let is_self = viewer_ulid.is_some_and(|u| u == id.as_str());
         members.push(TeamMemberView {
+            submissions_href: admin_token
+                .map(|token| admin_participant_submissions_href(&id, token)),
             id,
             name: row.get("name"),
             completed_count,
@@ -2137,7 +2377,8 @@ async fn load_team_view(
             .join(", ");
         let sql = format!(
             r"
-            SELECT p.name AS participant_name,
+            SELECT p.id AS participant_id,
+                   p.name AS participant_name,
                    s.exercise_name,
                    s.tests_passed,
                    s.fmt_passed,
@@ -2147,7 +2388,7 @@ async fn load_team_view(
             FROM submissions s
             JOIN participants p ON s.participant_id = p.id
             WHERE s.participant_id IN ({placeholders})
-            ORDER BY s.submitted_at DESC
+            ORDER BY s.submitted_at DESC, s.id DESC
             LIMIT ?
             "
         );
@@ -2168,22 +2409,11 @@ async fn load_team_view(
         };
         let truncated = i64::try_from(rows.len()).unwrap_or(i64::MAX) > TEAM_SUBMISSIONS_LIMIT;
         let limit = usize::try_from(TEAM_SUBMISSIONS_LIMIT).unwrap_or(0);
-        let mut subs = Vec::with_capacity(rows.len().min(limit));
-        for row in rows.into_iter().take(limit) {
-            let fmt_passed: bool = row.get("fmt_passed");
-            let clippy_passed: bool = row.get("clippy_passed");
-            let exercise_name: String = row.get("exercise_name");
-            let exercise_label = prettify_exercise_name(&exercise_name);
-            subs.push(SubmissionSummary {
-                participant_name: row.get("participant_name"),
-                exercise_name,
-                exercise_label,
-                tests_passed: row.get("tests_passed"),
-                perfected: fmt_passed && clippy_passed,
-                submitted_at: row.get("submitted_at"),
-                source_code: row.get("source_code"),
-            });
-        }
+        let subs = rows
+            .iter()
+            .take(limit)
+            .map(|row| submission_summary(row, admin_token, viewer_ulid))
+            .collect();
         (subs, truncated)
     };
 
@@ -2210,7 +2440,7 @@ async fn render_team_page(
     back_label: String,
 ) -> axum::response::Response {
     let (members, submissions, submissions_truncated, exercises) =
-        match load_team_view(state, team_token, viewer_ulid).await {
+        match load_team_view(state, team_token, viewer_ulid, admin_token.as_deref()).await {
             Ok(view) => view,
             Err(response) => return *response,
         };
@@ -2381,7 +2611,7 @@ async fn participant_settings_page(
 
     let team_token_parsed = participant.parsed_team_token();
     let (members, submissions, submissions_truncated, exercises) = match team_token_parsed {
-        Some(ref token) => match load_team_view(&state, Some(token), Some(&ulid)).await {
+        Some(ref token) => match load_team_view(&state, Some(token), Some(&ulid), None).await {
             Ok(view) => view,
             Err(response) => return *response,
         },
@@ -3361,6 +3591,37 @@ mod tests {
     }
 
     #[test]
+    fn exercise_course_links_target_the_exact_step() {
+        assert_eq!(
+            exercise_course_href("01_strings_and_chars/4_shout", None),
+            "/exercise/01_strings_and_chars#01_strings_and_chars__4_shout"
+        );
+        assert_eq!(
+            exercise_course_href("legacy_chapter", None),
+            "/exercise/legacy_chapter#legacy_chapter"
+        );
+        assert_eq!(
+            exercise_course_href("01_strings_and_chars/4_shout", Some("01JABC")),
+            "/exercise/01JABC/01_strings_and_chars#01_strings_and_chars__4_shout"
+        );
+    }
+
+    #[test]
+    fn submission_history_pages_are_clamped_to_the_available_range() {
+        assert_eq!(clamp_submission_history_page(0, 0), 1);
+        assert_eq!(clamp_submission_history_page(999, 0), 1);
+        assert_eq!(clamp_submission_history_page(999, 51), 2);
+    }
+
+    #[test]
+    fn admin_participant_links_target_the_full_submission_feed() {
+        assert_eq!(
+            admin_participant_submissions_href("01JABC", "secret+value&more"),
+            "/admin/participants/01JABC/submissions?token=secret%2Bvalue%26more"
+        );
+    }
+
+    #[test]
     fn team_token_form_input_treats_blank_as_none() {
         assert_eq!(TeamToken::parse_form_input(""), Ok(None));
         assert_eq!(TeamToken::parse_form_input("   "), Ok(None));
@@ -3393,6 +3654,7 @@ mod tests {
         ParticipantSummary {
             id: format!("id-{name}"),
             name: name.to_string(),
+            submissions_href: format!("/submissions/{name}"),
             completed_count: 0,
             total_exercises: 15,
             last_activity: None,

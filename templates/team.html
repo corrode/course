@@ -52,7 +52,13 @@ block topbar_active_team %}is-active{% endblock %} {% block content %}
                 {% for member in members %}
                 <tr class="{% if member.is_self %}is-self{% endif %}">
                     <td class="admin-cell-name">
-                        {{ member.name }} {% if member.is_self %}
+                        {% match member.submissions_href %} {% when Some with
+                        (href) %}
+                        <a class="admin-participant-link" href="{{ href }}"
+                            >{{ member.name }}</a
+                        >
+                        {% when None %} {{ member.name }} {% endmatch %} {% if
+                        member.is_self %}
                         <span class="team-self-badge">You</span>
                         {% endif %}
                     </td>
@@ -130,19 +136,18 @@ block topbar_active_team %}is-active{% endblock %} {% block content %}
         <div class="section-head">
             <span class="section-eyebrow">Recent submissions</span>
             {% if !exercises.is_empty() %}
-            <span class="section-meta">
+            <span class="section-meta submission-filters">
                 {% if !members.is_empty() %}
                 <label for="participant-filter">Participant:</label>
-                <select
+                <input
+                    type="search"
                     id="participant-filter"
-                    onchange="filterSubmissions()"
-                    class="admin-input admin-input-tiny"
-                >
-                    <option value="">All participants</option>
-                    {% for member in members %}
-                    <option value="{{ member.name }}">{{ member.name }}</option>
-                    {% endfor %}
-                </select>
+                    oninput="filterSubmissions()"
+                    class="admin-input admin-input-tiny submission-participant-filter"
+                    placeholder="Filter by name…"
+                    aria-label="Filter submissions by participant name"
+                    autocomplete="off"
+                />
                 {% endif %}
                 <label for="exercise-filter">Exercise:</label>
                 <select
@@ -169,7 +174,7 @@ block topbar_active_team %}is-active{% endblock %} {% block content %}
         {% if submissions_truncated %}
         <p class="team-truncated-note">
             Only the {{ submissions.len() }} most recent submissions are shown.
-            {% if is_admin %}Open an individual dashboard for the full
+            {% if is_admin %}Open a participant’s name to browse their full
             history.{% endif %}
         </p>
         {% endif %} {% endif %}
@@ -188,19 +193,6 @@ block topbar_active_team %}is-active{% endblock %} {% block content %}
         padding-bottom: 5rem;
     }
 
-    .team-back {
-        margin: 2rem 0 0;
-        font-size: 0.9rem;
-    }
-    .team-back a {
-        color: var(--color-text-muted);
-        text-decoration: none;
-    }
-    .team-back a:hover,
-    .team-back a:focus-visible {
-        color: var(--color-text);
-        text-decoration: underline;
-    }
 
     .team-title {
         font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;

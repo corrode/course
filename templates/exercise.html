@@ -185,6 +185,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     %}
 
     <section
+        id="{{ dom_id }}"
         class="exercise-section"
         data-step-id="{{ dom_id }}"
         data-exercise-key="{{ exercise_key }}"
@@ -718,11 +719,23 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         }
     }
 
+    function scrollToExerciseHash() {
+        if (!window.location.hash) return;
+        const target = document.getElementById(window.location.hash.slice(1));
+        if (!target) return;
+        requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
+    }
+
+    applyChapterDirectives();
+
     // CodeMirror mount + button wiring lives in the shared module.
     // Each `.exercise-section[data-step-id]` on the page gets its own
-    // mount; multi-step chapters render multiple sections.
+    // mount; multi-step chapters render multiple sections. Wait for every
+    // editor before re-applying the URL fragment because replacing earlier
+    // textareas changes the page height and can move the requested section.
     import("/static/dist/inline-editor.js")
         .then(({ mountInlineEditor }) => {
+            const mounts = [];
             document
                 .querySelectorAll(".exercise-section[data-step-id]")
                 .forEach((section) => {
@@ -737,7 +750,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
                     );
                     const stepId = section.dataset.stepId;
                     const exerciseKey = section.dataset.exerciseKey;
-                    mountInlineEditor(section, {
+                    const mount = mountInlineEditor(section, {
                         starter: fallback ? fallback.value : "",
                         submitted: submittedEl ? submittedEl.value : null,
                         slug: exerciseKey,
@@ -774,13 +787,14 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
                     }).catch((err) => {
                         console.error("Failed to mount section", stepId, err);
                     });
+                    mounts.push(mount);
                 });
-            applyChapterDirectives();
+            return Promise.all(mounts);
         })
         .catch((err) => {
             console.error("inline-editor module failed to load:", err);
-            applyChapterDirectives();
-        });
+        })
+        .finally(scrollToExerciseHash);
 </script>
 <script type="module">
     // Syntax-highlight code blocks in chapter prose (notes + intro)
@@ -1220,6 +1234,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     .exercise-section {
         max-width: 100%;
         margin: 0 0 2rem;
+        scroll-margin-top: 5rem;
     }
     .exercise-section:has(+ .hints-disclosure-step) {
         margin-bottom: 0;

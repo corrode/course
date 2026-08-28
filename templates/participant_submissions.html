@@ -1,0 +1,59 @@
+{% extends "base.html" %} {% block title %}{{ participant_name }} · Submissions · corrode Rust Course{% endblock %} {% block content %}
+<div class="container admin-page">
+    <p class="team-back">
+        <a href="{{ back_href }}">← Back to admin</a>
+    </p>
+
+    <header class="book-hero admin-hero">
+        <div class="book-eyebrow">
+            <span class="book-eyebrow-rule" aria-hidden="true"></span>
+            <span class="book-eyebrow-text">Participant submissions</span>
+            <span class="book-eyebrow-rule" aria-hidden="true"></span>
+        </div>
+        <h1 class="book-title admin-title">{{ participant_name }}</h1>
+        <p class="book-byline">
+            {{ total_submissions }} submission{% if total_submissions != 1 %}s{% endif %}
+        </p>
+        <nav class="participant-submissions-actions" aria-label="Participant links">
+            <a class="btn btn-secondary admin-btn-tiny" href="{{ dashboard_href }}"
+                >View dashboard</a
+            >
+            <a class="btn btn-secondary admin-btn-tiny" href="{{ team_href }}"
+                >{{ team_label }}</a
+            >
+        </nav>
+    </header>
+
+    <section class="admin-section" aria-label="All submissions by {{ participant_name }}">
+        <div class="section-head">
+            <span class="section-eyebrow">All submissions</span>
+            <span class="section-meta">Page {{ page }}</span>
+        </div>
+
+        {% if submissions.is_empty() %}
+        <p>No submissions on record yet.</p>
+        {% else %}
+        <ol class="submission-list" id="submissions-container">
+            {% for sub in submissions %} {% include
+            "partials/submission_card.html" %} {% endfor %}
+        </ol>
+        {% if previous_href.is_some() || next_href.is_some() %}
+        <nav class="admin-pagination" aria-label="Submission history pages">
+            {% match previous_href %} {% when Some with (href) %}
+            <a class="btn btn-secondary" href="{{ href }}">← Previous</a>
+            {% when None %}
+            <span></span>
+            {% endmatch %}
+            <span>Page {{ page }}</span>
+            {% match next_href %} {% when Some with (href) %}
+            <a class="btn btn-secondary" href="{{ href }}">Next →</a>
+            {% when None %}
+            <span></span>
+            {% endmatch %}
+        </nav>
+        {% endif %} {% endif %}
+    </section>
+</div>
+
+<script type="module" src="/static/dist/readonly-rust-editor.js"></script>
+{% endblock %}
