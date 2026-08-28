@@ -24,8 +24,6 @@
         <meta property="og:image:height" content="640" />
         <meta name="twitter:card" content="summary_large_image" />
 
-
-
         <link rel="stylesheet" href="/static/css/base.css" />
         <script>
             // Apply the saved theme before paint to avoid a flash.
@@ -328,16 +326,7 @@
                 } catch (_) {}
             }
 
-            // Back-compat shim for any callers still using setTheme(name).
-            function setTheme(theme) {
-                var t = theme === "dark" || theme === "light" ? theme : "light";
-                document.documentElement.setAttribute("data-theme", t);
-                try {
-                    localStorage.setItem("theme", t);
-                } catch (_) {}
-            }
-
-            // ---- Clipboard helpers used by admin/dashboard pages ----
+            // ---- Shared clipboard helper -----------------------------
             function showCopyFeedback(button, message) {
                 if (!button) return;
                 var original = button.dataset.copyLabel || button.innerHTML;
@@ -357,28 +346,6 @@
                     console.error("Failed to copy:", err);
                     showCopyFeedback(button, "Copy failed");
                 }
-            }
-            function copyCodeFromElement(codeElement) {
-                var text = codeElement.textContent;
-                var container = codeElement.closest(".code-container");
-                var button = container
-                    ? container.querySelector(".copy-btn")
-                    : null;
-                copyToClipboard(text, button);
-            }
-            function openCodeInPlayground(codeElement, button, title) {
-                openInRustPlayground(
-                    codeElement.textContent,
-                    button,
-                    title || "Rust Code",
-                );
-            }
-            function openInRustPlayground(code, button, _title) {
-                var encoded = encodeURIComponent(code);
-                var url =
-                    "https://play.rust-lang.org/?version=stable&mode=debug&edition=2024&code=" +
-                    encoded;
-                window.open(url, "_blank");
             }
 
             // ---- Chapter picker (breadcrumb dropdown) ----
@@ -599,9 +566,9 @@
             // Both `/admin` and `/admin/team/{slug}` (plus the participant
             // team view) include a submissions feed and a filter dropdown,
             // and the admin views additionally render "Remove" buttons.
-            // The handlers are global because the markup wires them up via
-            // inline `onclick=` / `onchange=` attributes; the early returns
-            // make them harmless when an unrelated page loads `base.html`.
+            // The filter remains global for inline `onchange=` attributes.
+            // Removal uses a delegated listener so htmx-swapped buttons work
+            // without placing participant data in JavaScript source.
             function filterSubmissions() {
                 var exerciseSelect = document.getElementById("exercise-filter");
                 var participantSelect =
@@ -656,8 +623,20 @@
                     alert("Error removing participant: " + e.message);
                 }
             }
-        </script>
 
+            document.addEventListener("click", function (event) {
+                var target = event.target;
+                var button =
+                    target && target.closest
+                        ? target.closest("[data-remove-participant]")
+                        : null;
+                if (!button) return;
+                removeParticipant(
+                    button.dataset.participantId,
+                    button.dataset.participantName,
+                );
+            });
+        </script>
 
         <script>
             // Reading-progress hairline at the bottom of the sticky

@@ -153,9 +153,8 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
                 <div class="settings-row-text">
                     <h3>Theme</h3>
                     <p>
-                        Light or dark mode. The brand <kbd>?</kbd> cheatsheet
-                        and the toggle in the top bar both flip the same
-                        setting.
+                        Light or dark mode. This control and the toggle in the
+                        top bar update the same setting.
                     </p>
                 </div>
                 <div class="settings-row-control">
@@ -468,11 +467,8 @@ cargo course init --token {{ u }}</code></pre>
 <script type="module" src="/static/dist/readonly-rust-editor.js"></script>
 
 <script>
-    // Keep these settings in sync with the keys defined in
-    // `static/js/inline-editor.js`. Anything that ships an actual
-    // visual effect (vim, font size, line wrap) is also read on every
-    // editor mount; see `applyEditorPrefsFromStorage` below and the
-    // hooks in `inline-editor.js`.
+    // Keep these settings in sync with `static/js/inline-editor.js` and
+    // the pre-paint preference loader in `templates/base.html`.
     const SETTINGS_KEYS = {
         vim: "corrode:editor:vim",
         fontSize: "corrode:editor:font-size",
@@ -509,21 +505,12 @@ cargo course init --token {{ u }}</code></pre>
             const next = input.checked;
             writeBool(SETTINGS_KEYS.vim, next);
             reflect(next);
-            // Propagate to any editor instances mounted on this page
-            // (e.g. the read-only submission viewers ignore it, but
-            // applying via the shared helper is harmless and keeps
-            // future mounts in sync).
-            import("/static/dist/inline-editor.js")
-                .then(({ setVimGlobal }) => setVimGlobal && setVimGlobal(next))
-                .catch(() => {});
         });
     })();
 
-    // ---- Soft wrap toggle (removed) ---------------------------------
-
     // ---- Generic on/off editor toggle --------------------------------
     // Used by settings whose only effect is flipping a CSS attribute on
-    // <html>; the matching rules in base.html re-style every code
+    // <html>; the matching rules in `static/css/base.css` re-style every code
     // surface. `defaultOn` is the user-visible default (the checkbox is
     // checked when the localStorage value is missing or not "0").
     function wireEditorToggle({ id, storageKey, htmlAttr, defaultOn }) {
@@ -713,9 +700,8 @@ cargo course init --token {{ u }}</code></pre>
 </script>
 
 <style>
-    /* Page-specific settings chrome only. Shared layout
-       (`.admin-page`, `.admin-section`, `.section-head`,
-       `.admin-table`, `.book-*`) lives in `base.html`. */
+    /* Page-specific settings chrome only. Shared layout, table, and book
+       styles live in `static/css/base.css`. */
 
     .settings-page {
         padding-bottom: 5rem;

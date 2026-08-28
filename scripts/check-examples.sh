@@ -20,10 +20,14 @@
 
 set -uo pipefail
 
+tmpdir="$(mktemp -d)"
+log="$tmpdir/clippy.log"
+trap 'rm -rf "$tmpdir"' EXIT
+
 # Chapters whose `--example` target intentionally does not compile.
 # Keyed by the chapter directory name (the cargo example target name).
 EXPECTED_BROKEN=(
-    "04_functions"               # 3_stray_semicolon.rs, 6_cap_at.rs
+    "04_functions"               # 3_stray_semicolon.rs, 5_cap_at.rs
     "20_modules_and_visibility"  # 3_calculate.rs (privacy error)
 )
 
@@ -42,7 +46,7 @@ for dir in examples/*/; do
     # Only directories with a `main.rs` are cargo example targets.
     [[ -f "${dir}main.rs" ]] || continue
 
-    if cargo clippy --quiet --example "$name" -- -D warnings >/tmp/check-example.log 2>&1; then
+    if cargo clippy --quiet --example "$name" -- -D warnings >"$log" 2>&1; then
         compiled=1
     else
         compiled=0
@@ -62,7 +66,7 @@ for dir in examples/*/; do
         else
             echo "FAIL             $name (expected to compile + lint clean)"
             echo "----- clippy output -----"
-            cat /tmp/check-example.log
+            cat "$log"
             echo "-------------------------"
             failures=$((failures + 1))
         fi

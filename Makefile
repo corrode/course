@@ -2,7 +2,7 @@
 # The course is a regular Cargo project, so every target here is a
 # thin wrapper. `make help` shows the full list.
 
-.PHONY: help dev run build test fmt clippy check clean examples typos links ci fmt-check solutions
+.PHONY: help dev run build test fmt clippy check clean examples solutions js-check typos links ci fmt-check
 
 help:
 	@echo "make dev      - run the server with auto-reload (needs cargo-watch)"
@@ -13,10 +13,11 @@ help:
 	@echo "make fmt      - cargo fmt"
 	@echo "make clippy   - cargo clippy"
 	@echo "make examples - verify every exercise chapter (needs clippy)"
-	@echo "make solutions- verify every solution (needs rustc)"
-	@echo "make typos    - spell check (needs typos-cli)"
-	@echo "make links    - link check (needs lychee)"
-	@echo "make ci       - run the full CI suite locally"
+	@echo "make solutions - verify every solution (needs rustc)"
+	@echo "make js-check  - rebuild and verify current JavaScript bundles"
+	@echo "make typos     - spell check (needs typos-cli)"
+	@echo "make links     - link check (needs lychee)"
+	@echo "make ci        - run all locally reproducible CI checks"
 	@echo "make clean    - cargo clean"
 
 # Rebuild + restart the server on every change. Install once with:
@@ -57,6 +58,15 @@ examples:
 solutions:
 	REQUIRE_COMPLETE=1 ./scripts/check-solutions.sh
 
+# Snapshot the current frontend bundles, rebuild them, and fail if the
+# generated output differs. This works before or after the changes are committed.
+js-check:
+	@tmpdir=$$(mktemp -d); \
+	trap 'rm -rf "$$tmpdir"' EXIT; \
+	cp -R static/dist "$$tmpdir/dist" && \
+	npm run build:js && \
+	diff -ru "$$tmpdir/dist" static/dist
+
 # Spell check. Install once with: cargo install typos-cli
 typos:
 	typos
@@ -65,8 +75,8 @@ typos:
 links:
 	lychee --root-dir . --config ./lychee.toml README.md docs examples static/cheatsheet.md
 
-# Everything CI runs, in one shot.
-ci: fmt-check clippy build test examples solutions typos links
+# Everything from CI that is reproducible locally without publishing or deploying.
+ci: fmt-check clippy build test examples solutions js-check typos links
 
 fmt-check:
 	cargo fmt --all --check

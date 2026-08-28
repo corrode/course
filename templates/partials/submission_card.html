@@ -5,8 +5,8 @@ data-exercise and data-participant attributes on the list item are what
 filterSubmissions() in base.html reads to show/hide cards when the user picks an
 exercise or participant from the dropdowns. The .rust-editor element is replaced
 in-place with a read-only CodeMirror 6 viewer by
-static/js/readonly-rust-editor.js. The styled fallback (border, padding, mono
-font) lives on .rust-editor in base.html. #}
+static/js/readonly-rust-editor.js. The styled fallback lives on .rust-editor in
+`static/css/base.css`. #}
 <li
     class="submission-card"
     data-exercise="{{ sub.exercise_name }}"

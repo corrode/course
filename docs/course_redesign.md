@@ -1,5 +1,7 @@
 # Course Redesign Blueprint
 
+> **Status: partially implemented historical blueprint.** The course adopted many of these pedagogical ideas, but the final chapter structure and implementation diverged from this plan. Preserve it as design rationale; use `docs/architecture.md` and the current `examples/` tree for the live structure.
+
 This document is the definitive plan for rebuilding the course from the ground up.
 It incorporates findings from chapter-by-chapter audits, feedback from live workshop
 cohorts, and deliberate pedagogical thinking about what makes a Rust beginner course

@@ -6,9 +6,8 @@
 // the document element.
 //
 // Used by:
-//   - templates/exercise.html (the editable per-step editor and the
-//     read-only run-output editor)
-//   - static/js/readonly-rust-editor.js (admin/team submissions)
+//   - static/js/inline-editor.js (editable editors and run output)
+//   - static/js/readonly-rust-editor.js (submissions and solutions)
 //
 // Kept as a module-level singleton so a page can have any number of
 // editors sharing one style/theme without per-mount allocation.

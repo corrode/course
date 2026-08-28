@@ -22,7 +22,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 anyhow = "1.0"
 ulid = "1.2"
-tokio = { version = "1.52", features = ["rt-multi-thread", "macros", "net", "fs", "io-util", "time", "sync", "signal"] }
+tokio = { version = "1.52", features = ["rt-multi-thread", "macros", "net", "sync"] }
 
 # CLI dependencies
 clap = { version = "4.6", features = ["derive"] }
@@ -35,7 +35,6 @@ sqlx = { version = "0.8", features = [
     "runtime-tokio-rustls",
     "sqlite",
     "chrono",
-    "uuid",
     "migrate",
 ] }
 askama = { version = "0.16" }
@@ -69,10 +68,9 @@ missing_panics_doc = "allow"
 # crates.io, so the `cargo_common_metadata` lint about missing
 # description/license/repository/keywords/categories doesn't apply.
 cargo_common_metadata = "allow"
-# Transitive dependency version conflicts (mostly windows-sys/windows-* and
-# rand/getrandom variants pulled in by sqlx-mysql/sqlx-postgres which we don't
-# use directly, plus ulid pulling rand 0.9 alongside rand 0.8). Not something
-# we can fix in our source. Re-enable if you ever want to audit the dep graph.
+# The dependency graph contains unavoidable duplicate transitive versions
+# (for example getrandom, hashbrown, and webpki-roots). Audit with
+# `cargo tree -d` when updating dependencies.
 multiple_crate_versions = "allow"
 # The `#[derive(Template)]` macro from askama expands to code that
 # triggers `manual_div_ceil`. Not actionable in our source.

@@ -118,8 +118,11 @@
                         View dashboard
                     </a>
                     <button
-                        onclick="removeParticipant('{{ participant.id }}', '{{ participant.name }}')"
+                        type="button"
                         class="btn admin-btn-tiny admin-btn-danger"
+                        data-remove-participant
+                        data-participant-id="{{ participant.id|escape }}"
+                        data-participant-name="{{ participant.name|escape }}"
                     >
                         Remove
                     </button>

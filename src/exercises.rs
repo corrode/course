@@ -3,15 +3,14 @@
 //! Each chapter is a directory `examples/NN_slug/` containing one or more
 //! exercise files (`.rs`) and zero or more notes (`.md`), interleaved by a
 //! leading `<n>_` ordering prefix. The chapter is exposed to the rest of
-//! the application as an ordered list of [`Step`]s, where each step is
-//! either a [`Note`] (prose) or a [`CodeStep`] (an exercise with its own
-//! editor and tests).
+//! the application as an ordered list of [`Step`]s: prose notes, editable
+//! code exercises, or interactive quizzes.
 //!
 //! Two formats are supported:
 //!
 //! * **Single-step (legacy):** only a `main.rs` and (optionally) one or
 //!   more `<n>_<slug>.md` notes. The chapter is treated as a single code
-//!   step whose source is `main.rs`; notes render before its prose.
+//!   step whose source is `main.rs`; notes render before its editor.
 //! * **Multi-step:** sibling `<n>_<slug>.rs` files alongside (or instead
 //!   of) `main.rs`. Each `.rs` file becomes a `CodeStep`, ordered with
 //!   the notes by its leading number. A generated `main.rs` (built by
@@ -45,7 +44,7 @@ pub struct Question {
     /// Optional nudge shown above the answers.
     #[serde(default)]
     pub hint: Option<String>,
-    /// 2–6 answer choices. Order is preserved; we do not shuffle.
+    /// At least two answer choices. Their order is shuffled for each render.
     pub answers: Vec<Answer>,
 }
 
@@ -211,7 +210,7 @@ pub struct CodeStep {
     /// step. Wired up in [`parse_chapter`] after both the steps and the
     /// hints note have been parsed. `None` means "no per-step hint":
     /// either the chapter has no hints at all, or the hints file has no
-    /// section matching this step's slug."
+    /// section matching this step's slug.
     pub hints_html: Option<String>,
     /// Full source of the reference solution for this step, loaded from
     /// the sibling `solutions/<chapter>/<file>` tree (the `//!` inner-doc
@@ -287,7 +286,7 @@ pub struct ChapterDirectives {
     /// the default for any chapter without a `.chapter.toml`. An explicit
     /// list (including the empty list) hides any button not named in
     /// it. See the `Buttons` map in `exercise.html` for valid names
-    /// (`run`, `submit`, `format`, `reset`, `copy`, `vscode`).
+    /// (`run`, `submit`, `format`, `reset`, `copy`, `vim`, `vscode`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub show: Option<Vec<String>>,
     /// Whether the page-wide table of contents (the chapter list at
@@ -334,15 +333,14 @@ pub struct Exercise {
     /// as the chapter half of `submissions.exercise_name` and the URL
     /// segment under `/exercise/`.
     pub file_stem: String,
-    /// Chapter title, taken from the first code step's `//!` H1 (legacy
-    /// format) or from a top-level `0_chapter.md` (future). Falls back to
-    /// `file_stem`.
+    /// Chapter title, taken from the first note's H1, then the first code
+    /// step's `//!` H1, and finally `file_stem`.
     pub title: String,
     /// Ordered prose + code steps as they should render top-to-bottom.
     pub steps: Vec<Step>,
-    /// Optional spoiler-protected hints, surfaced once per chapter as a
-    /// closed `<details>` below the last step. Sourced from a sibling
-    /// note whose slug is exactly `hints`.
+    /// Optional chapter-wide hints left after matching hint sections have
+    /// been attached to individual code steps. Sourced from a sibling note
+    /// whose slug is exactly `hints`.
     pub hints: Option<Note>,
     /// Per-chapter UI tweaks loaded from `.chapter.toml` (if present).
     /// Empty/default when the file is absent.
@@ -446,8 +444,7 @@ impl Exercise {
     }
 }
 
-/// One position in a chapter's rendered output: prose or an editable
-/// code section.
+/// One position in a chapter's rendered output: prose, editable code, or a quiz.
 ///
 /// Built per-request by the server from a chapter's `steps` plus the
 /// participant's progress; rendered by the `exercise.html` template.
@@ -460,8 +457,7 @@ pub struct RenderItem {
     pub kind: RenderKind,
 }
 
-/// Either a prose block or a code section with all the per-step state
-/// the editor JS needs.
+/// A prose block, code section with per-step state, or rendered quiz.
 #[derive(Debug, Clone)]
 pub enum RenderKind {
     /// A markdown note rendered as raw HTML.
@@ -523,9 +519,9 @@ pub enum RenderKind {
 
 /// Scan a directory for `NN_slug/` chapter dirs and parse each one.
 ///
-/// Directories whose name does not match `^\d+_` are skipped. Chapters
-/// missing a `main.rs` are logged and skipped, so a single malformed
-/// chapter does not take down the whole server.
+/// Directories whose name does not match `^\d+_` are skipped. A chapter
+/// may contain numbered code steps, a legacy `main.rs`, prose notes, or a
+/// quiz; malformed chapters are logged and skipped.
 pub fn scan_dir(dir: &Path) -> Result<Vec<Exercise>> {
     if !dir.exists() {
         return Err(anyhow!("Examples directory not found: {}", dir.display()));
@@ -661,10 +657,7 @@ fn parse_chapter(dir: &Path, solutions_root: Option<&Path>) -> Result<Exercise> 
 
     let (steps, hints) = apply_hints(steps, hints, hints_path.as_deref());
 
-    // If the chapter ships a `quiz.toml`, append it as a Quiz step.
-    // It always renders last because `Step::order` returns u8::MAX
-    // for quizzes, so a stable re-sort would keep it at the bottom
-    // even if other steps had higher numeric prefixes.
+    // If the chapter ships a `quiz.toml`, append it as the final step.
     let mut steps = steps;
     if let Some(quiz) = load_chapter_quiz(dir)? {
         steps.push(Step::Quiz(quiz));
@@ -713,9 +706,8 @@ fn parse_chapter(dir: &Path, solutions_root: Option<&Path>) -> Result<Exercise> 
 /// Read `quiz.toml` from a chapter directory if present.
 ///
 /// A missing file yields `Ok(None)` (most chapters don't have a quiz).
-/// A malformed file is a hard error so a typo can't silently strip
-/// the entire quiz off the page; we'd rather crash at startup than
-/// serve a broken chapter.
+/// A malformed file rejects the chapter so a typo cannot silently strip
+/// the quiz from the page; [`scan_dir`] logs the error and skips that chapter.
 fn load_chapter_quiz(dir: &Path) -> Result<Option<Quiz>> {
     let path = dir.join("quiz.toml");
     let raw = match std::fs::read_to_string(&path) {
@@ -977,8 +969,9 @@ fn scan_step_files(chapter_dir: &Path) -> Result<Vec<(u8, PathBuf, String)>> {
 }
 
 /// Find `<n>_<slug>.md` notes in a chapter dir and parse each into a
-/// `Note`. Sorted by the leading number so chapter authors can
-/// interleave notes with code steps in any order they like.
+/// `Note`. Parsed notes are ordered by their numeric prefix, with the slug
+/// used as a deterministic tie-breaker. Multi-step chapters later interleave
+/// parsed notes and code by their numeric order.
 fn scan_notes(chapter_dir: &Path) -> Result<Vec<Note>> {
     let mut paths: Vec<PathBuf> = std::fs::read_dir(chapter_dir)
         .with_context(|| format!("reading {}", chapter_dir.display()))?
@@ -1000,7 +993,12 @@ fn scan_notes(chapter_dir: &Path) -> Result<Vec<Note>> {
             Err(e) => log::warn!("Skipping note {}: {e:#}", path.display()),
         }
     }
+    sort_notes(&mut notes);
     Ok(notes)
+}
+
+fn sort_notes(notes: &mut [Note]) {
+    notes.sort_by(|a, b| a.order.cmp(&b.order).then_with(|| a.slug.cmp(&b.slug)));
 }
 
 fn parse_note(path: &Path) -> Result<Note> {
@@ -1069,7 +1067,7 @@ fn strip_inner_doc(source: &str) -> String {
     joined
 }
 
-/// Split `02_strings_and_chars` into `(2, "strings_and_chars")`.
+/// Split `01_strings_and_chars` into `(1, "strings_and_chars")`.
 fn split_numeric_prefix(stem: &str) -> Option<(u8, String)> {
     let (num, rest) = stem.split_once('_')?;
     let n: u8 = num.parse().ok()?;
@@ -1269,8 +1267,6 @@ mod tests {
         // `Exercise::number` doc).
         assert_eq!(strings.number, 2);
         assert_eq!(strings.file_stem, "01_strings_and_chars");
-        // Title now comes from the first code step's `# Title` (multi-step
-        // chapter). The chapter intro lives in `1_intro.md` (a Note).
         let primary = strings
             .primary_step()
             .expect("chapter should have at least one code step");
@@ -1364,6 +1360,47 @@ mod tests {
     }
 
     #[test]
+    fn sorts_2_note_before_10_note_with_slug_tie_breaker() {
+        let mut notes = [
+            Note {
+                order: 10,
+                slug: "note".to_string(),
+                title: String::new(),
+                html: String::new(),
+            },
+            Note {
+                order: 2,
+                slug: "zebra".to_string(),
+                title: String::new(),
+                html: String::new(),
+            },
+            Note {
+                order: 2,
+                slug: "note".to_string(),
+                title: String::new(),
+                html: String::new(),
+            },
+            Note {
+                order: 2,
+                slug: "alpha".to_string(),
+                title: String::new(),
+                html: String::new(),
+            },
+        ];
+
+        sort_notes(&mut notes);
+
+        let order_and_slug: Vec<_> = notes
+            .iter()
+            .map(|note| (note.order, note.slug.as_str()))
+            .collect();
+        assert_eq!(
+            order_and_slug,
+            vec![(2, "alpha"), (2, "note"), (2, "zebra"), (10, "note")]
+        );
+    }
+
+    #[test]
     fn discovers_chapter_notes() {
         // The first chapter (`00_integers`) ships with an introductory
         // note (`1_intro.md`). Verify the parser surfaces it.
@@ -1389,13 +1426,13 @@ mod tests {
 
     #[test]
     fn multi_step_chapter_exposes_each_step() {
-        // 08_option (formerly 07_option) is the pilot multi-step chapter.
+        // 11_option is a representative multi-step chapter.
         let exercises =
             scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "option")
-            .expect("expected 08_option to be present");
+            .expect("expected 11_option to be present");
         let code_steps = chapter.code_steps();
         assert!(
             code_steps.len() >= 2,
@@ -1407,7 +1444,7 @@ mod tests {
             "chapter with sibling .rs files should report multi-step"
         );
         // Step keys must be `<n>_<slug>` so the DB key becomes
-        // `07_option/<n>_<slug>`.
+        // `11_option/<n>_<slug>`.
         let first = code_steps[0];
         assert_eq!(first.order, 2, "first step should be ordered 2_*");
         assert!(first.key().starts_with("2_"));
@@ -1420,7 +1457,7 @@ mod tests {
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "rust_fundamentals_quiz")
-            .expect("expected 22_rust_fundamentals_quiz to be present");
+            .expect("expected 24_rust_fundamentals_quiz to be present");
         // No code editors on the quiz chapter; it's intro prose plus
         // an interactive quiz block, nothing to submit.
         assert!(
@@ -1466,8 +1503,8 @@ mod tests {
     #[test]
     fn split_numeric_prefix_works() {
         assert_eq!(
-            split_numeric_prefix("02_strings_and_chars"),
-            Some((2, "strings_and_chars".to_string()))
+            split_numeric_prefix("01_strings_and_chars"),
+            Some((1, "strings_and_chars".to_string()))
         );
         assert_eq!(
             split_numeric_prefix("18_question_mark_operator"),
@@ -1522,7 +1559,7 @@ mod tests {
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "integers")
-            .expect("expected 01_integers to be present");
+            .expect("expected 00_integers to be present");
         // Every code step in this chapter has a `## <slug>` section in
         // hints.md, so each step should now carry its own rendered HTML.
         for code in chapter.code_steps() {
@@ -1532,10 +1569,7 @@ mod tests {
                 code.slug
             );
         }
-        // And because every section was claimed by a step, the
-        // chapter-wide leftover hints should collapse to None (only the
-        // tiny intro paragraph remains, but it's pure prose with no
-        // unmatched H2s, so we still expect Some, just shorter).
+        // Any chapter-wide remainder must not repeat a per-step section.
         if let Some(leftover) = &chapter.hints {
             assert!(
                 !leftover.html.contains("number_to_string"),
@@ -1546,9 +1580,9 @@ mod tests {
 
     #[test]
     fn renamed_chapters_distribute_hints_per_step() {
-        // 11_iterators and 17_csv_parser were renamed so each hints H2
-        // is keyed by the file slug (e.g. `` ## `quoted_line`, the
-        // state machine ``). Every code step should receive its slice.
+        // 17_iterators and 22_csv_parser use hints H2 headings keyed by
+        // the file slug (e.g. `` ## `quoted_line`, the state machine ``).
+        // Every code step should receive its slice.
         let exercises =
             scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
         for slug in ["iterators", "csv_parser"] {

@@ -10,7 +10,7 @@
 //   1. lock the card once an answer is clicked,
 //   2. paint correct / wrong-pick verdicts on every answer,
 //   3. reveal each answer's explanation,
-//   4. tick the "answered" counter and, on the last answer, the score.
+//   4. update the answered count and running score.
 // Reset wipes every card back to its initial state.
 
 (function () {

@@ -14,7 +14,6 @@ use std::str::FromStr;
 const DEFAULT_SERVER_URL: &str = "https://course.corrode.dev";
 const TOKEN_FILE: &str = ".corrode/token";
 
-/// Get the server URL from environment variable or use default
 fn get_server_url() -> String {
     env::var("CORRODE_SERVER_URL").unwrap_or_else(|_| DEFAULT_SERVER_URL.to_string())
 }
@@ -50,7 +49,7 @@ enum CourseCommands {
     },
     /// Submit an exercise solution
     Submit {
-        /// Path to the exercise file (e.g., `examples/01_strings.rs`)
+        /// Path to the exercise file (e.g., `examples/01_strings_and_chars/2_welcome.rs`)
         file: Option<String>,
         /// Run fmt and clippy for a pedantic submission to earn a star
         #[arg(long)]
@@ -87,23 +86,14 @@ async fn main() -> Result<()> {
 }
 
 fn handle_token() -> Result<()> {
-    let Ok(token) = read_token() else {
-        return Err(anyhow!(
-            "No token found. Run 'cargo course init' to register."
-        ));
-    };
+    let token = read_token()?;
     println!("{}", token.as_str());
     Ok(())
 }
 
 fn handle_open() -> Result<()> {
-    // Read token from file
     let token = read_token()?;
-
-    // Construct the dashboard URL
     let url = format!("{}/dashboard/{}", get_server_url(), token.as_str());
-
-    // Open the URL in the default browser
     if open::that(&url).is_err() {
         return Err(anyhow!("Failed to open browser. Please visit: {url}"));
     }
@@ -114,7 +104,6 @@ fn handle_open() -> Result<()> {
 
 /// Initialize the course repository and register participant if needed.
 async fn handle_init(token_arg: Option<String>) -> Result<()> {
-    // If a token was provided as argument, use it
     if let Some(token_str) = token_arg {
         let token = Token::from_str(&token_str)?;
         save_token(&token)?;
@@ -125,14 +114,12 @@ async fn handle_init(token_arg: Option<String>) -> Result<()> {
         return Ok(());
     }
 
-    // Check for existing token
     if let Ok(existing_token) = read_token() {
         println!("✅ You're already registered with token: {existing_token}");
         println!("💡 Use --token <TOKEN> to replace with a different token");
         return Ok(());
     }
 
-    // Start registration flow
     println!("🚀 Welcome to the corrode Rust Course!");
     print!("How should I call you? ");
     io::stdout().flush()?;
@@ -147,7 +134,6 @@ async fn handle_init(token_arg: Option<String>) -> Result<()> {
 
     println!("✅ Registered successfully! Token: {token}");
 
-    // Give instructions on how to use the CLI
     println!("💡 Submit exercises with: cargo course submit <file>");
     println!("💡 For pedantic submissions (earn stars): cargo course submit <file> --pedantic");
 
@@ -161,33 +147,27 @@ async fn handle_submit(file: Option<&str>, pedantic: bool, all: bool) -> Result<
     }
 
     let file = file.ok_or_else(|| anyhow!("File path is required when not using --all"))?;
-    // 1. Read source code from file
     let source_code =
         fs::read_to_string(file).map_err(|_| anyhow!("Failed to read file: {file}"))?;
 
-    // 2. Extract chapter + optional step from the path. For legacy
-    //    single-step chapters the step is `None`, and `exercise_name`
-    //    is just the chapter slug. For multi-step (`<chapter>/<n>_<slug>.rs`)
-    //    the exercise key is `<chapter>/<n>_<slug>` and the test filter
-    //    is `_<n>_<slug>::`.
+    // Extract chapter + optional step from the path. For legacy
+    // single-step chapters the step is `None`, and `exercise_name` is just
+    // the chapter slug. For multi-step (`<chapter>/<n>_<slug>.rs`) the
+    // exercise key is `<chapter>/<n>_<slug>` and the test filter is
+    // `_<n>_<slug>::`.
     let target = extract_submission_target(file)?;
     let exercise_name = target.exercise_key();
 
-    // 3. Run tests scoped to the right chapter (and step, if any).
     let (tests_passed, test_output) =
         run_cargo_test(&target.chapter, target.test_filter.as_deref())?;
 
-    // 4. If pedantic flag, also run fmt + clippy
     let (fmt_passed, clippy_passed) = if pedantic {
         (run_cargo_fmt()?, run_cargo_clippy()?)
     } else {
         (false, false)
     };
 
-    // 5. Read token from file
     let token = read_token()?;
-
-    // 6. Submit to server
     submit_to_server(SubmissionRequest {
         ulid: token.as_str().to_string(),
         exercise_name: exercise_name.clone(),
@@ -198,7 +178,6 @@ async fn handle_submit(file: Option<&str>, pedantic: bool, all: bool) -> Result<
     })
     .await?;
 
-    // 7. Show result
     if tests_passed {
         if pedantic && fmt_passed && clippy_passed {
             println!("⭐ Exercise {exercise_name} perfected! You earned a star!");
@@ -223,10 +202,7 @@ async fn handle_submit(file: Option<&str>, pedantic: bool, all: bool) -> Result<
 async fn handle_submit_all(pedantic: bool) -> Result<()> {
     println!("🔍 Scanning for exercises...");
 
-    // Read token from file
     let token = read_token()?;
-
-    // Get list of all exercise files
     let exercise_files = find_exercise_files()?;
     if exercise_files.is_empty() {
         println!("❌ No exercise files found in examples/ directory");
@@ -236,8 +212,8 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
     println!("📋 Found {} exercise files", exercise_files.len());
     println!("🚀 Testing exercises in parallel...");
 
-    // Process exercises in parallel using bounded concurrency
-    let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(4)); // Limit to 4 concurrent operations
+    // Bound concurrent Cargo processes to avoid overwhelming the machine.
+    let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(4));
     let token = std::sync::Arc::new(token);
 
     let tasks: Vec<_> = exercise_files
@@ -252,7 +228,6 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
         })
         .collect();
 
-    // Wait for all tasks to complete and collect results
     let mut successful_submissions = 0;
     let mut failed_exercises = Vec::new();
 
@@ -274,7 +249,6 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
         }
     }
 
-    // Summary
     println!("\n📊 Submission Summary:");
     println!("✅ Successfully submitted: {successful_submissions}");
     if !failed_exercises.is_empty() {
@@ -305,7 +279,6 @@ async fn process_single_exercise(
     print!("🧪 Testing {exercise_name}... ");
     std::io::stdout().flush().unwrap();
 
-    // Run tests for this exercise
     let Ok((tests_passed, _test_output)) =
         run_cargo_test(&target.chapter, target.test_filter.as_deref())
     else {
@@ -318,13 +291,11 @@ async fn process_single_exercise(
         return Err(exercise_name);
     }
 
-    // Tests passed, now read source code
     let Ok(source_code) = fs::read_to_string(&file_path) else {
         println!("❌ Failed to read file");
         return Err(exercise_name);
     };
 
-    // If pedantic flag, also run fmt + clippy (these are global checks)
     let (fmt_passed, clippy_passed) = if pedantic {
         if let (Ok(fmt), Ok(clippy)) = (run_cargo_fmt(), run_cargo_clippy()) {
             (fmt, clippy)
@@ -336,7 +307,6 @@ async fn process_single_exercise(
         (false, false)
     };
 
-    // Submit to server
     let submission_result = submit_to_server(SubmissionRequest {
         ulid: token.as_str().to_string(),
         exercise_name: exercise_name.clone(),
@@ -713,7 +683,6 @@ fn read_token() -> Result<Token> {
 
 /// Save the participant token to the local file.
 fn save_token(token: &Token) -> Result<()> {
-    // Create .corrode directory if it doesn't exist
     if let Some(parent) = Path::new(TOKEN_FILE).parent() {
         fs::create_dir_all(parent)?;
     }

@@ -1,6 +1,6 @@
-// Read-only CodeMirror 6 viewer for Rust source blocks on the
-// admin and team pages, and the "Reveal the full solution" viewer on
-// chapter pages.
+// Read-only CodeMirror 6 viewer for Rust source blocks on the admin,
+// team, and settings pages, plus the "Reveal the full solution" viewer
+// on chapter pages.
 //
 // Built with the editable editor as split esbuild entry points, so both
 // viewers share the same generated CodeMirror chunks (no duplicate
@@ -39,29 +39,34 @@ function mountOne(el) {
   const source = el.textContent ?? "";
   el.textContent = "";
 
-  const view = new EditorView({
-    state: EditorState.create({
-      doc: source,
-      extensions: [
-        EditorView.editable.of(false),
-        EditorState.readOnly.of(true),
-        EditorView.lineWrapping,
-        lineNumbers(),
-        highlightActiveLine(),
-        highlightActiveLineGutter(),
-        drawSelection(),
-        bracketMatching(),
-        rust(),
-        syntaxHighlighting(proseHighlightStyle, { fallback: true }),
-        proseEditorTheme,
-      ],
-    }),
-    parent: el,
-  });
+  let view;
+  try {
+    view = new EditorView({
+      state: EditorState.create({
+        doc: source,
+        extensions: [
+          EditorView.editable.of(false),
+          EditorState.readOnly.of(true),
+          EditorView.lineWrapping,
+          lineNumbers(),
+          highlightActiveLine(),
+          highlightActiveLineGutter(),
+          drawSelection(),
+          bracketMatching(),
+          rust(),
+          syntaxHighlighting(proseHighlightStyle, { fallback: true }),
+          proseEditorTheme,
+        ],
+      }),
+      parent: el,
+    });
+  } catch (err) {
+    el.textContent = source;
+    throw err;
+  }
 
-  // Match the chrome the in-exercise editor sets directly on its root DOM
-  // node (see `initSection` in `templates/exercise.html`). Font size lives
-  // in CSS (`base.html`) so `/settings` can override it.
+  // Match the chrome used by the editable in-exercise editor. Font size
+  // lives in `static/css/base.css` so `/settings` can override it.
   view.dom.style.border = "1px solid var(--color-border)";
   view.dom.style.borderRadius = "12px";
   view.dom.style.overflow = "hidden";

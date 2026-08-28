@@ -1,5 +1,7 @@
 # Quiz module: plan
 
+> **Status: superseded design proposal.** The current course has one dedicated quiz chapter backed by `examples/24_rust_fundamentals_quiz/quiz.toml`, rendered inline without persisted scores. This per-chapter `quiz.md` and `quiz_submissions` design remains historical context, not a description of the current implementation.
+
 A short post-chapter quiz turns the "I followed along" feeling into "I
 can recall this without the editor in front of me." This document
 sketches how to add one quiz per chapter.

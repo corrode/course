@@ -1,6 +1,6 @@
 # A Beginner's Guide to Rust 
 
-![Screenshot of the course page](/static/assets/screenshot.jpg)
+![Screenshot of the course page](static/assets/screenshot.jpg)
 
 A hands-on Rust course for working developers.
 You write small programs, the compiler gives you feedback, and after a couple of
@@ -23,21 +23,19 @@ speed, so no rush!
 If you'd rather stay in your editor, remember that this is also just a regular Rust project!
 You can clone it, open it in any IDE, and work through the exercises under `examples/`.
 
-Each chapter is a directory under `examples/`. Open the files, read the
-`//!` comment at the top, replace the `todo!()` bodies, and run the
-tests until they pass. Then move on to the next chapter.
+Each chapter is a numbered directory under `examples/`. Work through its `.md` prose and `.rs` exercises in filename order. Replace the `todo!()` bodies in the exercise files and run the tests until they pass. The chapter's generated `main.rs` only connects the steps for Cargo, so don't edit it directly.
 
-If you get stuck, there's a sample solution for every exercise under `solutions/`. It's laid out
-the same way as `examples/` (same chapter folder and filename). They're what the website shows when you reveal the full solution on a hint, and if
-you're working in your editor, you can just open the matching file in `solutions/` to see one way to do it.
+If you get stuck, there's a sample solution for every exercise under `solutions/`. It mirrors the chapter and filename layout under `examples/`. These are the same solutions the website reveals in its hints.
 
 The workflow is roughly:
 
 ```bash
 git clone https://github.com/corrode/course.git
 cd course
-# edit away, then...
+# Edit examples/00_integers/3_add_health.rs, then test the whole chapter:
 cargo test --example 00_integers
+# Or run just that step's tests:
+cargo test --example 00_integers _3_add_health::
 ```
 
 ## About corrode

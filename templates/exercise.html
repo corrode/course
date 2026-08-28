@@ -624,7 +624,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
 
     bindCourseAnalytics();
 
-    // The CodeMirror mount, button wiring, draft persistence, vim toggle,
+    // The CodeMirror mount, button wiring, draft persistence, Vim preference,
     // submit flow, and fallback path all live in
     // `static/js/inline-editor.js`. This block is just chapter-page glue:
     // PassHooks (confetti, signup_on_pass) and the `applyChapterDirectives`
@@ -1003,8 +1003,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     /* "Useful from the standard library" sections are rewritten by the
        renderer into the same `markdown-alert-note` blockquote used by `>
        [!NOTE]`, so they pick up the alert styling above with no
-       * dedicated class of their own.
-       */
+       dedicated class of their own. */
 
     /* Reading column for the chapter prose. */
     .chapter-prose {
@@ -1282,11 +1281,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         justify-content: center;
         margin-top: 0.5rem;
     }
-    .exercise-file {
-        font-family: "SF Mono", Monaco, monospace;
-        color: var(--color-text-muted);
-        font-size: 0.9rem;
-    }
+
     .status-badge {
         display: inline-flex;
         align-items: center;
@@ -1320,31 +1315,6 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         color: #f1c40f;
     }
 
-    .crumbs {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.5rem 0 0.75rem;
-        margin-bottom: 1.5rem;
-        border-bottom: 1px solid var(--color-border);
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-        flex-wrap: wrap;
-    }
-    .crumb {
-        color: var(--color-text-muted);
-        text-decoration: none;
-    }
-    .crumb:hover {
-        color: var(--color-text);
-    }
-    .crumb-sep {
-        opacity: 0.5;
-    }
-    .crumb-current {
-        font-family: "SF Mono", Monaco, monospace;
-        color: var(--color-text);
-    }
 
     .register-banner {
         margin-bottom: 1.5rem;
@@ -1405,7 +1375,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         padding: 0 0.85rem;
         border-radius: 6px;
         border: 1px solid var(--color-border);
-        background: var(--color-bg);
+        background: var(--color-input-bg);
         color: var(--color-text);
         font-family: inherit;
     }
@@ -1439,7 +1409,8 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
 
     /* The bottom "All exercises" chapter list and the homepage TOC both
        render through `templates/partials/chapter_list.html`. The shared
-       `.chapter-list` / `.chapter-row` styles live in base.html. */
+       `.chapter-list` / `.chapter-row` styles live in
+       `static/css/base.css`. */
 
     /* The hint is a disclosure widget, not a UI card. Collapsed state
        is a quiet text trigger (icon + label, no border/background) so
@@ -1553,8 +1524,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         margin: 0;
         max-height: none;
     }
-    /* `.prose-code-wrap` + `.prose-copy-btn` now live in `base.html`
-       so the settings page (and any other page) can reuse the same
-       hover-reveal copy chrome. */
+    /* `.prose-code-wrap` and `.prose-copy-btn` live in
+       `static/css/base.css` so other pages can reuse the same copy chrome. */
 </style>
 {% endblock %}

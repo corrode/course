@@ -28,8 +28,8 @@ use ulid::Ulid;
 const COURSE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Build-time git metadata baked in by `build.rs` via `cargo:rustc-env`.
-/// `option_env!` keeps the build working when `.git` isn't available (the
-/// Docker build context excludes it), in which case these are `None`.
+/// The build script emits `unknown` when neither environment overrides nor
+/// local Git metadata are available.
 const GIT_BRANCH_BUILD: Option<&str> = option_env!("GIT_BRANCH");
 const GIT_HASH_BUILD: Option<&str> = option_env!("GIT_HASH");
 
@@ -157,13 +157,11 @@ impl DbParticipant {
 /// (e.g. `content_hash`) doesn't silently break the row mapping.
 #[derive(sqlx::FromRow)]
 struct DbSubmission {
-    id: String,
     exercise_name: String,
     source_code: String,
     tests_passed: bool,
     clippy_passed: bool,
     fmt_passed: bool,
-    submitted_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// Template for the standalone playground (scratchpad) page.
@@ -174,7 +172,7 @@ struct PlaygroundTemplate {
     starter: String,
 }
 
-/// Template for the read-only "A Quick Tour of Rust" preamble page.
+/// Template for the "A Quick Tour of Rust" preamble page.
 /// Renders one editable, runnable code box (the Mario tour) with
 /// concept-class hover explanations.
 #[derive(Template)]
@@ -182,8 +180,8 @@ struct PlaygroundTemplate {
 struct TourTemplate {
     /// The annotated tour source shown in the editor.
     starter: String,
-    /// Always `None`: the tour is anonymous preamble with no participant
-    /// context. Present so it can share `partials/next_chapter_cta.html`.
+    /// Participant context for `/tour/{ulid}`; `None` on the public route.
+    /// Present so the tour can share `partials/next_chapter_cta.html`.
     ulid: Option<String>,
     /// The first real chapter, rendered as the closing "Next chapter"
     /// CTA via the shared partial. `None` if the catalog is empty.
@@ -192,8 +190,7 @@ struct TourTemplate {
     next_locked: bool,
 }
 
-/// Template for the cheatsheet page. Just renders pre-built HTML
-/// produced from `static/cheatsheet.md` at startup.
+/// Template for the cheatsheet page, rendered from `static/cheatsheet.md`.
 #[derive(Template)]
 #[template(path = "cheatsheet.html")]
 struct CheatsheetTemplate {
@@ -229,7 +226,7 @@ struct ExerciseTemplate {
     /// `partials/next_chapter_cta.html`.
     next_locked: bool,
     /// Number of completable chapters the participant has finished.
-    /// Quizzes and notes-only chapters don't count toward either total.
+    /// Quizzes, notes-only chapters, and bonus chapters do not count.
     progress_done: usize,
     /// Number of completable chapters in the course (denominator).
     progress_total: usize,
@@ -260,12 +257,18 @@ struct ProgressDot {
     /// Optional explicit link target. When `Some`, the TOC partial and
     /// chapter picker link straight here instead of deriving an
     /// `/exercise/{slug}` URL. Used for non-exercise entries like the
-    /// read-only "Quick Tour" preamble (`/tour`).
+    /// editable "Quick Tour" preamble (`/tour`).
     href: Option<String>,
 }
 
-/// Synthetic chapter-list entry for the read-only "A Quick Tour of
-/// Rust" preamble. It isn't a real exercise (no code steps, no tests,
+impl ProgressDot {
+    const fn counts_toward_progress(&self) -> bool {
+        counts_toward_progress(self.is_quiz, self.has_exercises, self.is_bonus)
+    }
+}
+
+/// Synthetic chapter-list entry for the editable "A Quick Tour of Rust"
+/// preamble. It isn't a real exercise (no code steps, no tests,
 /// no progress), so it carries an explicit `/tour` href and
 /// `has_exercises = false` to stay out of the progress totals while
 /// still showing as the first row of the table of contents.
@@ -336,8 +339,8 @@ struct DashboardTemplate {
     next_chapter_number: u8,
     next_chapter_title: String,
     /// Number of completable chapters the participant has finished.
-    /// Always 0 in anonymous mode. Quizzes and notes-only chapters
-    /// don't count.
+    /// Always 0 in anonymous mode. Quizzes, notes-only chapters, and
+    /// bonus chapters do not count.
     progress_done: usize,
     /// Number of completable chapters in the course (denominator).
     progress_total: usize,
@@ -409,14 +412,13 @@ struct AdminStats {
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Serialize, Clone)]
 struct ExerciseProgress {
-    /// Display number, 1-based (chapter 0 on disk -> `1.` in the TOC).
+    /// Human-facing number, 1-based for regular chapters and 0 for bonuses.
     number: u8,
     name: String,
+    attempted: bool,
     completed: bool,
     perfected: bool,
     title: String,
-    description: String,
-    submissions: Vec<ExerciseSubmission>,
     is_quiz: bool,
     /// Notes-only chapters (appendix material) have no code steps and
     /// can't be "completed". The dashboard skips them when choosing
@@ -426,15 +428,23 @@ struct ExerciseProgress {
     is_bonus: bool,
 }
 
-/// Individual submission for an exercise
-#[derive(Serialize, Clone)]
-struct ExerciseSubmission {
-    id: String,
-    source_code: String,
-    tests_passed: bool,
-    clippy_passed: bool,
-    fmt_passed: bool,
-    submitted_at: chrono::DateTime<chrono::Utc>,
+const fn counts_toward_progress(is_quiz: bool, has_exercises: bool, is_bonus: bool) -> bool {
+    !is_quiz && has_exercises && !is_bonus
+}
+
+impl ExerciseProgress {
+    const fn counts_toward_progress(&self) -> bool {
+        counts_toward_progress(self.is_quiz, self.has_exercises, self.is_bonus)
+    }
+}
+
+fn exercise_progress_counts(exercises: &[ExerciseProgress]) -> (usize, usize) {
+    exercises
+        .iter()
+        .filter(|exercise| exercise.counts_toward_progress())
+        .fold((0, 0), |(done, total), exercise| {
+            (done + usize::from(exercise.completed), total + 1)
+        })
 }
 
 /// Participant summary for admin view
@@ -705,9 +715,9 @@ fn bucket_participants_by_team(participants: Vec<ParticipantSummary>) -> Vec<Par
 }
 
 /// Number of *completable* chapters in the catalog: the denominator
-/// every participant's progress is measured against. Quizzes and
-/// notes-only chapters have no code steps and never count, matching
-/// `participant_dashboard` / `render_exercise_page`.
+/// every participant's progress is measured against. Quizzes, notes-only
+/// chapters, and bonus chapters never count, matching
+/// `participant_dashboard` and `render_exercise_page`.
 fn completable_total(state: &AppState) -> i64 {
     i64::try_from(
         state
@@ -731,20 +741,15 @@ async fn build_participant_summary(
     last_activity: Option<chrono::DateTime<chrono::Utc>>,
     total_exercises: i64,
 ) -> ParticipantSummary {
-    let completed_count =
-        match get_exercise_progress(&state.pool, Some(&id), &state.exercises).await {
-            Ok(exercises) => i64::try_from(
-                exercises
-                    .iter()
-                    .filter(|e| !e.is_quiz && e.has_exercises && !e.is_bonus && e.completed)
-                    .count(),
-            )
-            .unwrap_or(i64::MAX),
-            Err(e) => {
-                warn!("Failed to compute progress for participant {id}: {e}");
-                0
-            }
-        };
+    let completed_count = match get_exercise_progress(&state.pool, Some(&id), &state.exercises)
+        .await
+    {
+        Ok(exercises) => i64::try_from(exercise_progress_counts(&exercises).0).unwrap_or(i64::MAX),
+        Err(e) => {
+            warn!("Failed to compute participant progress: {e}");
+            0
+        }
+    };
 
     ParticipantSummary {
         id,
@@ -881,10 +886,7 @@ async fn main() -> Result<()> {
     } else {
         info!("Creating database {database_url}");
         match Sqlite::create_database(&database_url).await {
-            Ok(()) => {
-                println!("✅ Database created successfully");
-                info!("Database created successfully");
-            }
+            Ok(()) => info!("Database created successfully"),
             Err(error) => {
                 error!("Error creating database: {error}");
                 panic!("❌ Error creating database: {error}");
@@ -898,10 +900,7 @@ async fn main() -> Result<()> {
         .connect(&database_url)
         .await
         .map_err(|e| {
-            eprintln!("❌ Failed to connect to database: {e}");
-            eprintln!("   Database URL: {database_url}");
-            error!("Failed to connect to database: {e}");
-            error!("Database URL: {database_url}");
+            error!("Failed to connect to database {database_url}: {e}");
             e
         })?;
 
@@ -982,7 +981,7 @@ async fn main() -> Result<()> {
 
     let listener = tokio::net::TcpListener::bind(&format!("0.0.0.0:{port}")).await?;
     info!("🚀 Server listening on 0.0.0.0:{port} (open http://localhost:{port} locally)");
-    info!("📊 Admin dashboard path: /admin?token={admin_token}");
+    info!("📊 Admin dashboard available at /admin");
     info!("🗃️  Database: {database_url}");
 
     axum::serve(listener, app).await?;
@@ -1028,7 +1027,7 @@ fn dots_from_exercises(exercises: &[ExerciseProgress]) -> Vec<ProgressDot> {
             slug: e.name.clone(),
             number: e.number,
             title: e.title.clone(),
-            attempted: !e.submissions.is_empty(),
+            attempted: e.attempted,
             completed: e.completed,
             perfected: e.perfected,
             current: false,
@@ -1070,7 +1069,7 @@ async fn anonymous_dashboard(
 
     let first = exercises
         .iter()
-        .find(|e| !e.is_quiz && e.has_exercises && !e.is_bonus)
+        .find(|e| e.counts_toward_progress())
         .or_else(|| exercises.first());
     let (next_slug, next_label, next_chapter_number, next_chapter_title) = first.map_or_else(
         || {
@@ -1090,10 +1089,7 @@ async fn anonymous_dashboard(
             )
         },
     );
-    let progress_total = exercises
-        .iter()
-        .filter(|e| !e.is_quiz && e.has_exercises && !e.is_bonus)
-        .count();
+    let (_, progress_total) = exercise_progress_counts(&exercises);
 
     let dots = dots_from_exercises(&exercises);
     let template = DashboardTemplate {
@@ -1158,7 +1154,7 @@ fn render_signup(team_slug: Option<String>) -> axum::response::Response {
     )
 }
 
-/// Read-only "A Quick Tour of Rust" preamble page at `/tour`.
+/// "A Quick Tour of Rust" preamble page at `/tour`.
 ///
 /// Ships the annotated Mario tour source (embedded at compile time)
 /// into one editable, runnable code box. Like the playground, edits
@@ -1245,15 +1241,9 @@ fn main() {
 
 /// Renders `static/cheatsheet.md` as a standalone reference page.
 async fn cheatsheet_page() -> impl IntoResponse {
-    let md = match std::fs::read_to_string("static/cheatsheet.md") {
-        Ok(s) => s,
-        Err(e) => {
-            warn!("cheatsheet markdown missing: {e}");
-            "# Cheatsheet\n\n_Cheatsheet not found._".to_string()
-        }
+    let template = CheatsheetTemplate {
+        html: load_cheatsheet_html(),
     };
-    let html = exercises::render_markdown(&md);
-    let template = CheatsheetTemplate { html };
     match template.render() {
         Ok(html) => Html(html),
         Err(e) => {
@@ -1267,14 +1257,15 @@ async fn cheatsheet_page() -> impl IntoResponse {
 /// Used by the in-page modal so we don't have to ship the entire
 /// document with every page load.
 async fn cheatsheet_fragment() -> impl IntoResponse {
-    let md = match std::fs::read_to_string("static/cheatsheet.md") {
-        Ok(s) => s,
-        Err(e) => {
-            warn!("cheatsheet markdown missing: {e}");
-            "# Cheatsheet\n\n_Cheatsheet not found._".to_string()
-        }
-    };
-    Html(exercises::render_markdown(&md))
+    Html(load_cheatsheet_html())
+}
+
+fn load_cheatsheet_html() -> String {
+    let markdown = std::fs::read_to_string("static/cheatsheet.md").unwrap_or_else(|error| {
+        warn!("cheatsheet markdown missing: {error}");
+        "# Cheatsheet\n\n_Cheatsheet not found._".to_string()
+    });
+    exercises::render_markdown(&markdown)
 }
 
 /// Web registration handler
@@ -1352,9 +1343,11 @@ async fn participant_dashboard(
     // a graceful default.
     let first_unfinished = exercises
         .iter()
-        .find(|e| !e.completed && !e.is_quiz && e.has_exercises && !e.is_bonus)
+        .find(|e| !e.completed && e.counts_toward_progress())
         .or_else(|| exercises.first());
-    let any_completed = exercises.iter().any(|e| e.completed);
+    let any_completed = exercises
+        .iter()
+        .any(|e| e.completed && e.counts_toward_progress());
     let (next_slug, next_label, next_chapter_number, next_chapter_title) = match first_unfinished {
         Some(e) if any_completed => (
             e.name.clone(),
@@ -1375,14 +1368,7 @@ async fn participant_dashboard(
             String::new(),
         ),
     };
-    let progress_total = exercises
-        .iter()
-        .filter(|e| !e.is_quiz && e.has_exercises && !e.is_bonus)
-        .count();
-    let progress_done = exercises
-        .iter()
-        .filter(|e| !e.is_quiz && e.has_exercises && !e.is_bonus && e.completed)
-        .count();
+    let (progress_done, progress_total) = exercise_progress_counts(&exercises);
 
     let team_token = participant.parsed_team_token();
     let dots = dots_from_exercises(&exercises);
@@ -1464,7 +1450,7 @@ async fn render_exercise_page(
     ulid: Option<String>,
 ) -> axum::response::Response {
     // Look up by slug or by file_stem so both `/exercise/strings_and_chars`
-    // and `/exercise/02_strings_and_chars` resolve.
+    // and `/exercise/01_strings_and_chars` resolve.
     let Some(idx) = state
         .exercises
         .iter()
@@ -1483,7 +1469,7 @@ async fn render_exercise_page(
                     (
                         r.name,
                         UiExerciseStatus {
-                            attempted: !r.submissions.is_empty(),
+                            attempted: r.attempted,
                             completed: r.completed,
                             perfected: r.perfected,
                             // Chapter rollup is only used for the header
@@ -1642,16 +1628,15 @@ async fn render_exercise_page(
         .find(|d| !d.is_bonus)
         .cloned();
 
-    // Progress: how many completable chapters has the participant
-    // finished? Quizzes and notes-only chapters never "complete", so
-    // they're excluded from both numerator and denominator.
+    // Progress excludes quizzes, notes-only chapters, and bonus chapters
+    // from both the numerator and denominator.
     let progress_total = dots
         .iter()
-        .filter(|d| !d.is_quiz && d.has_exercises && !d.is_bonus)
+        .filter(|dot| dot.counts_toward_progress())
         .count();
     let progress_done = dots
         .iter()
-        .filter(|d| !d.is_quiz && d.has_exercises && !d.is_bonus && d.completed)
+        .filter(|dot| dot.completed && dot.counts_toward_progress())
         .count();
 
     let next_locked = ulid.is_some() && !current_status.completed;
@@ -1689,7 +1674,9 @@ async fn load_step_progress(
     ulid: &str,
 ) -> Result<std::collections::HashMap<String, UiExerciseStatus>> {
     let rows: Vec<DbSubmission> = sqlx::query_as(
-        "SELECT * FROM submissions WHERE participant_id = ? ORDER BY exercise_name, submitted_at DESC",
+        "SELECT exercise_name, source_code, tests_passed, clippy_passed, fmt_passed \
+         FROM submissions WHERE participant_id = ? \
+         ORDER BY exercise_name, submitted_at DESC",
     )
     .bind(ulid)
     .fetch_all(pool)
@@ -1757,10 +1744,9 @@ async fn admin_dashboard(
             .into_response();
     };
 
-    // Denominator: the number of *completable* chapters in the catalog.
-    // Quizzes and notes-only chapters have no code steps and never count
-    // toward progress, so they're excluded here just like in
-    // `participant_dashboard` / `render_exercise_page`.
+    // Denominator: the number of non-bonus chapters with code exercises.
+    // Quizzes and notes-only chapters do not count, matching
+    // `participant_dashboard` and `render_exercise_page`.
     let total_exercises = completable_total(&state);
 
     let mut participants = Vec::new();
@@ -1988,7 +1974,7 @@ struct TeamTokenForm {
 /// Move a participant into a different team bucket (or out of any).
 ///
 /// Submitted by the inline form on the admin participants table. The
-/// `team_token` field is normalised via `normalize_team_token`:
+/// `team_token` field is normalised via [`TeamToken::parse_form_input`]:
 /// blank values clear the column (sending the participant to the
 /// "Unassigned" bucket), anything else has to be a short slug.
 ///
@@ -2026,7 +2012,7 @@ async fn admin_set_team_token(
             (StatusCode::NOT_FOUND, "Participant not found").into_response()
         }
         Ok(_) => {
-            info!("Admin moved participant {participant_id} to team {new_token:?}");
+            info!("Admin moved a participant to team {new_token:?}");
             // The admin token is already taken from the request URL,
             // which means the operator's browser was OK with it as-is;
             // echo it straight back, the same way the rest of the
@@ -2035,26 +2021,18 @@ async fn admin_set_team_token(
                 .into_response()
         }
         Err(err) => {
-            error!("Failed to update team_token for {participant_id}: {err}");
+            error!("Failed to update participant team token: {err}");
             (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
         }
     }
 }
 
-/// Builds the per-team page (`team.html`) for a given team label.
-///
-/// `team_token = None` selects the synthetic Unassigned bucket
-/// (every participant whose `participants.team_token` column is
-/// NULL). `viewer_ulid` highlights the matching member row in
-/// participant mode and is ignored in admin mode. Returns the
-/// rendered HTML response, or a 500 if any of the supporting queries
-/// fail.
-// reason: top-level request handler; splitting purely for line count adds indirection without value
 /// Snapshot of a single team (or the unassigned bucket): roster,
 /// recent submissions, truncation flag, and the distinct exercises
 /// present in the feed. Shared between [`render_team_page`] and the
 /// settings page so both pages see the same data and respect the same
 /// `TEAM_SUBMISSIONS_LIMIT`.
+// reason: roster and submission queries are kept together to build one snapshot
 #[allow(clippy::too_many_lines)]
 async fn load_team_view(
     state: &AppState,
@@ -2069,17 +2047,17 @@ async fn load_team_view(
     ),
     Box<axum::response::Response>,
 > {
-    let total_exercises: i64 = i64::try_from(state.exercises.len()).unwrap_or(i64::MAX);
+    let total_exercises = completable_total(state);
 
-    // Roster: every participant in this team, with a count of their
-    // passing submissions and the timestamp of their most recent one.
+    // Roster: every participant in this team, with the timestamp of their
+    // most recent passing submission. Chapter progress is computed below
+    // from the catalog-aware progress model.
     // We branch on the SQL because SQLite has no portable way to bind
     // an Option<&str> against `IS NULL` in a single statement.
     let roster_query = match team_token {
         Some(_) => {
             r"
             SELECT p.id, p.name,
-                   COUNT(s.id) AS completed_count,
                    MAX(s.submitted_at) AS last_activity
             FROM participants p
             LEFT JOIN submissions s
@@ -2092,7 +2070,6 @@ async fn load_team_view(
         None => {
             r"
             SELECT p.id, p.name,
-                   COUNT(s.id) AS completed_count,
                    MAX(s.submitted_at) AS last_activity
             FROM participants p
             LEFT JOIN submissions s
@@ -2121,11 +2098,21 @@ async fn load_team_view(
     let mut members = Vec::with_capacity(roster_rows.len());
     for row in &roster_rows {
         let id: String = row.get("id");
+        let completed_count =
+            match get_exercise_progress(&state.pool, Some(&id), &state.exercises).await {
+                Ok(exercises) => {
+                    i64::try_from(exercise_progress_counts(&exercises).0).unwrap_or(i64::MAX)
+                }
+                Err(err) => {
+                    warn!("Failed to compute participant progress for team view: {err}");
+                    0
+                }
+            };
         let is_self = viewer_ulid.is_some_and(|u| u == id.as_str());
         members.push(TeamMemberView {
             id,
             name: row.get("name"),
-            completed_count: row.get("completed_count"),
+            completed_count,
             total_exercises,
             last_activity: row.get("last_activity"),
             is_self,
@@ -2434,7 +2421,7 @@ async fn admin_remove_participant(
         return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
     }
 
-    info!("Admin removing participant: {participant_id}");
+    info!("Admin removing a participant");
 
     // Start a transaction to ensure atomicity
     let mut tx = match state.pool.begin().await {
@@ -2451,7 +2438,7 @@ async fn admin_remove_participant(
         .execute(&mut *tx)
         .await
     {
-        error!("Failed to delete submissions for participant {participant_id}: {err}");
+        error!("Failed to delete participant submissions: {err}");
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             "Failed to delete submissions",
@@ -2471,7 +2458,7 @@ async fn admin_remove_participant(
             }
         }
         Err(err) => {
-            error!("Failed to delete participant {participant_id}: {err}");
+            error!("Failed to delete participant: {err}");
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to delete participant",
@@ -2486,7 +2473,7 @@ async fn admin_remove_participant(
         return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
     }
 
-    info!("Successfully removed participant: {participant_id}");
+    info!("Successfully removed participant");
     (StatusCode::OK, "Participant removed successfully").into_response()
 }
 
@@ -2498,11 +2485,7 @@ async fn api_register(
 ) -> Result<Json<RegistrationResponse>, StatusCode> {
     let ulid = Ulid::new().to_string();
 
-    info!(
-        "New participant registration: name='{}', ulid='{}'",
-        request.name.as_str(),
-        ulid
-    );
+    info!("New participant registration request");
 
     match sqlx::query("INSERT INTO participants (id, name) VALUES (?, ?)")
         .bind(&ulid)
@@ -2511,7 +2494,7 @@ async fn api_register(
         .await
     {
         Ok(_) => {
-            info!("Participant registered successfully: {ulid}");
+            info!("Participant registered successfully");
             Ok(Json(RegistrationResponse { ulid }))
         }
         Err(e) => {
@@ -2532,18 +2515,17 @@ struct SubmitResponse {
     /// belongs to has at least one passing submission. Mirrors the
     /// `completed` flag in `get_exercise_progress`.
     chapter_completed: bool,
-    /// Number of completable chapters the participant has finished
-    /// (excludes quizzes and notes-only chapters), matching the
-    /// computation in `render_exercise_page` / `participant_dashboard`.
+    /// Number of chapters with code exercises the participant has finished;
+    /// quiz, notes-only, and bonus chapters are excluded.
     progress_done: usize,
-    /// Number of completable chapters in the course (denominator).
+    /// Number of chapters with code exercises in the returned denominator.
     progress_total: usize,
 }
 
 /// Compute the participant's chapter-level progress for the chapter that
 /// owns `exercise_name`. Returns `(chapter_completed, progress_done,
-/// progress_total)`, using the same `!is_quiz && has_exercises` filter
-/// as the page renderers so the numbers stay consistent.
+/// progress_total)`. Quiz, notes-only, and bonus chapters are excluded from
+/// the returned counts.
 async fn compute_submit_progress(
     pool: &SqlitePool,
     catalog: &[Exercise],
@@ -2558,14 +2540,7 @@ async fn compute_submit_progress(
         .iter()
         .find(|e| e.name == chapter_slug)
         .is_some_and(|e| e.completed);
-    let progress_total = exercises
-        .iter()
-        .filter(|e| !e.is_quiz && e.has_exercises)
-        .count();
-    let progress_done = exercises
-        .iter()
-        .filter(|e| !e.is_quiz && e.has_exercises && e.completed)
-        .count();
+    let (progress_done, progress_total) = exercise_progress_counts(&exercises);
     Ok((chapter_completed, progress_done, progress_total))
 }
 
@@ -2578,8 +2553,8 @@ async fn api_submit(
     Json(request): Json<SubmissionRequest>,
 ) -> Result<Json<SubmitResponse>, StatusCode> {
     info!(
-        "Submission attempt: participant_id='{}', exercise='{}'",
-        request.ulid, request.exercise_name
+        "Submission attempt for exercise='{}'",
+        request.exercise_name
     );
 
     // First, check if the participant exists
@@ -2590,14 +2565,10 @@ async fn api_submit(
 
     match participant_exists {
         Ok(Some(_)) => {
-            // Participant exists, proceed with submission
-            info!("Valid participant found for submission: {}", request.ulid);
+            // Participant exists, proceed with submission.
         }
         Ok(None) => {
-            warn!(
-                "Submission attempt with invalid participant ID: {}",
-                request.ulid
-            );
+            warn!("Submission attempt with invalid participant ID");
             return Err(StatusCode::UNAUTHORIZED);
         }
         Err(e) => {
@@ -2623,8 +2594,8 @@ async fn api_submit(
     match existing_submission {
         Ok(Some(_)) => {
             info!(
-                "Duplicate submission detected for participant='{}', exercise='{}'; skipping",
-                request.ulid, request.exercise_name
+                "Duplicate submission detected for exercise='{}'; skipping",
+                request.exercise_name
             );
             // Return success but don't store duplicate. Still recompute
             // progress so the client can reconcile its UI even when the
@@ -2674,8 +2645,10 @@ async fn api_submit(
     .await
     {
         Ok(_) => {
-            info!("Submission successful: participant='{}', exercise='{}', tests_passed={}", 
-                  request.ulid, request.exercise_name, request.tests_passed);
+            info!(
+                "Submission successful: exercise='{}', tests_passed={}",
+                request.exercise_name, request.tests_passed
+            );
             let (chapter_completed, progress_done, progress_total) = compute_submit_progress(
                 &state.pool,
                 &state.exercises,
@@ -2706,15 +2679,13 @@ async fn api_status(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
 ) -> Result<Json<ProgressResponse>, StatusCode> {
-    info!("Status request for participant: {ulid}");
+    info!("Participant status request");
 
     match get_exercise_progress(&state.pool, Some(&ulid), &state.exercises).await {
         Ok(exercises) => {
             let completed_count = exercises.iter().filter(|e| e.completed).count();
             let perfected_count = exercises.iter().filter(|e| e.perfected).count();
-            info!(
-                "Status response: participant='{ulid}', completed={completed_count}, perfected={perfected_count}"
-            );
+            info!("Status response: completed={completed_count}, perfected={perfected_count}");
 
             let exercise_statuses = exercises
                 .into_iter()
@@ -2730,7 +2701,7 @@ async fn api_status(
             }))
         }
         Err(e) => {
-            error!("Failed to get exercise progress for {ulid}: {e}");
+            error!("Failed to get participant exercise progress: {e}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }
@@ -2820,8 +2791,8 @@ async fn participant_exists(pool: &SqlitePool, participant_id: &str) -> Result<b
         .await
 }
 
-/// Request body for `/api/run`. We accept any source code; the slug is
-/// optional and only used for logging. `tests` defaults to `true` so
+/// Request body for `/api/run`. We accept any source code; the optional slug
+/// is used for logging and privacy-conscious analytics. `tests` defaults to `true` so
 /// exercise editors continue to compile with `--tests` (which surfaces
 /// `#[test]` results and is also how the Playground exposes a few of
 /// our test-only diagnostics). The standalone scratchpad sends
@@ -2860,10 +2831,7 @@ struct TestResult {
     passed: bool,
 }
 
-/// Proxy handler: forwards the editor's source to play.rust-lang.org and
-/// returns the JSON. We intentionally keep this thin: the upstream
-/// already runs untrusted code in a sandbox and enforces its own rate
-/// limits, so we just pass status codes back through.
+/// Response returned by the Playground `/execute` endpoint.
 #[derive(Deserialize)]
 struct PlaygroundResp {
     success: bool,
@@ -2871,6 +2839,9 @@ struct PlaygroundResp {
     stderr: String,
 }
 
+/// Forward editor source to play.rust-lang.org and return its result.
+/// The upstream service runs untrusted code in its own sandbox and enforces
+/// rate limits, so this handler maps its status codes without executing code.
 async fn api_run(
     State(state): State<AppState>,
     Json(req): Json<RunRequest>,
@@ -3085,9 +3056,7 @@ struct FormatResponse {
     stderr: String,
 }
 
-/// Proxy handler for play.rust-lang.org's `/format` endpoint. Takes the
-/// editor's source, runs it through `rustfmt` upstream, and returns the
-/// reformatted code so the client can replace its buffer.
+/// Response returned by the Playground `/format` endpoint.
 #[derive(Deserialize)]
 struct PlaygroundFormatResp {
     success: bool,
@@ -3095,6 +3064,7 @@ struct PlaygroundFormatResp {
     stderr: String,
 }
 
+/// Run editor source through the Playground's rustfmt endpoint.
 async fn api_format(Json(req): Json<FormatRequest>) -> Result<Json<FormatResponse>, StatusCode> {
     let slug = req.slug.as_deref().unwrap_or("<unknown>");
     info!(
@@ -3189,11 +3159,10 @@ async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
         .fetch_one(pool)
         .await?;
 
-    // Get total submissions across all participants
-    let total_submissions: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM submissions WHERE tests_passed = 1")
-            .fetch_one(pool)
-            .await?;
+    // Count every submission row; the dashboard label says "submissions".
+    let total_submissions: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM submissions")
+        .fetch_one(pool)
+        .await?;
 
     // Get total perfected submissions (successful + fmt + clippy)
     let total_perfected: i64 = sqlx::query_scalar(
@@ -3226,12 +3195,16 @@ async fn get_exercise_progress<'a>(
     // match against every chapter falls into the "not yet attempted"
     // branch.
     let all_submissions: Vec<DbSubmission> = match ulid {
-        Some(ulid) => sqlx::query_as(
-            "SELECT * FROM submissions WHERE participant_id = ? ORDER BY exercise_name, submitted_at DESC",
-        )
-        .bind(ulid)
-        .fetch_all(pool)
-        .await?,
+        Some(ulid) => {
+            sqlx::query_as(
+                "SELECT exercise_name, source_code, tests_passed, clippy_passed, fmt_passed \
+             FROM submissions WHERE participant_id = ? \
+             ORDER BY exercise_name, submitted_at DESC",
+            )
+            .bind(ulid)
+            .fetch_all(pool)
+            .await?
+        }
         None => Vec::new(),
     };
 
@@ -3241,20 +3214,10 @@ async fn get_exercise_progress<'a>(
         // single-step) or `<chapter_file_stem>/<step_key>` (multi-step).
         // Match both formats so chapter-level progress aggregates correctly.
         let chapter_prefix = format!("{}/", ex.file_stem);
-        let exercise_submissions: Vec<ExerciseSubmission> = all_submissions
-            .iter()
-            .filter(|s| {
-                s.exercise_name == ex.file_stem || s.exercise_name.starts_with(&chapter_prefix)
-            })
-            .map(|s| ExerciseSubmission {
-                id: s.id.clone(),
-                source_code: s.source_code.clone(),
-                tests_passed: s.tests_passed,
-                clippy_passed: s.clippy_passed,
-                fmt_passed: s.fmt_passed,
-                submitted_at: s.submitted_at,
-            })
-            .collect();
+        let attempted = all_submissions.iter().any(|submission| {
+            submission.exercise_name == ex.file_stem
+                || submission.exercise_name.starts_with(&chapter_prefix)
+        });
 
         let is_quiz = ex.is_quiz();
 
@@ -3293,11 +3256,10 @@ async fn get_exercise_progress<'a>(
         exercises.push(ExerciseProgress {
             number: ex.number,
             name: ex.file_stem.clone(),
+            attempted,
             completed,
             perfected,
             title: ex.title.clone(),
-            description: String::new(),
-            submissions: exercise_submissions,
             is_quiz,
             has_exercises: !code_steps.is_empty(),
             is_bonus: ex.is_bonus(),
@@ -3325,6 +3287,35 @@ fn calculate_submission_hash(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn progress_counts_exclude_quizzes_notes_and_bonuses() {
+        let progress = |completed, is_quiz, has_exercises, is_bonus| ExerciseProgress {
+            number: 1,
+            name: String::new(),
+            attempted: completed,
+            completed,
+            perfected: false,
+            title: String::new(),
+            is_quiz,
+            has_exercises,
+            is_bonus,
+        };
+        let exercises = [
+            progress(true, false, true, false),
+            progress(false, false, true, false),
+            progress(true, true, true, false),
+            progress(true, false, false, false),
+            progress(true, false, true, true),
+        ];
+
+        assert!(exercises[0].counts_toward_progress());
+        assert!(exercises[1].counts_toward_progress());
+        assert!(!exercises[2].counts_toward_progress());
+        assert!(!exercises[3].counts_toward_progress());
+        assert!(!exercises[4].counts_toward_progress());
+        assert_eq!(exercise_progress_counts(&exercises), (1, 2));
+    }
 
     #[test]
     fn resolve_register_next_accepts_simple_exercise_url() {

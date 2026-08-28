@@ -148,22 +148,17 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
             Skip ahead if a chapter feels familiar; come back when something clicks.
         </p>
         <p class="book-tour-link">
-            New to Rust? If you're never seen the syntax before, I recommend taking a peek at
-            <a href="/tour">A Quick Tour of Rust →</a>, which introduces "the whole language" on a
-            single page before we dive into the course. 
+            New to Rust? If you've never seen the syntax before, I recommend
+            taking a peek at <a href="/tour">A Quick Tour of Rust →</a>, which
+            introduces "the whole language" on a single page before we dive into
+            the course.
         </p>
     </section>
 
-    {#
-      The dashboard editor uses the same `.exercise-section[data-step-id]`
-      DOM contract as `templates/exercise.html` so the inline editor module
-      can be lifted into a shared file later (Phase 2b in `TODO/new4.md`).
-      Per-section data attributes are scoped via `data-role` lookups in
-      the script below, mirroring `initSection` on the chapter page. The
-      step id `dashboard-warmup` is also used as the `slug` on `/api/run`
-      and `/api/format` calls so server logs can tell warm-up traffic
-      from real chapter traffic.
-    #}
+    {# The dashboard editor uses the shared
+    `.exercise-section[data-step-id]` contract. The `dashboard-warmup` key is
+    also sent to `/api/run` and `/api/format` so server logs distinguish warm-up
+    traffic from chapter exercises. #}
     <section
         class="book-acquainted exercise-section"
         data-step-id="dashboard-warmup"
@@ -302,7 +297,7 @@ fn main() {
                     autocomplete="given-name"
                     required
                     minlength="1"
-                    maxlength="50"
+                    maxlength="100"
                     class="book-acquainted-signup-input"
                 />
                 <button
@@ -451,7 +446,7 @@ fn main() {
                 if (!resp.ok) {
                     const detail =
                         resp.status === 400
-                            ? "That name doesn't look right. Try a shorter one with letters only."
+                            ? "Enter a non-empty name up to 100 characters."
                             : `Couldn't sign you up (HTTP ${resp.status}). Please try again.`;
                     signupError.textContent = detail;
                     signupError.hidden = false;
@@ -481,11 +476,9 @@ fn main() {
     }
 </script>
 
-
 <style>
-    /* Page-specific styles only. The shared book look
-       (`.book-dashboard`, `.book-hero`, `.book-eyebrow`,
-       `.book-title`, `.book-byline`) lives in `base.html`. */
+    /* Page-specific styles only. Shared book styles live in
+       `static/css/base.css`. */
 
     /* ---------- Theme toggle (floats in the top-right corner of the
        dashboard since this page hides the shared topbar). ---------- */
@@ -566,22 +559,15 @@ fn main() {
     }
 
     /* ---------- "Let's get acquainted" inline editor ----------
-       Anonymous viewers land on the homepage and get a real CodeMirror
-       `println!` warm-up, mounted by `static/js/inline-editor.js` against
-       the standard `.exercise-section` DOM contract.
-
-       Once a Run succeeds, `.book-acquainted-signup-card` is revealed
-       inline (no full-page navigation). Submitting the form posts to
-       `/api/register` and lands the user on the new chapter 1
-       (`00_integers`) under a freshly minted ULID. */
+       Anonymous viewers get a CodeMirror `println!` warm-up through the
+       shared editor contract. A successful Run reveals the signup card;
+       registration then continues into the quick tour. */
     .book-acquainted {
         max-width: 38rem;
         margin: 0 auto 4rem;
     }
-    /* `.exercise-section-head` layout is duplicated here because the
-       chapter / playground pages define it in their own page-scoped
-       <style> blocks; once those move into base.html this whole block
-       can go. */
+    /* Keep the homepage editor header scoped so it can use the compact
+       book-column layout without affecting chapter editors. */
     .book-acquainted .exercise-section-head {
         display: flex;
         justify-content: space-between;

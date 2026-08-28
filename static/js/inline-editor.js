@@ -1,9 +1,7 @@
 // Single CodeMirror 6 mount used by every page that embeds an editor:
 // chapter pages (`templates/exercise.html`), the homepage warm-up
-// (`templates/dashboard.html`), and the scratchpad
-// (`templates/playground.html`).
-//
-// See `course/TODO/phase_2b_extract_inline_editor.md` for the full design.
+// (`templates/dashboard.html`), the quick tour (`templates/tour.html`),
+// and the scratchpad (`templates/playground.html`).
 //
 // DOM contract (every section root must follow it; missing optional roles
 // are tolerated):
@@ -38,18 +36,18 @@
 //     </section>
 //
 // Feature matrix (`features.*` knobs):
-//   vim                    -> show vim toggle button + compartment
+//   vim                    -> load Vim support and honor the global preference
 //   draftKey               -> persist edits to localStorage under this key
 //   submit                 -> { ulid, exerciseKey } enables Submit button
 //                             that POSTs to /api/submit
 //   testResults            -> render `<ul data-role="test-list">` rows and
 //                             parse failure snippets out of cargo stderr
 //   copyButton             -> wire `data-role="copy-btn"` for clipboard copy
-//   urlPlugin              -> middle-click http(s) URLs in the editor open
+//   urlPlugin              -> clicking http(s) URLs in the editor opens them
 //                             in a new tab
 //   syntaxHighlightOutput  -> mount a read-only CM6 view inside
 //                             `data-role="output-stderr"` to colourise
-//                             cargo output (defaults to features.testResults)
+//                             cargo output
 //   runWithoutTests        -> send `tests: false` to /api/run so the
 //                             upstream Playground runs `main()` instead of
 //                             `cargo test`. The scratchpad uses this so
@@ -556,8 +554,8 @@ export async function mountInlineEditor(section, opts = {}) {
     editor.dom.style.border = "1px solid var(--color-border)";
     editor.dom.style.borderRadius = "12px";
     editor.dom.style.overflow = "hidden";
-    // Font size is set in CSS (`.cm-editor { font-size: ... }` in
-    // `base.html`) so the `/settings` page can override it via the
+    // Font size is set in `static/css/base.css` so the `/settings` page
+    // can override it via the
     // `html[data-editor-font-size]` attribute.
 
     if (fallback) fallback.style.display = "none";

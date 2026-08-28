@@ -13,7 +13,6 @@ course.db-shm
 /target/
 /node_modules/
 exercises/*/target
-Cargo.lock
 
 # IDE files
 .vscode/

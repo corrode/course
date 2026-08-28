@@ -1,5 +1,7 @@
 # Plan: Multi-Step Chapters
 
+> **Status: completed historical implementation plan.** Multi-step chapters are now the normal course layout. The status, rollout checklist, old chapter numbers, and intermediate data shapes below describe the migration as it happened and are retained for context, not as current instructions. See `README.md` and `docs/architecture.md` for current usage.
+
 Allow a single chapter to contain multiple exercise files (`.rs`) and
 markdown notes (`.md`) in a defined order, so prose and code can
 interleave. Each `.rs` file is a self-contained step with its own

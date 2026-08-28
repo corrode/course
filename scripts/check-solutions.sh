@@ -16,8 +16,8 @@
 #   1. Orphan check  - every solution maps to a real exercise file.
 #   2. Correctness   - every solution compiles and its tests pass.
 #   3. Coverage      - reports how many exercise steps have a solution.
-#                      Only fatal when REQUIRE_COMPLETE=1 (flip that on
-#                      once all chapters are solved).
+#                      Fatal when REQUIRE_COMPLETE=1, as used by CI and
+#                      the Makefile's `solutions` target.
 #
 # Run locally from the repo root with:
 #   ./scripts/check-solutions.sh

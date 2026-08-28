@@ -1,57 +1,58 @@
 {# Shared chapter list. Used by the homepage and every exercise page so both
-render the same TOC markup and pick up the same styles in base.html. Required
-template variables: - dots: Vec<ProgressDot>
-    (one row per chapter, in order) - ulid: Option<String>
-        (when Some, links carry the participant prefix) `current` is set on at
-        most one entry; that row renders as a non-link
-        <span>
-            with id `current-chapter-row` so `static/js/inline-editor.js` can
-            refresh completion state after a passing Run. #}
-            <nav
-                class="chapter-list"
-                aria-label="All exercises"
-                style="--chapter-rows: {{ chapter_rows }}"
-            >
-                {% for d in dots %} {% if !d.is_bonus %} {% if d.current %}
-                <span
-                    class="chapter-row current{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
-                    id="current-chapter-row"
-                    aria-current="page"
-                >
-                    <span class="chapter-num">{{ d.number }}</span>
-                    <span class="chapter-title">{{ d.title }}</span>
-                    <span class="chapter-mark" aria-hidden="true"></span>
-                </span>
-                {% else %} {% match d.href %} {% when Some with (h) %}
-                <a
-                    href="{{ h }}"
-                    class="chapter-row{% if d.is_quiz %} quiz{% endif %}"
-                >
-                    <span class="chapter-num">{{ d.number }}</span>
-                    <span class="chapter-title">{{ d.title }}</span>
-                    <span class="chapter-mark" aria-hidden="true"></span>
-                </a>
-                {% when None %} {% match ulid %} {% when Some with (u) %}
-                <a
-                    href="/exercise/{{ u }}/{{ d.slug }}"
-                    class="chapter-row{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
-                >
-                    <span class="chapter-num">{{ d.number }}</span>
-                    <span class="chapter-title">{{ d.title }}</span>
-                    <span class="chapter-mark" aria-hidden="true"></span>
-                </a>
-                {% when None %}
-                <a
-                    href="/exercise/{{ d.slug }}"
-                    class="chapter-row{% if d.is_quiz %} quiz{% endif %}"
-                >
-                    <span class="chapter-num">{{ d.number }}</span>
-                    <span class="chapter-title">{{ d.title }}</span>
-                    <span class="chapter-mark" aria-hidden="true"></span>
-                </a>
-                {% endmatch %} {% endmatch %} {% endif %} {% endif %} {% endfor
-                %}
-            </nav></span
-        ></String
-    ></ProgressDot
+render the same TOC markup and pick up the shared styles in
+`static/css/base.css`. Required template variables: `dots` (one row per chapter,
+in order) and `ulid` (when present, links carry the participant prefix).
+`current` is set on at most one entry; that row renders as a non-link with id
+`current-chapter-row` so `static/js/inline-editor.js` can refresh completion
+state after a successful submission. #}
+<nav
+    class="chapter-list"
+    aria-label="All exercises"
+    style="--chapter-rows: {{ chapter_rows }}"
 >
+    {% for d in dots %}
+    {% if !d.is_bonus %}
+    {% if d.current %}
+    <span
+        class="chapter-row current{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
+        id="current-chapter-row"
+        aria-current="page"
+    >
+        <span class="chapter-num">{{ d.number }}</span>
+        <span class="chapter-title">{{ d.title }}</span>
+        <span class="chapter-mark" aria-hidden="true"></span>
+    </span>
+    {% else %}
+    {% match d.href %}
+    {% when Some with (h) %}
+    <a href="{{ h }}" class="chapter-row{% if d.is_quiz %} quiz{% endif %}">
+        <span class="chapter-num">{{ d.number }}</span>
+        <span class="chapter-title">{{ d.title }}</span>
+        <span class="chapter-mark" aria-hidden="true"></span>
+    </a>
+    {% when None %}
+    {% match ulid %}
+    {% when Some with (u) %}
+    <a
+        href="/exercise/{{ u }}/{{ d.slug }}"
+        class="chapter-row{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"
+    >
+        <span class="chapter-num">{{ d.number }}</span>
+        <span class="chapter-title">{{ d.title }}</span>
+        <span class="chapter-mark" aria-hidden="true"></span>
+    </a>
+    {% when None %}
+    <a
+        href="/exercise/{{ d.slug }}"
+        class="chapter-row{% if d.is_quiz %} quiz{% endif %}"
+    >
+        <span class="chapter-num">{{ d.number }}</span>
+        <span class="chapter-title">{{ d.title }}</span>
+        <span class="chapter-mark" aria-hidden="true"></span>
+    </a>
+    {% endmatch %}
+    {% endmatch %}
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+</nav>

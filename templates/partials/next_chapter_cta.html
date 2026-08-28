@@ -2,8 +2,8 @@
 pages and the quick tour. Required template fields: next_dot (the chapter to
 link to; renders nothing when absent), ulid (participant prefix on the link when
 present), and next_locked (renders hidden via `.is-locked`; exercise pages
-reveal it once the chapter is completed, the tour leaves it false). The
-`.next-chapter-*` styles live in base.html. #} {% match next_dot %} {% when Some
+reveal it after a successful run, while the tour leaves it false). The
+`.next-chapter-*` styles live in `static/css/base.css`. #} {% match next_dot %} {% when Some
 with (n) %}
 <section
     class="next-chapter-cta{% if next_locked %} is-locked{% endif %}"

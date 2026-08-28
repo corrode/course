@@ -30,7 +30,7 @@ RUN mkdir -p src/bin examples \
  && echo "fn main() {}" > src/bin/cli.rs \
  && echo "" > src/lib.rs \
  && echo "" > build.rs \
- && cargo build --release --bin server || true \
+ && cargo build --locked --release --bin server || true \
  && rm -rf src
 
 # Real source.
@@ -46,7 +46,7 @@ COPY static ./static
 # actually gets compiled (the dummy-main step above leaves stale
 # fingerprints otherwise).
 RUN touch src/bin/server.rs \
- && cargo build --release --bin server
+ && cargo build --locked --release --bin server
 
 FROM debian:trixie-slim AS runtime
 
@@ -70,6 +70,6 @@ RUN mkdir -p /app/data
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:3000/health || exit 1
+  CMD curl -fsS "http://127.0.0.1:${PORT:-3000}/health" || exit 1
 
 CMD ["/app/server"]

@@ -201,7 +201,7 @@ impl AsRef<str> for TeamToken {
 pub struct Name(String);
 
 impl Name {
-    /// Maximum allowed length for a participant name.
+    /// Maximum allowed character length for a participant name.
     ///
     /// This limit helps prevent abuse and ensures names fit comfortably
     /// in database columns and UI displays.
@@ -227,7 +227,7 @@ impl TryFrom<String> for Name {
             return Err(anyhow!("Name cannot be empty"));
         }
 
-        if trimmed.len() > Self::MAX_LENGTH {
+        if trimmed.chars().count() > Self::MAX_LENGTH {
             return Err(anyhow!(
                 "Name too long (max {} characters)",
                 Self::MAX_LENGTH
@@ -338,7 +338,7 @@ pub struct RegistrationResponse {
 pub struct SubmissionRequest {
     /// The participant's ULID token for identification
     pub ulid: String,
-    /// Name of the exercise (e.g., "`01_strings`")
+    /// Exercise key (e.g., `01_strings_and_chars/2_welcome`)
     pub exercise_name: String,
     /// The complete source code submitted by the participant
     pub source_code: String,
@@ -356,7 +356,7 @@ pub struct SubmissionRequest {
 /// including whether they've completed it and achieved perfection.
 #[derive(Serialize, Deserialize)]
 pub struct ExerciseStatus {
-    /// The exercise name (e.g., "`01_strings`")
+    /// The exercise key (e.g., `01_strings_and_chars/2_welcome`)
     pub name: String,
     /// Whether the participant has submitted a passing solution
     pub completed: bool,
@@ -372,4 +372,15 @@ pub struct ExerciseStatus {
 pub struct ProgressResponse {
     /// Status for each exercise in the course
     pub exercises: Vec<ExerciseStatus>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Name;
+
+    #[test]
+    fn participant_name_limit_counts_characters() {
+        assert!(Name::try_from("é".repeat(Name::MAX_LENGTH)).is_ok());
+        assert!(Name::try_from("é".repeat(Name::MAX_LENGTH + 1)).is_err());
+    }
 }

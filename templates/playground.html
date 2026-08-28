@@ -162,11 +162,8 @@ content %}
 </div>
 
 <script type="module">
-    // Playground scratchpad. The CodeMirror mount, button wiring, draft
-    // persistence (via `features.draftKey`), and fallback path all live
-    // in `static/js/inline-editor.js`. The `corrode:playground:draft`
-    // key matches the previous standalone STORAGE_KEY so users keep
-    // their existing scratchpad contents across this refactor.
+    // Playground scratchpad. The shared editor module owns the CodeMirror
+    // mount, button wiring, draft persistence, and textarea fallback.
     import("/static/dist/inline-editor.js")
         .then(({ mountInlineEditor }) => {
             const section = document.querySelector(
@@ -232,14 +229,7 @@ content %}
     .exercise-header {
         margin: 1rem 0 1.5rem;
     }
-    .chapter-eyebrow {
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--color-text-muted);
-        margin-bottom: 0.4rem;
-    }
+
     .exercise-title {
         font-size: 2rem;
     }
@@ -258,24 +248,13 @@ content %}
         margin-bottom: 1rem;
         flex-wrap: wrap;
     }
-    .section-eyebrow {
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--color-text-muted);
-    }
-    .section-title {
-        margin: 0;
-        font-size: 1.1rem;
-    }
+
     .exercise-actions {
         display: flex;
         gap: 0.5rem;
         align-items: center;
     }
 
-    #run-spinner,
     .run-spinner {
         width: 0.9rem;
         height: 0.9rem;
@@ -312,8 +291,7 @@ content %}
         min-height: 28rem;
     }
 
-    /* Visually separate the destructive Reset from the helpful
-       Vim/Format/Run cluster on its right. */
+    /* Visually separate Reset from the fullscreen/Format/Run cluster. */
     .exercise-actions .actions-cluster-start {
         margin-left: 1.25rem;
     }
@@ -389,8 +367,7 @@ content %}
     body.playground-fullscreen {
         overflow: hidden;
     }
-    body.playground-fullscreen .topbar,
-    body.playground-fullscreen header.topbar {
+    body.playground-fullscreen .topbar {
         display: none;
     }
 </style>

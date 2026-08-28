@@ -109,8 +109,11 @@ block topbar_active_team %}is-active{% endblock %} {% block content %}
                             View dashboard
                         </a>
                         <button
-                            onclick="removeParticipant('{{ member.id }}', '{{ member.name }}')"
+                            type="button"
                             class="btn admin-btn-tiny admin-btn-danger"
+                            data-remove-participant
+                            data-participant-id="{{ member.id|escape }}"
+                            data-participant-name="{{ member.name|escape }}"
                         >
                             Remove
                         </button>
@@ -176,16 +179,12 @@ block topbar_active_team %}is-active{% endblock %} {% block content %}
 <script type="module" src="/static/dist/readonly-rust-editor.js"></script>
 
 <style>
-    /* Page-specific team-page chrome only. All of the heavy lifting
-       (`.book-*`, `.admin-*`, `.section-*`, `.submission-card-*`,
-       `.status-badge-*`, `.rust-editor`, `.submission-list`) lives
-       in `base.html` and is shared with the admin dashboard so the
-       two pages stay visually aligned. */
+    /* Page-specific team-page chrome only. Shared book, admin, section,
+       submission, status, and editor styles live in `static/css/base.css`. */
 
     .team-page {
         /* Width and section rhythm come from `.admin-page` in
-           `base.html`; we only add the bottom padding so the page
-           ends gracefully after the submissions feed. */
+           `static/css/base.css`; this only adds bottom padding. */
         padding-bottom: 5rem;
     }
 
