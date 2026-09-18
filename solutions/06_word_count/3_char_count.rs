@@ -1,7 +1,11 @@
 /// Returns the number of characters in `text`. Counts every `char`
 /// the string contains, whitespace included.
 fn char_count(text: &str) -> usize {
-    text.chars().count()
+    let mut count = 0;
+    for _ in text.chars() {
+        count += 1;
+    }
+    count
 }
 
 #[test]
