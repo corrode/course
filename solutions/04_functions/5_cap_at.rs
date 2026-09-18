@@ -20,8 +20,8 @@ fn test_cap_at() {
     assert_eq!(cap_at(1_000, 0), 0);
 }
 
-// The caller's variable is not affected by the function modifying
-// its parameter. `i32` is `Copy`, so the function got its own copy.
+// Even if the function reassigns its parameter, the caller keeps
+// its original value: `i32` is `Copy`.
 #[test]
 fn caller_value_is_unchanged() {
     let original = 42;

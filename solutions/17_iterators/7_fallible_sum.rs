@@ -1,15 +1,8 @@
-/// Sums a whitespace-separated list of integers held in `text`.
-///
-/// Each token is parsed with `?`: the first one that isn't a number
-/// short-circuits and returns its `ParseIntError`. The function only
-/// parses (no file I/O), so a single error type is enough and there's
-/// no need for `Box<dyn Error>`.
+/// Sums whitespace-separated integers with an iterator pipeline and fallible `sum`.
 fn sum_numbers(text: &str) -> Result<i32, std::num::ParseIntError> {
-    let mut total = 0;
-    for token in text.split_whitespace() {
-        total += token.parse::<i32>()?;
-    }
-    Ok(total)
+    text.split_whitespace()
+        .map(|token| token.parse::<i32>())
+        .sum()
 }
 
 #[test]

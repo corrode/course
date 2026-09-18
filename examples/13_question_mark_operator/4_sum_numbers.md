@@ -1,4 +1,4 @@
-# `?` through an iterator
+# `?` inside a loop
 
 `add_parsed_numbers` had two chances to return a parse error.
 `sum_numbers` may inspect many tokens, but it still returns only the first parse error it encounters.
@@ -7,11 +7,12 @@
 The first token that isn't a number makes the function return that `ParseIntError` and stop.
 Since the function only parses, one error type covers every failure without boxing or conversion.
 
-Here the iterator pipeline produces one `Result`, and `?` either unwraps its total or returns the first error.
+Use a `for` loop and apply `?` to each token's parse result.
+What happens to the rest of the loop when parsing fails?
+Return `Ok(0)` for empty or whitespace-only input.
+Assume the running total fits in an `i32`.
 
 ## Useful from the standard library
 
 - [`str::split_whitespace`](https://doc.rust-lang.org/std/primitive.str.html#method.split_whitespace) yields each token as a `&str`, skipping the gaps between numbers.
-- Parsing each token turns the iterator into a sequence of `Result<i32, ParseIntError>` values.
-- [`Iterator::sum`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.sum) can add that sequence of `Result`s, returning the first `Err` or the total wrapped in `Ok`.
-  Once `sum` has collapsed those results, `?` gives you the total on success.
+- [`str::parse`](https://doc.rust-lang.org/std/primitive.str.html#method.parse) returns a `Result`; `parse::<i32>()` asks for an integer.

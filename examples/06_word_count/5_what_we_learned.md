@@ -22,3 +22,6 @@ fn longest_word(text: &str)  -> usize { text.split_whitespace().map(|w| w.chars(
 ```
 
 The word-frequencies example extends this from counting all words to recording which words appear and how often.
+
+Want more practice? Try the optional [word count challenge](06_word_count_challenge).
+It does not count toward course completion.

@@ -8,6 +8,6 @@
 
 ## cap_at
 
-1. The compiler complains about assigning to `value`.
+1. In the reassignment experiment, the compiler complains about assigning to `value`.
    Function parameters are immutable bindings by default, just like `let`.
 2. Add `mut` to the parameter binding (not the type): `fn cap_at(mut value: i32, max: i32) -> i32`.

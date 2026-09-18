@@ -12,17 +12,7 @@
     clippy::boxed_local
 )]
 
-#[path = "3_sum.rs"]
-mod _3_sum;
-#[path = "4_map.rs"]
-mod _4_map;
-#[path = "5_filter.rs"]
-mod _5_filter;
-#[path = "6_filter_to_string.rs"]
-mod _6_filter_to_string;
-#[path = "7_fallible_sum.rs"]
-mod _7_fallible_sum;
-#[path = "8_lazy_consumption.rs"]
-mod _8_lazy_consumption;
+#[path = "2_long_words.rs"]
+mod _2_long_words;
 
 fn main() {}
