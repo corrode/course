@@ -7,7 +7,7 @@
 /// signature is `fn contains(&self, x: &T) -> bool`, and here that's `&String`,
 /// while we have a `&str`. The most direct fix at this point in the course
 /// is a `for` loop. We will cover iterators later.
-fn contains_item(list: &Vec<String>, item: &str) -> bool {
+fn contains_item(list: &[String], item: &str) -> bool {
     for entry in list {
         if entry == item {
             return true;
@@ -20,5 +20,10 @@ fn contains_item(list: &Vec<String>, item: &str) -> bool {
 fn test_contains_item() {
     let list = vec!["apple".to_string(), "banana".to_string()];
     assert_eq!(contains_item(&list, "apple"), true);
+    assert_eq!(contains_item(&list, "banana"), true);
     assert_eq!(contains_item(&list, "orange"), false);
+    assert_eq!(contains_item(&[], "apple"), false);
+
+    let pantry = ["rice".to_string(), "beans".to_string()];
+    assert_eq!(contains_item(&pantry, "beans"), true);
 }

@@ -23,6 +23,7 @@ fn should_retry(status: HttpStatus) -> bool {
 fn test_should_retry() {
     assert_eq!(should_retry(HttpStatus::InternalServerError), true);
     assert_eq!(should_retry(HttpStatus::NotFound), false);
+    assert_eq!(should_retry(HttpStatus::Unauthorized), false);
     assert_eq!(should_retry(HttpStatus::BadRequest), false);
     assert_eq!(should_retry(HttpStatus::Ok), false);
 }

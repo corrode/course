@@ -14,4 +14,10 @@ fn test_set_config_value() {
     let mut config = HashMap::new();
     set_config_value(&mut config, "debug", "true");
     assert_eq!(config.get("debug"), Some(&"true".to_string()));
+
+    set_config_value(&mut config, "theme", "dark");
+    set_config_value(&mut config, "debug", "false");
+    assert_eq!(config.get("debug"), Some(&"false".to_string()));
+    assert_eq!(config.get("theme"), Some(&"dark".to_string()));
+    assert_eq!(config.len(), 2);
 }

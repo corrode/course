@@ -22,5 +22,7 @@ fn status_code(status: HttpStatus) -> u16 {
 fn test_status_code() {
     assert_eq!(status_code(HttpStatus::Ok), 200);
     assert_eq!(status_code(HttpStatus::NotFound), 404);
+    assert_eq!(status_code(HttpStatus::Unauthorized), 401);
+    assert_eq!(status_code(HttpStatus::BadRequest), 400);
     assert_eq!(status_code(HttpStatus::InternalServerError), 500);
 }
