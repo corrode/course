@@ -19,5 +19,6 @@ You used `into_iter()` to take ownership of the result and combined counts and l
 ## An optional detour
 
 You now have every tool you need to build a small program from scratch: structs, enums, iterators, `Option`, `Result`, vectors, and strings.
-If you want a change of pace, the optional **Creative Break** is an open-ended password validator project rather than a guided lesson.
-Nothing later depends on it, so you can take the detour now or keep going.
+Want to put them together? [Build a password validator](19_password_validator) with your own rules in the optional Creative Break project.
+Or try [smart pointers](23_smart_pointers) to learn how `Box`, `Rc`, and `RefCell` let you store and share data.
+Both chapters are optional and do not count toward course progress. You can try them now or keep going.

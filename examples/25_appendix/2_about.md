@@ -18,6 +18,9 @@ This site is that path, with an editor attached.
 
 ## How to keep going
 
+Want another exercise? [Build a password validator](19_password_validator) with rules you choose, or [try smart pointers](23_smart_pointers) to store and share data with `Box`, `Rc`, and `RefCell`.
+These optional chapters are also in the chapter picker and do not count toward course progress.
+
 Practice the core mechanics on a problem that matters to you:
 
 - Build something tiny.

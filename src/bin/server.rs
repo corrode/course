@@ -252,11 +252,11 @@ struct ProgressDot {
     perfected: bool,
     current: bool,
     is_quiz: bool,
-    /// `false` for notes-only chapters (the appendix). Used to skip
-    /// them when building the "next chapter" CTA and progress totals.
+    /// `false` for notes-only chapters (the appendix), which do not
+    /// count toward progress.
     has_exercises: bool,
-    /// `true` for optional bonus chapters: hidden from the TOC/picker and
-    /// excluded from progress and the next-chapter flow.
+    /// `true` for optional bonus chapters: listed in the picker but excluded
+    /// from the TOC, progress, and the default next-chapter flow.
     is_bonus: bool,
     /// Optional explicit link target. When `Some`, the TOC partial and
     /// chapter picker link straight here instead of deriving an
@@ -447,7 +447,7 @@ struct ExerciseProgress {
     /// can't be "completed". The dashboard skips them when choosing
     /// the next chapter to resume.
     has_exercises: bool,
-    /// `true` for optional bonus chapters (hidden from nav and progress).
+    /// `true` for optional bonus chapters (excluded from progress and default flow).
     is_bonus: bool,
 }
 
@@ -1781,9 +1781,9 @@ async fn render_exercise_page(
     }
 
     // Next chapter for the bottom CTA: the first non-bonus dot after the
-    // current one. We don't skip quizzes or appendices (the picker shows
-    // them), but bonus chapters are hidden from the picker, so the CTA
-    // skips them too. Locate the current dot by its flag rather than by
+    // current one. Quizzes and appendices stay in the default flow; optional
+    // chapters are discoverable in the picker without forcing a detour.
+    // Locate the current dot by its flag rather than by
     // `idx`, since `dots` is prefixed with the synthetic tour entry.
     let next_dot = dots
         .iter()
@@ -3585,6 +3585,153 @@ mod tests {
                 .unwrap()
                 .is_empty()
         );
+    }
+
+    async fn rendered_exercise(state: &AppState, slug: &str, participant: Option<&str>) -> String {
+        let response = render_exercise_page(state, slug, participant.map(str::to_owned)).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        String::from_utf8(body.to_vec()).unwrap()
+    }
+
+    async fn optional_discovery_state() -> AppState {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!().run(&pool).await.unwrap();
+        sqlx::query("INSERT INTO participants (id, name) VALUES ('participant', 'Test')")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let mut catalog = exercises::scan_dir(std::path::Path::new("examples")).unwrap();
+        // Extra optional chapters catch a picker or progress rule tied to today's catalog.
+        let prototype = catalog.iter().find(|e| e.is_bonus()).unwrap().clone();
+        for slug in ["extra_optional_a", "extra_optional_b"] {
+            let mut extra = prototype.clone();
+            extra.slug = slug.to_string();
+            extra.file_stem = slug.to_string();
+            extra.title = slug.to_string();
+            let index = catalog
+                .iter()
+                .position(|e| e.slug == "modules_and_visibility")
+                .unwrap();
+            catalog.insert(index, extra);
+        }
+        AppState {
+            pool,
+            admin_token: String::new(),
+            exercises: Arc::new(catalog),
+        }
+    }
+
+    #[tokio::test]
+    async fn optional_discovery_preserves_routes_progress_and_default_flow() {
+        let state = optional_discovery_state().await;
+        let total = state
+            .exercises
+            .iter()
+            .filter(|e| !e.is_bonus() && !e.is_quiz() && !e.code_steps().is_empty())
+            .count();
+        for participant in [None, Some("participant")] {
+            let prefix =
+                participant.map_or_else(|| "/exercise/".to_string(), |u| format!("/exercise/{u}/"));
+            for slug in [
+                "word_frequencies",
+                "password_validator",
+                "smart_pointers",
+                "appendix",
+            ] {
+                let html = rendered_exercise(&state, slug, participant).await;
+                let picker = html
+                    .split("<ul class=\"chapter-picker-list\">")
+                    .nth(1)
+                    .unwrap()
+                    .split("</ul>")
+                    .next()
+                    .unwrap();
+                assert_eq!(
+                    picker.matches("role=\"option\"").count(),
+                    state.exercises.len() + 1
+                );
+                assert_eq!(picker.matches("aria-selected=\"true\"").count(), 1);
+                assert!(picker.contains("href=\"/tour\""));
+                for chapter in state.exercises.iter() {
+                    let href = format!("href=\"{prefix}{}\"", chapter.slug);
+                    let item = picker
+                        .split("<a")
+                        .find(|item| item.contains(&href))
+                        .unwrap();
+                    let item = item.split("</a>").next().unwrap();
+                    assert_eq!(item.contains("aria-current=\"page\""), chapter.slug == slug);
+                    assert_eq!(item.contains("Optional: "), chapter.is_bonus());
+                    if chapter.is_bonus() {
+                        assert!(item.contains("class=\"chapter-picker-num\">★</span>"));
+                    }
+                }
+                if participant.is_some() {
+                    assert!(html.contains(&format!(
+                        "aria-label=\"Progress: 0 of {total} chapters completed\""
+                    )));
+                } else {
+                    assert!(!html.contains("aria-label=\"Progress:"));
+                }
+                let expected_next = match slug {
+                    "word_frequencies" | "password_validator" => Some("modules_and_visibility"),
+                    "smart_pointers" => Some("rust_fundamentals_quiz"),
+                    _ => None,
+                };
+                if let Some(next) = expected_next {
+                    let cta = html
+                        .split("aria-label=\"Continue\"")
+                        .nth(1)
+                        .unwrap()
+                        .split("</section>")
+                        .next()
+                        .unwrap();
+                    assert!(cta.contains(&format!("href=\"{prefix}{next}\"")));
+                    assert_eq!(
+                        html.contains("next-chapter-cta is-locked"),
+                        participant.is_some()
+                    );
+                } else {
+                    assert!(!html.contains("aria-label=\"Continue\""));
+                }
+                if matches!(slug, "word_frequencies" | "appendix") {
+                    let base =
+                        url::Url::parse(&format!("https://course.example{prefix}{slug}")).unwrap();
+                    for target in ["19_password_validator", "23_smart_pointers"] {
+                        assert!(html.contains(&format!("href=\"{target}\"")));
+                        let resolved = base.join(target).unwrap();
+                        assert_eq!(resolved.path(), format!("{prefix}{target}"));
+                        // The file-stem links also resolve through the real page handler.
+                        rendered_exercise(&state, target, participant).await;
+                    }
+                }
+            }
+        }
+
+        // Completing optional exercises must not advance the progress numerator.
+        for chapter in state.exercises.iter().filter(|e| e.is_bonus()) {
+            for step in chapter.code_steps() {
+                let key = if step.key().is_empty() {
+                    chapter.file_stem.clone()
+                } else {
+                    format!("{}/{}", chapter.file_stem, step.key())
+                };
+                sqlx::query("INSERT INTO submissions (id, participant_id, exercise_name, source_code, tests_passed, clippy_passed, fmt_passed) VALUES (?, 'participant', ?, '', 1, 1, 1)")
+                    .bind(&key).bind(&key).execute(&state.pool).await.unwrap();
+            }
+        }
+        let html = rendered_exercise(&state, "password_validator", Some("participant")).await;
+        assert!(html.contains("status-perfected"));
+        assert!(html.contains(&format!(
+            "aria-label=\"Progress: 0 of {total} chapters completed\""
+        )));
+        assert!(!html.contains("next-chapter-cta is-locked"));
     }
 
     #[test]

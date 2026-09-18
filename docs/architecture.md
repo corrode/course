@@ -126,6 +126,19 @@ Inside a code chapter directory:
   doesn't enforce this (sibling modules can `use super::<other>::*`),
   but doing so defeats the point of per-step independence.
 
+### Optional chapters and navigation
+
+Set `bonus = true` in a chapter's `.chapter.toml` to make it optional.
+The chapter picker lists every chapter, marking optional entries with a star
+and “Optional” instead of a chapter number. Optional chapters are excluded
+from the main table of contents, progress counts, and the default next-chapter
+CTA. This applies to any number of optional chapters, not a fixed list.
+
+In chapter prose, link to a sibling with a bare directory slug, for example
+`[Build a password validator](19_password_validator)`. Browser URL resolution
+preserves `/exercise/` or `/exercise/{ulid}/` on these links. Do not use `../`
+or an absolute `/exercise/` URL: those drop part of the participant route.
+
 ### Style rules for exercise prose
 
 Recently enforced and worth preserving:
