@@ -14,7 +14,7 @@ fn mutate_string(s: &mut String) {
 fn experiment_use_after_move() {
     let s = String::from("Rust");
     let _result = take_ownership(s);
-    // Uncomment the next line. Expect: "borrow of moved value: `s`".
+    // Predict, then uncomment the next line and run. Repair it afterwards.
     // assert_eq!(s, "Rust");
 }
 
@@ -22,8 +22,7 @@ fn experiment_use_after_move() {
 fn experiment_two_mutable_borrows() {
     let mut s = String::from("Ferris");
     let r1 = &mut s;
-    // Uncomment the next two lines together. Expect:
-    // "cannot borrow `s` as mutable more than once at a time".
+    // Predict, then uncomment both lines. Repair by reordering statements.
     // let r2 = &mut s;
     // r2.push('!');
     r1.push('!');
@@ -33,8 +32,7 @@ fn experiment_two_mutable_borrows() {
 fn experiment_mix_shared_and_mutable() {
     let mut s = String::from("Ferris");
     let shared = &s;
-    // Uncomment the next line. Expect:
-    // "cannot borrow `s` as mutable because it is also borrowed as immutable".
+    // Predict, then uncomment the mutation. Repair by reordering statements.
     // mutate_string(&mut s);
     println!("{shared}");
 }

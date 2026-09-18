@@ -21,7 +21,9 @@ fn take_ownership(s: String) -> String {
 //
 // So instead of growing the moved-in buffer in place (the `push_str`
 // version), it allocates a fresh buffer and writes both pieces into it.
-// The original `s` is dropped at the end of the function either way.
+// Only the `format!` version drops the original `s` when the function ends.
+// The `push_str` version returns it, moving ownership back to the caller.
+// Appending may reallocate its buffer, but returning it does not drop it.
 
 #[test]
 fn test_take_ownership() {
