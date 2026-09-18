@@ -1,9 +1,6 @@
 /// Returns the number of characters in `text`.
 /// Counts every `char` the string contains, whitespace included.
 fn char_count(text: &str) -> usize {
-    // 1. Start a counter at 0.
-    // 2. for _ in text.chars() { bump the counter }
-    // 3. Return the counter.
     todo!()
 }
 
@@ -28,7 +25,6 @@ fn test_char_count_whitespace_counts() {
 #[test]
 fn test_char_count_unicode() {
     // `café` is 4 characters even though it's 5 bytes in UTF-8.
-    // `text.len()` would say 5; `text.chars().count()` says 4.
     // `"hi café"` → h, i, ' ', c, a, f, é = 7.
     assert_eq!(char_count("café"), 4);
     assert_eq!(char_count("hi café"), 7);

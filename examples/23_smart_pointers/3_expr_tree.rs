@@ -17,10 +17,6 @@ enum Expr {
 
 impl Expr {
     /// Walk the tree and compute its numeric value.
-    ///
-    /// `Num(v)` is the base case (just return `v`).
-    /// `Add(l, r)` is `l.eval() + r.eval()`.
-    /// `Mul(l, r)` is `l.eval() * r.eval()`.
     fn eval(&self) -> i32 {
         todo!()
     }

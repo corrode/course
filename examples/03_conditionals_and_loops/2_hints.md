@@ -9,10 +9,8 @@
 
 ## factorial
 
-1. `let mut acc: u32 = 1;` outside the loop, `for i in 1..=n { ... }` inside.
-   Return `acc` at the end.
-2. The body of the loop is `acc *= i;`.
-   Both `mut` on the binding and `*=` for the compound assignment are needed.
+1. Use a mutable accumulator.
+2. What starting value works for multiplication and also makes `0!` correct?
 
 ## count_evens
 

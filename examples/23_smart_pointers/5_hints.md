@@ -10,9 +10,8 @@
 
 1. Pattern-match on `self`.
    There are three arms: `Expr::Num`, `Expr::Add`, and `Expr::Mul`.
-2. `Num(v)` returns `*v` (it's a borrow, so deref to get the `i32`).
-   `Add(l, r)` returns `l.eval() + r.eval()`.
-   `Mul(l, r)` is the same concept, but for `*`.
+2. Evaluate child expressions recursively where needed.
+   Here `self` is a `&Expr`, so matching on it borrows the fields; dereference a borrowed integer when you need its value.
    Method calls auto-deref through the `Box`, so you do not need to write `(*l).eval()`.
 
 ## pipeline

@@ -37,10 +37,10 @@ Interpreters and calculators often use trees like this to represent expressions.
 Parsing text like `"(1 + 2) * 4"` produces an `Expr` tree; evaluating that tree is just walking it.
 
 Your job is the evaluation half: implement `Expr::eval(&self) -> i32` so it returns the numeric value of the whole tree.
-You can follow the tree's structure with recursion.
-`Num(v)` is the base case (return `*v`, since `self` is borrowed); `Add(l, r)` returns `l.eval() + r.eval()`; `Mul(l, r)` does the same with `*`.
+Match on the variant and evaluate child expressions recursively where needed.
 
-The `match` binds `l` and `r` as `&Box<Expr>`, and method calls auto-deref through the box, so `l.eval()` works directly without `(*l).eval()`.
+Here `self` is a `&Expr`, so matching on it borrows the fields.
+If you bind the child expressions as `l` and `r`, their type is `&Box<Expr>`, and method calls auto-deref through the box, so `l.eval()` works directly without `(*l).eval()`.
 
 The tests build the trees for you; no new boxes are needed in `eval`.
 There's no tail-call optimization guarantee, but the test trees are tiny.

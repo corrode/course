@@ -6,7 +6,7 @@ Rust strings are UTF-8 internally, so a single visible character like `é` can t
 `text.chars()` walks Unicode scalar values (`char`s), which is what we count here.
 For `"café"` that's 5 bytes but 4 characters, and the two only agree on plain ASCII.
 
-So reach for `text.chars()`: start a counter at `0`, walk the characters with a `for` loop, and bump the counter once per iteration.
+Use a `for` loop, as in the previous exercise.
 Count every character, whitespace included, so `"hi there"` returns `8` (seven letters plus the space).
 The Unicode test below checks the difference between bytes and characters.
 

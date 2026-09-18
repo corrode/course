@@ -12,4 +12,3 @@ Use `format!` rather than building the string by hand.
 - [`format!`](https://doc.rust-lang.org/std/macro.format.html) builds a new `String` from a template and arguments.
   It uses the same syntax as `println!`, but returns the string instead of printing it.
 - Field access uses dot notation: `self.name`, `self.email`.
-  Pass those fields as arguments to `format!`: `format!("{} ({})", self.name, self.email)`.

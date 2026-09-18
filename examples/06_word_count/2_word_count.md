@@ -3,8 +3,7 @@
 Start with the smallest piece of the library: given some text, return how many words it contains.
 For this exercise, words are anything separated by whitespace, so `"hello world"` has two and `"   "` has none.
 
-Keep the implementation deliberately manual.
-Walk the pieces from `text.split_whitespace()`, bump a counter for each one, and return the counter when the loop ends.
+Use a `for` loop rather than an iterator counting method.
 
 ## Useful from the standard library
 

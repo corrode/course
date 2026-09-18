@@ -11,4 +11,3 @@ Return the trimmed fields as a `Vec<String>`.
 - [`str::trim`](https://doc.rust-lang.org/std/primitive.str.html#method.trim) drops leading/trailing whitespace from each piece.
 - [`ToString::to_string`](https://doc.rust-lang.org/std/string/trait.ToString.html#tymethod.to_string) in a `map` step turns the borrowed pieces into the owned `String`s the return type wants.
 - [`Iterator::collect`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.collect) finishes the chain.
-  The body fits on one line: `line.split(',').map(|s| s.trim().to_string()).collect()`.

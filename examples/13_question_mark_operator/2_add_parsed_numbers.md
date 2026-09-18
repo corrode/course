@@ -11,5 +11,3 @@ Compare to writing this out with a `match` on each `parse()` result.
   Combined with `?` you get the parsed number on the happy path and an early-return on failure.
 - [`std::num::ParseIntError`](https://doc.rust-lang.org/std/num/struct.ParseIntError.html) is the error type for integer parses.
   The function signature declares it directly, so `?` doesn't need to convert anything.
-- The function returns one expression: `Ok(a.parse::<i32>()? + b.parse::<i32>()?)`.
-  Each `?` unwraps an integer, then `+` adds them, then `Ok(...)` wraps the sum back up.
