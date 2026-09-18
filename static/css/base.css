@@ -1491,6 +1491,8 @@ a.submission-card-who:focus-visible {
    flow alongside prose and code sections, so it inherits the
    page's max-width and surface colours by default. */
 .quiz-section {
+    min-width: 0;
+    overflow-wrap: anywhere;
     margin: 2rem 0 3rem;
     display: flex;
     flex-direction: column;
@@ -1512,9 +1514,6 @@ a.submission-card-who:focus-visible {
     color: var(--color-text);
     font-variant-numeric: tabular-nums;
 }
-.quiz-meta-score[hidden] {
-    display: none;
-}
 .quiz-questions {
     list-style: none;
     margin: 0;
@@ -1524,6 +1523,8 @@ a.submission-card-who:focus-visible {
     gap: 1.25rem;
 }
 .quiz-card {
+    min-width: 0;
+    scroll-margin-top: 4rem;
     border: 1px solid var(--color-border);
     border-radius: 12px;
     background: var(--color-surface, transparent);
@@ -1550,6 +1551,7 @@ a.submission-card-who:focus-visible {
 }
 .quiz-card-head {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: baseline;
     gap: 1rem;
@@ -1570,8 +1572,6 @@ a.submission-card-who:focus-visible {
 .quiz-card-status {
     font-size: 0.8rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
 }
 .quiz-card.is-correct .quiz-card-status {
     color: var(--color-success, #2e7d32);
@@ -1664,7 +1664,7 @@ a.submission-card-who:focus-visible {
 .quiz-answer {
     appearance: none;
     display: grid;
-    grid-template-columns: 2rem 1fr;
+    grid-template-columns: 2rem minmax(0, 1fr);
     align-items: baseline;
     gap: 0.75rem;
     width: 100%;
@@ -1683,8 +1683,8 @@ a.submission-card-who:focus-visible {
         background-color 120ms ease,
         color 120ms ease;
 }
-.quiz-answer:hover:not(:disabled),
-.quiz-answer:focus-visible:not(:disabled) {
+.quiz-answer:hover:not([aria-disabled="true"]),
+.quiz-answer:focus-visible {
     border-color: var(--color-primary, #0969da);
     background: color-mix(
         in srgb,
@@ -1692,8 +1692,20 @@ a.submission-card-who:focus-visible {
         var(--color-background)
     );
 }
-.quiz-answer:disabled {
+.quiz-answer[aria-disabled="true"] {
     cursor: default;
+}
+.quiz-answer:focus-visible {
+    outline: 3px solid var(--color-primary, #0969da);
+    outline-offset: 3px;
+}
+.quiz-answer-status {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+.quiz-answer-status:empty {
+    display: none;
 }
 .quiz-answer-marker {
     display: inline-flex;
@@ -1721,13 +1733,8 @@ a.submission-card-who:focus-visible {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
 }
-/* Reveal state: every answer in an answered card picks up
-   a verdict colour. The chosen one gets a bold ring; all
-   correct answers get the green check; all wrong choices
-   get the red mark. */
-.quiz-card.is-answered .quiz-answer {
-    opacity: 0.65;
-}
+/* Text labels identify every answer; colour and the chosen ring
+   are additional cues, not the only way to review a choice. */
 .quiz-card.is-answered .quiz-answer.is-correct {
     opacity: 1;
     border-color: var(--color-success, #2e7d32);

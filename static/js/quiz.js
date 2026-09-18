@@ -10,7 +10,7 @@
 //   1. lock the card once an answer is clicked,
 //   2. paint correct / wrong-pick verdicts on every answer,
 //   3. reveal each answer's explanation,
-//   4. update the answered count and running score.
+//   4. update completion progress (not a grade).
 // Reset wipes every card back to its initial state.
 
 (function () {
@@ -22,8 +22,6 @@
   function initQuiz(quiz) {
     const cards = Array.from(quiz.querySelectorAll("[data-quiz-card]"));
     const answeredEl = quiz.querySelector("[data-quiz-answered]");
-    const scoreEl = quiz.querySelector("[data-quiz-score]");
-    const scoreWrap = quiz.querySelector("[data-quiz-score-wrap]");
     const footer = quiz.querySelector("[data-quiz-footer]");
     const headline = quiz.querySelector("[data-quiz-headline]");
     const resetBtn = quiz.querySelector("[data-quiz-reset]");
@@ -38,42 +36,23 @@
       const answered = cards.filter((c) =>
         c.classList.contains("is-answered"),
       ).length;
-      const correct = cards.filter((c) =>
-        c.classList.contains("is-correct"),
-      ).length;
       if (answeredEl) answeredEl.textContent = String(answered);
-      if (answered > 0 && scoreWrap) {
-        scoreWrap.hidden = false;
-        if (scoreEl) scoreEl.textContent = String(correct);
-      }
-      if (answered === total) {
-        showFooter(correct);
-      }
+      if (answered === total) showFooter();
     }
 
-    function showFooter(correct) {
+    function showFooter() {
       if (!footer || !headline) return;
       footer.hidden = false;
-      const verdict =
-        correct === total
-          ? `Perfect run \u2014 ${correct}/${total}. You know your Rust.`
-          : correct >= Math.ceil(total * 0.8)
-            ? `Solid: <strong>${correct}/${total}</strong>. Skim the explanations on the ones you missed.`
-            : correct >= Math.ceil(total * 0.5)
-              ? `<strong>${correct}/${total}</strong>. Worth another pass through the chapters you stumbled on.`
-              : `<strong>${correct}/${total}</strong>. The explanations above are where the learning is \u2014 read them, then try again.`;
-      headline.innerHTML = verdict;
-      footer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      headline.textContent =
+        "You've answered every question. Pick an explanation that surprised you and try a small code example to check your understanding. Your answers aren't saved.";
     }
 
     function resetAll() {
       cards.forEach(resetCard);
       if (answeredEl) answeredEl.textContent = "0";
-      if (scoreEl) scoreEl.textContent = "0";
-      if (scoreWrap) scoreWrap.hidden = true;
       if (footer) footer.hidden = true;
-      const first = quiz.querySelector("[data-quiz-card]");
-      if (first) first.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (headline) headline.textContent = "";
+      quiz.querySelector("[data-quiz-answer]")?.focus();
     }
   }
 
@@ -94,10 +73,14 @@
     card.classList.add("is-answered");
     card.classList.add(pickedCorrect ? "is-correct" : "is-wrong");
     if (status) {
-      status.textContent = pickedCorrect ? "Correct" : "Incorrect";
+      status.textContent = pickedCorrect
+        ? "Your choice is correct. All explanations are open."
+        : "All explanations are open. Compare your choice with the correct answer.";
     }
     answers.forEach((btn) => {
-      btn.disabled = true;
+      // Keep native buttons in the tab order so keyboard users can review
+      // their choices and descriptions without losing focus on selection.
+      btn.setAttribute("aria-disabled", "true");
       const wrap = btn.closest(".quiz-answer-wrap");
       const isCorrect = btn.dataset.correct === "true";
       const isPicked = btn === picked;
@@ -112,13 +95,21 @@
       if (isPicked) {
         btn.classList.add("is-chosen");
       }
-      // Reveal the picked answer's explanation. If the pick was
-      // wrong, also reveal the correct answer's explanation so
-      // the visitor sees what they should have chosen. Other
-      // distractors stay hidden to keep the card uncluttered.
-      const showExplanation = isPicked || (!pickedCorrect && isCorrect);
+      const label = btn.querySelector("[data-quiz-answer-status]");
+      if (label) {
+        label.textContent = isPicked
+          ? isCorrect
+            ? "Your choice · Correct answer"
+            : "Your choice · Not correct"
+          : isCorrect
+            ? "Correct answer"
+            : "Not correct";
+      }
       const exp = wrap && wrap.querySelector("[data-quiz-explanation]");
-      if (exp && showExplanation) exp.hidden = false;
+      if (exp) {
+        exp.hidden = false;
+        btn.setAttribute("aria-describedby", exp.id);
+      }
     });
   }
 
@@ -128,7 +119,10 @@
     if (status) status.textContent = "";
     const answers = card.querySelectorAll("[data-quiz-answer]");
     answers.forEach((btn) => {
-      btn.disabled = false;
+      btn.removeAttribute("aria-disabled");
+      btn.removeAttribute("aria-describedby");
+      const label = btn.querySelector("[data-quiz-answer-status]");
+      if (label) label.textContent = "";
       btn.classList.remove("is-correct", "is-wrong-pick", "is-chosen");
       const wrap = btn.closest(".quiz-answer-wrap");
       wrap && wrap.classList.remove("is-correct", "is-wrong-pick");

@@ -80,9 +80,6 @@ impl Quiz {
                <span class=\"quiz-meta-progress\">\
                  <strong data-quiz-answered>0</strong> / {total} answered\
                </span>\
-               <span class=\"quiz-meta-score\" data-quiz-score-wrap hidden>\
-                 Score: <strong data-quiz-score>0</strong> / {total}\
-               </span>\
              </header>",
             total = self.questions.len(),
         );
@@ -121,7 +118,7 @@ impl Quiz {
                 use rand::seq::SliceRandom;
                 shuffled.shuffle(&mut rand::rng());
             }
-            for a in &shuffled {
+            for (answer_index, a) in shuffled.iter().enumerate() {
                 let _ = write!(
                     out,
                     "<li class=\"quiz-answer-wrap\">\
@@ -129,9 +126,11 @@ impl Quiz {
                                data-quiz-answer \
                                data-correct=\"{correct}\">\
                          <span class=\"quiz-answer-marker\" aria-hidden=\"true\"></span>\
-                         <span class=\"quiz-answer-text\">{text}</span>\
+                         <span class=\"quiz-answer-text\">{text}\
+                           <span class=\"quiz-answer-status\" data-quiz-answer-status></span>\
+                         </span>\
                        </button>\
-                       <div class=\"quiz-explanation\" \
+                       <div class=\"quiz-explanation\" id=\"quiz-{i}-{answer_index}-explanation\" \
                             data-quiz-explanation hidden>\
                          {explanation}\
                        </div>\
@@ -146,7 +145,7 @@ impl Quiz {
         out.push_str("</ol>");
         out.push_str(
             "<footer class=\"quiz-footer\" data-quiz-footer hidden>\
-               <p class=\"quiz-footer-headline\" data-quiz-headline></p>\
+               <p class=\"quiz-footer-headline\" data-quiz-headline role=\"status\"></p>\
                <button type=\"button\" class=\"btn quiz-reset\"\
                        data-quiz-reset>Try again</button>\
              </footer>",
@@ -1517,7 +1516,25 @@ mod tests {
             quiz.questions.len() >= 10,
             "quiz should have a reasonable number of questions"
         );
+        let html = quiz.render_html();
+        assert!(!html.contains("data-quiz-score"));
+        assert!(html.contains("data-quiz-answered>0</strong>"));
+        assert!(html.contains("data-quiz-footer hidden"));
+        let answer_count: usize = quiz.questions.iter().map(|q| q.answers.len()).sum();
+        assert_eq!(
+            html.matches("data-quiz-answer-status").count(),
+            answer_count
+        );
+        assert_eq!(
+            html.matches("data-quiz-explanation hidden").count(),
+            answer_count
+        );
         for (i, q) in quiz.questions.iter().enumerate() {
+            for (answer_index, answer) in q.answers.iter().enumerate() {
+                assert!(!answer.explanation.trim().is_empty());
+                let id = format!("id=\"quiz-{i}-{answer_index}-explanation\"");
+                assert_eq!(html.matches(&id).count(), 1);
+            }
             let correct = q.answers.iter().filter(|a| a.correct).count();
             assert_eq!(
                 correct,
