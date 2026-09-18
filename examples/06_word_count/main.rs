@@ -18,5 +18,7 @@ mod _2_word_count;
 mod _3_char_count;
 #[path = "4_longest_word.rs"]
 mod _4_longest_word;
+#[path = "5_long_words.rs"]
+mod _5_long_words;
 
 fn main() {}

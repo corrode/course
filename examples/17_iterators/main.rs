@@ -20,5 +20,9 @@ mod _4_map;
 mod _5_filter;
 #[path = "6_filter_to_string.rs"]
 mod _6_filter_to_string;
+#[path = "7_fallible_sum.rs"]
+mod _7_fallible_sum;
+#[path = "8_lazy_consumption.rs"]
+mod _8_lazy_consumption;
 
 fn main() {}

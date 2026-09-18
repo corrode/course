@@ -1,7 +1,11 @@
 /// Returns the total number of words in `text`. Words are pieces
 /// separated by whitespace, so `"hello world"` has two words.
 fn word_count(text: &str) -> usize {
-    text.split_whitespace().count()
+    let mut count = 0;
+    for _ in text.split_whitespace() {
+        count += 1;
+    }
+    count
 }
 
 #[test]

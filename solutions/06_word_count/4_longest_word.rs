@@ -2,10 +2,14 @@
 /// `text`. Words are whitespace-separated. Returns 0 when the
 /// text has no words.
 fn longest_word(text: &str) -> usize {
-    text.split_whitespace()
-        .map(|word| word.chars().count())
-        .max()
-        .unwrap_or(0)
+    let mut longest = 0;
+    for word in text.split_whitespace() {
+        let length = word.chars().count();
+        if length > longest {
+            longest = length;
+        }
+    }
+    longest
 }
 
 #[test]

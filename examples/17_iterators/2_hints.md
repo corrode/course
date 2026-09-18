@@ -27,3 +27,14 @@
    Method-call auto-deref also works for `.ends_with(".rs")`.
 2. The function returns `Vec<String>`, not `Vec<&str>`.
    Add a `.map(...)` step that converts each `&&str` into an owned `String`.
+
+## `fallible_sum`
+
+1. What type does parsing each token produce? Keep those `Result` values as the iterator's items.
+2. `map` can apply parsing to each token. The return type tells `sum` to produce `Result<i32, ParseIntError>`.
+
+## `lazy_consumption`
+
+1. Creating a `map` adapter doesn't call its closure. Something must ask for an item.
+2. `filter` may request several inputs before it can yield one output.
+3. `by_ref` borrows the existing iterator; consuming that borrow advances the original too.
