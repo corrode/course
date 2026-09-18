@@ -1,4 +1,4 @@
-# A recursive type that needs `Box`
+# A Recursive Type That Needs `Box`
 
 Try to imagine this enum without the `Box`:
 
@@ -30,7 +30,7 @@ enum Expr {
 This is the same trick C uses with `struct node { struct node *l; struct node *r; }` and that Java/C# get for free because every object is already a reference.
 Rust just wants you to ask for the indirection explicitly.
 
-## What you're building
+## What You're Building
 
 `Expr` is a tiny *expression tree*: a value is either a literal number, the sum of two sub-expressions, or the product of two sub-expressions.
 Interpreters and calculators often use trees like this to represent expressions.

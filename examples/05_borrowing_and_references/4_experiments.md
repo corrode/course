@@ -1,4 +1,4 @@
-# Experiments: break it, then fix it
+# Experiments: Break It, Then Fix It
 
 These tests pass as written.
 Uncomment the lines in one experiment at a time to see what the compiler rejects.

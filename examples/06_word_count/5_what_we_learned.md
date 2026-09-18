@@ -1,8 +1,8 @@
-# Wrapping up word count
+# Wrapping Up Word Count
 
 You wrote three functions using a counter or running maximum, a `for` loop, and a return value.
 
-## What we learned
+## What We Learned
 
 - `text.split_whitespace()` walks the words in a string for you.
   It handles any kind of whitespace and skips empty pieces.
@@ -11,7 +11,7 @@ You wrote three functions using a counter or running maximum, a `for` loop, and 
 - `word.chars().count()` counts `char` values, not necessarily visible characters.
   `str::len` returns *bytes*, and the two differ the moment you hit a non-ASCII character.
 
-## What comes next
+## What Comes Next
 
 Iterator methods let you write the same three functions without explicit loops:
 

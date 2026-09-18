@@ -1,4 +1,4 @@
-# Strings, &str, and chars
+# Strings, &str, and Chars
 
 *An `i32` walks up to a `String` and asks for its number.
 The `String` replies: "Sorry, you're not my type."*
@@ -71,7 +71,7 @@ Rust pulls the variable from the surrounding scope.
 You can also pass the argument explicitly: `format!("Hello, {}!", name)`.
 The exclamation mark (`!`) means `format!` is a macro rather than a regular function call.
 
-## Consuming an iterator 
+## Consuming an Iterator
 
 The simplest way to consume an iterator is a `for` loop:
 
@@ -86,7 +86,7 @@ In this case, for each character in the string `"hello"`, do something with it.
 The loop variable is a fresh binding scoped to each iteration.
 Ranges, arrays, and collections can also go on the right-hand side because each can produce an iterator.
 
-## Useful resources
+## Useful Resources
 
 - [`std::fmt`](https://doc.rust-lang.org/std/fmt/) contains everything the formatting macros can do (padding, precision, hex, debug output…).
 - [`str`](https://doc.rust-lang.org/std/primitive.str.html): the inventory of operations available on any `&str`.

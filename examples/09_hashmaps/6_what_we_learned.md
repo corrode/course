@@ -1,8 +1,8 @@
-# Wrapping up hashmaps
+# Wrapping Up Hashmaps
 
 You built a configuration map from scratch, updated and read values, and used the `entry` API to write the counting step of a word counter in one line.
 
-## What we learned
+## What We Learned
 
 - `HashMap<K, V>` stores key-value pairs and looks them up in (average) constant time.
   All keys share one type; all values share one type.

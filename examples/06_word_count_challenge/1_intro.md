@@ -1,4 +1,4 @@
-# Word count challenge
+# Word Count Challenge
 
 This optional challenge combines strings, loops, and conditionals.
 It does not count toward course completion.

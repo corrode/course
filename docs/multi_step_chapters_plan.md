@@ -12,7 +12,7 @@ This is the design agreed in the conversation summarised in
 below are small and independently shippable. Tick them off as you go
 and append notes inline.
 
-## Target shape
+## Target Shape
 
 ```
 examples/07_option/
@@ -44,7 +44,7 @@ Conventions:
 - A chapter with only `main.rs` (single-step legacy shape) keeps
   working: `scan_dir` treats it as a one-step chapter.
 
-## Running and testing
+## Running and Testing
 
 - Whole chapter: `cargo test --example 07_option` (unchanged).
 - One step: `cargo test --example 07_option _2_unwrap::` (Cargo module
@@ -57,7 +57,7 @@ Conventions:
   per step to play.rust-lang.org (just that step's source, no need
   for the chapter aggregator).
 
-## Data model changes
+## Data Model Changes
 
 `Exercise` becomes a chapter that owns an ordered `Vec<Step>`:
 
@@ -96,13 +96,13 @@ rather than backfill.
   on where the natural seams are; left for a focused follow-up pass.
 - **Step 9 (cleanup)** can wait until step 6 is done.
 
-## Step-by-step rollout
+## Step-by-Step Rollout
 
 Each numbered step is intended to be a single PR/commit. Steps 1-3 are
 infrastructure with no learner-visible change; step 4 is the first
 pilot chapter; later steps migrate the rest and clean up.
 
-### Step 1 - Data model + scanner, single-step compatible
+### Step 1 - Data Model + Scanner, Single-Step Compatible
 
 - Introduce `Step` / `CodeStep` in `src/exercises.rs`.
 - Rewrite `parse_chapter` to:
@@ -118,7 +118,7 @@ pilot chapter; later steps migrate the rest and clean up.
 
 Acceptance: `cargo test` green; no template or server changes.
 
-### Step 2 - `build.rs` for chapter aggregators
+### Step 2 - `build.rs` for Chapter Aggregators
 
 - Add `build.rs` at the crate root. For each `examples/NN_<slug>/`
   that contains sibling `*.rs` files, generate `main.rs` with:
@@ -142,7 +142,7 @@ Acceptance: `cargo test` green; no template or server changes.
 Acceptance: build succeeds, generated `main.rs` files match
 hand-rolled equivalents byte-for-byte for a test chapter.
 
-### Step 3 - Server + templates render steps
+### Step 3 - Server + Templates Render Steps
 
 - Change `exercise.html` to iterate `chapter.steps` and render either
   a prose block or a `<section>` containing prose + editor + run/test
@@ -162,7 +162,7 @@ hand-rolled equivalents byte-for-byte for a test chapter.
 Acceptance: Existing single-step chapters render identically to
 before; the URL `/exercise/07_option` still works.
 
-### Step 4 - Pilot chapter: convert `07_option`
+### Step 4 - Pilot Chapter: Convert `07_option`
 
 - Split today's `examples/07_option/main.rs` into:
   - `1_intro.md` (overview prose, currently the top of the `//!`
@@ -178,7 +178,7 @@ before; the URL `/exercise/07_option` still works.
 Acceptance: pilot chapter passes locally and online; no regressions
 in other chapters.
 
-### Step 5 - CLI ergonomics
+### Step 5 - CLI Ergonomics
 
 - `cargo course submit <path>`:
   - If path is `examples/<chapter>/<N>_<slug>.rs`, derive chapter +
@@ -191,7 +191,7 @@ in other chapters.
 Acceptance: CLI works end-to-end against a running server with the
 pilot chapter.
 
-### Step 6 - Migrate remaining chapters
+### Step 6 - Migrate Remaining Chapters
 
 One PR per chapter (or small batch). Order suggestion, easy wins
 first, spikes last:
@@ -212,7 +212,7 @@ For each chapter, append a one-line entry to
 `docs/learner_journey.md` under a new "Multi-step split" pass
 documenting the chosen step boundaries.
 
-### Step 7 - Database reset
+### Step 7 - Database Reset
 
 - Delete `course.db` from local dev.
 - Add a new migration `006_multi_step_submissions.sql` that does
@@ -259,7 +259,7 @@ multiple steps and complete it without surprise.
   `cargo fmt --check`, and a manual click-through of the online
   course.
 
-## Open questions / decisions to revisit
+## Open Questions / Decisions to Revisit
 
 - **Per-step hints.** Deferred. Revisit if learners ask for hints
   on a specific step rather than the whole chapter.

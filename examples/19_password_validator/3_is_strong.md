@@ -1,4 +1,4 @@
-# Warm-up: `is_strong`
+# Warm-Up: `is_strong`
 
 A `PasswordReport` holds the result of your checks: a numeric score, feedback, and a rough strength label.
 

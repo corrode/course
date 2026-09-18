@@ -3,7 +3,11 @@ use std::collections::HashMap;
 /// Counts how many times each word appears in the text.
 /// Words are whitespace-separated; counts use lowercase keys.
 fn count_words(text: &str) -> HashMap<String, usize> {
-    todo!()
+    let mut counts = HashMap::new();
+    for word in text.split_whitespace() {
+        *counts.entry(word.to_lowercase()).or_insert(0) += 1;
+    }
+    counts
 }
 
 /// Finds the most common word in the text.

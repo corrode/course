@@ -20,7 +20,7 @@ Copying it on every assignment would mean duplicating that buffer over and over,
 Rust makes the cheap thing the default: move the `String` without copying its heap buffer.
 To duplicate the string's buffer, call `.clone()` explicitly.
 
-## Copy types
+## Copy Types
 
 Types that can safely be duplicated bit-for-bit can implement `Copy`.
 Integers, `bool`, `char`, and fixed-size arrays of them implement the `Copy` trait, so assigning one duplicates the bits instead of moving:

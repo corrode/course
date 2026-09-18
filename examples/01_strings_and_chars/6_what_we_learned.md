@@ -1,8 +1,8 @@
-# Wrapping up strings and chars
+# Wrapping Up Strings and Chars
 
 You counted UTF-8 characters, took a `&str` and produced a new `String`, and walked a string character by character.
 
-## What we learned
+## What We Learned
 
 - `&str` is a borrowed view into UTF-8 text; `String` is an owned, growable buffer; `char` is one Unicode scalar value.
   Functions that read text can take a `&str`, while functions that produce new text return a `String`.

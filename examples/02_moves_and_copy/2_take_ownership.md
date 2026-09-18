@@ -1,4 +1,4 @@
-# Taking ownership by value
+# Taking Ownership by Value
 
 When a function parameter has an owned type like `String` (no `&` in front), calling the function *moves* the argument in.
 The caller's binding is no longer usable afterwards.
@@ -9,7 +9,7 @@ Read the signature as `String` in, `String` out.
 The function can choose to mutate the value it owns, but the parameter binding still needs `mut` before you can change it.
 Append the text to `s`, then return the same `String` so the caller owns it again.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`String::push_str`](https://doc.rust-lang.org/std/string/struct.String.html#method.push_str) appends a `&str` to an owned `String`.
   It doesn't allocate if there's spare capacity.

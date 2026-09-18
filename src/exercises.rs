@@ -770,7 +770,7 @@ fn load_chapter_directives(dir: &Path) -> ChapterDirectives {
 ///
 /// Sections whose heading contains a backticked token matching a code
 /// step's slug are attached to that step. For example,
-/// `` ## `quoted_line`, the state machine `` matches the `quoted_line`
+/// `` ## `quoted_line`, the State Machine `` matches the `quoted_line`
 /// step. Anything that
 /// doesn't match stays in the chapter-wide leftover, which falls back
 /// to the old "all hints in one block at the bottom" behaviour.
@@ -893,7 +893,7 @@ fn split_hints_markdown(md: &str) -> (String, Vec<(String, String)>) {
 /// Match a hints H2 heading against a step slug. The first backticked
 /// token in the heading (if any) is treated as the key, otherwise the
 /// whole heading text is used. This lets authors write descriptive
-/// headings like `` `quoted_line`, the state machine `` while still
+/// headings like `` `quoted_line`, the State Machine `` while still
 /// keying off the file slug.
 fn heading_matches_slug(heading: &str, step_slug: &str) -> bool {
     let key = heading.find('`').map_or_else(
@@ -1178,9 +1178,9 @@ pub fn render_markdown(md: &str) -> String {
 /// blockquote and acts as the label, so these sections render with the same
 /// alert chrome that pulldown-cmark emits for `> [!NOTE]`.
 const ALERT_HEADINGS: &[&str] = &[
-    "<h2>Useful from the standard library</h2>",
-    "<h2>Useful resources</h2>",
-    "<h2>What we learned</h2>",
+    "<h2>Useful from the Standard Library</h2>",
+    "<h2>Useful Resources</h2>",
+    "<h2>What We Learned</h2>",
 ];
 
 /// Wrap every recognized H2-plus-following-`<ul>` block in the same
@@ -1257,15 +1257,19 @@ mod tests {
 
     #[test]
     fn reference_sections_share_callout_markup() {
-        for heading in ["Useful from the standard library", "Useful resources"] {
+        for heading in [
+            "Useful from the Standard Library",
+            "Useful Resources",
+            "What We Learned",
+        ] {
             let md = format!(
-                "Before.\n\n## {heading}\n\n- [Documentation](https://doc.rust-lang.org/) explains it.\n\n## Next section\n\nAfter.\n"
+                "Before.\n\n## {heading}\n\n- [Documentation](https://doc.rust-lang.org/) explains it.\n\n## Next Section\n\nAfter.\n"
             );
             let html = render_markdown(&md);
             assert!(html.contains(&format!(
                 "<blockquote class=\"markdown-alert-note\">\n<h2>{heading}</h2>\n<ul>"
             )));
-            assert!(html.contains("</ul>\n</blockquote>\n<h2>Next section</h2>"));
+            assert!(html.contains("</ul>\n</blockquote>\n<h2>Next Section</h2>"));
             assert!(html.contains("target=\"_blank\" rel=\"noopener noreferrer\""));
             assert_eq!(html.matches("<blockquote").count(), 1);
         }
@@ -1283,14 +1287,69 @@ mod tests {
         ] {
             let html = render_markdown(md);
             assert!(html.contains(
-                "<blockquote class=\"markdown-alert-note\">\n<h2>Useful resources</h2>\n<ul>"
+                "<blockquote class=\"markdown-alert-note\">\n<h2>Useful Resources</h2>\n<ul>"
             ));
         }
     }
 
     #[test]
+    fn chapter_titles_preserve_source_casing_and_code_names() {
+        let exercises =
+            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        for (slug, title, step_slug, step_title) in [
+            (
+                "strings_and_chars",
+                "Strings, &str, and Chars",
+                "shout",
+                "Borrow In, Own Out",
+            ),
+            (
+                "option",
+                "Option<T>: When a Value Might Be Missing",
+                "first_char",
+                "Producing an `Option<char>`",
+            ),
+            (
+                "conditionals_and_loops",
+                "Conditionals and Loops",
+                "factorial",
+                "Factorial with a `for` Loop",
+            ),
+            (
+                "csv_parser",
+                "State Machines and Stateful Parsing",
+                "quoted_line",
+                "Quotes, Embedded Commas, and Escapes",
+            ),
+        ] {
+            let chapter = exercises.iter().find(|e| e.slug == slug).unwrap();
+            assert_eq!(chapter.title, title);
+            let code = chapter
+                .code_steps()
+                .into_iter()
+                .find(|code| code.slug == step_slug)
+                .unwrap();
+            // Paired notes supply the visible heading; the code title is suppressed.
+            let note = chapter
+                .steps
+                .iter()
+                .find_map(|step| match step {
+                    Step::Prose(note) if note.order == code.order && note.slug == step_slug => {
+                        Some(note)
+                    }
+                    _ => None,
+                })
+                .unwrap();
+            assert_eq!(note.title, step_title);
+            if matches!(step_slug, "factorial" | "quoted_line") {
+                assert!(code.hints_html.is_some(), "missing hints for {step_slug}");
+            }
+        }
+    }
+
+    #[test]
     fn ordinary_teaching_sections_remain_unwrapped() {
-        let html = render_markdown("## Path syntax\n\n- `crate::` starts at the root.\n");
+        let html = render_markdown("## Path Syntax\n\n- `crate::` starts at the root.\n");
         assert!(!html.contains("<blockquote"));
     }
 
@@ -1602,7 +1661,7 @@ mod tests {
     #[test]
     fn heading_matches_slug_uses_first_backticked_token() {
         assert!(heading_matches_slug(
-            "`quoted_line`, the state machine",
+            "`quoted_line`, the State Machine",
             "quoted_line"
         ));
         assert!(heading_matches_slug("`sum`", "sum"));
@@ -1639,7 +1698,7 @@ mod tests {
     #[test]
     fn renamed_chapters_distribute_hints_per_step() {
         // 17_iterators and 22_csv_parser use hints H2 headings keyed by
-        // the file slug (e.g. `` ## `quoted_line`, the state machine ``).
+        // the file slug (e.g. `` ## `quoted_line`, the State Machine ``).
         // Every code step should receive its slice.
         let exercises =
             scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");

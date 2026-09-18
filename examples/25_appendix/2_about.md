@@ -1,9 +1,9 @@
-# About this course
+# About This Course
 
 You finished the course (or you're skipping ahead, which is fine too).
 A bit of background, in case you're curious.
 
-## Why this course exists
+## Why This Course Exists
 
 There's no shortage of Rust resources.
 The [official book](https://doc.rust-lang.org/book/) is excellent, and you should read it.
@@ -16,7 +16,7 @@ These exercises started as a folder on my laptop, the kind of thing I'd pull out
 Over the years it grew into a structured path through the language.
 This site is that path, with an editor attached.
 
-## How to keep going
+## How to Keep Going
 
 Want another exercise? [Build a password validator](19_password_validator) with rules you choose, or [try smart pointers](23_smart_pointers) to store and share data with `Box`, `Rc`, and `RefCell`.
 These optional chapters are also in the chapter picker and do not count toward course progress.
@@ -37,7 +37,7 @@ Practice the core mechanics on a problem that matters to you:
 - Investigate unexpected behavior.
   When behavior or a compiler message catches you off guard, reduce it to a small example and change one thing at a time.
 
-## A note from corrode
+## A Note from corrode
 
 This course is open source on [github.com/corrode/course](https://github.com/corrode/course).
 Issues and pull requests are welcome.

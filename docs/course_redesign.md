@@ -11,7 +11,7 @@ No backwards-compatibility is required. Rebuild cleanly.
 
 ---
 
-## Why this redesign
+## Why This Redesign
 
 Workshop participants on days 1 and 2 reported frustration:
 
@@ -30,7 +30,7 @@ This redesign fixes the root cause, not the symptoms.
 
 ---
 
-## Pedagogical principles
+## Pedagogical Principles
 
 These principles govern every decision below. When in doubt, come back to them.
 
@@ -72,7 +72,7 @@ These principles govern every decision below. When in doubt, come back to them.
 
 ---
 
-## Chapter map
+## Chapter Map
 
 | # | Title | Theme | Difficulty | Spiral moment |
 |---|---|---|---|---|
@@ -103,7 +103,7 @@ very end.
 
 ---
 
-## Pre-course: "Why Rust?"
+## Pre-Course: "Why Rust?"
 
 **Format:** Read-only. No exercises. Target: 5 minutes.
 
@@ -142,7 +142,7 @@ how they think about software."
 
 ---
 
-## Chapter specs
+## Chapter Specs
 
 ### Chapter 0 · When Types Mean What They Say
 *Difficulty: Easy*
@@ -376,7 +376,7 @@ can be `Copy`; the compiler duplicates them for free, just like integers."*
 
 ---
 
-### Chapter 8 · Structured Data Without the Baggage
+### Chapter 8 · Structured Data without the Baggage
 *Difficulty: Moderate*
 
 **Opening hook:** Object-oriented languages bundle data and behavior together through
@@ -401,7 +401,7 @@ idempotent behavior is intentional.
 
 ---
 
-### Chapter 9 · Memory Safety Without a Garbage Collector
+### Chapter 9 · Memory Safety without a Garbage Collector
 *Difficulty: Spike*
 
 **Opening hook:** Every memory safety CVE in Chrome, Windows, and the Linux kernel —
@@ -443,7 +443,7 @@ designed to make the errors visible, not to frustrate you."*
 
 ---
 
-### Chapter 10 · Shared Behavior Without Inheritance
+### Chapter 10 · Shared Behavior without Inheritance
 *Difficulty: Moderate*
 
 **Opening hook:** Inheritance promises reuse but delivers coupling. Deep class
@@ -496,7 +496,7 @@ annotation in `find_rust_files` — lifetimes are not the lesson here.
 
 ---
 
-### Chapter 12 · Heap Memory, Under Control
+### Chapter 12 · Heap Memory, under Control
 *Difficulty: Moderate*
 
 **Opening hook:** In C, every `malloc` needs a matching `free`. Miss one and you have
@@ -689,19 +689,19 @@ we chose and why"):
 
 ---
 
-## Cross-cutting changes
+## Cross-Cutting Changes
 
-### Difficulty labels on everything
+### Difficulty Labels on Everything
 Every chapter in the chapter list, every exercise within a chapter, carries a
 difficulty label. Use a small badge in the UI: `○` Trivial, `◔` Easy, `◑` Moderate,
 `◕` Hard, `●` Spike. The label appears before the learner opens the chapter.
 
-### Hints file for every chapter
+### Hints File for Every Chapter
 Every chapter must have a `2_hints.md`. One paragraph per exercise function: not the
 answer, but the method or pattern to reach for. This is the difference between "stuck
 for 5 minutes" and "stuck for 45 minutes and now demoralized."
 
-### Cheatsheet additions
+### Cheatsheet Additions
 - The `&&T` / iterator-yield table described in chapter 11.
 - A "when to use which string type" table: `&str` for read-only parameters, `String`
   for owned data, `&String` almost never.
@@ -719,7 +719,7 @@ for 5 minutes" and "stuck for 45 minutes and now demoralized."
 
 ---
 
-## New content required
+## New Content Required
 
 The following does not exist yet and must be written from scratch:
 
@@ -735,7 +735,7 @@ data-race guarantee without turning into an async/await course.
 
 ---
 
-## Deferred work
+## Deferred Work
 
 **Language-personalized motivating examples.** The problem-first framing (show the
 bug in the language the learner knows before showing how Rust fixes it) is the right
@@ -752,7 +752,7 @@ JavaScript, then Go, then Java/C#, then C/C++.
 
 ---
 
-## Items absorbed from new5.md
+## Items Absorbed from new5.md
 
 The following were in the earlier audit (new5.md) and are still valid. They are
 incorporated into the chapter specs above but listed here for traceability:

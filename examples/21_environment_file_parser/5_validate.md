@@ -1,4 +1,4 @@
-# Validating required variables
+# Validating Required Variables
 
 At startup, an app often needs to verify its database URL, port, or API key before doing any work.
 Your helper takes a list of required keys and reports the first one that's missing.
@@ -6,7 +6,7 @@ Your helper takes a list of required keys and reports the first one that's missi
 `Iterator::find` is a good fit: scan the slice, return the first key that isn't in the map, and turn that into an `Err`.
 If `find` returns `None`, every required key was present and the result is `Ok(())`.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`<[T]>::iter`](https://doc.rust-lang.org/std/primitive.slice.html#method.iter) on `required` yields `&&str` (a reference to each `&str` in the slice).
 - [`Iterator::find`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find) borrows each item for its predicate, so `|key|` receives `&&&str`, but the returned item is `Option<&&str>`.

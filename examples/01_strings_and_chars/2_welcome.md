@@ -1,4 +1,4 @@
-# A welcome message
+# A Welcome Message
 
 Time to put `&str` and `String` together.
 Implement `format_welcome_message` so it returns the string `"Welcome, {name}!"`.

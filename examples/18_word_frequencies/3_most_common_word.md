@@ -1,13 +1,12 @@
-# The most common word
+# The Most Common Word
 
 Once you have the counts, you can ask the iterator for the largest one.
 The choice between `iter` and `into_iter` determines whether you can return the winning word without cloning it.
 
-`count_words` is duplicated below as a `todo!()` stub so this step compiles in isolation.
-Paste your earlier implementation into it, then work on `most_common_word`.
-The test calls `most_common_word` and unwraps the result.
+A working `count_words` is included so this step runs on its own.
+Reuse it and implement only `most_common_word`.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`HashMap::into_iter`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.into_iter) consumes the map and yields owned `(K, V)` pairs.
   That's how you get an owned `String` out without cloning.

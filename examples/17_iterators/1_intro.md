@@ -40,7 +40,7 @@ You can write the chain first, then add a type annotation on the binding if the 
 Tell it which one with a type annotation: `Vec<_>`, `HashMap<_, _>`, `String`.
 The `_` lets the compiler fill in the inner types.
 
-## Coming back to word count
+## Coming Back to Word Count
 
 Remember the three little functions from the word count chapter's exercise break?
 Each one was a counter, a `for` loop, and a return.

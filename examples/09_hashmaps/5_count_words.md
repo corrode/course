@@ -4,7 +4,7 @@ A word counter needs to look up each word, start missing counts at zero, and the
 Doing that by hand with `contains_key` and `get_mut` works, but it takes two lookups.
 The `entry` API combines the lookup and default insertion.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`HashMap::entry`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.entry) looks up a key and returns an `Entry` representing either an occupied or a vacant entry.
 - [`Entry::or_insert`](https://doc.rust-lang.org/std/collections/hash_map/enum.Entry.html#method.or_insert) returns a `&mut V`: either to the existing value, or to the default it just inserted.

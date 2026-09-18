@@ -1,4 +1,4 @@
-# Conditionals and loops
+# Conditionals and Loops
 
 Rust's `if` can return a value, and its condition has to be a `bool`.
 You've already seen `if` and `for` in passing.
@@ -31,7 +31,7 @@ Two Rust details matter here:
 
   Both branches have to produce the same type, and there's no trailing semicolon on the value-producing expression in each branch (just like a function body, see the functions chapter).
 
-## `for` loops
+## `for` Loops
 
 A `for` loop can walk through a range of numbers, the elements of an array, or the items in a collection.
 Rust supports all of these through iterators, but you do not need to understand iterators yet to use the loop.
@@ -102,7 +102,7 @@ for n in 0..10 {
 }
 ```
 
-## Picking the right loop
+## Picking the Right Loop
 
 When you need to pick one:
 

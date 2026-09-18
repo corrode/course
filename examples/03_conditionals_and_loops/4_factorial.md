@@ -1,4 +1,4 @@
-# Factorial with a `for` loop
+# Factorial with a `for` Loop
 
 `n!` is `1 * 2 * 3 * ... * n`.
 By convention, `0! == 1`.

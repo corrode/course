@@ -7,7 +7,7 @@
 # We use Debian (not Alpine/musl) so we can avoid cross-compilation
 # headaches and keep dynamic linking with the same glibc the runtime has.
 
-FROM rust:1-trixie AS builder
+FROM rust:1.98.1-trixie AS builder
 
 WORKDIR /app
 

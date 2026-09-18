@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createResultRenderer } from "./editor-results.js";
+import { highlightOutput } from "./output-highlight.js";
 
 // These tests exercise the textarea controller without a browser. The extension
 // factory is deliberately stubbed: CodeMirror is not mounted in this suite.
@@ -36,6 +37,15 @@ class Element extends EventTarget {
     this.disabled = false;
     this.classList = { toggle() {}, remove() {}, add() {} };
   }
+  get textContent() {
+    return this.children.length
+      ? this.children.map((child) => child.textContent).join("")
+      : this.text;
+  }
+  set textContent(value) {
+    this.children = [];
+    this.text = value;
+  }
   setAttribute(key, value) {
     this.attributes.set(key, value);
   }
@@ -61,7 +71,7 @@ class Element extends EventTarget {
     this.parentNode = null;
   }
   replaceChildren(...children) {
-    this.children = [];
+    this.textContent = "";
     children.forEach((child) => this.append(child));
   }
   setRangeText(insert, from, to) {
@@ -137,6 +147,51 @@ test("result rows expose textual statuses, preserve both streams, and never scro
     "Failed: bad",
   );
   assert.equal(roles["output-details"].open, true);
+});
+
+test("output highlights Rust values and diagnostics without interpreting HTML", () => {
+  const { roles } = fixture();
+  const output = roles["output-stderr"];
+  const text = [
+    "error[E0308]: mismatched types",
+    " --> src/main.rs:2:5",
+    "2 | let value = Some(42);",
+    "assertion `left == right` failed",
+    " left: None",
+    'right: Some("<script>alert(1)</script>&")',
+    "test example ... FAILED",
+    "test another ... ok",
+    "warning: unused variable",
+    "help: try `Some(2)`",
+    "plain <img src=x onerror=alert(1)> output\r\n",
+  ].join("\n");
+  highlightOutput(output, text);
+  assert.equal(output.textContent, text);
+  for (const cls of ["output-error", "output-warning", "output-help", "output-success", "tok-keyword", "tok-number", "tok-string"]) {
+    assert.ok(output.children.some((span) => span.className.split(" ").includes(cls)), cls);
+  }
+  assert.ok(output.children.every((span) => span.children.length === 0));
+  highlightOutput(output, "replacement");
+  assert.equal(output.textContent, "replacement");
+});
+
+test("failure snippets and full logs both receive highlighting", () => {
+  const { roles } = fixture();
+  const render = createResultRenderer({
+    panel: roles["output-panel"],
+    list: roles["test-list"],
+    output: roles["output-stderr"],
+    testResults: true,
+  });
+  render({
+    success: false,
+    stderr: "---- example stdout ----\nthread 'example' panicked at src/main.rs:2:5:\nassertion `left == right` failed\n left: None\nright: Some(2)\n\nfailures:\n    example",
+    test_results: [{ name: "example", passed: false }],
+  });
+  const snippet = roles["test-list"].children[0].children[1];
+  assert.match(snippet.textContent, /right: Some\(2\)/);
+  assert.ok(snippet.children.some((span) => span.className === "tok-number"));
+  assert.ok(roles["output-stderr"].children.some((span) => span.className === "tok-number"));
 });
 
 test("diagnostics remain visible with a stale notice until fresh results replace them", () => {

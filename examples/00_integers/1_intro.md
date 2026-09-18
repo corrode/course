@@ -14,7 +14,7 @@ let price: f64 = 19.99;       // floating point (f32 is the smaller one)
 
 Those are the types you'll see most often.
 
-## No silent overflows
+## No Silent Overflows
 
 Languages handle integer overflow differently: Java wraps, Python's integers grow to hold the result, and C wraps unsigned arithmetic but leaves signed overflow undefined.
 Rust panics on integer overflow in a debug build by default.
@@ -43,7 +43,7 @@ Release builds wrap by default for speed.
 I prefer to choose the overflow behavior explicitly rather than rely on the release default.
 These methods also give you the same behavior in debug and release builds.
 
-## No implicit conversions
+## No Implicit Conversions
 
 **Rust never mixes numeric types for you.**
 `u32 + i32` won't compile, and you can't multiply a `u32` by an `f64` either.
@@ -58,7 +58,7 @@ let price: f64 = 19.99;
 let total = price * count as f64; 
 ```
 
-## Text into numbers
+## Text into Numbers
 
 Parsing a string can fail because the input might not be a number at all, so `parse` hands back a `Result`.
 

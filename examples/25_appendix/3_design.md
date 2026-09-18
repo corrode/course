@@ -1,4 +1,4 @@
-# Why this course is built the way it is
+# Why This Course Is Built the Way It Is
 
 I built this course around a simple bet: Rust sinks in faster when you write code before you study every rule.
 The choices below follow from that bet.
@@ -13,7 +13,7 @@ The choices below follow from that bet.
 Here you try the code before reading the rules behind it.
 I use that order because a borrow-checker error gives you something concrete to work through instead of a rule to memorize.
 
-## Future directions
+## Future Directions
 
 I haven't built all the ideas below, but I don't want to lose them:
 

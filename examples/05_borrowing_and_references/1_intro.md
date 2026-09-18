@@ -1,4 +1,4 @@
-# Borrowing and references
+# Borrowing and References
 
 In the moves chapter, `take_ownership` took a `String` and returned it.
 Pass a `String` to a function and the move rules say you've handed it over.
@@ -19,7 +19,7 @@ println!("{s}");       // s still owns the data
 The caller keeps ownership the whole time.
 The function gets temporary access and gives it back when it returns.
 
-## Shared or exclusive access
+## Shared or Exclusive Access
 
 For the same value, the borrowing rule is:
 

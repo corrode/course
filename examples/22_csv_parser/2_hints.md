@@ -5,7 +5,7 @@
 1. There's a method on `&str` that splits on a delimiter and gives you an iterator.
    Combine it with `trim` and `collect`.
 
-## `quoted_line`: the state machine
+## `quoted_line`: The State Machine
 
 1. A single `bool` (`in_quotes`) is enough state.
    Walk the input with `line.chars().peekable()` so you can look one character ahead.

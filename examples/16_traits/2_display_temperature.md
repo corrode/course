@@ -1,4 +1,4 @@
-# Implementing `Display` for your own type
+# Implementing `Display` for Your Own Type
 
 `Display` is the trait behind the `{}` placeholder in `println!`, `format!`, and friends.
 Implement it for your struct, and you can format its values as user-facing text just like a number or a `String`.
@@ -28,14 +28,14 @@ impl fmt::Display for Pixel {
 
 After that, `format!("{}", Pixel(255, 0, 0))` produces `"#FF0000"`.
 
-## Why isn't there a `#[derive(Display)]`?
+## Why Isn't There a `#[derive(Display)]`?
 
 Because there's no obvious default.
 `Debug` has one (print the type name and fields), but `Display` is for *human-readable* output and only you know what that should look like for your type.
 So you write it by hand.
 The Java/C# parallel is overriding `toString()`; the Python one is `__str__`.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`std::fmt::Display`](https://doc.rust-lang.org/std/fmt/trait.Display.html) is the trait.
   `use std::fmt;` and then `impl fmt::Display for T` is the idiomatic spelling.

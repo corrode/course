@@ -1,4 +1,4 @@
-# Generating a password
+# Generating a Password
 
 Implement `generate_secure_password(length)` that returns a `String` of the requested length, containing at least one uppercase letter, one lowercase letter, one digit, and one special character from `!@#$%^&*`.
 
@@ -12,7 +12,7 @@ Tips:
 - Make sure each class appears at least once (assume `length >= 4`).
 - The test below only checks the four character classes are present and the length is right; how you mix them is up to you.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`SystemTime::duration_since`](https://doc.rust-lang.org/std/time/struct.SystemTime.html#method.duration_since) returns a `Result<Duration, SystemTimeError>`.
   After handling that result, [`Duration::subsec_nanos`](https://doc.rust-lang.org/std/time/struct.Duration.html#method.subsec_nanos) gives the fractional second in nanoseconds as a `u32`; cast it to `usize` for an index.

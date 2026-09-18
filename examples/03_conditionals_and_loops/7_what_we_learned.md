@@ -1,9 +1,9 @@
-# Wrapping up conditionals and loops
+# Wrapping Up Conditionals and Loops
 
 You used each kind of control flow for a slightly different job.
 The mood classifier chose one branch, the two `for` loops walked through values you already had, and the `while` loop kept going until there was nothing left to divide.
 
-## What we learned
+## What We Learned
 
 - `if`/`else` is an *expression*, not just a statement.
   It can sit on the right of `let`, be returned from a function, or appear anywhere a value is expected.

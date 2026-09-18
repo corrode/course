@@ -1,4 +1,4 @@
-# Ferris's mood
+# Ferris's Mood
 
 Ferris the crab is a creature of simple needs.
 Two things determine his mood on any given day: how hungry he is (on a `0..=10` scale) and how many naps he's managed to fit in.

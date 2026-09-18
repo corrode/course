@@ -1,4 +1,4 @@
-# Borrowing without taking
+# Borrowing without Taking
 
 Most of the time a function only needs to *look at* a value, not own it.
 That's a shared borrow, written `&T` in the signature.
@@ -12,7 +12,7 @@ Reach for `&str` by default when you only need to read text.
 The body only needs to call `.len()` on the slice.
 Pay more attention to the signature and the test: after the call, the caller can still read and grow its owned `String` because the function only borrowed it.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::len`](https://doc.rust-lang.org/std/primitive.str.html#method.len) is the byte length of the slice.
   The chapter on strings covers why that's not the same as a character count.

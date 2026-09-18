@@ -33,7 +33,7 @@ for word in ["a", "b", "a"] {
 Either way, you get a mutable reference to the value.
 I find it easier to read the counter expression from the inside out: find the entry, supply a starting count, then increment it.
 
-## A note on `*` (dereference)
+## A Note on `*` (Dereference)
 
 The `*` in front of `counts.entry(...).or_insert(0)` is the *dereference operator*.
 `or_insert(0)` hands back a `&mut u32` (a pointer to the value inside the map) and `*` reaches through that pointer so we can actually update the `u32` it points at:

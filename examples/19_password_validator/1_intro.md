@@ -1,4 +1,4 @@
-# A creative break
+# A Creative Break
 
 You've used structs, enums, iterators, `Option`, `Result`, vectors, and strings in guided exercises.
 Here you get to decide how to put them together in a password validator.
@@ -11,9 +11,9 @@ When that happens, you can open the same work in a roomier editor:
 - To run it locally, clone [the repo](https://github.com/corrode/course), open a chapter under `examples/NN_slug/`, and run `cargo test --example NN_slug` (or `cargo check` for a faster compile-only loop).
   Working locally gives you `rust-analyzer` and on-save formatting, which help when you're working through a larger project.
 
-## Patterns you can reuse
+## Patterns You Can Reuse
 
-### Counting with iterators
+### Counting with Iterators
 
 Use `.filter(...).count()` to ask "how many of these match?":
 
@@ -21,7 +21,7 @@ Use `.filter(...).count()` to ask "how many of these match?":
 let digit_count = password.chars().filter(|c| c.is_ascii_digit()).count();
 ```
 
-### Checking for a character class
+### Checking for a Character Class
 
 When you only need a yes/no answer ("is there any uppercase letter?"), `.chars().any(...)` stops at the first match:
 
@@ -33,7 +33,7 @@ fn has_uppercase(password: &str) -> bool {
 
 For the lowercase, digit, and special-character checks, swap in `is_ascii_lowercase`, `is_ascii_digit`, or `"!@#$%^&*".contains(c)` for the closure body.
 
-### Collecting feedback
+### Collecting Feedback
 
 You can push messages into a `Vec<String>` as you check each rule:
 
@@ -44,7 +44,7 @@ if password.chars().count() < 8 {
 }
 ```
 
-### Mapping a score to a category
+### Mapping a Score to a Category
 
 Use a `match` with ranges to classify a score as weak, medium, or strong:
 
@@ -60,7 +60,7 @@ The `0..30` here is a *range pattern*.
 It's the same `..` syntax you saw in the loops chapter for ranges as values, but used inside a `match` arm to mean "any value in `0..30`."
 `..=` (inclusive) works in patterns too.
 
-### Cycling through characters for the generator
+### Cycling through Characters for the Generator
 
 If you want to avoid external crates, you can use the current time's nanoseconds to vary the generated string.
 This isn't cryptographically secure, so keep it strictly for the exercise:
@@ -76,7 +76,7 @@ let seed = SystemTime::now()
 For real randomness, use the [`rand`](https://docs.rs/rand) crate.
 We won't cover it here, but it's worth knowing it exists.
 
-## Ideas to try
+## Ideas to Try
 
 Start with the `is_strong` warm-up, then move on to the generator and scoring engine.
 Once those tests pass, take the validator in any direction that sounds interesting:

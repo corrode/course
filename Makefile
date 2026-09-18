@@ -58,14 +58,17 @@ examples:
 solutions:
 	REQUIRE_COMPLETE=1 ./scripts/check-solutions.sh
 
-# Snapshot the current frontend bundles, rebuild them, and fail if the
-# generated output differs. This works before or after the changes are committed.
+# Snapshot browser assets, rebuild them, and fail if the generated output
+# differs. This works before or after the changes are committed.
 js-check:
 	@tmpdir=$$(mktemp -d); \
 	trap 'rm -rf "$$tmpdir"' EXIT; \
 	cp -R static/dist "$$tmpdir/dist" && \
+	cp static/js/htmx.min.js "$$tmpdir/htmx.min.js" && \
+	npm test && \
 	npm run build:js && \
-	diff -ru "$$tmpdir/dist" static/dist
+	diff -ru "$$tmpdir/dist" static/dist && \
+	cmp "$$tmpdir/htmx.min.js" static/js/htmx.min.js
 
 # Spell check. Install once with: cargo install typos-cli
 typos:

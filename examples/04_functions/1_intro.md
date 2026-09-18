@@ -23,7 +23,7 @@ To call a function, write its name with the arguments in parentheses:
 let sum = add(2, 3);   // sum: i32 = 5
 ```
 
-## Expressions, not statements
+## Expressions, Not Statements
 
 The body of a function is a *block*: zero or more statements followed by an optional final expression.
 When that final expression has no trailing semicolon, its value becomes the value of the block.
@@ -49,7 +49,7 @@ Leave the semicolon off the final expression when you want to return its value.
 Adding one accidentally turns the body into "do this, then return `()`" and the compiler will complain that the types don't match.
 In the first exercise, you'll make that error disappear by changing a single character.
 
-## A few good habits
+## A Few Good Habits
 
 - Start with the smallest function you can.
   Single-purpose functions are easier to test and easier to read.

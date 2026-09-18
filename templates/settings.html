@@ -41,7 +41,7 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
         <div class="settings-grid">
             <div class="settings-row">
                 <div class="settings-row-text">
-                    <h3>Vim keybindings</h3>
+                    <h3>Vim Keybindings</h3>
                     <p>
                         Modal editing across every code editor on the site.
                         Persists across reloads on this browser.
@@ -62,7 +62,7 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
 
             <div class="settings-row">
                 <div class="settings-row-text">
-                    <h3>Programming ligatures</h3>
+                    <h3>Programming Ligatures</h3>
                     <p>
                         JetBrains Mono renders pairs like
                         <code>==</code>, <code>!=</code>, <code>-&gt;</code>,
@@ -86,7 +86,7 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
 
             <div class="settings-row">
                 <div class="settings-row-text">
-                    <h3>Highlight active line</h3>
+                    <h3>Highlight Active Line</h3>
                     <p>
                         Subtle background band on the line your cursor is on.
                         Turn it off for a quieter editor view.
@@ -110,7 +110,7 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
 
             <div class="settings-row">
                 <div class="settings-row-text">
-                    <h3>Editor font size</h3>
+                    <h3>Editor Font Size</h3>
                     <p>
                         Affects every CodeMirror instance. Useful on small
                         laptop screens or for projector demos.
@@ -167,7 +167,7 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
     {# ---------------- Saved data ---------------- #}
     <section class="admin-section" aria-label="Saved data">
         <div class="section-head">
-            <span class="section-eyebrow">Your data</span>
+            <span class="section-eyebrow">Your Data</span>
             <span class="section-meta">Lives in this browser</span>
         </div>
 
@@ -175,7 +175,7 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
             {% match ulid %} {% when Some with (u) %}
             <div class="settings-row">
                 <div class="settings-row-text">
-                    <h3>Your login link</h3>
+                    <h3>Your Login Link</h3>
                     <p>
                         Bookmark this link to stay signed in. Anyone with the
                         link can sign in as you, so keep it private.
@@ -202,7 +202,7 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
 
             <div class="settings-row">
                 <div class="settings-row-text">
-                    <h3>Editor drafts</h3>
+                    <h3>Editor Drafts</h3>
                     <p>
                         Each exercise's in-progress code is saved locally so
                         reloads don't lose your work. Clear them all to start
@@ -226,7 +226,7 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
     {# ---------------- Command-line workflow ---------------- #}
     <section class="admin-section" aria-label="Command-line workflow">
         <div class="section-head">
-            <span class="section-eyebrow">Command line</span>
+            <span class="section-eyebrow">Command Line</span>
             <span class="section-meta">
                 Edit in your own IDE, submit with
                 <code>cargo&nbsp;course</code>
@@ -249,7 +249,7 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
 
         <ol class="settings-cli-steps">
             <li>
-                <h4>1. Set up the CLI</h4>
+                <h4>1. Set Up the CLI</h4>
                 <p>
                     Installs <code>cargo-course</code> and links this browser
                     session to your machine in one paste. Safe to re-run — the
@@ -288,7 +288,7 @@ cargo course init --token {{ u }}</code></pre>
             </li>
 
             <li>
-                <h4>2. Submit a solution</h4>
+                <h4>2. Submit a Solution</h4>
                 <p>
                     From the course directory, point <code>submit</code> at the
                     exercise file you've been editing. Tests run locally first;
@@ -356,7 +356,7 @@ cargo course init --token {{ u }}</code></pre>
     !members.is_empty() %}
     <section class="admin-section" aria-label="Your team">
         <div class="section-head">
-            <span class="section-eyebrow">Your team</span>
+            <span class="section-eyebrow">Your Team</span>
             <span class="section-meta">
                 {{ members.len() }} member{% if members.len() != 1 %}s{% endif
                 %}{% match team_token %}{% when Some with (t) %} · team
@@ -408,7 +408,7 @@ cargo course init --token {{ u }}</code></pre>
 
     <section class="admin-section" aria-label="Recent submissions">
         <div class="section-head">
-            <span class="section-eyebrow">Recent submissions</span>
+            <span class="section-eyebrow">Recent Submissions</span>
             {% if !exercises.is_empty() %}
             <span class="section-meta submission-filters">
                 <label for="participant-filter">Participant:</label>
@@ -452,7 +452,7 @@ cargo course init --token {{ u }}</code></pre>
     {% else %} {% match ulid %} {% when Some with (_u) %}
     <section class="admin-section" aria-label="Your team">
         <div class="section-head">
-            <span class="section-eyebrow">Your team</span>
+            <span class="section-eyebrow">Your Team</span>
         </div>
         <p class="team-empty">
             You're not on a team yet. Teams are assigned via the signup link

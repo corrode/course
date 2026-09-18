@@ -1,4 +1,4 @@
-# Optional: give the parser a module boundary
+# Optional: Give the Parser a Module Boundary
 
 Return to the modules lesson with something worth hiding. This page includes your
 comma-line parser inside an inline `csv` module, so it runs in the browser without

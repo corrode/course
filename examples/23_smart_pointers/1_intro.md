@@ -1,4 +1,4 @@
-# Smart pointers
+# Smart Pointers
 
 **Smart pointers** such as `Box<T>` and `Rc<T>` manage ownership of heap values.
 They drop the value when its last owner is dropped, so you don't call `free` or `delete` yourself.
@@ -13,7 +13,7 @@ A `String` variable in Java holds a reference to a heap object that becomes elig
 Those references are not smart pointers in the Rust sense: there is no single *owner*, and you don't know when (or whether) cleanup happens.
 Rust's smart pointers use ownership to determine when to drop a value; `Rc` tracks its owners at runtime.
 
-## Where `Box` earns its keep
+## Where `Box` Earns Its Keep
 
 1. `Box<T>` gives you a heap allocation with a single owner.
    You give it a value, it puts it on the heap, and it frees it when the box goes out of scope.
@@ -29,7 +29,7 @@ Rust's smart pointers use ownership to determine when to drop a value; `Rc` trac
 You'll use `Box` in the exercises.
 I'll also cover `Rc` and `RefCell` briefly so you can recognize them when you read other people's Rust.
 
-### `Rc<T>`: shared ownership, single-threaded
+### `Rc<T>`: Shared Ownership, Single-Threaded
 
 `Box<T>` has exactly one owner.
 Sometimes several parts of your program need to share ownership of the same value, and you can't predict which one will be the last to let go.
@@ -48,7 +48,7 @@ let c = Rc::clone(&a);   // count is now 3
 `Arc<T>` ("atomically reference counted") provides shared ownership across threads, as long as the value inside is itself safe to share between threads.
 C++ devs: `Rc` is `shared_ptr` without the atomic overhead, `Arc` is `shared_ptr` with it.
 
-### `RefCell<T>`: interior mutability
+### `RefCell<T>`: Interior Mutability
 
 The borrow checker normally enforces "one mutable reference or many immutable ones" at compile time.
 `RefCell<T>` moves that check to *runtime*: you can hand out an `&RefCell<T>`, and someone holding it can still mutate the inner value by calling `.borrow_mut()`.

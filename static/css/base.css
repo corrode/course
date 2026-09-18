@@ -265,6 +265,42 @@ samp,
     background: var(--color-surface);
     font-size: 0.8rem;
 }
+:is([data-role="output-stderr"], .editor-test-detail) .tok-keyword {
+    color: var(--syn-keyword);
+}
+:is([data-role="output-stderr"], .editor-test-detail) :is(.tok-typeName, .tok-className, .tok-namespace) {
+    color: var(--syn-type);
+}
+:is([data-role="output-stderr"], .editor-test-detail) :is(.tok-string, .tok-string2) {
+    color: var(--syn-string);
+}
+:is([data-role="output-stderr"], .editor-test-detail) :is(.tok-number, .tok-bool, .tok-atom, .tok-literal) {
+    color: var(--syn-number);
+}
+:is([data-role="output-stderr"], .editor-test-detail) .tok-definition {
+    color: var(--syn-definition);
+}
+:is([data-role="output-stderr"], .editor-test-detail) .tok-macroName {
+    color: var(--syn-macro);
+}
+:is([data-role="output-stderr"], .editor-test-detail) .tok-comment {
+    color: var(--syn-comment);
+}
+:is([data-role="output-stderr"], .editor-test-detail) :is(.tok-punctuation, .tok-operator, .output-location) {
+    color: var(--syn-punctuation);
+}
+:is([data-role="output-stderr"], .editor-test-detail) :is(.output-error, .tok-invalid) {
+    color: var(--color-error);
+}
+:is([data-role="output-stderr"], .editor-test-detail) .output-warning {
+    color: var(--syn-type);
+}
+:is([data-role="output-stderr"], .editor-test-detail) :is(.output-note, .output-help) {
+    color: var(--syn-definition);
+}
+:is([data-role="output-stderr"], .editor-test-detail) .output-success {
+    color: var(--color-success);
+}
 .editor-stale-results {
     color: var(--color-text-muted);
     font-size: 0.85rem;

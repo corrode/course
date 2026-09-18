@@ -1,4 +1,4 @@
-# Putting the checks together
+# Putting the Checks Together
 
 `PasswordValidator::validate(password)` combines the character checks and scoring rules into a `PasswordReport` with a numeric score, a list of feedback messages, and a `PasswordStrength` label.
 
@@ -25,7 +25,7 @@ Push a short message into `feedback` for every rule that *fails*.
 That way your own follow-up code has something to react to.
 The length-related complaint should mention "characters", "length", "short", "longer", or "at least" so the test below can recognise it.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars) followed by `.count()` gives the length in Unicode scalar values.
   `str::len` counts bytes, which can overestimate the length of non-ASCII passwords.

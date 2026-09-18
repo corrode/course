@@ -1,4 +1,4 @@
-# Trait objects: `dyn Trait`
+# Trait Objects: `dyn Trait`
 
 The generic `print_descriptions<T: Describable>` you wrote earlier avoids runtime dispatch, but every element in a single call must have the same concrete type `T`.
 You can pass `&[Book]` or `&[Movie]`, but not a slice that contains *both*.
@@ -24,7 +24,7 @@ C++ folks will recognize the same machinery as virtual methods, but here you opt
 `run_all` is also compiled exactly once rather than once per concrete type.
 That trades one vtable lookup per call for the ability to mix concrete types in the slice.
 
-## Static vs. dynamic dispatch, side by side
+## Static vs. Dynamic Dispatch, Side by Side
 
 | | `fn f<T: Trait>(x: &T)` | `fn f(x: &dyn Trait)` |
 | --- | --- | --- |
@@ -36,7 +36,7 @@ That trades one vtable lookup per call for the ability to mix concrete types in 
 I'd start with generics for performance and flexibility.
 Reach for `dyn Trait` when you need to store different concrete types together or want a smaller binary.
 
-## A validation example
+## A Validation Example
 
 You'll use trait objects to build a small validation library.
 Each validator needs one method:
@@ -59,7 +59,7 @@ Each rule can carry its own configuration while the call site only needs a list 
 
 If you take the optional password validator later, you'll use the same idea for a configurable set of checks.
 
-## A word about `Box<dyn Trait>`
+## A Word about `Box<dyn Trait>`
 
 You'll also see `Box<dyn Trait>` in Rust code:
 
@@ -78,13 +78,13 @@ The pointer itself can live on the stack or inside another allocation, such as a
 `Box<dyn Trait>` is the owning form of this fixed-size handle.
 `&dyn Validator` borrows through a fixed-size handle instead of taking ownership.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::contains`](https://doc.rust-lang.org/std/primitive.str.html#method.contains) (with a `&str` argument) is all you need for the `MustContain` / `MustNotContain` checks.
 - Inside `collect_errors`, a plain `for` loop pushing into a `Vec<String>` is the most direct form.
   An `.iter().filter_map(...)` chain expresses the same loop with iterator adapters.
 
-## Stop or keep going?
+## Stop or Keep Going?
 
 For `"a b"`, predict the messages from all three rules before running the test.
 Why must `collect_errors` continue after a failed check, unlike the `?` operator?

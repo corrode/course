@@ -149,7 +149,21 @@ try {
   pending.shift().resolve({ ...green, success: false });
   await tick();
   assert(pending.length === 0 && !role("run-status").textContent.includes("passed"), "A failed process cannot autosubmit even if parsed test lines passed");
+  role("run-btn").click();
+  const log = '---- example stdout ----\nthread \'example\' panicked at src/main.rs:4:5:\nassertion `left == right` failed\n left: None\nright: Some(2)\n\nfailures:\n    example\n\ntest result: FAILED. 0 passed; 1 failed\n';
+  const diagnostic = 'error[E0308]: mismatched types\n --> src/main.rs:2:5\n2 | let value = Some(42);\nhelp: try `Some(2)`\n<img src=x onerror=alert(1)>';
+  pending.shift().resolve({ success: false, stdout: log, stderr: diagnostic, test_results: [{ name: "example", passed: false }] });
   await tick();
+  assert(role("output-stderr").textContent === log + "\n\n" + diagnostic, "Highlighted output preserves every character in both streams");
+  assert(!role("output-stderr").querySelector("img"), "Program output cannot inject HTML");
+  for (const theme of ["light", "dark"]) {
+    document.documentElement.dataset.theme = theme;
+    for (const output of [role("output-stderr"), section.querySelector(".editor-test-detail")]) {
+      const number = output.querySelector(".tok-number");
+      assert(number && getComputedStyle(number).color !== getComputedStyle(output).color, `Rust values are syntax-highlighted in ${theme} output`);
+    }
+  }
+  assert(role("output-stderr").querySelector(".output-error") && role("output-details").open, "Failed runs expose highlighted diagnostics in the expanded log");
   assert(browserErrors.length === 0, `No browser errors: ${browserErrors.join("; ")}`);
   checks.dataset.result = "passed";
   checks.textContent = `${messages.length} browser checks passed\n` + messages.map((message) => `✓ ${message}`).join("\n");

@@ -1,4 +1,4 @@
-# Public type, private fields
+# Public Type, Private Fields
 
 Making the type public is only the first layer.
 
@@ -19,7 +19,7 @@ read settings through the API, not depend on their storage.
 When you want something between fully public and fully private, `pub(crate)` makes an item visible everywhere in your own crate while keeping it hidden from outside users.
 Use it for helpers that several modules share but that aren't part of your public API.
 
-## Predict a failure
+## Predict a Failure
 
 Once the tests pass, temporarily replace `settings.get_port()` in the test with
 `settings.port`. Will it compile? Predict the error, then run it and restore the

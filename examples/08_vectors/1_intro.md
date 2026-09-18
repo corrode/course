@@ -2,7 +2,7 @@
 
 `Vec<T>` stores a sequence of values that can grow or shrink.
 
-## Arrays first: where vectors come from
+## Arrays First: Where Vectors Come From
 
 To see why a `Vec` can grow, compare it with an *array*.
 An array `[T; N]` is a fixed-size, contiguous chunk of values whose length is part of the type:
@@ -33,7 +33,7 @@ If you're coming from Python or Java, `Vec<T>` is the closer match for the lists
 In C, the same choice is closer to picking a fixed-size array or managing an allocation yourself.
 Rust gives you both choices, and its ownership rules apply to either one.
 
-## Vectors: growable, heap-allocated
+## Vectors: Growable, Heap-Allocated
 
 The `<T>` is a generic parameter: it works with any type, but a single `Vec` only holds one type at a time.
 So `Vec<i32>` is a vector of 32-bit integers, `Vec<String>` is a vector of owned strings.

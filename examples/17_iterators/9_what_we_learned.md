@@ -1,8 +1,8 @@
-# Wrapping up iterators
+# Wrapping Up Iterators
 
 You summed a numeric array with `sum`, transformed every element with `map`, kept just the matching ones with `filter`, and combined `filter` with `map` to convert borrowed slices into owned strings.
 
-## What we learned
+## What We Learned
 
 - An iterator pipeline starts with `.iter()`, `.iter_mut()`, `.into_iter()`, or a method such as `.chars()` or `.lines()`.
   Lazy adapters describe what should happen to each item.

@@ -1,4 +1,4 @@
-# Putting a value on the heap with `Box`
+# Putting a Value on the Heap with `Box`
 
 [`Box::new(value)`](https://doc.rust-lang.org/std/boxed/struct.Box.html#method.new) allocates space on the heap, moves `value` into it, and hands you back a `Box<T>` that owns that allocation.
 When the box goes out of scope, Rust drops the inner value and frees the memory.

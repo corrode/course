@@ -1,4 +1,4 @@
-# Counting words
+# Counting Words
 
 Start by turning a string of text into a `HashMap<String, usize>` that records how many times each word appears.
 Words are separated by whitespace and the count should be case-insensitive: `"Hello"` and `"hello"` are the same word.
@@ -6,7 +6,7 @@ Words are separated by whitespace and the count should be case-insensitive: `"He
 Build the map by splitting on whitespace, lowercasing each piece, and bumping its counter.
 The `entry` API handles the lookup and default insertion together, then gives you the counter to update.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::split_whitespace`](https://doc.rust-lang.org/std/primitive.str.html#method.split_whitespace) splits on any whitespace and skips empty pieces.
   That makes it a better default for natural text than splitting on one literal space.

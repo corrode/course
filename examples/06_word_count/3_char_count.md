@@ -1,4 +1,4 @@
-# Counting characters
+# Counting Characters
 
 You counted characters in the strings chapter.
 The same catch applies here: `text.len()` returns bytes, not characters.
@@ -10,6 +10,6 @@ Use a `for` loop, as in the previous exercise.
 Count every character, whitespace included, so `"hi there"` returns `8` (seven letters plus the space).
 The Unicode test below checks the difference between bytes and characters.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars) walks through every `char` in a string, whitespace and all.

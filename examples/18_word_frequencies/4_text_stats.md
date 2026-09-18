@@ -1,4 +1,4 @@
-# Text statistics
+# Text Statistics
 
 Now you'll combine several small aggregations in one function.
 `text_stats` returns three numbers about a piece of text: total word count, number of unique words, and the average word length as an `f64`.
@@ -17,12 +17,10 @@ Integer division truncates, so cast to `f64` before you divide.
 Converting an already-truncated result won't bring the fraction back.
 The test compares the result against a small tolerance because calculations with `f64` can introduce rounding error.
 
-`count_words` is stubbed with `todo!()` again so this file compiles on its own.
-Paste your earlier implementation into it before calling it from `text_stats`.
-You can organize the body of `text_stats` as you like.
-The test only cares about the returned tuple.
+`count_words` is provided here too.
+Reuse it and implement only `text_stats`.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`HashMap::values`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.values) yields the occurrence counts; [`Iterator::sum`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.sum) adds them to give the total number of words.
 - [`HashMap::len`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.len) gives the number of unique words because each key appears once.

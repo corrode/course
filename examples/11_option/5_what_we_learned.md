@@ -1,8 +1,8 @@
-# Wrapping up `Option`
+# Wrapping Up `Option`
 
 You consumed `Option`s with fallbacks and combinators, produced new ones from string and slice operations, and chained `find` and `map` to turn a search into the exact return type the signature asked for.
 
-## What we learned
+## What We Learned
 
 - `Option<T>` is Rust's stand-in for "value or absence".
   You cannot use it as a `T` without first extracting the value.

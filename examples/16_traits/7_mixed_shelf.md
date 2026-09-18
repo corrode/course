@@ -1,4 +1,4 @@
-# A mixed shelf
+# A Mixed Shelf
 
 Your shelf now contains a book and a movie. Would you keep `T: Describable`,
 use borrowed trait objects, or introduce an enum? Choose before opening the code.

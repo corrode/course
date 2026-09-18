@@ -1,4 +1,4 @@
-# `?` inside a loop
+# `?` inside a Loop
 
 `add_parsed_numbers` had two chances to return a parse error.
 `sum_numbers` may inspect many tokens, but it still returns only the first parse error it encounters.
@@ -12,7 +12,7 @@ What happens to the rest of the loop when parsing fails?
 Return `Ok(0)` for empty or whitespace-only input.
 Assume the running total fits in an `i32`.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::split_whitespace`](https://doc.rust-lang.org/std/primitive.str.html#method.split_whitespace) yields each token as a `&str`, skipping the gaps between numbers.
 - [`str::parse`](https://doc.rust-lang.org/std/primitive.str.html#method.parse) returns a `Result`; `parse::<i32>()` asks for an integer.

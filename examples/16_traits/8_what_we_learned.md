@@ -1,10 +1,10 @@
-# Wrapping up traits
+# Wrapping Up Traits
 
 You implemented the standard library's `Display` trait and defined a `Describable` trait of your own.
 You used `Describable` as a generic bound, then shared behavior through default methods.
 Finally, you switched from a generic to a trait object so one slice could hold several kinds of validation rule.
 
-## What we learned
+## What We Learned
 
 - A trait is a named collection of method signatures.
   Any type can opt in with `impl TraitName for TypeName { ... }`.

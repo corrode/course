@@ -1,9 +1,9 @@
-# Wrapping up `Result`
+# Wrapping Up `Result`
 
 The examples use simple `if` checks to build `Result`s with owned and borrowed success values.
 Combining `strip_suffix`, `parse`, and a bounds check produces a validating parser with several failure cases.
 
-## What we learned
+## What We Learned
 
 - `Result<T, E>` is how Rust expresses fallibility.
   There are no exceptions; a function that can fail says so in its signature.

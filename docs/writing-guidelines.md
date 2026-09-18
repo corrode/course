@@ -4,7 +4,7 @@ The house style for chapter prose and exercise doc-comments. The goal is a cours
 that respects the reader's time and existing experience. These rules exist to keep
 20+ chapters consistent as we restructure; apply them to every chapter you touch.
 
-## 1. Lead with the surprise (top principle)
+## 1. Lead with the Surprise (Top Principle)
 
 For every topic, open with the angle that **differs from other languages**, the
 **bug Rust prevents** at compile/runtime that would have shipped elsewhere, or the
@@ -32,7 +32,7 @@ example sets health to 200 and adds a 100-point bonus, the prose should talk abo
 that same 200 dropping to 44, not an abstract "large value." The reader should be
 able to trace the failure with the exact numbers they just read.
 
-## 2. Audience axiom
+## 2. Audience Axiom
 
 The reader already knows at least one other language. **Never explain what a
 variable, loop, function, return value, boolean, or integer _is_.** Do explain
@@ -71,24 +71,24 @@ desk. A few specifics that keep it that way:
   types for you."). Never bold-lead the items of a bulleted list, and don't
   pepper bold through a paragraph.
 
-## 4. Density guard
+## 4. Density Guard
 
 Cutting a sentence that explains the obvious is good. Compressing two clear
 sentences into one dense one is not. **Cut, don't crush.** Removing condescension
 should make the prose lighter, not denser.
 
-## 5. Cross-references
+## 5. Cross-References
 
 Refer to chapters by **name** ("the borrowing chapter", "the `Result` chapter"),
 not by number, so renumbering doesn't rot the prose.
 
-## 6. Pacing floor
+## 6. Pacing Floor
 
 Don't shrink a core chapter below ~2 hands-on exercises. It should feel like
 practice, not a reading. (Pure "why" chapters like the ownership consolidation and
 the appendix are exempt.)
 
-## 7. Difficulty honesty
+## 7. Difficulty Honesty
 
 When a concept is genuinely hard (the borrow checker, the `?`/error-type story, the
 CSV state machine), say so in a short, reassuring inline note, e.g. *"This is a
@@ -97,13 +97,19 @@ you."* Normalize the struggle instead of pretending everything is easy.
 
 ## 8. Headings
 
-Keep headings short and in sentence case ("Text into numbers", not "Text Into
-Numbers"). For the guarantees Rust gives you, a parallel "No _bad thing_" phrasing
-reads well and reinforces the lead-with-surprise angle: "No silent overflows", "No
-implicit conversions". Let the heading itself carry the surprise instead of a flat
-label like "Overflow".
+Keep chapter titles, section headings, and app headlines short and in Title Case.
+Capitalize the first and last word and the first word after a colon.
+Capitalize nouns, pronouns, verbs, adjectives, and adverbs; keep articles, coordinating conjunctions, and prepositions lowercase elsewhere, including longer prepositions such as "into", "with", and "without".
+For example: "Text into Numbers", "A Beginner's Guide to Rust", "Arrays First: Where Vectors Come From", and "Static vs. Dynamic Dispatch: A Sneak Preview".
+Capitalize particles in phrasal verbs ("Wrapping Up Numbers", "Set Up the CLI") and the main parts of hyphenated compounds ("Single-Threaded", "Step-by-Step").
+Preserve Rust identifiers and types, inline code, acronyms, brand spelling, filenames, slugs, and URLs exactly, even at the start or end of a heading: "Strings, &str, and Chars", "Counting with `entry`", and "A Note from corrode".
+Hint headings that match function names stay unchanged, such as `## factorial` or ``## `quoted_line`: The State Machine``.
+This policy does not apply to body text, button labels, or code blocks.
 
-## 9. Source formatting: one sentence per line
+For the guarantees Rust gives you, a parallel "No _Bad Thing_" phrasing reads well and reinforces the lead-with-surprise angle: "No Silent Overflows", "No Implicit Conversions".
+Let the heading itself carry the surprise instead of a flat label like "Overflow".
+
+## 9. Source Formatting: One Sentence per Line
 
 Write prose with one sentence per line in the Markdown source, with a hard line
 break after each sentence. It still renders as a normal paragraph, but the source
@@ -112,7 +118,7 @@ reflowed paragraph, and writing one sentence per line nudges you to check each
 sentence on its own. Don't wrap a single sentence to a fixed column width; let it
 run to the end of its line, however long it is.
 
-## 10. Code comments in examples
+## 10. Code Comments in Examples
 
 Comments in example code should teach, not label. Prefer a full sentence (or two)
 on its own line above the line it explains, rather than a terse trailing comment.

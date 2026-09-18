@@ -1,4 +1,4 @@
-# Making something reachable
+# Making Something Reachable
 
 This step doesn't compile.
 `calculate` tries to call a private function in `calculator`.

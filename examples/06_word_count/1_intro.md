@@ -1,11 +1,11 @@
-# Exercise break: word count
+# Exercise Break: Word Count
 
 You now have enough Rust to write a small word-count library.
 You'll combine strings, `for` loops, and functions without having to learn another language feature.
 
 This first version is the running example we'll keep refactoring throughout the course.
 
-## Splitting text into words
+## Splitting Text into Words
 
 The standard library hands you `split_whitespace` on every `&str`.
 You can use it in a `for` loop to walk through each word in a string:
@@ -20,7 +20,7 @@ It splits on any run of whitespace (spaces, tabs, newlines) and skips empties, w
 `.split_whitespace()` returns an iterator over the words.
 A `for` loop consumes that iterator without requiring its concrete type.
 
-## Walking characters
+## Walking Characters
 
 The same idea works at the character level via `.chars()`:
 

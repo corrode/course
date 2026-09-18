@@ -1,10 +1,10 @@
-# Rust cheatsheet
+# Rust Cheatsheet
 
 Forgot the syntax? That's what this page is for.
 It covers the syntax you'll use in the course, with [cheats.rs](https://cheats.rs/) as inspiration.
 Press `?` from any page to bring this up, and `Esc` to close it.
 
-## Variables and types
+## Variables and Types
 
 | Syntax | Meaning |
 | --- | --- |
@@ -24,7 +24,7 @@ Press `?` from any page to bring this up, and `Esc` to close it.
 | `println!("{s} {n}");` | Print to stdout, with a newline. |
 | Take `&str` in, return `String` out | Rule of thumb for function signatures. |
 
-## Control flow
+## Control Flow
 
 | Syntax | Meaning |
 | --- | --- |
@@ -57,7 +57,7 @@ Press `?` from any page to bring this up, and `Esc` to close it.
 | `HashMap<K, V>` | Hash map. `use std::collections::HashMap;` |
 | `m.insert(k, v);` `m.get(&k);` | Insert; lookup returns `Option<&V>`. |
 
-## Functions and closures
+## Functions and Closures
 
 | Syntax | Meaning |
 | --- | --- |
@@ -66,7 +66,7 @@ Press `?` from any page to bring this up, and `Esc` to close it.
 | `\|x: i32\| -> i32 { x + 1 }` | Closure with explicit types and a body block. |
 | `Fn`, `FnMut`, `FnOnce` | Closure traits, in order of how much they capture. |
 
-## Ownership and borrowing
+## Ownership and Borrowing
 
 | Syntax | Meaning |
 | --- | --- |
@@ -76,7 +76,7 @@ Press `?` from any page to bring this up, and `Esc` to close it.
 | `fn consume(s: String) { ... }` | Takes ownership; original binding becomes invalid. |
 | Rule | At any time: many `&` *or* one `&mut`, never both. |
 
-## Structs, enums, and methods
+## Structs, Enums, and Methods
 
 | Syntax | Meaning |
 | --- | --- |
@@ -98,7 +98,7 @@ Press `?` from any page to bring this up, and `Esc` to close it.
 | `.collect::<Vec<_>>()` | Drive a lazy chain into a concrete collection. |
 | `.sum()`, `.count()`, `.find(...)`, `.any(...)` | Common eager terminators. |
 
-### What does my closure receive?
+### What Does My Closure Receive?
 
 `filter` hands its closure a *reference* to whatever the iterator yields.
 If you're wondering where that extra `&` came from, check the iterator's item type first:
@@ -114,7 +114,7 @@ Method calls like `.starts_with`, `.len`, and `.contains` auto-dereference, so `
 Direct comparisons (`==`, `<`, `>`) don't, which is why you sometimes need `**` or `&&` to make the types match.
 
 
-## Error handling with `?`
+## Error Handling with `?`
 
 | Syntax | Meaning |
 | --- | --- |
@@ -122,7 +122,7 @@ Direct comparisons (`==`, `<`, `>`) don't, which is why you sometimes need `**` 
 | `Result<T, Box<dyn Error>>` | "Any error type", common in `main`. |
 | `?` requires a matching return type | Function must return `Result` or `Option`. |
 
-## Modules and visibility
+## Modules and Visibility
 
 | Syntax | Meaning |
 | --- | --- |
@@ -132,7 +132,7 @@ Direct comparisons (`==`, `<`, `>`) don't, which is why you sometimes need `**` 
 | `pub(crate) fn ...` | Public within this crate only. |
 | (no keyword) | Private to the current module. |
 
-## Traits and generics (just enough)
+## Traits and Generics (Just Enough)
 
 | Syntax | Meaning |
 | --- | --- |
@@ -140,7 +140,7 @@ Direct comparisons (`==`, `<`, `>`) don't, which is why you sometimes need `**` 
 | `impl Display for User { ... }` | Implement a trait for your type. |
 | `Box<dyn Trait>` | Heap-allocated trait object (dynamic dispatch). |
 
-## Cargo commands
+## Cargo Commands
 
 | Command | Purpose |
 | --- | --- |
@@ -152,7 +152,7 @@ Direct comparisons (`==`, `<`, `>`) don't, which is why you sometimes need `**` 
 | `cargo fmt` | Auto-format with rustfmt. |
 | `cargo clippy -- -D warnings` | Lint, fail on warnings. |
 
-## Where to look next
+## Where to Look Next
 
 [`std` docs](https://doc.rust-lang.org/std/) ·
 [Rust by Example](https://doc.rust-lang.org/rust-by-example/) ·

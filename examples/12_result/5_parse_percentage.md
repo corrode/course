@@ -1,4 +1,4 @@
-# Parse percentage
+# Parse Percentage
 
 A trailing `%` is allowed, but the remaining text may still fail to parse, and a parsed `u8` may be greater than `100`.
 Those two failures need different error messages:
@@ -13,7 +13,7 @@ The error type here is `&'static str`, so use string literals for the messages.
 If you find yourself wanting `format!("{input} is out of range")` in an `Err`, you'd need to change the return type to `Result<u8, String>`.
 Stick with literals for this exercise.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::strip_suffix`](https://doc.rust-lang.org/std/primitive.str.html#method.strip_suffix) removes a trailing pattern if present and returns `Option<&str>`.
   `input.strip_suffix('%').unwrap_or(input)` peels the `%` when there is one.

@@ -1,4 +1,4 @@
-# State machines and stateful parsing
+# State Machines and Stateful Parsing
 
 Reach for `split(',')` and CSV looks solved in one line.
 Then a field contains a comma: the row `"a,b",c` is meant to hold two fields, `a,b` and `c`.
@@ -11,7 +11,7 @@ A comma inside quotes is data; a comma outside quotes is a separator.
 This "for each character, update some state, occasionally emit a result" pattern is called a *state machine*.
 It comes up in any non-trivial parsing task: JSON, command-line arguments, terminal escape sequences, markup languages.
 
-## A smaller state machine
+## A Smaller State Machine
 
 Before writing CSV, try counting characters outside square brackets.
 Assume brackets are balanced and never nested:
@@ -38,7 +38,7 @@ Trace the state before and after each bracket. CSV needs a similar distinction
 between data and syntax, but also needs to collect fields and recognize escaped
 quotes. Work out those transitions in the exercise rather than copying this loop.
 
-## Tools for the CSV loop
+## Tools for the CSV Loop
 
 - `peekable()` lets you inspect the next character without consuming it.
   CSV needs lookahead to distinguish an escaped quote from a closing quote.
@@ -53,7 +53,7 @@ quotes. Work out those transitions in the exercise rather than copying this loop
 The tests use raw strings from the env-file chapter so quotes don't need
 backslash escapes in the Rust source. CSV itself escapes quotes by doubling them.
 
-## A useful tactic
+## A Useful Tactic
 
 When stateful parsing gets hairy, write the simple version first (`split_once`, `split(',')`) and let the easy tests pass.
 Then upgrade to the state-machine version for the harder cases.

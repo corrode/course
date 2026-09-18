@@ -1,4 +1,4 @@
-# Enums and pattern matching
+# Enums and Pattern Matching
 
 *“Dad, why is my sister’s name Rose?”  
 “Because your mother loves roses.”  
@@ -45,7 +45,7 @@ match code {
 }
 ```
 
-## `#[derive(...)]`: free implementations
+## `#[derive(...)]`: Free Implementations
 
 You'll see this line on many types in Rust:
 

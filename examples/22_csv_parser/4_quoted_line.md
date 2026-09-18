@@ -1,4 +1,4 @@
-# Quotes, embedded commas, and escapes
+# Quotes, Embedded Commas, and Escapes
 
 A field can be wrapped in double quotes, in which case any commas *inside* the quotes are part of the field, not separators.
 And a literal `"` inside a quoted field is encoded as `""` (two quotes).
@@ -15,7 +15,7 @@ If it's another `"`, push a literal `"` and consume both; otherwise close the fi
 Keeping track of which quote you've consumed is the hard part here.
 If a test fails, trace its input character by character and write down `in_quotes` after each step.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars) is the entry point for character-level iteration.
 - [`Iterator::peekable`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.peekable) wraps the iterator so you can look ahead one character.

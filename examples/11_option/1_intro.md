@@ -1,4 +1,4 @@
-# Option<T>: when a value might be missing
+# Option<T>: When a Value Might Be Missing
 
 Rust has no `null`.
 Instead, when a value might be absent, the type makes that explicit using `Option<T>`:
@@ -31,7 +31,7 @@ let upper = name.map(|s| s.to_uppercase());   // transform if Some
 let len = maybe_str.map_or(0, |s| s.len());   // transform-or-default
 ```
 
-### A note on `|x| ...` (closures)
+### A Note on `|x| ...` (Closures)
 
 Those `|s| s.to_uppercase()` and `|s| s.len()` bits are *closures*: anonymous functions you can pass as arguments.
 The pipes hold the parameters; everything after them is the body:

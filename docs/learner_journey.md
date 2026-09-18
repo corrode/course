@@ -1,4 +1,4 @@
-# The learner's mental journey
+# The Learner's Mental Journey
 
 > **Status: historical audit.** This document captures the course before the current `00_integers` through `25_appendix` structure. Keep it as rationale and a cumulative changelog, but do not treat its chapter numbering or implementation details as current. See `docs/architecture.md` for the live repository map.
 
@@ -50,7 +50,7 @@ That was nice."
 
 ---
 
-## 01: Integer handling  ·  *Easy*
+## 01: Integer Handling  ·  *Easy*
 
 **State of mind.** Confident from chapter 0. Three functions instead
 of one. They read it as "three of the same thing".
@@ -86,7 +86,7 @@ positive `f64` truncates, so `108.5 as u32 = 108`. Phew, lucky."
 
 ---
 
-## 02: Strings and chars  ·  *Easy*
+## 02: Strings and Chars  ·  *Easy*
 
 **State of mind.** Still riding the wave. The intro table
 ("borrowed/owned") feels reassuring. There's a *system* here.
@@ -113,7 +113,7 @@ literally one line."
 
 ---
 
-## 03: Enums and matching  ·  *Easy*
+## 03: Enums and Matching  ·  *Easy*
 
 **State of mind.** First proper Rust idiom. The intro mentions
 "exhaustive matching", and they're curious whether the compiler really
@@ -147,7 +147,7 @@ return `false` for four of them, or... use `_`. The intro said
 
 ---
 
-## 04: Vectors basics  ·  *Easy*
+## 04: Vectors Basics  ·  *Easy*
 
 **State of mind.** Comfortable. They've been waiting for "a list".
 
@@ -183,7 +183,7 @@ but that allocates."
 
 ---
 
-## 05: HashMaps  ·  *Easy*  (with one moderate function)
+## 05: HashMaps  ·  *Easy*  (with One Moderate Function)
 
 **State of mind.** They feel like they know "real" Rust now. `Vec`
 and `HashMap` are the two collections every working program uses.
@@ -248,7 +248,7 @@ but I don't know that yet. Let me do `if contains_key { ... } else { ... }`."
 
 ---
 
-## 07: Option handling  ·  *Moderate*
+## 07: Option Handling  ·  *Moderate*
 
 **State of mind.** They know the *shape* of `Option` from chapter 2
 (`first_char`). Now they're being asked to actually *manipulate*
@@ -288,7 +288,7 @@ Or `name.as_ref()`? Wait, what's the difference?"
 
 ---
 
-## 08: Result handling  ·  *Moderate*
+## 08: Result Handling  ·  *Moderate*
 
 **State of mind.** "Oh, like Option but with an error." They
 *think* they know what they're in for.
@@ -329,7 +329,7 @@ OK, nested `match`."
 
 ---
 
-## 09: Ownership basics  ·  *Spike*
+## 09: Ownership Basics  ·  *Spike*
 
 **State of mind.** They've heard ownership is the hard part. They're
 nervous. They want it to make sense, not just memorise it.
@@ -373,7 +373,7 @@ green. ...is that it?"
 
 ---
 
-## 10: Structs and methods  ·  *Moderate*
+## 10: Structs and Methods  ·  *Moderate*
 
 **State of mind.** Comfortable territory. Most languages have a
 flavour of this.
@@ -409,7 +409,7 @@ self.is_verified = true;`. `can_access_premium`: `self.is_verified
 
 ---
 
-## 11: Iterator patterns  ·  *Hard*
+## 11: Iterator Patterns  ·  *Hard*
 
 **State of mind.** This is the chapter that converts "I write Rust
 loops" into "I write Rust." Mixed feelings: excitement at the
@@ -463,7 +463,7 @@ difference?"
 
 ---
 
-## 12: Password validator  ·  *Hard* (open-ended)
+## 12: Password Validator  ·  *Hard* (Open-Ended)
 
 **State of mind.** Tired but proud: they've completed 11 chapters.
 Now they get a "build something" exercise. The intro explicitly
@@ -512,7 +512,7 @@ Done. ...now `generate_secure_password`. The hint about
 
 ---
 
-## 13: The `?` operator  ·  *Moderate*
+## 13: The `?` Operator  ·  *Moderate*
 
 **State of mind.** Glad to be back in tutorial-mode after the
 open-ended chapter 12.
@@ -566,7 +566,7 @@ around it. `sum_numbers_in_file`: this needs both error types. Use
 
 ---
 
-## 14: Modules and visibility  ·  *Easy* (but with a sharp landing)
+## 14: Modules and Visibility  ·  *Easy* (but with a Sharp Landing)
 
 **State of mind.** They expect a lecture-flavoured chapter. The
 intro markdown is solid.
@@ -604,7 +604,7 @@ has `let state = ...; // Once you make State public, this will compile`
 
 ---
 
-## 15: Word counter  ·  *Moderate* (synthesis)
+## 15: Word Counter  ·  *Moderate* (Synthesis)
 
 **State of mind.** "I've done all the building blocks. Now I'm
 combining them." Confident, slightly self-conscious about whether
@@ -644,7 +644,7 @@ avg = total chars / total words as f64. Done."
 
 ---
 
-## 16: Env parser  ·  *Moderate-to-Hard*
+## 16: Env Parser  ·  *Moderate-to-Hard*
 
 **State of mind.** "I'm parsing real files now." Feels professional.
 
@@ -688,7 +688,7 @@ first missing."
 
 ---
 
-## 17: CSV parser  ·  *Hard*
+## 17: CSV Parser  ·  *Hard*
 
 **State of mind.** Last "real" chapter. They want to feel they've
 graduated. The doc-comment "Good luck." doesn't help the nerves.
@@ -746,7 +746,7 @@ I'm decoding doubled quotes wrong."
 
 ---
 
-## 18: Quiz  ·  *Trivial* (by design)
+## 18: Quiz  ·  *Trivial* (by Design)
 
 **State of mind.** Reflective. They want to know whether all this
 stuck.
@@ -761,7 +761,7 @@ stuck.
 
 ---
 
-# Cross-cutting observations
+# Cross-Cutting Observations
 
 These came up across multiple chapters; flagging them here so they
 don't have to be repeated in every entry.
@@ -807,12 +807,12 @@ don't have to be repeated in every entry.
 
 ---
 
-# Changelog: fixes applied from this audit
+# Changelog: Fixes Applied from This Audit
 
 The items below have landed in the course repository. They are listed
 in the order they appear in this document.
 
-## Per-chapter
+## Per-Chapter
 
 - **Chapter 1**: `test_tax_calculation` now also asserts
   `calculate_total_with_tax(100, 8.4) == 108`, which pins down
@@ -851,7 +851,7 @@ in the order they appear in this document.
   with `r#""a","b","c""#` sits *between* the simple-split case and
   the doubled-quote one.
 
-## Cross-cutting
+## Cross-Cutting
 
 - **Cheatsheet**: added a *What does my closure receive?* table to
   the iterators section, covering the four common shapes
@@ -907,7 +907,7 @@ in the order they appear in this document.
   no learner progress is lost regardless of which migration state a
   database is currently in.
 
-## Test naming
+## Test Naming
 
 Test function names were inconsistent: some matched their target
 (`test_count_chars`), others described a scenario (`test_email_validation`,
@@ -925,7 +925,7 @@ doc-comment references that named tests by their old names
 (chapter 12's *Suggested order*, chapter 14's `get_port` hint) were
 updated to point at the new names.
 
-## Per-chapter (second pass)
+## Per-Chapter (Second Pass)
 
 A second sweep through the per-chapter sharp edges that hadn't yet
 been addressed in code:
@@ -987,7 +987,7 @@ been addressed in code:
   `csv_to_records` ships a worked `headers.iter().cloned().zip(...)`
   sketch so the chained `.collect()`s aren't a guessing game.
 
-# Multi-step split
+# Multi-Step Split
 
 In the migration to multi-step chapters, each chapter directory was
 rebuilt around one `<N>_<slug>.rs` file per concept. `1_intro.md`
@@ -1096,7 +1096,7 @@ step files. Recorded boundaries:
   whole "chapter" is just a pointer to `static/quiz.html`; there's
   nothing to split.
 
-## Cross-cutting notes from the migration
+## Cross-Cutting Notes from the Migration
 
 - **Self-contained steps.** Every step file compiles on its own. When
   a later step needs a helper from an earlier step, the helper is
