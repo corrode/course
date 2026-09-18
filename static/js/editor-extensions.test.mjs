@@ -24,10 +24,10 @@ function complete(
 
 test("completion is suppressed in comments and literals", () => {
   for (const source of [
-    "// hel|lo",
-    "/* hel|lo */",
-    'fn main() { "hel|lo"; }',
-    'fn main() { r#"hel|lo"#; }',
+    "// hello|world",
+    "/* hello|world */",
+    'fn main() { "hello|world"; }',
+    'fn main() { r#"hello|world"#; }',
     "fn main() { 'a|'; }",
   ]) {
     assert.equal(complete(source), null, source);

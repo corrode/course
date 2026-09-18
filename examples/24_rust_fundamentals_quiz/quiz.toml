@@ -8,18 +8,18 @@
 # choice.
 
 [[questions]]
-prompt = "What happens when you pass a `String` to a function in Rust?"
+prompt = "What happens to `s` when you call `consume(s)` with `fn consume(s: String)`?"
 hint = "Think about ownership rules."
 answers = [
   { text = "The `String` is copied, and both caller and function own it.", correct = false, explanation = """
-Rust never implicitly copies heap data; that would defeat the point of single ownership.""" },
+`String` does not implement `Copy`. This call moves it; use `s.clone()` if you need a separate copy of its bytes.""" },
   { text = "The `String`'s ownership moves into the function, and it's no longer valid in the caller.", correct = true, explanation = """
 Passing a `String` by value transfers ownership; you can't use it in the caller again unless the function returns it.""" },
   { text = "The function borrows the `String`, and ownership stays with the caller.", correct = false, explanation = """
 Borrowing requires an explicit `&String` (or `&str`).
 Bare `String` means a move.""" },
   { text = "The function automatically gets a reference to the `String`.", correct = false, explanation = """
-References must always be explicit in Rust; there's no implicit auto-ref at call sites.""" },
+This function takes a `String` by value. Method calls can automatically borrow their receiver, but this is an ordinary function call.""" },
 ]
 
 [[questions]]
@@ -51,7 +51,7 @@ Numeric conversion is done with `as`, `From`/`Into`, or `try_from`.""" },
 ]
 
 [[questions]]
-prompt = "How do you borrow a value immutably?"
+prompt = "Given `let value = String::from(\"hello\");`, how do you borrow this `String` immutably?"
 answers = [
   { text = "`&mut value`", correct = false, explanation = """
 That's a *mutable* borrow.""" },
@@ -60,20 +60,30 @@ The `&` operator produces a shared, immutable reference.""" },
   { text = "`*value`", correct = false, explanation = """
 `*` *dereferences* a reference; it doesn't create one.""" },
   { text = "`value.clone()`", correct = false, explanation = """
-`.clone()` makes an independent owned copy, not a reference to the original.""" },
+`String::clone()` copies the string bytes into another owned `String`. This is specific to `String`; cloning a shared pointer can keep sharing its data.""" },
 ]
 
 [[questions]]
-prompt = "Which statement about Rust's ownership is correct?"
+prompt = """
+What happens when this inner scope ends?
+
+```rust
+let name = String::from("Ada");
+{
+    let moved = name;
+}
+// Can we use name here?
+```
+"""
 answers = [
-  { text = "A value can have multiple owners at the same time.", correct = false, explanation = """
-Single ownership is the whole point: at most one owner at any moment.""" },
-  { text = "When an owner goes out of scope, the value is dropped.", correct = true, explanation = """
-This is how Rust frees memory deterministically, without a garbage collector.""" },
-  { text = "Assigning a value to a second variable always copies it.", correct = false, explanation = """
-For non-`Copy` types, assignment *moves* ownership; the original binding can't be used afterwards.""" },
-  { text = "Primitive types need manual memory management.", correct = false, explanation = """
-Primitives implement `Copy`, so they're duplicated on assignment, no manual management.""" },
+  { text = "`moved` drops the string; `name` can no longer be used.", correct = true, explanation = """
+The assignment moves this `String` into `moved`. At the end of the inner scope, `moved` drops it and frees its buffer.""" },
+  { text = "`name` becomes usable again when `moved` goes out of scope.", correct = false, explanation = """
+A move does not temporarily lend ownership. Use a borrow (`let borrowed = &name;`) if you want `name` to keep owning the string.""" },
+  { text = "Both bindings own separate copies of the string.", correct = false, explanation = """
+Assignment does not clone a `String`. `let copied = name.clone();` would create a separate string.""" },
+  { text = "Rust keeps the string alive because `name` is still in scope.", correct = false, explanation = """
+`name` has been moved from. Shared ownership is possible with types such as `Rc`, a reference-counted pointer, but this code uses a plain `String`.""" },
 ]
 
 [[questions]]
@@ -181,6 +191,7 @@ Usually you reach for `match` instead, and `==` only works if the enum derives `
 
 [[questions]]
 prompt = """
+A named lifetime ties the returned borrow to the input borrows; it does not keep their owners alive.
 What does the lifetime in this signature say?
 
 ```rust
@@ -200,18 +211,31 @@ They don't; the compiler can use the shorter lifetime for `'a` because a longer-
 ]
 
 [[questions]]
-prompt = "What does `.clone()` typically do?"
+prompt = """
+Compare these two clones:
+
+```rust
+use std::rc::Rc;
+
+let text = String::from("hello");
+let text_copy = text.clone();
+let shared = Rc::new(String::from("hello"));
+let shared_copy = Rc::clone(&shared);
+```
+
+`Rc<T>` is a reference-counted pointer: several handles can own the same allocation.
+Cloning an `Rc` adds a handle, and the contained value is dropped when the last strong handle is dropped.
+Which pair still shares the same string allocation?
+"""
 answers = [
-  { text = "Shallow-copies the data into a new value.", correct = false, explanation = """
-Most `Clone` impls are deep; they duplicate owned heap data so the new value is fully independent.""" },
-  { text = "Creates a reference to the original.", correct = false, explanation = """
-That's `&value`.
-`.clone()` creates a new value.""" },
-  { text = "Creates an independent deep copy.", correct = true, explanation = """
-For collections and `String`, `clone()` allocates fresh memory and copies the contents in.""" },
-  { text = "Moves the value to a new memory location.", correct = false, explanation = """
-Move is what *assignment* does.
-`clone()` produces a second value alongside the original.""" },
+  { text = "Only `shared` and `shared_copy`.", correct = true, explanation = """
+`String::clone` copies the bytes into a separate buffer. `Rc::clone` increments a reference count without cloning the contained `String`. `Clone` does not promise a deep copy.""" },
+  { text = "Only `text` and `text_copy`.", correct = false, explanation = """
+These are separate owned strings. Changing a mutable `text_copy` would not change `text`. The two `Rc` handles share instead.""" },
+  { text = "Both pairs.", correct = false, explanation = """
+The `Rc` pair shares its allocation, but cloning this nonempty `String` creates another buffer.""" },
+  { text = "Neither pair: `clone` always copies all the data.", correct = false, explanation = """
+Each type defines its own `Clone` implementation. A new `Rc` handle still points to the same data; a new `String` owns copied bytes.""" },
 ]
 
 [[questions]]
@@ -229,13 +253,13 @@ Not built into the language.""" },
 ]
 
 [[questions]]
-prompt = "When is a value's `drop` method called?"
-hint = "Same answer that explains why Rust doesn't need a garbage collector."
+prompt = "In `{ let s = String::from(\"hello\"); }`, when is `s` dropped?"
+hint = "Here, `s` is neither moved nor explicitly dropped before the closing brace."
 answers = [
   { text = "When the value is explicitly set to null.", correct = false, explanation = """
 Rust has no null.""" },
   { text = "When the value goes out of scope.", correct = true, explanation = """
-This is RAII: the compiler inserts the `drop` call at the end of the value's scope.""" },
+Here `s` still owns the string when its scope ends, so its buffer is freed. Dropping one `Rc` handle would not drop shared data while another strong handle remains.""" },
   { text = "When `Drop::drop` is called manually.", correct = false, explanation = """
 You're not allowed to call `Drop::drop` directly.
 Use `std::mem::drop` if you need to drop early.""" },
@@ -244,10 +268,10 @@ Use `std::mem::drop` if you need to drop early.""" },
 ]
 
 [[questions]]
-prompt = "What does the `'static` lifetime mean?"
+prompt = "What does `'static` mean in the reference type `&'static str`?"
 answers = [
   { text = "The value is valid for the entire program's lifetime.", correct = true, explanation = """
-`'static` references are either to data baked into the binary (string literals, `const` data) or to leaked heap allocations.""" },
+The referenced string can remain valid for the whole program, as a string literal does. This describes a reference; a type bound such as `T: 'static` does not mean an owned value must live forever.""" },
   { text = "The variable cannot be modified.", correct = false, explanation = """
 `'static` is about *lifetime*, not mutability.
 A `static mut` is `'static` and mutable (but unsafe to touch).""" },
@@ -285,7 +309,7 @@ There is no `global` keyword.""" },
 ]
 
 [[questions]]
-prompt = "Which of these does **not** create a reference?"
+prompt = "Given `let mut x: &i32 = &42;`, which line binds `r` to an `i32` rather than a reference?"
 hint = "`*` is the dereference operator."
 answers = [
   { text = "`let r = &x;`", correct = false, explanation = """
@@ -293,8 +317,42 @@ That *is* a reference, a shared one.""" },
   { text = "`let r = &mut x;`", correct = false, explanation = """
 That's also a reference, a mutable one.""" },
   { text = "`let r = *x;`", correct = true, explanation = """
-`*x` dereferences `x` and (for `Copy` types) gives you the value.
-`r` is a value, not a reference.""" },
-  { text = "`let r = x.as_ref();`", correct = false, explanation = """
-`AsRef::as_ref` returns a reference.""" },
+Here `x` is an `&i32`, so `*x` reads the integer. Since `i32` implements `Copy`, `r` receives a copy of `42`.""" },
+  { text = "`let r = &*x;`", correct = false, explanation = """
+`*x` refers to the integer, then `&` borrows it again. The type of `r` is `&i32`.""" },
+]
+
+[[questions]]
+prompt = '''
+In the CSV project, a comma inside quotes is data, and `""` inside a quoted field encodes one literal `"`.
+Predict the fields for this row:
+
+```text
+"a""b,c",d
+```
+'''
+hint = "Trace whether the parser is inside quotes after consuming the escaped pair."
+answers = [
+  { text = '`["a\"b,c", "d"]`', correct = true, explanation = "The doubled quote adds one literal quote and leaves the parser inside the quoted field. The first comma stays in that field; the comma after the closing quote separates `d`." },
+  { text = '`["ab", "c", "d"]`', correct = false, explanation = "This loses the escaped quote and splits at a comma that is still inside quotes. Consuming the escaped pair must not exit quoted mode." },
+  { text = '`["a\"\"b,c", "d"]`', correct = false, explanation = "The two input quotes encode one output quote. The parser pushes one quote and consumes the second without pushing it again." },
+  { text = '`["a\"b,c,d"]`', correct = false, explanation = "The quote before the final comma closes the quoted field. That comma is a separator, so `d` belongs in a second field." },
+]
+
+[[questions]]
+prompt = '''
+The environment-file project's typed lookup returns `Option<T>`. For a `u16` port, its body could be:
+
+```rust
+values.get(key).and_then(|raw| raw.parse::<u16>().ok())
+```
+
+Predict the results when `PORT` is absent, is `"8080"`, and is `"eight"`, in that order.
+'''
+hint = "`and_then` calls the closure only for `Some`. `.ok()` converts a successful `Result` to `Some` and an error to `None`."
+answers = [
+  { text = "`None`, `Some(8080)`, `None`.", correct = true, explanation = "A missing key skips the closure. Valid text parses to `Some(8080)`. `.ok()` discards the parse error for `eight`, so this API cannot distinguish invalid text from an absent key." },
+  { text = "`None`, `Some(8080)`, `Err(...)`.", correct = false, explanation = "The parser produces an error, but `.ok()` turns it into `None`. To preserve that distinction, you would need a different return type, such as `Result<Option<u16>, ParseIntError>`." },
+  { text = "`Some(0)`, `Some(8080)`, `None`.", correct = false, explanation = "Nothing supplies a default value. A missing key produces `None`; the caller can choose a default separately." },
+  { text = "`None`, `Some(8080)`, a panic.", correct = false, explanation = "There is no `unwrap` here. Parsing invalid text returns an error, which `.ok()` converts to `None` without panicking." },
 ]
