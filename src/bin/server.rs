@@ -304,6 +304,9 @@ struct UiExerciseStatus {
     /// populated for per-step progress (`load_step_progress`); the
     /// per-chapter rollup leaves it empty.
     submitted_code: Option<String>,
+    /// Whether that most recent submission passed its tests, not whether
+    /// any earlier submission passed. False when there is no submission.
+    submitted_passed: bool,
 }
 
 /// Template for participant dashboard.
@@ -1635,6 +1638,7 @@ async fn render_exercise_page(
                             // badge and chapter list, never to seed an
                             // editor, so the submitted source is irrelevant.
                             submitted_code: None,
+                            submitted_passed: false,
                         },
                     )
                 })
@@ -1754,6 +1758,7 @@ async fn render_exercise_page(
                         show_title: !prev_was_note,
                         starter_code: code.starter_code.clone(),
                         submitted_code: status.submitted_code,
+                        submitted_passed: status.submitted_passed,
                         attempted: status.attempted,
                         completed: status.completed,
                         perfected: status.perfected,
@@ -1857,6 +1862,7 @@ async fn load_step_progress(
         // with it on devices that have no local draft.
         if entry.submitted_code.is_none() {
             entry.submitted_code = Some(row.source_code.clone());
+            entry.submitted_passed = row.tests_passed;
         }
     }
     Ok(by_key)
@@ -3517,6 +3523,69 @@ fn calculate_submission_hash(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn step_progress_keeps_latest_submission_metadata_separate_from_completion() {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!().run(&pool).await.unwrap();
+        sqlx::query("INSERT INTO participants (id, name) VALUES ('participant', 'Test')")
+            .execute(&pool)
+            .await
+            .unwrap();
+
+        assert!(
+            load_step_progress(&pool, "participant")
+                .await
+                .unwrap()
+                .is_empty()
+        );
+        let empty = UiExerciseStatus::default();
+        assert!(empty.submitted_code.is_none());
+        assert!(!empty.submitted_passed);
+
+        for (key, latest_passed) in [("chapter/1_step", false), ("chapter/2_step", true)] {
+            // Insert newest first so the query must sort rather than rely on insertion order.
+            for (version, passed) in [(2, latest_passed), (1, !latest_passed)] {
+                sqlx::query(
+                    "INSERT INTO submissions \
+                     (id, participant_id, exercise_name, source_code, tests_passed, \
+                      clippy_passed, fmt_passed, submitted_at) \
+                     VALUES (?, 'participant', ?, ?, ?, ?, ?, ?)",
+                )
+                .bind(format!("{key}-{version}"))
+                .bind(key)
+                .bind(format!("source {version}"))
+                .bind(passed)
+                .bind(passed)
+                .bind(passed)
+                .bind(format!("2026-09-18 12:00:0{version}"))
+                .execute(&pool)
+                .await
+                .unwrap();
+            }
+        }
+
+        let progress = load_step_progress(&pool, "participant").await.unwrap();
+        assert_eq!(progress.len(), 2);
+        for (key, latest_passed) in [("chapter/1_step", false), ("chapter/2_step", true)] {
+            let status = &progress[key];
+            assert!(status.attempted);
+            assert!(status.completed);
+            assert!(status.perfected);
+            assert_eq!(status.submitted_code.as_deref(), Some("source 2"));
+            assert_eq!(status.submitted_passed, latest_passed);
+        }
+        assert!(
+            load_step_progress(&pool, "other-participant")
+                .await
+                .unwrap()
+                .is_empty()
+        );
+    }
 
     #[test]
     fn progress_counts_exclude_quizzes_notes_and_bonuses() {

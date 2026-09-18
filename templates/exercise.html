@@ -181,7 +181,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     <div class="chapter-prose exercise-prose">{{ html|safe }}</div>
     {% when cargo_course::exercises::RenderKind::Code with { dom_id,
     exercise_key, eyebrow, title, show_title, starter_code, submitted_code,
-    attempted, completed, perfected, github_dev_url, hints_html, solution_code }
+    submitted_passed, attempted, completed, perfected, github_dev_url, hints_html, solution_code }
     %}
 
     <section
@@ -189,6 +189,8 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         class="exercise-section"
         data-step-id="{{ dom_id }}"
         data-exercise-key="{{ exercise_key }}"
+        {% match ulid %}{% when Some with (u) %}data-ulid="{{ u }}"{% when None %}{% endmatch %}
+        data-submitted-passed="{% if *submitted_passed %}true{% else %}false{% endif %}"
         data-completed="{% if *completed %}true{% else %}false{% endif %}"
     >
         <div class="exercise-section-head">
@@ -750,13 +752,16 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
                     );
                     const stepId = section.dataset.stepId;
                     const exerciseKey = section.dataset.exerciseKey;
+                    const draftParticipant =
+                        submitBtn?.dataset.ulid || section.dataset.ulid || "anonymous";
                     const mount = mountInlineEditor(section, {
                         starter: fallback ? fallback.value : "",
                         submitted: submittedEl ? submittedEl.value : null,
+                        submittedPassed: section.dataset.submittedPassed === 'true',
                         slug: exerciseKey,
                         features: {
                             vim: true,
-                            draftKey: `corrode:draft:${stepId}`,
+                            draftKey: `corrode:draft:${draftParticipant}:${exerciseKey}`,
                             submit: submitBtn
                                 ? {
                                       ulid: submitBtn.dataset.ulid,

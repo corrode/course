@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<meta charset="utf-8">
+<title>Inline editor browser regression checks</title>
+<link rel="stylesheet" href="/static/css/base.css">
+<style>
+  body { padding: 2rem; }
+  main { max-width: 1100px; margin: auto; }
+  .toolbar { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; }
+  .toolbar [data-role="action-status"] { margin-right: auto; }
+  [data-role="editor-fallback"] { width: 100%; height: 200px; }
+  [data-role="output-stderr"] { padding: 1rem; white-space: pre-wrap; }
+  #checks { margin-top: 2rem; white-space: pre-wrap; }
+</style>
+<main>
+<h1>Inline editor regression checks</h1>
+<section class="exercise-section" id="exercise" data-exercise-key="browser-check">
+  <div class="toolbar">
+    <span data-role="action-status"></span>
+    <button class="btn" data-role="reset-btn">Reset</button>
+    <button class="btn" data-role="copy-btn">Copy</button>
+    <button class="btn" data-role="format-btn">Format</button>
+    <button class="btn" data-role="run-btn">Run</button>
+    <button class="btn" data-role="submit-btn">Submit</button>
+  </div>
+  <div><textarea data-role="editor-fallback">fn main() {
+    todo!()
+}
+</textarea><div data-role="editor-mount"></div></div>
+  <span data-role="run-spinner" style="display:none">Running…</span>
+  <p data-role="run-status"></p>
+  <div data-role="output-panel" style="display:none">
+    <ul data-role="test-list"></ul>
+    <details data-role="output-details"><summary>Full output</summary><pre data-role="output-stderr"></pre></details>
+  </div>
+</section>
+<pre id="checks" data-result="running">Running browser checks…</pre>
+</main>
+<script type="module">
+import { mountInlineEditor, setVimGlobal } from "/static/dist/inline-editor.js";
+const checks = document.querySelector("#checks");
+const messages = [];
+const assert = (condition, message) => { if (!condition) throw new Error(message); messages.push(message); };
+const tick = () => new Promise((resolve) => setTimeout(resolve, 20));
+const section = document.querySelector("#exercise");
+const role = (name) => section.querySelector(`[data-role="${name}"]`);
+const pending = [];
+const green = { success: true, test_results: [{ name: "example", passed: true }], stdout: "test example ... ok", stderr: "compiler warning" };
+const oldFetch = window.fetch;
+window.fetch = (url, options) => new Promise((resolve) => pending.push({ url, options, resolve: (data) => resolve({ ok: true, json: async () => data }) }));
+let view, cm;
+const browserErrors = [];
+window.addEventListener("error", (event) => browserErrors.push(event.message));
+window.addEventListener("unhandledrejection", (event) => browserErrors.push(String(event.reason)));
+try {
+  const options = {
+    slug: "browser-check",
+    features: {
+      vim: true,
+      draftKey: "browser-regression-draft",
+      submit: { ulid: "browser-test", exerciseKey: "browser-check" },
+      buildExtraExtensions(modules) {
+        cm = modules;
+        return modules.view.ViewPlugin.define((editor) => { view = editor; return {}; });
+      },
+    },
+  };
+  const api = await mountInlineEditor(section, options);
+  assert(!!view, "CodeMirror mounts rather than falling back");
+  assert(await mountInlineEditor(section, options) === api, "Mounting twice is idempotent");
+  assert(api.getValue().includes("\n  todo!()"), "Starter code uses two-space indentation");
+  assert(view.contentDOM.getAttribute("aria-label").includes("Rust code editor"), "Editor has an accessible name");
+  view.dispatch({ selection: { anchor: 5 } });
+  assert(view.dom.classList.contains("inline-rust-editor"), "Editor chrome survives CodeMirror updates");
+
+  role("format-btn").click();
+  const staleFormat = pending.shift();
+  api.setValue("fn newer() {}\n");
+  staleFormat.resolve({ success: true, code: "fn old() {}\n" });
+  await tick();
+  assert(api.getValue() === "fn newer() {}\n", "A late Format response cannot overwrite new edits");
+
+  role("run-btn").click();
+  const staleRun = pending.shift();
+  api.setValue("fn newest() {}\n");
+  staleRun.resolve(green);
+  await tick();
+  assert(pending.length === 0 && role("submit-btn").style.display === "none", "A late Run cannot submit or label a newer version");
+
+  const unformatted = 'fn main(){\n    let answer=42;\n    println!("{answer}");\n}\n';
+  api.setValue(unformatted);
+  view.dispatch({ selection: { anchor: unformatted.indexOf("println") + 4 } });
+  const beforeCursor = view.state.selection.main.head;
+  role("format-btn").click();
+  pending.shift().resolve({ success: true, code: 'fn main() {\n    let answer = 42;\n    println!("{answer}");\n}\n' });
+  await tick();
+  assert(view.state.selection.main.head === api.getValue().indexOf("println") + 4, "Formatting preserves the cursor across multiple whitespace edits");
+  assert(api.getValue().includes("\n  let answer = 42;"), "Format keeps two-space indentation");
+  cm.commands.undo(view);
+  assert(api.getValue() === unformatted && view.state.selection.main.head === beforeCursor, "Formatting is one undo step with restored selection");
+
+  const linkDoc = "// https://example.com/full/path\nfn main() {}\n";
+  api.setValue(linkDoc);
+  await tick();
+  const opened = [];
+  window.open = (...args) => opened.push(args);
+  const coords = view.coordsAtPos(linkDoc.indexOf("example") + 4);
+  const mouse = (ctrlKey) => new MouseEvent("mousedown", { button: 0, ctrlKey, clientX: coords.left + 1, clientY: (coords.top + coords.bottom) / 2, bubbles: true, cancelable: true });
+  view.contentDOM.dispatchEvent(mouse(false));
+  view.contentDOM.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+  assert(opened.length === 0, "Plain clicking a URL does not open a tab");
+  view.contentDOM.dispatchEvent(mouse(true));
+  assert(opened[0]?.[0] === "https://example.com/full/path", "Modified clicking opens the whole URL across syntax spans");
+
+  setVimGlobal(true);
+  await tick();
+  assert(view.scrollDOM.classList.contains("cm-vimMode"), "Vim can be enabled after mounting");
+  const key = (name, keyCode) => new KeyboardEvent("keydown", { key: name, code: name, keyCode, bubbles: true, cancelable: true });
+  view.contentDOM.dispatchEvent(key("Escape", 27));
+  const tab = key("Tab", 9);
+  view.contentDOM.dispatchEvent(tab);
+  assert(!tab.defaultPrevented, "Escape then Tab escapes the editor even in Vim mode");
+  setVimGlobal(false);
+
+  role("run-btn").click();
+  pending.shift().resolve(green);
+  await tick();
+  assert(pending[0]?.url === "/api/submit", "A current passing run autosubmits");
+  pending.shift().resolve({});
+  await tick();
+  assert(role("run-btn").style.display !== "none" && !role("run-btn").disabled, "Run remains available after saving");
+  assert(role("submit-btn").disabled && role("submit-btn").textContent.includes("Submitted"), "Saved state describes the current passing source");
+  assert(role("output-stderr").textContent.includes("compiler warning") && role("output-stderr").textContent.includes("test example"), "Output shows stdout and stderr together");
+  api.setValue(api.getValue() + "// edit\n");
+  assert(role("output-panel").style.display === "block" && !section.querySelector(".editor-stale-results").hidden, "Diagnostics stay available while editing, clearly marked stale");
+  window.dispatchEvent(new Event("pagehide"));
+  assert(localStorage.getItem("browser-regression-draft") === api.getValue(), "Navigation flushes the latest draft immediately");
+
+  const draft = api.getValue();
+  api.destroy();
+  assert(!section.querySelector(".cm-editor"), "Destroy removes the CodeMirror view");
+  const remounted = await mountInlineEditor(section, options);
+  assert(remounted.getValue() === draft && section.querySelectorAll(".cm-editor").length === 1, "Remount restores the draft without duplicating editors");
+  role("run-btn").click();
+  pending.shift().resolve({ ...green, success: false });
+  await tick();
+  assert(pending.length === 0 && !role("run-status").textContent.includes("passed"), "A failed process cannot autosubmit even if parsed test lines passed");
+  await tick();
+  assert(browserErrors.length === 0, `No browser errors: ${browserErrors.join("; ")}`);
+  checks.dataset.result = "passed";
+  checks.textContent = `${messages.length} browser checks passed\n` + messages.map((message) => `✓ ${message}`).join("\n");
+} catch (error) {
+  checks.dataset.result = "failed";
+  checks.textContent = messages.join("\n") + "\nFAILED: " + error.stack;
+} finally { window.fetch = oldFetch; }
+</script>
+</html>

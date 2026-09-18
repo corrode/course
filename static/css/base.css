@@ -226,6 +226,49 @@ samp,
 .cm-editor {
     font-size: 0.9rem;
 }
+.inline-rust-editor {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.editor-shortcuts {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+}
+.editor-copy-feedback {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+}
+.editor-copy-feedback:empty {
+    display: none;
+}
+.editor-test-result {
+    padding: 0.35rem 0.5rem;
+    font-family: "JetBrains Mono", "SF Mono", Monaco, monospace;
+    font-size: 0.85rem;
+}
+.editor-test-pass {
+    color: var(--color-success);
+}
+.editor-test-fail {
+    color: var(--color-error);
+}
+.editor-test-detail {
+    margin: 0.25rem 0 0;
+    padding: 0.4rem 0.6rem;
+    white-space: pre-wrap;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    font-size: 0.8rem;
+}
+.editor-stale-results {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
 html[data-editor-font-size="small"] .cm-editor {
     font-size: 0.78rem;
 }

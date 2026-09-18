@@ -465,8 +465,7 @@ pub enum RenderKind {
     /// An editable code step. Carries every per-step value the template
     /// needs so the editor JS can stay scoped to one `<section>`.
     Code {
-        /// Stable per-step id used for DOM ids and the draft
-        /// localStorage key. Equal to the chapter `file_stem` for
+        /// Stable per-step id used for DOM ids. Equal to the chapter `file_stem` for
         /// legacy single-step chapters, or
         /// `<chapter_file_stem>__<n>_<step_slug>` for multi-step.
         dom_id: String,
@@ -494,6 +493,9 @@ pub enum RenderKind {
         /// token across devices instead of living only in the
         /// `localStorage` of whichever browser made the submission.
         submitted_code: Option<String>,
+        /// Whether the most recent submission passed its tests. False
+        /// when there is no submission; independent of aggregate completion.
+        submitted_passed: bool,
         /// True if at least one submission exists for this step.
         attempted: bool,
         /// True if a submission has `tests_passed`.
