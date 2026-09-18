@@ -308,9 +308,9 @@ pub struct ChapterDirectives {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signup_on_pass: Option<bool>,
     /// When `true`, this chapter is an optional "bonus": hidden from the
-    /// table of contents and the chapter picker, excluded from progress
-    /// totals and the next-chapter flow, and rendered without a number.
-    /// It stays reachable by direct URL. `None` / `Some(false)` is the
+    /// table of contents, excluded from progress totals and the default
+    /// next-chapter flow, and rendered without a number. It is available
+    /// in the chapter picker and by direct URL. `None` / `Some(false)` is the
     /// default.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bonus: Option<bool>,
@@ -354,9 +354,9 @@ impl Exercise {
     }
 
     /// True for optional "bonus" chapters (`bonus = true` in
-    /// `.chapter.toml`). Bonus chapters are hidden from the TOC, the
-    /// chapter picker, progress totals, and the next-chapter flow, but
-    /// stay reachable by direct URL. See [`ChapterDirectives::bonus`].
+    /// `.chapter.toml`). Bonus chapters are excluded from the TOC,
+    /// progress totals, and the default next-chapter flow, but are listed
+    /// in the chapter picker and reachable by direct URL. See [`ChapterDirectives::bonus`].
     #[must_use]
     pub fn is_bonus(&self) -> bool {
         self.directives.bonus.unwrap_or(false)

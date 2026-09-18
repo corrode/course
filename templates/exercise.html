@@ -56,7 +56,7 @@ with (u) %}
             </button>
         </div>
         <ul class="chapter-picker-list">
-            {% for d in dots %}{% if !d.is_bonus %}
+            {% for d in dots %}
             <li>
                 <a
                     role="option"
@@ -103,8 +103,8 @@ with (u) %}
                     %}
                     class="chapter-picker-item{% if d.current %} is-current{% endif %}"
                 >
-                    <span class="chapter-picker-num">{{ d.number }}</span>
-                    <span class="chapter-picker-title">{{ d.title }}</span>
+                    <span class="chapter-picker-num">{% if d.is_bonus %}★{% else %}{{ d.number }}{% endif %}</span>
+                    <span class="chapter-picker-title">{% if d.is_bonus %}Optional: {% endif %}{{ d.title }}</span>
                     <span class="chapter-picker-status" aria-hidden="true">
                         {% if d.perfected %}★{% else if d.completed %}<span
                             class="icon-check"
@@ -113,7 +113,7 @@ with (u) %}
                     </span>
                 </a>
             </li>
-            {% endif %}{% endfor %}
+            {% endfor %}
         </ul>
     </div>
 </div>
