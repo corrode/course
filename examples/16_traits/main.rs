@@ -20,5 +20,7 @@ mod _3_describable;
 mod _4_logger;
 #[path = "5_validate.rs"]
 mod _5_validate;
+#[path = "7_mixed_shelf.rs"]
+mod _7_mixed_shelf;
 
 fn main() {}

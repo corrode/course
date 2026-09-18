@@ -12,7 +12,19 @@ A public accessor such as `get_port` lets callers read the value while leaving y
 
 The same opt-in rule covers methods.
 `new` and `get_port` are private until you `pub` each one, so this step is broken in more than one place.
-Compile, read the error, `pub` the item it names, and repeat until the compiler runs out of complaints.
+Make the type, constructor, and accessor reachable, but keep `port` private.
+Passing the test by making everything public misses the point: callers should
+read settings through the API, not depend on their storage.
 
 When you want something between fully public and fully private, `pub(crate)` makes an item visible everywhere in your own crate while keeping it hidden from outside users.
 Use it for helpers that several modules share but that aren't part of your public API.
+
+## Predict a failure
+
+Once the tests pass, temporarily replace `settings.get_port()` in the test with
+`settings.port`. Will it compile? Predict the error, then run it and restore the
+accessor call. Don't add `pub` to the field to silence this error.
+
+Could you rename the stored field to `listen_port` without changing callers?
+What if you narrowed it to `u16` instead? Consider `Settings::new(70000)` before
+answering: hiding storage does not make changes to accepted values harmless.

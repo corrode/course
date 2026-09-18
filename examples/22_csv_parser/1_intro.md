@@ -11,53 +11,47 @@ A comma inside quotes is data; a comma outside quotes is a separator.
 This "for each character, update some state, occasionally emit a result" pattern is called a *state machine*.
 It comes up in any non-trivial parsing task: JSON, command-line arguments, terminal escape sequences, markup languages.
 
-## A skeleton
+## A smaller state machine
+
+Before writing CSV, try counting characters outside square brackets.
+Assume brackets are balanced and never nested:
 
 ```rust
-fn parse(line: &str) -> Vec<String> {
-    let mut fields = Vec::new();
-    let mut current = String::new();
-    let mut in_quotes = false;
-    let mut chars = line.chars().peekable();
-
-    while let Some(c) = chars.next() {
-        match (c, in_quotes) {
-            ('"', false) => in_quotes = true,
-            ('"', true) if chars.peek() == Some(&'"') => {
-                // Escaped quote inside a quoted field.
-                current.push('"');
-                chars.next();
-            }
-            ('"', true) => in_quotes = false,
-            (',', false) => {
-                fields.push(std::mem::take(&mut current));
-            }
-            (c, _) => current.push(c),
+fn count_visible(text: &str) -> usize {
+    let mut hidden = false;
+    let mut count = 0;
+    for c in text.chars() {
+        match (c, hidden) {
+            ('[', false) => hidden = true,
+            (']', true) => hidden = false,
+            (_, false) => count += 1,
+            (_, true) => {}
         }
     }
-    fields.push(current);
-    fields
+    count
 }
+
+assert_eq!(count_visible("ab[secret]c"), 3);
 ```
 
-Each less familiar tool removes one bit of bookkeeping from the loop:
+Trace the state before and after each bracket. CSV needs a similar distinction
+between data and syntax, but also needs to collect fields and recognize escaped
+quotes. Work out those transitions in the exercise rather than copying this loop.
 
-- `peekable()` lets you look at the next character without consuming it.
-  That lookahead matters when one character's meaning depends on the one after it, as in the `""` -> `"` rule.
-- `match` on a tuple `(c, in_quotes)` lets you express each transition as one arm.
-  The alternatives stay flatter than they would with nested `if`/`else` blocks.
-- [`std::mem::take`](https://doc.rust-lang.org/std/mem/fn.take.html) gives you the current string and replaces it with an empty one in a single move.
-  The old buffer moves into `fields` without a clone.
+## Tools for the CSV loop
 
-## A note on `while let`
+- `peekable()` lets you inspect the next character without consuming it.
+  CSV needs lookahead to distinguish an escaped quote from a closing quote.
+- `while let Some(c) = chars.next()` repeats until the iterator is exhausted.
+  Unlike a `for` loop, it lets you call `chars.next()` inside the body to consume
+  a second character when needed.
+- Matching a tuple `(c, in_quotes)` lets an arm consider both character and state.
+  A match guard can add a lookahead condition.
+- [`std::mem::take`](https://doc.rust-lang.org/std/mem/fn.take.html) moves out a
+  completed `String` and leaves an empty one behind, without cloning its contents.
 
-You used `if let` with `Option` earlier; `while let` repeats the same pattern until it stops matching.
-That extra control matters here because the loop sometimes calls `chars.next()` again to consume the second `"`.
-
-You also used tuple patterns in `let (a, b) = pair`; here, `match` inspects the character and quote state together.
-A guard adds the lookahead check only to the escaped-quote arm.
-
-These tests use the raw strings you met in the env-file parser, so the CSV examples can contain quotes without backslash escapes.
+The tests use raw strings from the env-file chapter so quotes don't need
+backslash escapes in the Rust source. CSV itself escapes quotes by doubling them.
 
 ## A useful tactic
 

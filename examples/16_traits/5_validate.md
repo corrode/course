@@ -83,3 +83,11 @@ The pointer itself can live on the stack or inside another allocation, such as a
 - [`str::contains`](https://doc.rust-lang.org/std/primitive.str.html#method.contains) (with a `&str` argument) is all you need for the `MustContain` / `MustNotContain` checks.
 - Inside `collect_errors`, a plain `for` loop pushing into a `Vec<String>` is the most direct form.
   An `.iter().filter_map(...)` chain expresses the same loop with iterator adapters.
+
+## Stop or keep going?
+
+For `"a b"`, predict the messages from all three rules before running the test.
+Why must `collect_errors` continue after a failed check, unlike the `?` operator?
+Would changing its return type to `Result<Vec<String>, String>` and adding `?`
+preserve that behavior? Explain which failures the caller would lose.
+Then try the mixed shelf task after the hints.

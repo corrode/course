@@ -168,3 +168,7 @@ fn collect_errors_with_no_rules_returns_empty() {
     let rules: Vec<&dyn Validator> = vec![];
     assert!(collect_errors(&rules, "anything").is_empty());
 }
+
+// `?` on a failed check would return immediately (and needs a compatible
+// return type). Collecting errors keeps visiting rules so callers see every
+// failure, not just the first one.

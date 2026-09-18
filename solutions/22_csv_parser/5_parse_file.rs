@@ -18,8 +18,7 @@ fn parse_csv_line(line: &str) -> Vec<String> {
             }
             '"' => in_quotes = true,
             ',' if !in_quotes => {
-                fields.push(field.clone());
-                field.clear();
+                fields.push(std::mem::take(&mut field));
             }
             _ => field.push(c),
         }

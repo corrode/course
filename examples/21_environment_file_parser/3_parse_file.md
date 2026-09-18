@@ -17,3 +17,7 @@ Paste or reimplement your earlier solution before building the file-level parser
 - [`HashMap::insert`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.insert) fills in each parsed pair.
   The `?` after `parse_env_line(line)` short-circuits on the first malformed line.
 - I'd use a `for` loop here rather than an iterator chain because the body needs both `continue` to skip lines and `?` to return early.
+
+Before running the tests, predict the result for `HOST=localhost`, then a line
+containing only `BROKEN`, then `PORT=8080`. Should you get a partial map, a map
+with two entries, or an error? The tests distinguish these policies.

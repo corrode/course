@@ -18,5 +18,9 @@ mod _3_simple_line;
 mod _4_quoted_line;
 #[path = "5_parse_file.rs"]
 mod _5_parse_file;
+#[path = "6_delimited_line.rs"]
+mod _6_delimited_line;
+#[path = "7_parser_module.rs"]
+mod _7_parser_module;
 
 fn main() {}
