@@ -1,6 +1,6 @@
 // Shared CodeMirror mount, with a functional textarea fallback when loading fails.
 import { proseHighlightStyle, proseEditorTheme } from "./cm-theme.js";
-import { indentRustSource, rustIndentUnit } from "./rust-indent.js";
+import { rustIndentUnit } from "./rust-indent.js";
 import {
   buildLocalCompletions,
   createUrlExtensions,
@@ -63,7 +63,7 @@ async function createMount(section, opts) {
   const document = section.ownerDocument;
   const window = document.defaultView;
   const exerciseKey = opts.slug || section.dataset.exerciseKey || "playground";
-  const starter = indentRustSource(opts.starter ?? fallback?.value ?? "");
+  const starter = opts.starter ?? fallback?.value ?? "";
   const submitted = opts.submitted ?? null;
   const draftKey = features.draftKey || null;
   let draft = null;
@@ -203,7 +203,7 @@ async function createMount(section, opts) {
     setValue: api.setValue,
     submitted,
     submittedPassed: opts.submittedPassed === true,
-    formatSource: indentRustSource,
+
     runWithoutTests: features.runWithoutTests === true,
     autoSubmit: !!(submitBtn && submitInfo && ulid()),
     submitPayload:

@@ -78,7 +78,7 @@ export function createWorkflow({
   submitted = null,
   submittedPassed = false,
   runWithoutTests = false,
-  formatSource = (text) => text,
+
   changed = () => {},
   render = () => {},
   onRunSuccess = () => {},
@@ -162,7 +162,7 @@ export function createWorkflow({
           throw new Error(
             "rustfmt couldn't parse the code. Fix the syntax error first.",
           );
-        const formatted = formatSource(data.code);
+        const formatted = data.code;
         if (formatted !== code) {
           // setValue synchronously emits edit(), invalidating old results.
           setValue(formatted);

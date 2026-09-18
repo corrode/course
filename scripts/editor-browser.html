@@ -68,7 +68,11 @@ try {
   const api = await mountInlineEditor(section, options);
   assert(!!view, "CodeMirror mounts rather than falling back");
   assert(await mountInlineEditor(section, options) === api, "Mounting twice is idempotent");
-  assert(api.getValue().includes("\n  todo!()"), "Starter code uses two-space indentation");
+  assert(api.getValue().includes("\n    todo!()"), "Starter code retains rustfmt's four-space indentation");
+  api.setValue("fn char_count(text: &str) -> usize {\n}");
+  view.dispatch({ selection: { anchor: api.getValue().indexOf("{") + 1 } });
+  cm.commands.insertNewlineAndIndent(view);
+  assert(api.getValue() === "fn char_count(text: &str) -> usize {\n    \n}", "Enter after an opening brace inserts four spaces");
   assert(view.contentDOM.getAttribute("aria-label").includes("Rust code editor"), "Editor has an accessible name");
   view.dispatch({ selection: { anchor: 5 } });
   assert(view.dom.classList.contains("inline-rust-editor"), "Editor chrome survives CodeMirror updates");
@@ -95,7 +99,7 @@ try {
   pending.shift().resolve({ success: true, code: 'fn main() {\n    let answer = 42;\n    println!("{answer}");\n}\n' });
   await tick();
   assert(view.state.selection.main.head === api.getValue().indexOf("println") + 4, "Formatting preserves the cursor across multiple whitespace edits");
-  assert(api.getValue().includes("\n  let answer = 42;"), "Format keeps two-space indentation");
+  assert(api.getValue() === 'fn main() {\n    let answer = 42;\n    println!("{answer}");\n}\n', "Format preserves rustfmt output verbatim");
   cm.commands.undo(view);
   assert(api.getValue() === unformatted && view.state.selection.main.head === beforeCursor, "Formatting is one undo step with restored selection");
 
