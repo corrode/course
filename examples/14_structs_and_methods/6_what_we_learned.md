@@ -1,8 +1,8 @@
-# Wrapping up structs and methods
+# Wrapping Up Structs and Methods
 
 You defined a struct, wrote a `new` constructor, added a `&self` method that formatted fields into a `String`, mutated state with `&mut self`, and combined two fields into a predicate.
 
-## What we learned
+## What We Learned
 
 - A `struct` groups related fields under a single named type.
   Build instances with a struct literal, supplying every field, and read fields with dot notation.

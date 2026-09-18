@@ -31,13 +31,13 @@ Every time you wrote `#[derive(Debug, PartialEq)]` on an enum or struct, you wer
 That's all `derive` is: a macro that emits the obvious implementation so you don't have to type it out.
 We'll revisit this in a moment.
 
-## From familiar traits to trait objects
+## From Familiar Traits to Trait Objects
 
 The first exercise implements `Display`, a standard library trait, for a temperature type.
 Then you'll define `Describable` and use it as a bound for a generic function.
 You'll share behavior through default methods and use `dyn Trait` when one collection needs to hold values of different concrete types.
 
-## Standard library traits you've already met
+## Standard Library Traits You've Already Met
 
 | Trait | What it gives you | Where you know it from |
 | --- | --- | --- |
@@ -54,7 +54,7 @@ Each is a regular trait defined in `std`, with implementations for the built-in 
 When you `derive` one, the compiler writes the implementation.
 When the generated behavior isn't what you want, you write the implementation by hand.
 
-## Static vs. dynamic dispatch: a sneak preview
+## Static vs. Dynamic Dispatch: A Sneak Preview
 
 ```rust
 // Static dispatch: the compiler generates a specialized copy of

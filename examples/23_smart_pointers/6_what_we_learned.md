@@ -1,9 +1,9 @@
-# Wrapping up smart pointers
+# Wrapping Up Smart Pointers
 
 You used `Box` to put an integer on the heap, then to build a recursive expression tree and a pipeline of different command types.
 Boxing the integer was practice; the tree and pipeline give you reasons to use `Box` in your own code.
 
-## What we learned
+## What We Learned
 
 - Smart pointers such as `Box` and `Rc` manage ownership and drop the value when its last owner is dropped.
   They use RAII to release resources without an explicit `free` or `delete`.
@@ -20,7 +20,7 @@ Boxing the integer was practice; the tree and pipeline give you reasons to use `
   For this small command pipeline, one lookup per stage is unlikely to matter.
   Reach for generics (`fn f<T: Command>`) when you want the compiler to monomorphize away the indirection.
 
-## Other smart pointers, briefly
+## Other Smart Pointers, Briefly
 
 - `Rc<T>` ("reference counted") gives you multiple owners on a single thread.
   The value is dropped when the last `Rc` goes away.

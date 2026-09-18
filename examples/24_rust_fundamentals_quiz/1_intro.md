@@ -1,4 +1,4 @@
-# Rust fundamentals quiz
+# Rust Fundamentals Quiz
 
 *You can look things up here, just as you would while writing code.*
 

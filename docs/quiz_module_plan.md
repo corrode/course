@@ -1,4 +1,4 @@
-# Quiz module: plan
+# Quiz Module: Plan
 
 > **Status: superseded design proposal.** The current course has one dedicated quiz chapter backed by `examples/24_rust_fundamentals_quiz/quiz.toml`, rendered inline without persisted scores. This per-chapter `quiz.md` and `quiz_submissions` design remains historical context, not a description of the current implementation.
 
@@ -6,7 +6,7 @@ A short post-chapter quiz turns the "I followed along" feeling into "I
 can recall this without the editor in front of me." This document
 sketches how to add one quiz per chapter.
 
-## Design goals
+## Design Goals
 
 - **Same look and feel as the rest of the course.** No external quiz
   framework like quizdown; the questions live in the repo as plain
@@ -22,7 +22,7 @@ sketches how to add one quiz per chapter.
 - **Skippable.** A chapter shouldn't be locked behind its quiz. Quizzes
   are a self-test, not a gate.
 
-## Data model
+## Data Model
 
 Each chapter directory grows an optional `quiz.md` file alongside the
 existing `1_intro.md` / `main.rs`:
@@ -165,7 +165,7 @@ Client-side script (one ~50-line JS block, no framework):
 3. Tally a running score. When all questions are answered, show a
    per-chapter summary card and POST it to `/api/quiz-submit`.
 
-## Dashboard / chapter list
+## Dashboard / Chapter List
 
 The bottom-of-exercise chapter list (the "dots" UI in `exercise.html`)
 already reserves space for a special `is_quiz` row. Two changes:
@@ -179,7 +179,7 @@ The dashboard's "completed exercises" stat keeps counting only real
 exercises (the perfectionists shouldn't feel the goal post move). A
 separate "quizzes passed" stat goes next to it.
 
-## Authoring workflow
+## Authoring Workflow
 
 For each chapter, write a quiz of **3-7 questions** that:
 - Tests recall of one specific concept the chapter introduced.
@@ -209,7 +209,7 @@ Chapters 01, 06, 12, 15-17 either have no compelling quiz material
 (they're mostly project-shaped) or are the project chapters themselves.
 Skip them; not every chapter needs one.
 
-## Implementation order
+## Implementation Order
 
 1. Add `quizzes` module + `quiz.md` parser + tests on a single example
    chapter (write `examples/02_strings_and_chars/quiz.md` first).

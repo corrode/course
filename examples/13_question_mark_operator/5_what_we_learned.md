@@ -1,8 +1,8 @@
-# Wrapping up the `?` operator
+# Wrapping Up the `?` Operator
 
 You replaced repetitive `match` chains with `?`, propagated errors out of multi-step functions, and used `?` inside a loop.
 
-## What we learned
+## What We Learned
 
 - `?` is shorthand for "if this is `Err`, return it from the current function; if it's `Ok`, unwrap the value and keep going."
   It works on `Option` too (returning `None` early).

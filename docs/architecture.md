@@ -5,7 +5,7 @@ re-explore from scratch. Update this file whenever the shape of the
 project changes (new top-level directory, new binary, schema change,
 renamed module, etc.).
 
-## What this repository is
+## What This Repository Is
 
 Two things in one crate:
 
@@ -20,11 +20,13 @@ Two things in one crate:
 The Cargo package is `cargo-course` (Rust edition 2024). It exposes a
 library plus two binaries (`server`, `cargo-course` aka the CLI).
 
-## Top-level layout
+## Top-Level Layout
 
 ```
 course/
 ├── Cargo.toml             # single crate, two binaries
+├── rust-toolchain.toml    # stable Rust, rustfmt, and Clippy
+├── .github/dependabot.yml # weekly dependency updates
 ├── README.md              # learner-facing README
 ├── build.rs               # generates aggregator main.rs for multi-step chapters
 ├── .env / .env.example    # CORRODE_ADMIN_TOKEN, DATABASE_URL, PORT
@@ -56,9 +58,20 @@ course/
 └── target/                # cargo build output (ignored)
 ```
 
-## Course content (`examples/`)
+## Dependency Updates
 
-### Per-chapter convention
+`rust-toolchain.toml` selects stable Rust with rustfmt and Clippy, matching CI.
+Run `rustup update stable` to refresh an existing local installation.
+The Docker build pins a stable Rust image; Dependabot checks that tag along with Cargo, npm, and GitHub Actions dependencies each week.
+Minor and patch updates for Rust and browser packages are grouped; major updates get separate PRs.
+
+Browser dependencies use exact versions in `package.json` and `package-lock.json`.
+After updating them, run `npm run build:js` and include the regenerated `static/dist/` files and `static/js/htmx.min.js` in the PR.
+CI checks that these assets match the pinned packages, and `make js-check` does the same locally.
+
+## Course Content (`examples/`)
+
+### Per-Chapter Convention
 
 Each chapter is a directory `NN_<slug>/`. The leading `NN_` is the
 chapter number (zero-padded), the slug is concept-first
@@ -126,20 +139,29 @@ Inside a code chapter directory:
   doesn't enforce this (sibling modules can `use super::<other>::*`),
   but doing so defeats the point of per-step independence.
 
-### Optional chapters and navigation
+### Optional Chapters and Navigation
 
 Set `bonus = true` in a chapter's `.chapter.toml` to make it optional.
 The chapter picker lists every chapter, marking optional entries with a star
-and “Optional” instead of a chapter number. Optional chapters are excluded
-from the main table of contents, progress counts, and the default next-chapter
-CTA. This applies to any number of optional chapters, not a fixed list.
+and “Optional” instead of a chapter number. The dashboard also lists them in
+an “Optional Chapters” section below the numbered table of contents, using
+stars instead of numbers and preserving participant completion marks. Links
+use `/exercise/{slug}` for anonymous visitors and `/exercise/{ulid}/{slug}`
+for participants. The section is omitted when there are no optional chapters;
+its columns are balanced independently of the numbered TOC.
+
+Optional chapters remain excluded from required numbering, progress counts,
+and the default next-chapter CTA. This applies to any number of optional
+chapters, not a fixed list. The current bonus chapters are
+`06_word_count_challenge`, `19_password_validator`, `22_csv_parser_challenges`,
+and `23_smart_pointers`.
 
 In chapter prose, link to a sibling with a bare directory slug, for example
 `[Build a password validator](19_password_validator)`. Browser URL resolution
 preserves `/exercise/` or `/exercise/{ulid}/` on these links. Do not use `../`
 or an absolute `/exercise/` URL: those drop part of the participant route.
 
-### Style rules for exercise prose
+### Style Rules for Exercise Prose
 
 Recently enforced and worth preserving:
 
@@ -153,13 +175,13 @@ Recently enforced and worth preserving:
   pattern (for example, "returning `0` on failure is a placeholder;
   the `Option` and `Result` chapters show the real design").
 
-### Historical chapter-complexity audit
+### Historical Chapter-Complexity Audit
 
 `docs/learner_journey.md` records the difficulty audit for an earlier
 chapter order. It remains useful as design history, but its chapter
 numbers are not the current `00_integers` through `25_appendix` map.
 
-## Server (`src/bin/server.rs`, ~3440 lines)
+## Server (`src/bin/server.rs`, ~3440 Lines)
 
 Axum 0.8, Askama 0.16, and SQLx 0.8 (SQLite). Core `AppState` data
 includes:
@@ -170,7 +192,7 @@ includes:
   `exercises::load("examples/")`. Hot-reload is not implemented;
   restart the server after editing chapter content.
 
-### Routes (current)
+### Routes (Current)
 
 Learner-facing HTML routes:
 
@@ -209,7 +231,7 @@ Exercise lookup accepts either the full directory slug or its slug
 without the numeric prefix. For example, `/exercise/strings_and_chars`
 and `/exercise/01_strings_and_chars` resolve to the same chapter.
 
-### Run/Format proxy
+### Run/Format Proxy
 
 `api_run` and `api_format` send requests to `play.rust-lang.org` with
 `channel=stable`, `edition=2024`. The server doesn't compile code
@@ -218,7 +240,7 @@ itself. Failing-test output is post-processed to strip the
 (capped at 6 lines), and `not yet implemented` panics from `todo!()`
 are rewritten to a friendlier message before being shown to learners.
 
-## CLI (`src/bin/cli.rs`, ~690 lines)
+## CLI (`src/bin/cli.rs`, ~690 Lines)
 
 Invoked as `cargo course …` (cargo's `cargo-<name>` shim):
 
@@ -253,7 +275,7 @@ Two modules:
   - Tests at the bottom verify scanning against the real `examples/`
     directory for both single-step and multi-step shapes.
 
-## Build script (`build.rs`)
+## Build Script (`build.rs`)
 
 For every chapter dir under `examples/` that contains sibling
 `<n>_<slug>.rs` files, `build.rs` (re)generates a thin `main.rs`
@@ -355,7 +377,7 @@ The chapter picker / "next chapter" navigation is driven by the
 fresh per request from `state.exercises` and the participant's
 submissions.
 
-## Static files (`static/`)
+## Static Files (`static/`)
 
 Served by `tower-http` `ServeDir` at `/static/*`. Notable:
 
@@ -394,7 +416,7 @@ Served by `tower-http` `ServeDir` at `/static/*`. Notable:
 - `why_rust.md`: standalone draft marked as such in its front matter.
 - `static/cheatsheet.md`: rendered by the server at `/cheatsheet`.
 
-## Conventions for future edits
+## Conventions for Future Edits
 
 - **Touch one layer at a time.** Exercise code and prose live in
   numbered `.rs` and `.md` files under `examples/<chapter>/`. Server logic lives in

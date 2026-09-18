@@ -1,4 +1,4 @@
-# Cap at a maximum
+# Cap at a Maximum
 
 Write `cap_at(value, max)` so it returns `value` if it's at or below `max`, and `max` otherwise.
 Both arguments are `i32`.

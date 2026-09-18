@@ -1,4 +1,4 @@
-# Parsing strings into numbers
+# Parsing Strings into Numbers
 
 `str::parse` turns text into the type you ask for.
 It returns a `Result` because the input might not be valid for that type.
@@ -10,7 +10,7 @@ Here, I'll keep error handling out of the exercise: return `0` if the string isn
 
 `u32` can't be negative, so `"-5".parse::<u32>()` fails and you should return `0` for it too.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::parse`](https://doc.rust-lang.org/std/primitive.str.html#method.parse) turns a string into a type you choose.
   It returns a `Result` because the input might not be valid.

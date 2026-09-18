@@ -1,4 +1,4 @@
-# Course analytics
+# Course Analytics
 
 The course records a small set of first-party events in SQLite's
 `course_events` table. The goal is to answer where learners stop or ask for
@@ -30,7 +30,7 @@ browser tab. `participant_id` is nullable for anonymous learners.
 Every row includes `course_version` and `git_hash`, allowing reports to avoid
 mixing results from incompatible course revisions.
 
-## Example queries
+## Example Queries
 
 Exercises with the most repeated unsuccessful runs:
 

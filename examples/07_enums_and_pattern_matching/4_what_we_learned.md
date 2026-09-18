@@ -1,8 +1,8 @@
-# Wrapping up enums and pattern matching
+# Wrapping Up Enums and Pattern Matching
 
 You defined an enum with a fixed set of variants, mapped each variant to a value with a `match`, and used `matches!` to ask a yes/no question about a single variant.
 
-## What we learned
+## What We Learned
 
 - An `enum` is a "this or that or that" type.
   Each value is exactly one of its variants, and the compiler tracks which one.

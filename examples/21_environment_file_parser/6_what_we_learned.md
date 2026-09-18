@@ -1,9 +1,9 @@
-# Wrapping up the env-file parser
+# Wrapping Up the Env-File Parser
 
 You can now parse a configuration file, read its values as the types you need, and check for missing required keys.
 The file parser builds on the line parser, so you only had to write the rules for `KEY=value` once.
 
-## What we learned
+## What We Learned
 
 - `split_once(delim)` is the right tool for "key/value, split at the *first* separator".
   It returns `Option<(&str, &str)>` without allocating.

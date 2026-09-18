@@ -1,4 +1,4 @@
-# Mixed types behind one trait: `Box<dyn Trait>`
+# Mixed Types behind One Trait: `Box<dyn Trait>`
 
 Different `dyn Trait` implementors have different sizes, so the compiler won't let you put a trait object directly in a `Vec` or return one from a function.
 The fix is to put it behind a pointer, and the *owned* pointer is `Box<dyn Trait>`.
@@ -20,7 +20,7 @@ Calling a method on a `Box<dyn Command>` looks like calling it on the concrete t
 Under the hood, Rust does a *vtable lookup* (the same trick C++ uses for virtual methods) to pick the right implementation.
 You pay one extra indirection per call in exchange for storing different concrete types in one vector.
 
-## What you're building
+## What You're Building
 
 You'll build a tiny text-transformation pipeline.
 The trait is one method:
@@ -44,7 +44,7 @@ An empty pipeline returns the input unchanged.
 Because each command sits behind `Box<dyn Command>`, the same `Vec` can hold `Uppercase`, `Reverse`, and `Append { suffix: String }` even though their concrete types have different sizes.
 A generic `Vec<C>` where `C: Command` would only let you pick *one* concrete command type per pipeline.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - A `for` loop over `&[Box<dyn Command>]` yields `&Box<dyn Command>` on each iteration.
   Method calls auto-deref through the box (and through the `&`), so `cmd.run(...)` just works.

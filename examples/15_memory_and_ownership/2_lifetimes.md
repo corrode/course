@@ -1,4 +1,4 @@
-# A first look at lifetimes
+# A First Look at Lifetimes
 
 The borrow checker also tracks how long a reference stays valid.
 That's what a *lifetime* describes.

@@ -1,4 +1,4 @@
-# Parsing a whole file
+# Parsing a Whole File
 
 You can now reuse your line parser for a whole file.
 Iterate over `content.lines()`, skip blank lines and `#` comments, and collect the remaining entries into a `HashMap`.
@@ -8,7 +8,7 @@ Strict parsing makes configuration bugs obvious instead of silently dropping val
 To keep this page runnable on its own, `ParseError` is re-declared and `parse_env_line` has a `todo!()` stub.
 Paste or reimplement your earlier solution before building the file-level parser.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::lines`](https://doc.rust-lang.org/std/primitive.str.html#method.lines) iterates over the lines of the file content, stripping `\n` and `\r\n` for you.
 - [`str::trim`](https://doc.rust-lang.org/std/primitive.str.html#method.trim) on each line lets you handle leading/trailing whitespace once.

@@ -1,4 +1,4 @@
-# Swapping with destructuring
+# Swapping with Destructuring
 
 Tuple destructuring makes swapping two values a one-liner: bind the pair to `(a, b)` and return `(b, a)`.
 You don't need a temporary variable.

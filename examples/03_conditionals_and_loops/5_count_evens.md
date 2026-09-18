@@ -1,4 +1,4 @@
-# Counting evens with `for` and `continue`
+# Counting Evens with `for` and `continue`
 
 The parameter here is a `&[i32]`, a *slice*: a borrowed view over a sequence of `i32` values that live somewhere else.
 A `for` loop over the slice gives you a reference to each number in turn.

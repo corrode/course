@@ -6,7 +6,7 @@ Read this pipeline from left to right: take ownership of the vector's items, tra
 `map` is lazy: it just describes the transformation.
 Nothing runs until `collect` (or another consumer) asks for the results.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`Vec::into_iter`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.into_iter) consumes the vec and yields owned items.
   The input vector is no longer needed after this call.

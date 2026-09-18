@@ -1,4 +1,4 @@
-# Methods that mutate via `&mut self`
+# Methods That Mutate via `&mut self`
 
 When a method needs to change the struct's data, it takes `&mut self`.
 Declare `user` with `let mut` so the method can borrow it mutably.
@@ -8,7 +8,7 @@ At `user.record_login()`, Rust supplies the `&mut` borrow automatically.
 You can set `is_verified = true` even if the user is already verified.
 That assignment is idempotent, so you don't need a branch to check the flag first.
 
-## Updating fields
+## Updating Fields
 
 - The `+= 1` operator updates a numeric field in place; the same works through `self`.
 - Plain assignment (`self.is_verified = true`) is enough for the bool.

@@ -1,4 +1,5 @@
 import { submissionPassed } from "./editor-workflow.js";
+import { highlightOutput } from "./output-highlight.js";
 
 function failureSnippets(raw) {
   const snippets = new Map();
@@ -50,9 +51,8 @@ export function createResultRenderer({
     if (staleNotice) staleNotice.hidden = true;
     if (panel) panel.style.display = "block";
     const raw = cargoOutput(data);
-    // Cargo output is terminal text, not Rust source. A pre also keeps it
-    // selectable and readable without a second editor or focus stop.
-    if (output) output.textContent = raw;
+    // Keep logs selectable without adding another editor or focus stop.
+    if (output) highlightOutput(output, raw);
     const tests = Array.isArray(data.test_results) ? data.test_results : [];
     if (list) list.replaceChildren();
     if (testResults && list) {
@@ -70,7 +70,7 @@ export function createResultRenderer({
           if (snippet) {
             const detail = list.ownerDocument.createElement("pre");
             detail.className = "editor-test-detail";
-            detail.textContent = snippet;
+            highlightOutput(detail, snippet);
             li.append(detail);
           }
         }

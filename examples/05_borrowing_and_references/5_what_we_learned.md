@@ -1,8 +1,8 @@
-# Wrapping up borrowing
+# Wrapping Up Borrowing
 
 You borrowed a `String` read-only as `&str`, mutated one through `&mut String`, and practiced repairing ownership and borrowing errors.
 
-## What we learned
+## What We Learned
 
 - A borrow lets you read or modify a value without taking ownership.
   `&T` is a shared, read-only borrow; `&mut T` is an exclusive, writable one.

@@ -1,4 +1,4 @@
-# Parsing a single line
+# Parsing a Single Line
 
 Before tackling whole files, get one line right.
 The `.env` format is `KEY=value`, but real-world files have surrounding whitespace too.
@@ -9,7 +9,7 @@ Then trim both halves and check that neither is empty.
 
 Later pages reuse the small `ParseError` enum introduced here.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::split_once`](https://doc.rust-lang.org/std/primitive.str.html#method.split_once) splits at the first match and returns `Option<(&str, &str)>`.
   The `None` case maps cleanly onto `ParseError::InvalidFormat`.

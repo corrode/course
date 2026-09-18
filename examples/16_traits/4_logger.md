@@ -1,4 +1,4 @@
-# Default methods
+# Default Methods
 
 A trait method can ship with a default body.
 Implementors get that method for free, but any one of them can override it if the default doesn't fit.
@@ -21,7 +21,7 @@ This is how `Iterator` gets away with offering dozens of methods (`map`, `filter
 The other methods have defaults, so you can implement them selectively when your iterator has a more efficient approach.
 Haskellers will recognise the pattern from type class default methods; Java added the same feature as "default methods on interfaces" in Java 8.
 
-## A logger with shared behavior
+## A Logger with Shared Behavior
 
 The `Logger` trait has one required method, `log`, which formats a single line.
 Its `warn` and `error` methods provide default bodies built on top of `log`.
@@ -52,7 +52,7 @@ You'll try both keeping and overriding defaults with two types:
 
 You only have to override the behavior you want to change.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`format!`](https://doc.rust-lang.org/std/macro.format.html) builds the warning, error, and tagged messages.
   Default `warn` builds `"[WARN] {msg}"` and hands it back to `self.log`, so whatever decoration `log` does (the tag, in `TaggedLogger`'s case) wraps the warning prefix.

@@ -9,7 +9,7 @@ dozen exercises you start to get the hang of it.
 This is an official course repository by [corrode](https://corrode.dev), a Rust
 consultancy that helps teams adopt Rust in production.
 
-## How it works
+## How It Works
 
 The course runs primarily through the website, which walks you through
 each chapter, shows the exercises in your browser, and tracks your

@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %}A Beginner's Guide To Rust |
+{% extends "base.html" %} {% block title %}A Beginner's Guide to Rust |
 corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
 <div
     class="container book-dashboard"
@@ -73,7 +73,7 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
             <span class="book-eyebrow-text">Course</span>
             <span class="book-eyebrow-rule" aria-hidden="true"></span>
         </div>
-        <h1 class="book-title">A Beginner's Guide To Rust</h1>
+        <h1 class="book-title">A Beginner's Guide to Rust</h1>
         <p class="book-byline">
             or, "wrangling with the borrow checker until one of you gives up"
         </p>
@@ -166,7 +166,7 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         aria-label="Let's get acquainted"
     >
         <div class="chapter-prose exercise-prose">
-            <h2>Let's get acquainted</h2>
+            <h2>Let's Get Acquainted</h2>
             <p>
                 Here's your first piece of Rust. Hit <strong>Run</strong> below
                 to send it off to the compiler. If everything's wired
@@ -282,7 +282,7 @@ fn main() {
             aria-live="polite"
         >
             <h3 class="book-acquainted-signup-title">
-                Nicely done. What should we call you?
+                Nicely Done. What Should We Call You?
             </h3>
             <p class="book-acquainted-signup-sub">
                 Just a name. No email or password. Sign up to save your
@@ -324,6 +324,33 @@ fn main() {
     {% endmatch %}
 
     {% include "partials/chapter_list.html" %}
+
+    {% let optional_rows = self.optional_chapter_rows() %}
+    {% if optional_rows > 0 %}
+    <section class="book-optional" aria-labelledby="optional-chapters-heading">
+        <h2 id="optional-chapters-heading">Optional Chapters</h2>
+        <p>Extra practice to explore at your own pace. These chapters do not count toward course progress.</p>
+        <nav class="chapter-list" aria-label="Optional chapters" style="--chapter-rows: {{ optional_rows }}">
+            {% for d in dots %}
+            {% if d.is_bonus %}
+            <a
+                {% match ulid %}
+                {% when Some with (u) %}
+                href="/exercise/{{ u }}/{{ d.slug }}"
+                {% when None %}
+                href="/exercise/{{ d.slug }}"
+                {% endmatch %}
+                class="chapter-row{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}"
+            >
+                <span class="chapter-num" aria-hidden="true">★</span>
+                <span class="chapter-title">{{ d.title }}</span>
+                <span class="chapter-mark" aria-hidden="true"></span>
+            </a>
+            {% endif %}
+            {% endfor %}
+        </nav>
+    </section>
+    {% endif %}
 
     {% if !next_slug.is_empty() %} {% match participant_name %} {% when Some
     with (_n) %}
@@ -556,6 +583,23 @@ fn main() {
         border-radius: 4px;
         background-color: var(--color-surface);
         border: 1px solid var(--color-border);
+    }
+
+    .book-optional {
+        max-width: 60rem;
+        margin: 3rem auto 0;
+    }
+    .book-optional h2 {
+        font-size: 1.2rem;
+        margin: 0 0 0.5rem;
+    }
+    .book-optional p {
+        color: var(--color-text-muted);
+        line-height: 1.6;
+        margin: 0 0 1rem;
+    }
+    .book-optional .chapter-list {
+        margin-top: 0;
     }
 
     /* ---------- "Let's get acquainted" inline editor ----------

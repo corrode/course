@@ -1,4 +1,4 @@
-# Mutable borrows
+# Mutable Borrows
 
 Sometimes you want to modify a value in place without taking ownership of it.
 That's a mutable borrow: `&mut T`.
@@ -13,7 +13,7 @@ It changes the value through the reference, and the caller sees that change afte
 At the call site (see the test), you need both `&mut s` and a binding declared with `let mut s = ...`.
 Mutability is opt-in at every layer.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`String::push_str`](https://doc.rust-lang.org/std/string/struct.String.html#method.push_str) works on `&mut String` exactly the same way as on an owned `String`.
   The compiler reaches through the reference for you.

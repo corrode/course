@@ -1,4 +1,4 @@
-# Optional: choose your separator
+# Optional: Choose Your Separator
 
 A spreadsheet export arrives with semicolons instead of commas. Adapt your line
 parser into `parse_delimited_line(line, delimiter)` without changing the quoting

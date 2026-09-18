@@ -1,4 +1,4 @@
-# Revisit: summing parsed numbers
+# Revisit: Summing Parsed Numbers
 
 In the `?` chapter, you parsed each token inside a `for` loop.
 Write `sum_numbers` again, this time with an iterator pipeline and `sum`, without a loop or `?`.

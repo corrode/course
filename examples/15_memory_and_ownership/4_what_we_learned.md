@@ -1,9 +1,9 @@
-# Wrapping up
+# Wrapping Up
 
 Ownership is the model underneath the moves, borrows, and references you've been using throughout the course.
 In the username exercise, returning an owned `String` let the caller keep the name after the records were dropped.
 
-## The whole picture
+## The Whole Picture
 
 - Every value has one owner and is dropped when the owner leaves scope.
   That alone gives you automatic cleanup with no garbage collector and no double-frees.
@@ -14,7 +14,7 @@ In the username exercise, returning an owned `String` let the caller keep the na
 - Lifetimes are the same guarantee seen from the reference's side: a borrow can't outlive what it points at.
   You rarely write them by hand early on.
 
-## Cleanup and memory safety
+## Cleanup and Memory Safety
 
 C++ uses RAII and destructors for deterministic cleanup, while garbage-collected languages track which values are still alive at runtime.
 Rust adds compile-time ownership and borrowing rules, so safe Rust turns use-after-free, double-free, and data races into compile errors.

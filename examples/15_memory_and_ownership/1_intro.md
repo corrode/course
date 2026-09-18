@@ -1,10 +1,10 @@
-# Memory and ownership
+# Memory and Ownership
 
 You've already used ownership in several forms.
 You moved `String`s, borrowed slices, passed `&mut` references into functions, and handed values to `Vec`, `HashMap`, `Option`, `Result`, and your own structs.
 Now we can connect those operations and see how Rust manages memory safely without a garbage collector.
 
-## What the borrow checker checks
+## What the Borrow Checker Checks
 
 Languages with manual memory management (C, C++) hand you the power to free memory yourself, and with it the power to free it twice, free it too early, or forget to free it at all.
 Languages with a garbage collector take that power back and spend runtime and memory tracking what's still alive.

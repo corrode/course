@@ -11,7 +11,7 @@ Keep the calculation in `f64` so the fractional percentage is not lost, then con
 Converting the final value back to `u32` *truncates* the fractional part toward zero.
 That matches games which use whole HP, so `8.085` damage becomes `8`, not `9`.
 
-## Useful resources
+## Useful Resources
 
 - [`as`](https://doc.rust-lang.org/std/keyword.as.html) is the cast operator.
   `1.7_f64 as u32` is `1`, not `2`, because the cast truncates.

@@ -1,9 +1,9 @@
-# Wrapping up the password validator
+# Wrapping Up the Password Validator
 
 You built a report with a struct and an enum, checked characters with iterators, and collected feedback in a vector.
 Methods and a `match` over score ranges tied those pieces together.
 
-## What we learned
+## What We Learned
 
 - Use `s.chars().any(|c| c.is_ascii_*())` for a yes-or-no question and `s.chars().filter(...).count()` when you need the number of matches.
 - Membership in a small set of literal characters is one `"!@#$%^&*".contains(c)` call.

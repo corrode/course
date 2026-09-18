@@ -1,4 +1,4 @@
-# Getting a value with a fallback
+# Getting a Value with a Fallback
 
 Looking up a key in a `HashMap` returns an `Option<&V>`, because the key might not be there.
 There's no null.
@@ -6,7 +6,7 @@ To get a value out of the `Option`, you supply a fallback for the missing case.
 We'll cover `Option` in its own chapter.
 For now, you can clone the value if present and use `unwrap_or` to supply a fallback.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`HashMap::get`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.get) returns `Option<&V>`.
   The `&` matters: you get a reference into the map, not a copy of the value.

@@ -1,4 +1,4 @@
-# Iterating over characters
+# Iterating over Characters
 
 Strings aren't directly indexable in Rust, because UTF-8 characters have varying widths, but you can walk through their `char`s.
 A `for c in text.chars()` loop works.
@@ -9,7 +9,7 @@ The name between the pipes is the parameter; the expression after them is the re
 Here, `any` passes each item to the closure and checks the returned `bool`.
 A `for` loop is fine too.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`Iterator::any`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.any) returns `true` if any item in the iterator matches a predicate.
   It stops at the first match, so you don't have to inspect the rest of the string.

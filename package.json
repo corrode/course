@@ -3,18 +3,19 @@
   "scripts": {
     "test": "node --test static/js/*.test.mjs",
     "test:browser": "npm run build:js && python3 scripts/check-editor-browser.py",
-    "build:js": "rm -rf static/dist && esbuild static/js/inline-editor.js static/js/readonly-rust-editor.js static/js/rust-highlight.js --bundle --splitting --format=esm --minify --outdir=static/dist --entry-names=[name] --chunk-names=chunks/[name]-[hash]"
+    "build:js": "rm -rf static/dist && esbuild static/js/inline-editor.js static/js/readonly-rust-editor.js static/js/rust-highlight.js --bundle --splitting --format=esm --minify --outdir=static/dist --entry-names=[name] --chunk-names=chunks/[name]-[hash] && cp node_modules/htmx.org/dist/htmx.min.js static/js/htmx.min.js"
   },
   "devDependencies": {
-    "@codemirror/autocomplete": "6.18.0",
-    "@codemirror/commands": "6.6.0",
-    "@codemirror/lang-rust": "6.0.1",
-    "@codemirror/language": "6.10.2",
-    "@codemirror/state": "6.7.1",
-    "@codemirror/view": "6.43.7",
-    "@lezer/highlight": "1.2.0",
+    "@codemirror/autocomplete": "6.20.3",
+    "@codemirror/commands": "6.11.1",
+    "@codemirror/lang-rust": "6.0.2",
+    "@codemirror/language": "6.12.4",
+    "@codemirror/state": "6.7.5",
+    "@codemirror/view": "6.43.12",
+    "@lezer/highlight": "1.2.3",
     "@lezer/rust": "1.0.2",
-    "@replit/codemirror-vim": "6.2.1",
-    "esbuild": "0.25.8"
+    "@replit/codemirror-vim": "6.4.0",
+    "esbuild": "0.28.2",
+    "htmx.org": "2.0.10"
   }
 }

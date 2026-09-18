@@ -1,8 +1,8 @@
-# Wrapping up moves and Copy
+# Wrapping Up Moves and Copy
 
 You moved a `String` into a function and back out, and saw that an `i32` copies instead of moving.
 
-## What we learned
+## What We Learned
 
 - Assigning or passing a non-`Copy` value moves it.
   The old binding no longer holds the value; using it again before reassigning it is a compile error.

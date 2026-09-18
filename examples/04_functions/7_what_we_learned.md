@@ -1,4 +1,4 @@
-# Wrapping up functions
+# Wrapping Up Functions
 
 Here's what each exercise asked you to work out:
 

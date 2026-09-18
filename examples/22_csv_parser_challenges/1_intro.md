@@ -1,4 +1,4 @@
-# CSV parser challenges
+# CSV Parser Challenges
 
 Two optional tasks to try after the CSV parser. Change the separator without
 breaking quoted fields, then reuse a parser through a small public API.

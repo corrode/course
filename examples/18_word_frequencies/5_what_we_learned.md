@@ -1,9 +1,9 @@
-# Wrapping up the word counter
+# Wrapping Up the Word Counter
 
 Your word counter now uses a `HashMap` keyed by lowercased words and `max_by_key` to find the most common one.
 You used `into_iter()` to take ownership of the result and combined counts and lengths into summary statistics.
 
-## What we learned
+## What We Learned
 
 - `split_whitespace()` is the right default for word-splitting in natural text.
   It collapses runs of whitespace and skips empties.
@@ -16,7 +16,7 @@ You used `into_iter()` to take ownership of the result and combined counts and l
   Tests for calculated `f64` values usually compare a tolerance such as `(a - b).abs() < eps` instead of using `==`.
 - Tuples like `(usize, usize, f64)` work for tiny ad-hoc returns, but a named struct (`TextStats { total, unique, avg_len }`) reads better at the call site as the function grows.
 
-## An optional detour
+## An Optional Detour
 
 You now have every tool you need to build a small program from scratch: structs, enums, iterators, `Option`, `Result`, vectors, and strings.
 Want to put them together? [Build a password validator](19_password_validator) with your own rules in the optional Creative Break project.

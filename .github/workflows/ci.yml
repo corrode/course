@@ -76,10 +76,12 @@ jobs:
           cache: npm
       - name: Install pinned dependencies
         run: npm ci --ignore-scripts
-      - name: Rebuild local CodeMirror and Lezer bundles
+      - name: Test browser JavaScript
+        run: npm test
+      - name: Rebuild browser assets
         run: npm run build:js
-      - name: Verify generated bundles are current
-        run: git diff --exit-code -- static/dist
+      - name: Verify generated assets are current
+        run: git diff --exit-code -- static/dist static/js/htmx.min.js
 
   spellcheck:
     name: Spell check (typos)
@@ -87,7 +89,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Run typos
-        uses: crate-ci/typos@v1.49.1
+        uses: crate-ci/typos@v1.50.2
 
   link-check:
     name: Link check (lychee)

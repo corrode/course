@@ -1,8 +1,8 @@
-# Wrapping up numbers
+# Wrapping Up Numbers
 
 You chose how to handle overflow, converted numeric types explicitly, and used a fallback when parsing failed.
 
-## What we learned
+## What We Learned
 
 - If you add two numbers and the result doesn't fit the type, Rust panics in debug builds and wraps in release builds.
   When overflow is possible, pick the behavior you want: `saturating_add` (clamp), `checked_add` (return an `Option`), or `wrapping_add` (wrap around).

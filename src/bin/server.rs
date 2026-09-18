@@ -18,11 +18,12 @@ use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::{
-    Row, Sqlite, SqlitePool,
+    QueryBuilder, Row, Sqlite, SqlitePool,
     migrate::MigrateDatabase,
     sqlite::{SqlitePoolOptions, SqliteRow},
 };
 use std::env;
+use std::fmt::Write as _;
 use std::sync::{Arc, LazyLock};
 use tower_http::services::ServeDir;
 use ulid::Ulid;
@@ -113,7 +114,7 @@ async fn store_course_event(pool: &SqlitePool, event: CourseEvent<'_>) -> Result
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ",
     )
-    .bind(Ulid::new().to_string())
+    .bind(Ulid::generate().to_string())
     .bind(event.participant_id)
     .bind(event.session_id)
     .bind(event.event_type)
@@ -255,8 +256,9 @@ struct ProgressDot {
     /// `false` for notes-only chapters (the appendix), which do not
     /// count toward progress.
     has_exercises: bool,
-    /// `true` for optional bonus chapters: listed in the picker but excluded
-    /// from the TOC, progress, and the default next-chapter flow.
+    /// `true` for optional bonus chapters: listed in the picker and the
+    /// dashboard's optional section, but excluded from the numbered TOC,
+    /// progress, and the default next-chapter flow.
     is_bonus: bool,
     /// Optional explicit link target. When `Some`, the TOC partial and
     /// chapter picker link straight here instead of deriving an
@@ -361,6 +363,12 @@ struct DashboardTemplate {
     /// "View your team" link on the dashboard. `None` for anonymous
     /// viewers and for participants who signed up via the public form.
     team_token: Option<TeamToken>,
+}
+
+impl DashboardTemplate {
+    fn optional_chapter_rows(&self) -> usize {
+        self.dots.iter().filter(|d| d.is_bonus).count().div_ceil(2)
+    }
 }
 
 /// Template for the slim signup form.
@@ -938,20 +946,16 @@ async fn load_team_member_summaries(
         FROM participants p
         LEFT JOIN submissions s ON p.id = s.participant_id AND s.tests_passed = 1
     ";
-    let rows = if let Some(token) = team {
-        sqlx::query(&format!(
-            "{base} WHERE p.team_token = ? GROUP BY p.id, p.name, p.team_token"
-        ))
-        .bind(token.as_str())
-        .fetch_all(&state.pool)
-        .await?
+    let mut query = QueryBuilder::<Sqlite>::new(base);
+    if let Some(token) = team {
+        query
+            .push(" WHERE p.team_token = ")
+            .push_bind(token.as_str());
     } else {
-        sqlx::query(&format!(
-            "{base} WHERE p.team_token IS NULL GROUP BY p.id, p.name, p.team_token"
-        ))
-        .fetch_all(&state.pool)
-        .await?
-    };
+        query.push(" WHERE p.team_token IS NULL");
+    }
+    query.push(" GROUP BY p.id, p.name, p.team_token");
+    let rows = query.build().fetch_all(&state.pool).await?;
 
     let total = completable_total(state);
     let mut members = Vec::with_capacity(rows.len());
@@ -1449,7 +1453,7 @@ async fn web_register(
         .map_or(Ok(None), TeamToken::parse_form_input)
         .map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    let ulid = Ulid::new().to_string();
+    let ulid = Ulid::generate().to_string();
 
     sqlx::query("INSERT INTO participants (id, name, team_token) VALUES (?, ?, ?)")
         .bind(&ulid)
@@ -2377,13 +2381,7 @@ async fn load_team_view(
     let (submissions, submissions_truncated) = if member_ids.is_empty() {
         (Vec::new(), false)
     } else {
-        // Hand-rolled IN list. Member IDs are ULIDs we just read out
-        // of the same DB so there's no untrusted input to escape;
-        // sqlx's prepared-statement placeholders go in via `bind`.
-        let placeholders = std::iter::repeat_n("?", member_ids.len())
-            .collect::<Vec<_>>()
-            .join(", ");
-        let sql = format!(
+        let mut query = QueryBuilder::<Sqlite>::new(
             r"
             SELECT p.id AS participant_id,
                    p.name AS participant_name,
@@ -2395,18 +2393,17 @@ async fn load_team_view(
                    s.source_code
             FROM submissions s
             JOIN participants p ON s.participant_id = p.id
-            WHERE s.participant_id IN ({placeholders})
-            ORDER BY s.submitted_at DESC, s.id DESC
-            LIMIT ?
-            "
+            WHERE s.participant_id IN (
+            ",
         );
-        let mut q = sqlx::query(&sql);
+        let mut ids = query.separated(", ");
         for id in &member_ids {
-            q = q.bind(id);
+            ids.push_bind(id);
         }
+        query.push(") ORDER BY s.submitted_at DESC, s.id DESC LIMIT ");
         // +1 so we can detect truncation without a second query.
-        q = q.bind(TEAM_SUBMISSIONS_LIMIT + 1);
-        let rows = match q.fetch_all(&state.pool).await {
+        query.push_bind(TEAM_SUBMISSIONS_LIMIT + 1);
+        let rows = match query.build().fetch_all(&state.pool).await {
             Ok(rows) => rows,
             Err(err) => {
                 error!("team page submissions query failed: {err}");
@@ -2721,7 +2718,7 @@ async fn api_register(
     State(state): State<AppState>,
     Json(request): Json<RegistrationRequest>,
 ) -> Result<Json<RegistrationResponse>, StatusCode> {
-    let ulid = Ulid::new().to_string();
+    let ulid = Ulid::generate().to_string();
 
     info!("New participant registration request");
 
@@ -2871,7 +2868,7 @@ async fn api_submit(
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         "
     )
-    .bind(Ulid::new().to_string())
+    .bind(Ulid::generate().to_string())
     .bind(&request.ulid)
     .bind(&request.exercise_name)
     .bind(&request.source_code)
@@ -3519,12 +3516,28 @@ fn calculate_submission_hash(
     hasher.update(exercise_name.as_bytes());
     hasher.update(b":");
     hasher.update(source_code.as_bytes());
-    format!("{:x}", hasher.finalize())
+    let mut hex = String::with_capacity(64);
+    for byte in hasher.finalize() {
+        let _ = write!(hex, "{byte:02x}");
+    }
+    hex
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn submission_hash_preserves_stored_lowercase_hex() {
+        assert_eq!(
+            calculate_submission_hash("participant", "00_integers/3_add_health", "fn main() {}"),
+            "e4c530bfc0b83dc1bd408f8db96ed659cc991d7f07daf5c0464270fdc9f3199a"
+        );
+        assert_eq!(
+            calculate_submission_hash("participant", "00_integers/3_add_health", ""),
+            "b5a4b53a7e194bb079185aa9c070b40b8abc277322d175bf11ab21ce949ee15b"
+        );
+    }
 
     #[tokio::test]
     async fn step_progress_keeps_latest_submission_metadata_separate_from_completion() {
@@ -3628,6 +3641,161 @@ mod tests {
             admin_token: String::new(),
             exercises: Arc::new(catalog),
         }
+    }
+
+    async fn rendered_dashboard(state: &AppState, participant: Option<&str>) -> String {
+        let response = if let Some(id) = participant {
+            participant_dashboard(AxumPath(id.to_string()), State(state.clone()))
+                .await
+                .into_response()
+        } else {
+            anonymous_dashboard(State(state.clone()), Query(DashboardQuery { reason: None }))
+                .await
+                .into_response()
+        };
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        String::from_utf8(body.to_vec()).unwrap()
+    }
+
+    fn dashboard_nav<'a>(html: &'a str, label: &str) -> &'a str {
+        html.split(&format!("aria-label=\"{label}\""))
+            .nth(1)
+            .unwrap()
+            .split("</nav>")
+            .next()
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn dashboard_optional_chapters_are_visible_without_changing_required_toc() {
+        let state = optional_discovery_state().await;
+        for stem in [
+            "06_word_count_challenge",
+            "19_password_validator",
+            "22_csv_parser_challenges",
+            "23_smart_pointers",
+        ] {
+            assert!(
+                state
+                    .exercises
+                    .iter()
+                    .any(|e| e.file_stem == stem && e.is_bonus())
+            );
+        }
+        for optional_count in [0_usize, 1, 4, 6] {
+            let mut state = state.clone();
+            let mut remaining = optional_count;
+            Arc::make_mut(&mut state.exercises).retain(|e| {
+                if !e.is_bonus() {
+                    return true;
+                }
+                if remaining == 0 {
+                    return false;
+                }
+                remaining -= 1;
+                true
+            });
+            let mut required_only = state.clone();
+            Arc::make_mut(&mut required_only.exercises).retain(|e| !e.is_bonus());
+            for participant in [None, Some("participant")] {
+                let html = rendered_dashboard(&state, participant).await;
+                let baseline = rendered_dashboard(&required_only, participant).await;
+                let required = dashboard_nav(&html, "All exercises");
+                assert_eq!(
+                    required.split_whitespace().collect::<Vec<_>>(),
+                    dashboard_nav(&baseline, "All exercises")
+                        .split_whitespace()
+                        .collect::<Vec<_>>()
+                );
+                assert_eq!(
+                    html.contains("id=\"optional-chapters-heading\""),
+                    optional_count > 0
+                );
+                if optional_count == 0 {
+                    assert!(!html.contains("aria-label=\"Optional chapters\""));
+                    continue;
+                }
+                let optional = dashboard_nav(&html, "Optional chapters");
+                assert_eq!(
+                    optional.matches("class=\"chapter-row").count(),
+                    optional_count
+                );
+                assert_eq!(optional.matches("★</span>").count(), optional_count);
+                assert!(
+                    optional.contains(&format!("--chapter-rows: {}", optional_count.div_ceil(2)))
+                );
+                let prefix = participant
+                    .map_or_else(|| "/exercise/".to_string(), |u| format!("/exercise/{u}/"));
+                for chapter in state.exercises.iter() {
+                    let href = format!("href=\"{prefix}{}\"", chapter.file_stem);
+                    assert_eq!(optional.contains(&href), chapter.is_bonus());
+                    assert_eq!(required.contains(&href), !chapter.is_bonus());
+                    if chapter.is_bonus() {
+                        rendered_exercise(&state, &chapter.file_stem, participant).await;
+                    }
+                }
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn dashboard_optional_completion_preserves_progress_and_resume() {
+        let state = optional_discovery_state().await;
+        let before = rendered_dashboard(&state, Some("participant")).await;
+        for chapter in state.exercises.iter().filter(|e| e.is_bonus()) {
+            for step in chapter.code_steps() {
+                let key = if step.key().is_empty() {
+                    chapter.file_stem.clone()
+                } else {
+                    format!("{}/{}", chapter.file_stem, step.key())
+                };
+                team_query_submission(
+                    &state,
+                    &key,
+                    "participant",
+                    &key,
+                    true,
+                    "2026-09-19 12:00:00",
+                )
+                .await;
+            }
+        }
+        let progress = get_exercise_progress(&state.pool, Some("participant"), &state.exercises)
+            .await
+            .unwrap();
+        let expected_total = state
+            .exercises
+            .iter()
+            .filter(|e| !e.is_bonus() && !e.is_quiz() && !e.code_steps().is_empty())
+            .count();
+        assert_eq!(exercise_progress_counts(&progress), (0, expected_total));
+        let after = rendered_dashboard(&state, Some("participant")).await;
+        let optional = dashboard_nav(&after, "Optional chapters");
+        assert_eq!(
+            optional
+                .matches("class=\"chapter-row attempted completed perfected\"")
+                .count(),
+            state.exercises.iter().filter(|e| e.is_bonus()).count()
+        );
+        assert_eq!(
+            dashboard_nav(&before, "All exercises"),
+            dashboard_nav(&after, "All exercises")
+        );
+        let cta = |html: &str| {
+            html.split("aria-label=\"Start the course\"")
+                .nth(1)
+                .unwrap()
+                .split("</section>")
+                .next()
+                .unwrap()
+                .to_string()
+        };
+        assert_eq!(cta(&before), cta(&after));
+        let anonymous = rendered_dashboard(&state, None).await;
+        assert!(!dashboard_nav(&anonymous, "Optional chapters").contains(" perfected"));
     }
 
     #[tokio::test]
@@ -3944,6 +4112,287 @@ mod tests {
         );
         assert_eq!(first_rust_error_code("error: expected expression"), None);
         assert_eq!(first_rust_error_code("all tests passed"), None);
+    }
+
+    async fn team_query_state() -> AppState {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!().run(&pool).await.unwrap();
+        for (id, name, team) in [
+            ("member-a", "Alice", Some("workshop")),
+            ("member'b", "Bob", Some("workshop")),
+            ("outsider", "Other", Some("other-team")),
+            ("unassigned", "Una", None),
+        ] {
+            sqlx::query("INSERT INTO participants (id, name, team_token) VALUES (?, ?, ?)")
+                .bind(id)
+                .bind(name)
+                .bind(team)
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+        AppState {
+            pool,
+            admin_token: String::new(),
+            exercises: Arc::new(Vec::new()),
+        }
+    }
+
+    async fn team_query_submission(
+        state: &AppState,
+        id: &str,
+        participant: &str,
+        exercise: &str,
+        passed: bool,
+        timestamp: &str,
+    ) {
+        sqlx::query(
+            "INSERT INTO submissions \
+             (id, participant_id, exercise_name, source_code, tests_passed, \
+              clippy_passed, fmt_passed, submitted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+        .bind(id)
+        .bind(participant)
+        .bind(exercise)
+        .bind(id)
+        .bind(passed)
+        .bind(passed)
+        .bind(passed)
+        .bind(timestamp)
+        .execute(&state.pool)
+        .await
+        .unwrap();
+    }
+
+    #[tokio::test]
+    async fn team_queries_filter_named_unassigned_and_nonexistent_rosters() {
+        let state = team_query_state().await;
+        team_query_submission(
+            &state,
+            "pass",
+            "member-a",
+            "chapter/step",
+            true,
+            "2026-09-18 12:00:00",
+        )
+        .await;
+        team_query_submission(
+            &state,
+            "fail",
+            "member-a",
+            "chapter/step",
+            false,
+            "2026-09-19 12:00:00",
+        )
+        .await;
+        let team = TeamToken::try_from("workshop").unwrap();
+        let missing = TeamToken::try_from("nonexistent").unwrap();
+        for (token, expected) in [
+            (Some(&team), vec!["member'b", "member-a"]),
+            (None, vec!["unassigned"]),
+            (Some(&missing), vec![]),
+        ] {
+            let members = load_team_member_summaries(&state, token).await.unwrap();
+            let mut ids: Vec<_> = members.iter().map(|m| m.id.as_str()).collect();
+            ids.sort_unstable();
+            assert_eq!(ids, expected);
+            for member in members {
+                assert_eq!(member.team_token.as_ref(), token);
+                assert_eq!(member.completed_count, 0);
+                assert_eq!(member.total_exercises, 0);
+                if member.id == "member-a" {
+                    assert_eq!(
+                        member.last_activity.unwrap().to_rfc3339(),
+                        "2026-09-18T12:00:00+00:00"
+                    );
+                } else {
+                    assert!(member.last_activity.is_none());
+                }
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn team_queries_feed_binds_quoted_member_ids_and_excludes_other_teams() {
+        let state = team_query_state().await;
+        for (id, participant, exercise, passed, timestamp) in [
+            (
+                "a-pass",
+                "member-a",
+                "z_chapter/step",
+                true,
+                "2026-09-18 12:00:00",
+            ),
+            (
+                "b-fail",
+                "member'b",
+                "a_chapter/step",
+                false,
+                "2026-09-19 12:00:00",
+            ),
+            (
+                "a-fail",
+                "member-a",
+                "z_chapter/step",
+                false,
+                "2026-09-20 12:00:00",
+            ),
+            (
+                "outside",
+                "outsider",
+                "outside/step",
+                true,
+                "2026-09-21 12:00:00",
+            ),
+            (
+                "solo",
+                "unassigned",
+                "solo/step",
+                true,
+                "2026-09-22 12:00:00",
+            ),
+        ] {
+            team_query_submission(&state, id, participant, exercise, passed, timestamp).await;
+        }
+        let team = TeamToken::try_from("workshop").unwrap();
+        let (members, feed, truncated, exercises) =
+            load_team_view(&state, Some(&team), Some("member'b"), None)
+                .await
+                .unwrap();
+        assert_eq!(members.len(), 2);
+        assert_eq!(members[0].id, "member-a");
+        assert!(!members[0].is_self);
+        assert_eq!(
+            members[0].last_activity.unwrap().to_rfc3339(),
+            "2026-09-18T12:00:00+00:00"
+        );
+        assert_eq!(members[1].id, "member'b");
+        assert!(members[1].is_self);
+        assert!(members[1].last_activity.is_none());
+        assert_eq!(
+            feed.iter()
+                .map(|s| (
+                    s.source_code.as_str(),
+                    s.participant_name.as_str(),
+                    s.tests_passed
+                ))
+                .collect::<Vec<_>>(),
+            vec![
+                ("a-fail", "Alice", false),
+                ("b-fail", "Bob", false),
+                ("a-pass", "Alice", true)
+            ]
+        );
+        assert!(!truncated);
+        assert_eq!(exercises, vec!["a_chapter/step", "z_chapter/step"]);
+
+        let (members, feed, truncated, exercises) =
+            load_team_view(&state, None, None, None).await.unwrap();
+        assert_eq!(members.len(), 1);
+        assert_eq!(members[0].id, "unassigned");
+        assert_eq!(feed.len(), 1);
+        assert_eq!(feed[0].source_code, "solo");
+        assert!(!truncated);
+        assert_eq!(exercises, vec!["solo/step"]);
+    }
+
+    #[tokio::test]
+    async fn team_queries_empty_roster_and_members_without_submissions_have_empty_feeds() {
+        let state = team_query_state().await;
+        let missing = TeamToken::try_from("nonexistent").unwrap();
+        let team = TeamToken::try_from("workshop").unwrap();
+        for (token, count) in [(Some(&missing), 0), (Some(&team), 2), (None, 1)] {
+            let (members, feed, truncated, exercises) =
+                load_team_view(&state, token, None, None).await.unwrap();
+            assert_eq!(members.len(), count);
+            assert!(feed.is_empty());
+            assert!(!truncated);
+            assert!(exercises.is_empty());
+        }
+    }
+
+    #[tokio::test]
+    async fn team_queries_feed_limit_and_newest_order_include_id_tiebreaker() {
+        let state = team_query_state().await;
+        let team = TeamToken::try_from("workshop").unwrap();
+        let limit = usize::try_from(TEAM_SUBMISSIONS_LIMIT).unwrap();
+        for n in 0..limit {
+            team_query_submission(
+                &state,
+                &format!("submission-{n:04}"),
+                if n % 2 == 0 { "member-a" } else { "member'b" },
+                "retained/step",
+                true,
+                "2026-09-19 12:00:00",
+            )
+            .await;
+        }
+        let (_, feed, truncated, _) = load_team_view(&state, Some(&team), None, None)
+            .await
+            .unwrap();
+        assert_eq!(feed.len(), limit);
+        assert!(!truncated, "exactly the limit must not be marked truncated");
+        let expected: Vec<_> = (0..limit)
+            .rev()
+            .map(|n| format!("submission-{n:04}"))
+            .collect();
+        assert_eq!(
+            feed.iter().map(|s| &s.source_code).collect::<Vec<_>>(),
+            expected.iter().collect::<Vec<_>>()
+        );
+
+        // Insert older activity last, with a higher ID, to distinguish timestamp ordering.
+        team_query_submission(
+            &state,
+            "zzz-older",
+            "member'b",
+            "clipped/step",
+            true,
+            "2026-09-18 12:00:00",
+        )
+        .await;
+        let (_, feed, truncated, exercises) = load_team_view(&state, Some(&team), None, None)
+            .await
+            .unwrap();
+        assert_eq!(feed.len(), limit);
+        assert!(truncated);
+        assert_eq!(
+            feed.iter().map(|s| &s.source_code).collect::<Vec<_>>(),
+            expected.iter().collect::<Vec<_>>()
+        );
+        assert_eq!(exercises, vec!["retained/step"]);
+    }
+
+    #[tokio::test]
+    async fn registration_generates_distinct_ulids_and_persists_participants() {
+        let state = team_query_state().await;
+        let mut ids = Vec::new();
+        for name in ["New Alice", "New Bob"] {
+            let Json(response) = api_register(
+                State(state.clone()),
+                Json(RegistrationRequest {
+                    name: Name::try_from(name.to_string()).unwrap(),
+                }),
+            )
+            .await
+            .unwrap();
+            let parsed: Ulid = response.ulid.parse().unwrap();
+            assert_eq!(parsed.to_string(), response.ulid);
+            assert_eq!(response.ulid.len(), 26);
+            let row = sqlx::query("SELECT name, team_token FROM participants WHERE id = ?")
+                .bind(&response.ulid)
+                .fetch_one(&state.pool)
+                .await
+                .unwrap();
+            assert_eq!(row.get::<String, _>("name"), name);
+            assert!(row.get::<Option<String>, _>("team_token").is_none());
+            ids.push(response.ulid);
+        }
+        assert_ne!(ids[0], ids[1]);
     }
 
     #[test]

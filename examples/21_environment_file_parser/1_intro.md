@@ -1,4 +1,4 @@
-# Parsing structured text and generics
+# Parsing Structured Text and Generics
 
 *You have a problem.
 You decide to use generics.
@@ -7,7 +7,7 @@ Now you have a `Problem<T> where T: Clone + Send + Sync + 'static`.*
 You'll build a parser for `.env`-style configuration files.
 You'll split each entry only once, then use a generic function to read values as the types your callers need.
 
-## Splitting once
+## Splitting Once
 
 `split` returns an iterator of *all* parts.
 For "key=value" you usually want to split *once* and keep the rest of the line intact (in case the value itself contains the separator):
@@ -23,7 +23,7 @@ match line.split_once('=') {
 `split_once` returns `Option<(&str, &str)>`.
 The two halves are slices of the original string, so you don't allocate anything.
 
-## Generic functions
+## Generic Functions
 
 You could write separate functions to read a port as a `u16` and a flag as a `bool`.
 I'd rather write the lookup once and let the caller choose the type.
@@ -44,7 +44,7 @@ parameters. `T::Err` is the error type chosen by that implementation of `FromStr
 Your lookup exercise will combine this conversion with `HashMap::get` and decide
 how to represent a missing key or a failed conversion.
 
-## Trim and skip
+## Trim and Skip
 
 Real config files have empty lines, comments, and trailing whitespace.
 A small loop handles all three cases:
@@ -62,7 +62,7 @@ for line in content.lines() {
 `continue` skips the rest of the current loop iteration and jumps to the next one.
 Its sibling, `break`, exits the loop entirely.
 
-## When errors mix: `Box<dyn Error>`
+## When Errors Mix: `Box<dyn Error>`
 
 The parser uses one error type, the custom `ParseError` enum, so `?` propagates it cleanly.
 Real programs often mix error types: read the file from disk and you get a `std::io::Error`; parse its contents and you get your own `ParseError`.
@@ -87,7 +87,7 @@ The box preserves the error's message and source chain, but callers no longer ge
 A custom enum (like `ParseError`, but with a variant per source) lets callers match on each case, and the [`thiserror`](https://docs.rs/thiserror) crate generates the trait implementations for you.
 For application code, [`anyhow`](https://docs.rs/anyhow) offers a similar approach with convenient error context; for libraries where callers need to match on the error, prefer an enum.
 
-## A note on raw strings: `r#"..."#`
+## A Note on Raw Strings: `r#"..."#`
 
 The tests use raw string literals so you can embed a multi-line `.env` snippet without escaping anything:
 

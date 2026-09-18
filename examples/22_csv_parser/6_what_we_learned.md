@@ -1,9 +1,9 @@
-# Wrapping up the CSV parser
+# Wrapping Up the CSV Parser
 
 You started with `split` and `trim`, then kept track of quotes so commas inside a field stayed where they belonged.
 Once that worked, you reused the line parser to collect headers and rows.
 
-## What we learned
+## What We Learned
 
 - The same stateful parsing pattern appears in JSON, command lines, and terminal escape sequences.
   In each case, read one item, consult the current state, then update the state or emit a result.

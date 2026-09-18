@@ -1,9 +1,9 @@
-# Computing two values at once
+# Computing Two Values at Once
 
 When two results are naturally produced together, returning them as a tuple is often clearer than two separate function calls.
 The caller destructures the result into named bindings.
 
-## Syntax to use
+## Syntax to Use
 
 - The arithmetic operators `*` and `+` are all you need here.
   The dimensions in the tests keep both `u32` results within range.

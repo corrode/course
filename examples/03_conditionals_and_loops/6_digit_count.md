@@ -1,4 +1,4 @@
-# Counting digits with `while`
+# Counting Digits with `while`
 
 How many digits does a number have?
 `0` has one digit; everything else is "divide by 10 and count how many times you can do it before hitting zero".

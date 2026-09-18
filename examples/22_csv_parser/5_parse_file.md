@@ -1,4 +1,4 @@
-# Parsing a whole file
+# Parsing a Whole File
 
 Your line parser has done the harder work.
 For the whole file, split on newlines, treat the first line as headers, and parse the rest as data rows.
@@ -9,7 +9,7 @@ You'll reuse `parse_csv_line` from the previous page.
 To keep this page independently runnable, its signature is re-declared here as a stub with `todo!()`.
 Paste your earlier solution into the stub.
 
-## Useful from the standard library
+## Useful from the Standard Library
 
 - [`str::lines`](https://doc.rust-lang.org/std/primitive.str.html#method.lines) yields each line as a `&str`, stripping `\n` and `\r\n`.
   A trailing newline does not create an empty trailing line.

@@ -1,4 +1,4 @@
-# Structs and methods
+# Structs and Methods
 
 In Rust, a method's signature tells you whether it borrows a value, changes it, or takes ownership of it.
 You group related fields in a `struct` and attach methods with an `impl` block.
@@ -47,7 +47,7 @@ Inside `impl` you write `self.field` for the same thing.
 `Self` (capital S) is shorthand for "the type I'm `impl`ing".
 `User` and `Self` are interchangeable inside `impl User`.
 
-## A note on ranges: `0..5`
+## A Note on Ranges: `0..5`
 
 The `record_login` test calls the method five times in a loop:
 

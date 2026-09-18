@@ -1,9 +1,9 @@
-# Wrapping up vectors
+# Wrapping Up Vectors
 
 You read a vector through a shared borrow and changed one through a mutable borrow.
 You also built a fresh `Vec<String>` from borrowed `&str` inputs.
 
-## What we learned
+## What We Learned
 
 - `Vec<T>` is a growable, heap-allocated array.
   The `<T>` is generic, but a single `Vec` only holds one type at a time.

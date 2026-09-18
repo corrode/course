@@ -1,4 +1,4 @@
-# A stray semicolon
+# A Stray Semicolon
 
 This function takes an `i32`, promises to return an `i32`, and multiplies the input by two.
 Still, the compiler refuses to compile it.

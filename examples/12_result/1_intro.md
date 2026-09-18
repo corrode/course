@@ -1,4 +1,4 @@
-# Result<T, E>: when an operation might fail
+# Result<T, E>: When an Operation Might Fail
 
 *Failure is not an `Option<T>`, but a `Result<T, E>`.*
 
@@ -48,7 +48,7 @@ let n: u16 = "42".parse().unwrap();
 
 You'll see this anywhere a function returns `T` and the type isn't clear from the surrounding code.
 
-### Match guards: `Ok(n) if n > 0 => ...`
+### Match Guards: `Ok(n) if n > 0 => ...`
 
 The `if n > 0` clause on a match arm is called a *guard*.
 The arm only fires when both the pattern matches *and* the guard is true.
@@ -63,7 +63,7 @@ match n {
 }
 ```
 
-### Handling the two variants
+### Handling the Two Variants
 
 As with `Option`, you can handle a `Result` with `match`, `if let`, or a combinator when you have a simple fallback:
 

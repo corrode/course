@@ -1,8 +1,8 @@
-# Wrapping up tuples and destructuring
+# Wrapping Up Tuples and Destructuring
 
 You used tuples to return multiple values, destructured them in parameter lists and `let` bindings, and saw how ownership behaves differently for `Copy` and non-`Copy` element types.
 
-## What we learned
+## What We Learned
 
 - A tuple is a fixed-size group of values whose size and per-slot types are part of the type.
   `(String, u32)` and `(u32, String)` are different types.

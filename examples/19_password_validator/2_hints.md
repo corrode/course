@@ -4,7 +4,7 @@ There are several reasonable ways to build this project.
 These hints give you a starting point without filling in the whole solution.
 I'd get the basic checks passing before adding more scoring rules.
 
-## Where to start
+## Where to Start
 
 1. Implement `PasswordReport::is_strong` first.
    It's a one-liner: `self.score >= 70`.
@@ -27,14 +27,14 @@ fn validate(password: &str) -> PasswordReport {
 }
 ```
 
-## Useful one-liners
+## Useful One-Liners
 
 - Length: `password.chars().count()` counts Unicode scalar values; `password.len()` counts bytes.
 - Has uppercase: `password.chars().any(|c| c.is_ascii_uppercase())`.
 - Has digit: `password.chars().any(|c| c.is_ascii_digit())`.
 - Has special: `password.chars().any(|c| "!@#$%^&*".contains(c))`.
 
-## Strength enum
+## Strength Enum
 
 ```rust
 let strength = match score {

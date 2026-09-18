@@ -1,4 +1,4 @@
-# Predict, then run: how far does it go?
+# Predict, Then Run: How Far Does It Go?
 
 The tests below already contain the pipelines.
 Before running them, replace each `todo!()` with your prediction; leave the pipelines unchanged.
