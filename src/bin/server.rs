@@ -293,6 +293,8 @@ fn tour_dot() -> ProgressDot {
 }
 
 /// Per-exercise progress used by the chapter list and current-status badge.
+// Historical progress and the latest submission can have different outcomes.
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Clone, Default)]
 struct UiExerciseStatus {
     attempted: bool,
