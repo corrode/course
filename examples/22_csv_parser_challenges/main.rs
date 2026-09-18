@@ -12,11 +12,9 @@
     clippy::boxed_local
 )]
 
-#[path = "3_simple_line.rs"]
-mod _3_simple_line;
-#[path = "4_quoted_line.rs"]
-mod _4_quoted_line;
-#[path = "5_parse_file.rs"]
-mod _5_parse_file;
+#[path = "2_delimited_line.rs"]
+mod _2_delimited_line;
+#[path = "3_parser_module.rs"]
+mod _3_parser_module;
 
 fn main() {}

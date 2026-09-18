@@ -28,7 +28,7 @@ mod csv {
         fields
     }
 
-    fn parse_file(content: &str) -> (Vec<String>, Vec<Vec<String>>) {
+    pub fn parse_file(content: &str) -> (Vec<String>, Vec<Vec<String>>) {
         todo!()
     }
 }
