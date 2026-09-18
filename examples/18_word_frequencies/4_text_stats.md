@@ -4,12 +4,13 @@ Now you'll combine several small aggregations in one function.
 `text_stats` returns three numbers about a piece of text: total word count, number of unique words, and the average word length as an `f64`.
 You can compute all three from a single pass over `count_words`'s result, or split the work; either is fine.
 
-The average is where Rust makes you slow down.
-Integer division truncates, so cast to `f64` before you divide, not after.
+Watch the order of operations when you compute the average.
+Integer division truncates, so cast to `f64` before you divide.
+Converting an already-truncated result won't bring the fraction back.
 The test compares the result against a small tolerance because calculations with `f64` can introduce rounding error.
 
 `count_words` is stubbed with `todo!()` again so this file compiles on its own.
-Wire `text_stats` up however you like.
+You can organize the body of `text_stats` as you like.
 The test only cares about the returned tuple.
 
 ## Useful from the standard library

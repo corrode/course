@@ -1,19 +1,16 @@
-/// Parses a percentage from a string. Accepts integers in `0..=100`,
-/// optionally with a trailing `%` (so `"42"` and `"42%"` both work).
+/// Parses a percentage from a string.
+/// Accepts integers in `0..=100`, optionally with a trailing `%` (so `"42"` and `"42%"` both work).
 ///
 /// Returns `Ok(value)` on success, `Err(message)` otherwise.
 ///
-/// This is the hardest function in the chapter; the previous three
-/// were warmups. More than one thing can go wrong, and they need
-/// different error messages. Strip the optional `%` first, then
-/// `parse::<u8>()` the rest, then bounds-check. Each step is its own
-/// potential `Err`.
+/// This takes more thought than the previous exercises because parsing successfully does not mean the number is in range.
+/// More than one thing can go wrong, and they need different error messages.
+/// Strip the optional `%` first, then `parse::<u8>()` the rest, then bounds-check.
+/// Each step is its own potential `Err`.
 ///
-/// Note: the error type here is `&'static str`, which means the message
-/// has to be a string literal. If you find yourself wanting
-/// `format!("{input} is out of range")` in an `Err`, you'd need to
-/// change the return type to `Result<u8, String>`. Stick with literals
-/// for this exercise.
+/// The error type here is `&'static str`, so use string literals for the messages.
+/// If you find yourself wanting `format!("{input} is out of range")` in an `Err`, you'd need to change the return type to `Result<u8, String>`.
+/// Stick with literals for this exercise.
 fn parse_percentage(input: &str) -> Result<u8, &'static str> {
     todo!()
 }

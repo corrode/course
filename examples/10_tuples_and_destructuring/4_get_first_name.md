@@ -10,8 +10,7 @@ This is the same move-versus-copy distinction you worked through in the moves ch
 
 ## Useful from the standard library
 
-- [Rust by Example: destructuring tuples](https://doc.rust-lang.org/rust-by-example/flow_control/match/destructuring/destructure_tuple.html)
-  shows the `let (a, b) = pair;` form and how `_` can ignore parts you don't want to bind.
+- [Rust by Example: destructuring tuples](https://doc.rust-lang.org/rust-by-example/flow_control/match/destructuring/destructure_tuple.html) shows the `let (a, b) = pair;` form and how `_` can ignore parts you don't want to bind.
 - Field-by-index access (`full_name.0`) also works, but a destructure with a meaningful name like `first` reads better at the call site.
 - Anything that isn't `Copy`, such as `String`, moves when destructured by value.
   A tuple is only `Copy` when all of its elements are `Copy`.

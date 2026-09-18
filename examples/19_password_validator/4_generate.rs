@@ -1,9 +1,8 @@
 struct PasswordGenerator {}
 
 impl PasswordGenerator {
-    /// Generates a "secure" password of the given length containing at
-    /// least one uppercase letter, one lowercase letter, one digit, and
-    /// one special character from `!@#$%^&*`.
+    /// Generate a password of the given length containing at least one uppercase letter, one lowercase letter, one digit, and one special character from `!@#$%^&*`.
+    /// The clock-based approach suggested in the hints is only for this exercise, not for real passwords.
     fn generate_secure_password(length: usize) -> String {
         todo!()
     }

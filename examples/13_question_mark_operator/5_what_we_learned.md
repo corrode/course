@@ -9,7 +9,7 @@ You replaced repetitive `match` chains with `?`, propagated errors out of multi-
 - The function using `?` must return a `Result` (or `Option`) whose error type matches, or one that the failing error converts into via `From`.
 - `?` can follow an iterator pipeline that produces a `Result`, so the first error still returns early.
 - Every exercise here used a single error type, so `?` propagated with no conversion.
-  When a function genuinely mixes error types (say file I/O and parsing), you need a common error type.
+  When a function mixes error types (say file I/O and parsing), you need a common error type.
   The env-file parser uses `Box<dyn Error>` as a common error type.
-- Tests that touch the filesystem can race when the harness runs in parallel.
+- Tests that touch the filesystem can race when they run in parallel.
   Use unique filenames or `cargo test -- --test-threads=1` if you see flaky failures.

@@ -1,8 +1,10 @@
 # Parsing a whole file
 
-With a working line parser, the file-level parser is mostly plumbing: split on newlines, treat the first line as headers, and parse the rest as data rows.
+Your line parser has done the harder work.
+For the whole file, split on newlines, treat the first line as headers, and parse the rest as data rows.
 
-Use [`str::lines`](https://doc.rust-lang.org/std/primitive.str.html#method.lines) to split: it handles trailing newlines gracefully, so `"a,b\n"` gives one line, not two.
+Use [`str::lines`](https://doc.rust-lang.org/std/primitive.str.html#method.lines) to split the input.
+A trailing newline won't add an extra line, so `"a,b\n"` gives one line, not two.
 
 You'll reuse `parse_csv_line` from the previous page.
 To keep this page independently runnable, its signature is re-declared here as a stub with `todo!()`.

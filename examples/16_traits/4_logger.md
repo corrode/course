@@ -40,17 +40,17 @@ trait Logger {
 }
 ```
 
-The shape should look familiar from logging APIs in other languages.
+You may recognize these methods from logging APIs in other languages.
 Because `warn` and `error` live on the *trait*, each new implementor gets both without writing them again.
 
-You'll implement that contrast with two types:
+You'll try both keeping and overriding defaults with two types:
 
 1. `PlainLogger` returns the message untouched.
    It uses both defaults as written, so all you have to write is `log`.
 2. `TaggedLogger { tag: String }` prepends a tag (e.g. `"auth: ..."`).
    It uses the default `warn`, but *overrides* `error` to swap the `[ERROR]` prefix for a louder `[CRITICAL]` prefix.
 
-That asymmetry lets each implementor keep the defaults that fit and replace only the behavior that differs.
+You only have to override the behavior you want to change.
 
 ## Useful from the standard library
 

@@ -1,10 +1,7 @@
 # Modules and visibility
 
-Modules are how Rust organizes code into namespaces.
-They let you group related items and control which ones outside code can use.
-
-The default is private.
-Add `pub` to expose something:
+Items in a Rust module are private by default, so outside code can't call your helpers just because it knows their names.
+Modules organize code into namespaces and let you choose which items to expose with `pub`:
 
 ```rust
 mod calculator {
@@ -46,7 +43,7 @@ mod config {
 }
 ```
 
-A narrow public surface keeps callers from depending on details you may want to change later.
+Start with as little `pub` as possible, so callers don't depend on details you may want to change later.
 Expose the constructors, methods, and fields they need, and leave the rest private.
 
 ## Path syntax

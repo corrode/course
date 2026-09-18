@@ -10,14 +10,14 @@ The choices below follow from that bet.
 | Little "why should I care?" motivation | Problem-first: show the bug Rust prevents, then the fix |
 | No feedback when your code is wrong | Tests and focused `todo!()` stubs that point at what's missing |
 
-Here you learn Rust by hitting its rules in practice, not by reading about them in advance.
-The borrow checker makes more sense after you've watched it reject something than it does as a list of rules up front, so we use that order throughout.
+Here you try the code before reading the rules behind it.
+I use that order because a borrow-checker error gives you something concrete to work through instead of a rule to memorize.
 
 ## Future directions
 
 I haven't built all the ideas below, but I don't want to lose them:
 
-- Difficulty signposting: an explicit "this chapter is a cliff" warning before the hard spots.
+- More warning before the hard spots, so you know when to set aside extra time.
 - A dedicated closures chapter (`Fn`, `FnMut`, `FnOnce`, and capture semantics) as another turn of the ownership spiral.
 - A fearless-concurrency chapter, the fourth pillar alongside no null, no exceptions, and memory safety without a GC.
 - A problem-first language picker: ask which language you're coming from and show the bug in that language first.

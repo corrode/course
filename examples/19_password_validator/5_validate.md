@@ -1,11 +1,12 @@
-# The orchestrator: `validate`
+# Putting the checks together
 
 `PasswordValidator::validate(password)` combines the character checks and scoring rules into a `PasswordReport` with a numeric score, a list of feedback messages, and a `PasswordStrength` label.
 
 The shared types and the four `has_*` character-class helpers are stubbed below.
 Fill them in (the intro shows the `.chars().any(...)` pattern) and then write `validate` on top of them.
 
-Suggested scoring (feel free to tweak; the tests only check broad ranges):
+Here's a suggested scoring scheme.
+You can adjust it as long as the results stay within the broad ranges the tests check:
 
 - At least 8 characters: +20
 - Contains uppercase: +15

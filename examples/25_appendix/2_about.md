@@ -21,17 +21,19 @@ This site is that path, with an editor attached.
 
 Practice the core mechanics on a problem that matters to you:
 
-- **Build something tiny.** A CLI that does one thing for you.
+- Build something tiny.
+  A CLI that does one thing for you.
   A scraper.
   A toy interpreter.
   The smaller and more personal, the better.
   Finishing it teaches more than reading another tutorial.
-- **Read other people's Rust.**
+- Read other people's Rust.
   Pick a small crate you use and trace one path through its source, from a public function to its return value.
   You do not need to understand the whole crate to pick up an idiom or two.
-- **Use it for the next thing you'd otherwise do in another language.** The first project will be slow.
+- Use it for the next thing you'd otherwise do in another language.
+  Give yourself time; you'll be making decisions that are already familiar in your usual language.
   Decisions about errors, modules, and tests can often be reused in later projects.
-- **Investigate unexpected behavior.**
+- Investigate unexpected behavior.
   When behavior or a compiler message catches you off guard, reduce it to a small example and change one thing at a time.
 
 ## A note from corrode

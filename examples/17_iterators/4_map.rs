@@ -1,8 +1,7 @@
 /// Normalizes email addresses to lowercase.
 ///
-/// Now you need to transform every element instead of collapsing the
-/// sequence. The pattern is `vec.into_iter()` -> some combinator that
-/// applies a closure -> back to a `Vec` via `collect()`.
+/// Now you need to transform every element instead of reducing the sequence to one value.
+/// Start with `vec.into_iter()`, apply a closure to each item with an adapter, then build a new `Vec` with `collect()`.
 /// See: <https://doc.rust-lang.org/std/string/struct.String.html#method.to_lowercase>
 fn normalize_emails(emails: Vec<String>) -> Vec<String> {
     todo!()

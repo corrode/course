@@ -1,4 +1,4 @@
-# Result<T, E>: When an operation might fail
+# Result<T, E>: when an operation might fail
 
 *Failure is not an `Option<T>`, but a `Result<T, E>`.*
 
@@ -26,14 +26,14 @@ fn parse_port(input: &str) -> Result<u16, &'static str> {
 }
 ```
 
-You only need a working reading of three details in this example: `&'static str`, the `::<u16>` after `parse`, and the `if` guard on the first match arm.
+There are three bits of syntax here you may not have seen yet: `&'static str`, the `::<u16>` after `parse`, and the `if` guard on the first match arm.
 
 ### `&'static str`
 
 This is a `&str` whose lifetime is `'static`: a fancy way of saying "this string lives for the entire duration of the program."
 String literals like `"port must be greater than 0"` are baked into the binary, so they qualify.
 For now, treat `&'static str` as the right type to use for hard-coded error messages.
-Lifetimes receive more detailed treatment later.
+We'll cover lifetimes in more detail later.
 
 ### Turbofish: `parse::<u16>()`
 
@@ -52,7 +52,8 @@ You'll see this anywhere a function returns `T` and the type isn't clear from th
 
 The `if n > 0` clause on a match arm is called a *guard*.
 The arm only fires when both the pattern matches *and* the guard is true.
-Without it you'd need a nested `if` inside the arm body, which reads worse.
+Without it, you'd need a nested `if` inside the arm body.
+I prefer the guard here because it keeps the condition next to the pattern.
 
 ```rust
 match n {

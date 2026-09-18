@@ -1,7 +1,8 @@
 # Typed lookup with generics
 
-Configuration values are stored as strings, but consumers want `u16` ports, `bool` flags, and so on.
-Rather than write one helper per type, declare a generic function bounded by `FromStr` and let the caller pick the type at the call site with a turbofish or a type annotation.
+Your map stores strings, but you need a `u16` for a port or a `bool` for a flag.
+Rather than write one helper per type, declare a generic function with a `FromStr` bound.
+The caller picks the type with a turbofish or a type annotation.
 
 Return `None` both when the key is missing and when its value cannot be parsed as the requested type.
 The standard library methods below provide the pieces; your task is to combine them.

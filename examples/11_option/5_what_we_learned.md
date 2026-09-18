@@ -6,7 +6,7 @@ You consumed `Option`s with fallbacks and combinators, produced new ones from st
 
 - `Option<T>` is Rust's stand-in for "value or absence".
   The compiler forces both cases to be handled, which is why there's no `null`.
-- `match` is the always-works tool.
+- You can use `match` to spell out both cases.
   For common patterns, reach for `unwrap_or`, `map`, and `map_or` to keep call sites short.
 - `if let Some(x) = ...` is the lighter alternative to `match` when you only care about the `Some` branch.
 - `Option::map` mirrors the iterator method of the same name: it transforms the inside if present, leaves `None` alone.
@@ -16,4 +16,4 @@ You consumed `Option`s with fallbacks and combinators, produced new ones from st
   Use them in tests or when you've already ruled out `None`; otherwise prefer the safer combinators.
 - The `|x| ...` syntax is a closure: a tiny anonymous function.
   It shows up everywhere with `Option` and iterators.
-  Closures receive more detailed treatment later.
+  We'll cover closures in more detail later.

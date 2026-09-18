@@ -1,9 +1,11 @@
 # Parsing structured text and generics
 
-*You have a problem. You decide to use generics. Now you have a `Problem<T> where T: Clone + Send + Sync + 'static`.*
+*You have a problem.
+You decide to use generics.
+Now you have a `Problem<T> where T: Clone + Send + Sync + 'static`.*
 
-The project is a parser for `.env`-style configuration files.
-It splits a string only once and uses a generic function to parse the type requested by the caller.
+You'll build a parser for `.env`-style configuration files.
+You'll split each entry only once, then use a generic function to read values as the types your callers need.
 
 ## Splitting once
 
@@ -19,12 +21,12 @@ match line.split_once('=') {
 ```
 
 `split_once` returns `Option<(&str, &str)>`.
-The two halves are slices of the original string; no allocation.
+The two halves are slices of the original string, so you don't allocate anything.
 
 ## Generic functions
 
-Sometimes you want one function that works for many types.
-Here, "parse this string into whatever the caller asks for" is a perfect fit:
+You could write separate functions to read a port as a `u16` and a flag as a `bool`.
+I'd rather write the lookup once and let the caller choose the type:
 
 ```rust
 fn get<T>(env: &HashMap<String, String>, key: &str) -> Option<T>
@@ -40,7 +42,9 @@ let debug: Option<bool> = get(&env, "DEBUG");
 
 `<T>` declares a type parameter.
 The `where T: FromStr` clause says "T must implement the `FromStr` trait", which is what makes `.parse()` work.
-`.parse()` returns `Result<T, T::Err>`; `.ok()` discards the error type and gives back `Option<T>`, which combines nicely with the `?` on the preceding line.
+`.parse()` returns `Result<T, T::Err>`.
+Calling `.ok()` discards the error and gives back `Option<T>`.
+Together with the `?` after `env.get(key)`, that means both a missing key and a failed conversion return `None`.
 
 ## Trim and skip
 
@@ -65,6 +69,7 @@ Its sibling, `break`, exits the loop entirely.
 The parser uses one error type, the custom `ParseError` enum, so `?` propagates it cleanly.
 Real programs often mix error types: read the file from disk and you get a `std::io::Error`; parse its contents and you get your own `ParseError`.
 A function using `?` insists on one error type, so you need something both can turn into.
+This is a fiddly part of `?`: when it won't compile, check the error types as well as the success types.
 
 `Box<T>` puts a value on the heap and owns it.
 `Box<dyn std::error::Error>` is a return type that accepts almost any error, because nearly every error type converts into it automatically:

@@ -29,7 +29,9 @@ for word in ["a", "b", "a"] {
 }
 ```
 
-`entry().or_insert()` is the idiomatic way to do "look up, or insert a default and then take a mutable reference to it" in one step.
+`entry().or_insert()` looks up the key and inserts a default if it is missing.
+Either way, you get a mutable reference to the value.
+I find it easier to read the counter expression from the inside out: find the entry, supply a starting count, then increment it.
 
 ## A note on `*` (dereference)
 

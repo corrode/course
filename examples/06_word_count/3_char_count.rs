@@ -1,5 +1,5 @@
-/// Returns the number of characters in `text`. Counts every `char`
-/// the string contains, whitespace included.
+/// Returns the number of characters in `text`.
+/// Counts every `char` the string contains, whitespace included.
 fn char_count(text: &str) -> usize {
     // 1. Start a counter at 0.
     // 2. for _ in text.chars() { bump the counter }

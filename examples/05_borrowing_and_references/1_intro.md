@@ -2,7 +2,7 @@
 
 The functions chapter had a nuisance baked in.
 Pass a `String` to a function and the move rules say you've handed it over.
-Want to use it afterwards? Too bad, it's gone.
+Try to use it afterwards and the compiler points out the move.
 Returning it back out works but gets tedious fast, especially when the function only needed to *read* the value.
 
 Borrowing is the fix.
@@ -23,11 +23,13 @@ The function gets temporary access and gives it back when it returns.
 
 Borrows come with a single rule, and the borrow checker enforces it everywhere:
 
-> At any moment you can have either any number of shared `&` references, or exactly one `&mut` reference. Never both at once.
+> At any moment you can have either any number of shared `&` references, or exactly one `&mut` reference.
+> Never both at once.
 
 A shared reference promises the data won't change while you're looking at it.
 A mutable reference promises nobody else is looking while you write to it.
 Allow both at once and you'd have someone reading a value halfway through someone else's change, which is the classic data race.
 Rust rules that out at compile time instead of trusting you to get the locking right.
 
-When the compiler rejects your code with a borrowing error, this rule is the first thing to check.
+Borrowing can take a few tries to get used to, especially when you have to work out where a borrow ends.
+When the compiler rejects your code, I suggest starting with this rule: who needs to read the value, and who needs to change it?

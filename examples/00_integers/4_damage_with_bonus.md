@@ -1,8 +1,8 @@
 # `damage_with_bonus`
 
 Rust never converts between numeric types implicitly.
-If you want to multiply a `u32` by an `f64`, one of them has to be converted first.
-The `as` keyword is probably the simplest way to do the conversion.
+If you want to multiply a `u32` by an `f64`, you have to convert one of them first.
+You can use `as` for that.
 
 The function takes base damage as a `u32` and an `f64` bonus percentage, then returns the final damage as a `u32`.
 A bonus of `50.0` means adding half of the base damage again, whether it came from a critical hit, equipment, or some other modifier.

@@ -1,4 +1,5 @@
-/// Finds a user by ID. Returns `Some(username)` if found, `None` if not.
+/// Finds a user by ID.
+/// Returns `Some(username)` if found, `None` if not.
 fn find_user_by_id(users: &[(u32, String)], id: u32) -> Option<&str> {
     todo!()
 }

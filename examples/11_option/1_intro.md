@@ -1,4 +1,4 @@
-# Option<T>: When a value might be missing
+# Option<T>: when a value might be missing
 
 Rust has no `null`.
 Instead, when a value might be absent, the type makes that explicit using `Option<T>`:
@@ -15,7 +15,7 @@ Every time you have an `Option`, you have to deal with both cases.
 That's the whole point.
 
 There are two main ways to unwrap an option.
-Pattern matching is the fundamental tool:
+You can spell out both cases with pattern matching:
 
 ```rust
 match find_user(id) {
@@ -51,10 +51,10 @@ let greet = |name: &str| {
 };
 ```
 
-Closures show up properly in the closures chapter.
-For this chapter, just read `|s| s.len()` as "a tiny one-shot function that takes `s` and returns `s.len()`."
+We'll cover closures in their own chapter.
+For this chapter, just read `|s| s.len()` as "a small function that takes `s` and returns `s.len()`."
 
-A useful one to know: `if let` lets you handle just the `Some` case without writing a full `match`:
+When you only need to handle `Some`, you can use `if let` instead of a full `match`:
 
 ```rust
 if let Some(user) = find_user(id) {

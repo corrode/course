@@ -9,8 +9,7 @@ Client errors like `NotFound` or `BadRequest` mean the request itself is wrong, 
 
 ## Useful from the standard library
 
-- [`std::matches!`](https://doc.rust-lang.org/std/macro.matches.html)
-  expands to a `match` that returns `true` for the given pattern and `false` otherwise.
-  Reads naturally as `matches!(status, HttpStatus::InternalServerError)`.
+- [`std::matches!`](https://doc.rust-lang.org/std/macro.matches.html) expands to a `match` that returns `true` for the given pattern and `false` otherwise.
+  You can write it as `matches!(status, HttpStatus::InternalServerError)`.
 - The `==` operator works on enums that derive `PartialEq`, so `status == HttpStatus::InternalServerError` is equally fine.
   Pick whichever reads better at the call site.

@@ -10,13 +10,11 @@ Appending text may require the owned `String` to grow its buffer, while a string
 The function does not need to return the `String`.
 It changes the value through the reference, and the caller sees that change after the call returns.
 
-On the call site (see the test): the caller has to write `&mut s` explicitly, and `s` itself has to have been declared `let mut s = ...`.
+At the call site (see the test), you need both `&mut s` and a binding declared with `let mut s = ...`.
 Mutability is opt-in at every layer.
 
 ## Useful from the standard library
 
-- [`String::push_str`](https://doc.rust-lang.org/std/string/struct.String.html#method.push_str)
-  works on `&mut String` exactly the same way as on an owned `String`.
+- [`String::push_str`](https://doc.rust-lang.org/std/string/struct.String.html#method.push_str) works on `&mut String` exactly the same way as on an owned `String`.
   The compiler reaches through the reference for you.
-- [`String::push`](https://doc.rust-lang.org/std/string/struct.String.html#method.push)
-  is the single-`char` version, in case you want to append one character at a time.
+- [`String::push`](https://doc.rust-lang.org/std/string/struct.String.html#method.push) is the single-`char` version, in case you want to append one character at a time.

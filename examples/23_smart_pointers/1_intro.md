@@ -1,6 +1,7 @@
 # Smart pointers
 
-*A pointer that cleans up after itself walks into a scope. Nothing leaks.*
+*A pointer that cleans up after itself walks into a scope.
+Nothing leaks.*
 
 A **smart pointer** is a type that owns a value on the heap and runs cleanup automatically when it goes out of scope.
 The "smart" part is the cleanup: there's no `free`, no `delete`, no `dispose()`.
@@ -18,24 +19,24 @@ Rust's smart pointers give you the heap allocation without the GC, because owner
 
 ## Where `Box` earns its keep
 
-1. **`Box<T>`: heap allocation with a single owner.** The simplest smart pointer.
+1. `Box<T>` gives you a heap allocation with a single owner.
    You give it a value, it puts it on the heap, and it frees it when the box goes out of scope.
-2. **Recursive types.** Some types are impossible to write without indirection.
+2. Recursive types need indirection.
    A linked-list node that contains *another* node would be infinitely sized; `Box` gives the compiler a fixed-size handle to put in the struct.
-3. **`Box<dyn Trait>`.**
-   You met `dyn Trait` earlier; now you'll give the trait object an owner.
+3. You met `dyn Trait` earlier; `Box<dyn Trait>` gives the trait object an owner.
    A trait object like `dyn Shape` doesn't have a known size, so it has to live behind a pointer.
    `Box<dyn Shape>` is the owned form, and it's what lets you store a `Vec` of mixed concrete types that all implement the same trait.
    You saw the same trick with `Box<dyn Error>` in the env-file parser.
 
 ## Recognizing `Rc` and `RefCell`
 
-The exercises focus on `Box`, but `Rc` and `RefCell` appear often enough in Rust code that you should know what their names promise.
+You'll use `Box` in the exercises.
+I'll also cover `Rc` and `RefCell` briefly so you can recognize them when you read other people's Rust.
 
 ### `Rc<T>`: shared ownership, single-threaded
 
 `Box<T>` has exactly one owner.
-Sometimes you genuinely need several parts of a program to share ownership of the same value, and you can't predict which one will be the last to let go.
+Sometimes several parts of your program need to share ownership of the same value, and you can't predict which one will be the last to let go.
 `Rc<T>` ("reference counted") tracks the number of owners and drops the value when the count hits zero.
 
 ```rust
@@ -58,6 +59,6 @@ The borrow checker normally enforces "one mutable reference or many immutable on
 If the borrowing rules are violated, the program panics instead of failing to compile.
 
 If you're coming from Java, this is close to a field with a private setter: outside code holds an immutable handle to the object, but the object can still mutate itself.
-You will not need `RefCell` for a long time.
-It pairs with `Rc` to build graph-shaped data, and it shows up in some testing patterns.
+You don't need `RefCell` for these exercises.
+It pairs with `Rc` to build graphs, and it shows up in some testing patterns.
 For now, recognizing the name is enough.

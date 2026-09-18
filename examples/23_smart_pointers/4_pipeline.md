@@ -36,7 +36,8 @@ Three commands are already implemented for you:
 - `Reverse` reverses the input.
 - `Append { suffix }` appends a configured suffix.
 
-Your job is the orchestration: `apply_pipeline` threads an input string through every command in order, feeding each command's output into the next command's input, and returns the final result.
+Implement `apply_pipeline` to pass the input string through every command in order.
+Feed each command's output into the next command, then return the final result.
 An empty pipeline returns the input unchanged.
 
 Because each command sits behind `Box<dyn Command>`, the same `Vec` can hold `Uppercase`, `Reverse`, and `Append { suffix: String }` even though their concrete types have different sizes.
@@ -47,6 +48,6 @@ A generic `Vec<C>` where `C: Command` would only let you pick *one* concrete com
 - A `for` loop over `&[Box<dyn Command>]` yields `&Box<dyn Command>` on each iteration.
   Method calls auto-deref through the box (and through the `&`), so `cmd.run(...)` just works.
 - The pipeline is a *fold*: start with the input, and at each step the next command takes the previous output.
-  A plain `let mut current = input.to_string();` plus reassignment in the loop is the most readable thing.
+  Start with `let mut current = input.to_string();` and reassign it in the loop.
 - `str::chars().rev().collect::<String>()` is one way to reverse a string (it's already written in the `Reverse` impl below).
-  Note that this reverses by Unicode scalar value, not by grapheme; the tests stick to ASCII so it doesn't matter here.
+  This reverses by Unicode scalar value, not by grapheme; the tests stick to ASCII so it doesn't matter here.

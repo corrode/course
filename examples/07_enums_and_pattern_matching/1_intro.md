@@ -21,7 +21,8 @@ enum HttpStatus {
 ```
 
 You typically inspect an enum value with `match`.
-The compiler insists you handle every variant, which is one of Rust's most loved features: when you add a new variant later, every `match` that didn't account for it stops compiling and tells you exactly where to update.
+This is what I like about `match`: the compiler checks that you've handled every variant.
+When you add a new variant later, it points you to each `match` that no longer covers every case.
 
 ```rust
 fn code(status: HttpStatus) -> u16 {
@@ -65,9 +66,9 @@ Traits are covered in more detail later.
 
 For now, you need two:
 
-- **`Debug`** lets you print the value with the `{:?}` formatter, so `println!("{status:?}")` prints `NotFound` instead of refusing to compile.
-  Useful in `dbg!`, `assert_eq!` failure messages, and quick log lines.
-- **`PartialEq`** generates `==` and `!=`.
+- `Debug` lets you print the value with the `{:?}` formatter, so `println!("{status:?}")` prints `NotFound` instead of refusing to compile.
+  You can also use it in `dbg!`, `assert_eq!` failure messages, and quick log lines.
+- `PartialEq` generates `==` and `!=`.
   Without it, comparing two `HttpStatus` values is a compile error; with it, `status == HttpStatus::Ok` just works, and `assert_eq!` in tests can compare whole enum values.
 
 Derive works on enums and structs whose fields all implement the same traits.

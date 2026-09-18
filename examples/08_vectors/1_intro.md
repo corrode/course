@@ -5,7 +5,7 @@ If you stare at a problem for long enough, it starts to turn into a vector.
 
 ## Arrays first: where vectors come from
 
-Before we get to `Vec`, it's worth a minute on its older sibling, the *array*.
+To see why a `Vec` can grow, compare it with an *array*.
 An array `[T; N]` is a fixed-size, contiguous chunk of values whose length is part of the type:
 
 ```rust
@@ -58,7 +58,8 @@ let count = list.len();     // borrow without mut
 When you choose a parameter type, start from what the function needs to do:
 
 - Take a slice (`&[T]`) as input when the function only needs to *read* the data.
-  This is the same idea as the `&str` rule you met with functions: `&[i32]` accepts a borrow of a `Vec` (`&my_vec` coerces to `&[i32]`), a borrow of an array (`&[1, 2, 3]`), or a sub-slice of either, all without conversion.
+  This follows the same rule as `&str` in function parameters.
+  A `&[i32]` parameter accepts a borrow of a `Vec` (`&my_vec` coerces to `&[i32]`), a borrow of an array (`&[1, 2, 3]`), or a sub-slice of either, without an explicit conversion.
   A parameter typed `&Vec<i32>` would only accept the first one and would offer nothing in return.
 - Take `&mut Vec<T>` when you need to add or remove items.
 - Take `Vec<T>` (no reference) when you actually want to consume the vector and take ownership.

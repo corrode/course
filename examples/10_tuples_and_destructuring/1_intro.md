@@ -16,7 +16,8 @@ let name = user.0;
 let age = user.1;
 ```
 
-But the more idiomatic way is *destructuring*: pull the parts out into named bindings in one step.
+I prefer *destructuring* here so I can read `name` and `age` rather than remember what `.0` and `.1` mean.
+It pulls the parts out into named bindings in one step.
 
 ```rust
 let (name, age) = user;
@@ -45,5 +46,5 @@ let (first, _) = ("Alice", "Smith");
 ```
 
 Tuples are great for short-lived "two or three values that belong together" situations.
-When the tuple grows or you keep passing the same shape around, give those fields names with a `struct` instead.
+When the tuple grows or you keep passing the same tuple type around, give those fields names with a `struct` instead.
 

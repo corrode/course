@@ -21,7 +21,8 @@ You usually wouldn't.
 - The type would otherwise be infinitely sized (next step).
 - You need a trait object (the step after that).
 
-For this exercise we keep it simple: take two boxed integers, add them, return the sum.
+For this exercise, take two boxed integers, add them, and return the sum.
+The small values let you focus on how to read through a box before you use one in a recursive type.
 
 ## Useful from the standard library
 

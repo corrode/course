@@ -1,6 +1,7 @@
 # Numbers in Rust
 
-Rust's numeric types are not special, so a quick overview is enough before focusing on what Rust does differently.
+Rust won't mix numeric types for you, and it catches overflow in debug builds.
+The types themselves will look familiar:
 
 ```rust
 let byte: u8 = 255;           // a single byte, holds 0 to 255
@@ -18,7 +19,7 @@ Those are the types you'll see most often.
 If you push a number past its type's maximum, most languages won't tell you.
 For example, C wraps around, Java wraps around, and Python silently increases the capacity of its integers. 
 Rust won't do that.
-Instead (in a debug build) it stops and panics instead of handing back a wrong answer.
+In a debug build, it panics instead of handing back a wrong answer.
 
 ```rust
 let hp: u8 = 200;
@@ -39,11 +40,13 @@ When a result does not fit, you must choose the behavior:
 - `a.checked_add(b)` returns `None` on overflow, so you can handle it yourself.
 - `a.wrapping_add(b)` opts back into wraparound, for the times you actually want it.
 
-Which variant you choose depends on your business logic. For example, if you expect the health bar to never exceed 255, `saturating_add` is the right choice.
+Which variant you choose depends on what your program needs.
+If you want the health bar to stop at 255, use `saturating_add`.
 
-Release builds wrap by default for **speed**.
+Release builds wrap by default for speed.
 
-Pro tip: the above methods are a great way to align the behavior of debug and release builds; I like to be explicit about overflow handling rather than relying on the default behavior of release builds.
+I prefer to choose the overflow behavior explicitly rather than rely on the release default.
+These methods also give you the same behavior in debug and release builds.
 
 ## No implicit conversions
 
@@ -68,7 +71,7 @@ Parsing a string can fail because the input might not be a number at all, so `pa
 let n: u32 = "123".parse().unwrap_or(0);
 ```
 
-`parse` returns a `Result`.
-We will talk about `Result` later, but the main point is that it turns a potential parsing problem into an explicit value that we can handle instead of ignoring it by accident.
+We'll talk about `Result` later.
+For now, it gives you a value that represents either success or failure, so you can't ignore a parsing problem by accident.
 
 Knowing that you can call `.unwrap_or(fallback_value_if_the_parsing_failed)` on a `Result` is enough for this exercise.

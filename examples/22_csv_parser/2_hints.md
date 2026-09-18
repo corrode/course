@@ -10,14 +10,14 @@
 1. A single `bool` (`in_quotes`) is enough state.
    Walk the input with `line.chars().peekable()` so you can look one character ahead.
 2. Match on the tuple `(c, in_quotes)`.
-   There are only five interesting cases:
+   Handle these five cases:
    - `('"', false)` → enter quoted mode.
    - `('"', true)` and the next char is also `"` → push a literal `"`, consume the second one with `chars.next()`.
    - `('"', true)` → exit quoted mode.
    - `(',', false)` → finish the current field, start a new one.
    - anything else → push the character into the current field.
 3. After the loop, push the final field.
-   Use `std::mem::take(&mut current)` to harvest a field without cloning.
+   Use `std::mem::take(&mut current)` to move a completed field into the results without cloning.
 4. The full skeleton is in the chapter intro; if you've read it and are still stuck, copy the skeleton verbatim and run the tests.
    The compiler errors will tell you what's left to wire up.
 
