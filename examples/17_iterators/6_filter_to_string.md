@@ -1,7 +1,8 @@
 # Filter, then own the result
 
 This time the input is a `&[&str]`, a borrowed slice of borrowed strings, so the iterator yields `&&str`.
-We sidestep that double-reference by returning owned `String`s; the lesson here is iterators, not lifetimes.
+You'll return owned `String`s so the caller can keep the results independently of the input.
+That lets us focus on the iterator chain without adding lifetime annotations.
 
 [`str::to_string`](https://doc.rust-lang.org/std/primitive.str.html#method.to_string) converts each surviving `&&str` into an owned `String` through auto-deref.
 Chain it after your `filter` with a `map`, then `collect` into a `Vec`.

@@ -17,4 +17,5 @@ Ownership is the model underneath the moves, borrows, and references you've been
 
 C++ uses RAII and destructors for deterministic cleanup, while garbage-collected languages track which values are still alive at runtime.
 Rust adds compile-time ownership and borrowing rules, so safe Rust turns use-after-free, double-free, and data races into compile errors.
-The borrow checker can be frustrating while you're still learning its rules, but that trade, an argument with the compiler now instead of a crash later, is the core bet the language makes.
+The borrow checker can be frustrating while you're still learning its rules.
+I'd rather have that argument with the compiler now than debug a use-after-free later, but learning to resolve those errors takes practice.

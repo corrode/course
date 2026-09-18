@@ -1,6 +1,6 @@
 # Trait objects: `dyn Trait`
 
-The generic `print_descriptions<T: Describable>` from step 3 is fast and zero-cost, but it has one limit: every element of a single call must be the same concrete `T`.
+The generic `print_descriptions<T: Describable>` you wrote earlier avoids runtime dispatch, but every element in a single call must have the same concrete type `T`.
 You can pass `&[Book]` or `&[Movie]`, but not a slice that contains *both*.
 
 That's because the compiler picks one `T` per call site and produces a specialized copy of the function for it.
@@ -33,8 +33,9 @@ That trades one vtable lookup per call for the ability to mix concrete types in 
 | Mixed collections | no | yes |
 | Runtime cost | none | one indirect call per trait-method call |
 
-Neither is "better."
-Use generics by default for performance and flexibility, and reach for `dyn Trait` when you genuinely need heterogeneous storage or want a smaller binary.
+I'd start with generics for performance and flexibility.
+Reach for `dyn Trait` when you need to store different concrete types together or want a smaller binary.
+The choice depends on what you need the code to do.
 
 ## A validation example
 
@@ -70,7 +71,9 @@ let rules: Vec<Box<dyn Validator>> = vec![
 ];
 ```
 
-The reason: `dyn Trait` has no statically known size (the three implementors above can carry different fields, so they don't all take up the same number of bytes), so the compiler won't let you put bare `dyn Validator` values directly in a `Vec`.
+`dyn Trait` has no statically known size.
+The three implementors above can carry different fields, so they don't all take up the same number of bytes.
+That's why the compiler won't let you put bare `dyn Validator` values directly in a `Vec`.
 A `Box` is a heap allocation with a fixed-size pointer that lives on the stack, which sidesteps the size problem.
 `Box<dyn Trait>` is the owning form of this fixed-size handle.
 `&dyn Validator` borrows through a fixed-size handle instead of taking ownership.

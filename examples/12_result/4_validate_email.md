@@ -7,8 +7,7 @@ For now, notice that the function compiles even though no lifetime appears in th
 
 ## Useful from the standard library
 
-- [`str::contains`](https://doc.rust-lang.org/std/primitive.str.html#method.contains)
-  takes a `char` (or another `&str`) and answers yes/no.
+- [`str::contains`](https://doc.rust-lang.org/std/primitive.str.html#method.contains) takes a `char` (or another `&str`) and answers yes/no.
   So `email.contains('@')` is exactly the check you need.
 - The `Ok` branch can return the input slice directly: it's already a `&str` with the right lifetime.
-  No `to_string()` allocation needed.
+  You don't need to allocate a `String` with `to_string()`.

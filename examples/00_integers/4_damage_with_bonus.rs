@@ -1,11 +1,8 @@
 /// Applies a damage bonus to a base damage value.
 ///
-/// The bonus is a percentage *added on top* of the base, so
-/// `50.0` means "+50%": a base of `100` becomes `150`. Think of
-/// it as a critical-hit bonus, an equipment buff, or any other
-/// damage modifier expressed as a percentage. Fractional HP is
-/// dropped (truncated toward zero), which is what most games do;
-/// half-HP doesn't exist.
+/// The bonus is a percentage *added on top* of the base, so `50.0` means "+50%": a base of `100` becomes `150`.
+/// Think of it as a critical-hit bonus, an equipment buff, or any other damage modifier expressed as a percentage.
+/// Fractional HP is dropped (truncated toward zero), which is what most games do; half-HP doesn't exist.
 fn damage_with_bonus(base: u32, bonus_percent: f64) -> u32 {
     todo!()
 }

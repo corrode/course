@@ -1,6 +1,7 @@
 # Traits
 
-A **trait** is Rust's word for "a named collection of method signatures that any type can opt into."
+A trait lets you give unrelated types a shared interface without putting them in a class hierarchy.
+You declare a named collection of method signatures, and each type can opt in by implementing it.
 If you've used Java or C# interfaces, C++ abstract classes with pure virtual methods, Haskell type classes, Swift protocols, or Python's `abc`/`Protocol`, you already know the gist of it.
 
 The Rust spelling is:
@@ -25,7 +26,7 @@ impl Greet for German {
 `English` and `German` have nothing in common structurally, but both "implement `Greet`."
 Anywhere code asks for a `Greet`, either will do.
 
-You've actually been using traits since the enums chapter.
+You've been using traits since the enums chapter.
 Every time you wrote `#[derive(Debug, PartialEq)]` on an enum or struct, you were asking the compiler to write the `impl Debug for ...` and `impl PartialEq for ...` blocks for you.
 That's all `derive` is: a macro that emits the obvious implementation so you don't have to type it out.
 We'll revisit this in a moment.
@@ -33,9 +34,8 @@ We'll revisit this in a moment.
 ## From familiar traits to trait objects
 
 The first exercise implements `Display`, a standard library trait, for a temperature type.
-`Describable` provides a bound for a generic function.
-Default methods share behavior between implementations without repetition.
-`dyn Trait` lets one collection hold values of different concrete types.
+Then you'll define `Describable` and use it as a bound for a generic function.
+You'll share behavior through default methods and use `dyn Trait` when one collection needs to hold values of different concrete types.
 
 ## Standard library traits you've already met
 

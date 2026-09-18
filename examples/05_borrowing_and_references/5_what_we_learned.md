@@ -1,6 +1,6 @@
 # Wrapping up borrowing
 
-You borrowed a `String` read-only as `&str`, mutated one through `&mut String`, and triggered the borrow checker's three canonical errors on purpose.
+You borrowed a `String` read-only as `&str`, mutated one through `&mut String`, and triggered three ownership and borrowing errors on purpose.
 
 ## What we learned
 

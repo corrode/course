@@ -1,7 +1,7 @@
 # Structs and methods
 
-A `struct` groups related fields under a single named type.
-Once you have a struct, you can attach methods to it with an `impl` block.
+In Rust, a method's signature tells you whether it borrows a value, changes it, or takes ownership of it.
+You group related fields in a `struct` and attach methods with an `impl` block.
 
 ```rust
 struct User {

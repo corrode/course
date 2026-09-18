@@ -12,5 +12,4 @@ sum_to(0) = 0                    // base case
 sum_to(n) = n + sum_to(n - 1)    // for n > 0
 ```
 
-That's the whole idea of recursion: a function's answer is defined in terms of its own answer to a smaller version of the same problem.
-Once the base case is reached, every pending call finishes its addition and the final total bubbles back up.
+Once you reach the base case, every pending call finishes its addition and returns the total to its caller.

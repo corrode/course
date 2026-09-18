@@ -8,6 +8,5 @@ Walk the pieces from `text.split_whitespace()`, bump a counter for each one, and
 
 ## Useful from the standard library
 
-- [`str::split_whitespace`](https://doc.rust-lang.org/std/primitive.str.html#method.split_whitespace)
-  walks through every whitespace-separated piece of a string.
+- [`str::split_whitespace`](https://doc.rust-lang.org/std/primitive.str.html#method.split_whitespace) walks through every whitespace-separated piece of a string.
   It handles tabs, newlines, and runs of consecutive spaces without any extra work on your part.

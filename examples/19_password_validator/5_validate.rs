@@ -41,10 +41,10 @@ struct PasswordValidator {}
 impl PasswordValidator {
     /// Validates `password` and returns a detailed report.
     ///
-    /// See the module docs for the suggested scoring scheme. Once the base
-    /// rules pass the tests, get creative: detect common passwords, repeated
-    /// runs (`aaa`, `111`), keyboard patterns (`qwerty`, `123456`), or add
-    /// a bonus for variety. None of those are required by the tests.
+    /// See the module docs for the suggested scoring scheme.
+    /// Once the base rules pass the tests, try detecting common passwords, repeated runs (`aaa`, `111`), or keyboard patterns (`qwerty`, `123456`).
+    /// You could also add a bonus for variety.
+    /// None of those additions are required by the tests.
     fn validate(password: &str) -> PasswordReport {
         todo!()
     }

@@ -9,4 +9,4 @@ The signature already tells you what to do:
 fn format_welcome_message(name: &str) -> String
 ```
 
-This means: you're handed a borrowed `&str` to read from, and you produce a fresh, owned `String` to hand back.
+You borrow the `&str` to read the name and return a new `String` that the caller owns.

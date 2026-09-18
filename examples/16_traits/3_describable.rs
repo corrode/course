@@ -15,18 +15,14 @@ struct Movie {
     year: u16,
 }
 
-/// Implement `Describable` for `Book` so that
-/// `Book { title: "Dune".into(), author: "Herbert".into() }.describe()`
-/// returns `"Dune by Herbert"`.
+/// Implement `Describable` for `Book` so that `Book { title: "Dune".into(), author: "Herbert".into() }.describe()` returns `"Dune by Herbert"`.
 impl Describable for Book {
     fn describe(&self) -> String {
         todo!()
     }
 }
 
-/// Implement `Describable` for `Movie` so that
-/// `Movie { title: "Arrival".into(), year: 2016 }.describe()`
-/// returns `"Arrival (2016)"`.
+/// Implement `Describable` for `Movie` so that `Movie { title: "Arrival".into(), year: 2016 }.describe()` returns `"Arrival (2016)"`.
 impl Describable for Movie {
     fn describe(&self) -> String {
         todo!()
@@ -35,13 +31,12 @@ impl Describable for Movie {
 
 /// Generic function with a trait bound.
 ///
-/// Accepts a slice of *any* type `T` that implements `Describable`,
-/// calls `.describe()` on each element, and joins the results with a
-/// newline (`"\n"`) between them. An empty slice returns `""`.
+/// Accept a slice of any type `T` that implements `Describable`.
+/// Call `.describe()` on each element and join the results with a newline (`"\n"`) between them.
+/// Return `""` for an empty slice.
 ///
-/// Note: because of the `T: Describable` bound, every element of one
-/// call must be the same concrete type. Mixing `Book`s and `Movie`s
-/// in the same call needs trait objects, which is the next step.
+/// The `T: Describable` bound means every element in one call must have the same concrete type.
+/// Mixing `Book`s and `Movie`s in the same call needs trait objects, which you'll use later in this chapter.
 fn print_descriptions<T: Describable>(items: &[T]) -> String {
     todo!()
 }

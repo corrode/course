@@ -1,11 +1,12 @@
 # Copy types don't move
 
 `take_ownership` moved a `String`.
-This step shows the other half of the rule: a `Copy` type is duplicated instead, so the caller keeps its value.
+With a `Copy` type, you get a copy instead, so the caller keeps its value.
 
 `double` takes an `i32` by value.
 Because `i32` is `Copy`, the caller's variable is still alive after the call.
-The body is one expression; the lesson is in the test, where `x` is read again after being passed in.
+The body is one expression.
+Look at the test: it reads `x` again after passing it to `double`.
 
 ## Useful from the standard library
 

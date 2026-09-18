@@ -14,8 +14,7 @@ Pay more attention to the signature and the test: after the call, the caller can
 
 ## Useful from the standard library
 
-- [`str::len`](https://doc.rust-lang.org/std/primitive.str.html#method.len)
-  is the byte length of the slice.
+- [`str::len`](https://doc.rust-lang.org/std/primitive.str.html#method.len) is the byte length of the slice.
   The chapter on strings covers why that's not the same as a character count.
 - Rust calls the automatic conversion from `&String` to `&str` a "deref coercion."
   It is why the test can pass `&s` directly, with no `.as_str()` call.

@@ -1,8 +1,7 @@
 # Experiments: get the errors on purpose
 
 Passing the previous tests verifies the basic borrowing syntax.
-These experiments focus on reading ownership errors and identifying the rule each one violates.
-
+Now you'll deliberately break the rules and use the compiler messages to work out what went wrong.
 
 Each test below is paired with a commented-out line.
 Uncomment one at a time, run the tests, read the error carefully, then comment it out again before moving on.
@@ -20,8 +19,7 @@ Once you can do that, you can change the code for a reason instead of guessing.
 
 ## Useful from the standard library
 
-- [`Clone::clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html#tymethod.clone)
-  makes an explicit deep copy when you genuinely need two owners.
+- [`Clone::clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html#tymethod.clone) makes an explicit deep copy when you need two independently owned values.
   A good "escape hatch" once you've understood why a borrow won't compile, but not the first thing to reach for.
 - The compiler errors themselves are the documentation here.
   Each one is a paragraph you'd otherwise have to read in a book.

@@ -1,7 +1,7 @@
 # Implementing `Display` for your own type
 
 `Display` is the trait behind the `{}` placeholder in `println!`, `format!`, and friends.
-Implementing it for your struct means values of that struct can be formatted as user-facing text the same way a number or a `String` can.
+Implement it for your struct, and you can format its values as user-facing text just like a number or a `String`.
 
 The trait lives in `std::fmt` and looks like this:
 
@@ -11,8 +11,8 @@ pub trait Display {
 }
 ```
 
-Don't be put off by the signature.
-In practice you write a one-liner that delegates to the `write!` macro, which has the same template syntax as `println!` but writes into the formatter:
+That signature has a lot of punctuation for a method whose body is often one line.
+You can delegate to `write!`, which uses the same template syntax as `println!` but writes into the formatter:
 
 ```rust
 use std::fmt;

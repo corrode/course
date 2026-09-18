@@ -1,11 +1,9 @@
-//! Exercise: write a function `cap_at` that takes a `value` and a
-//! `max`, both `i32`, and returns `value` if it's at or below
-//! `max`, or `max` otherwise.
+//! Exercise: write a function `cap_at` that takes a `value` and a `max`, both `i32`, and returns `value` if it's at or below `max`, or `max` otherwise.
 //!
-//! The logic itself is one `if` away. The signature, however, has a
-//! catch. Write it the most natural way you can think of, run the
-//! tests, and read the compiler error carefully before changing
-//! anything. The `.md` has the one hint you'll need.
+//! The logic itself is one `if` away.
+//! The signature, however, has a catch.
+//! Write it the most natural way you can think of, run the tests, and read the compiler error carefully before changing anything.
+//! The `.md` has the one hint you'll need.
 
 #[test]
 fn test_cap_at() {

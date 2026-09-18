@@ -15,13 +15,12 @@ The course runs primarily through the website, which walks you through
 each chapter, shows the exercises in your browser, and tracks your
 progress. That's the recommended way to take it.
 
-You can start alone or with a team. If you're taking it with a team, you can share your
-progress with each other by submitting your solutions and seeing other people's solutions.
-The course is designed to be self-paced, so you can work through it at your own
-speed, so no rush!
+You can work through it on your own or with a team.
+With a team, you can submit your solutions and compare approaches with each other.
+Either way, take it at your own pace.
 
-If you'd rather stay in your editor, remember that this is also just a regular Rust project!
-You can clone it, open it in any IDE, and work through the exercises under `examples/`.
+If you'd rather stay in your editor, this is also just a regular Rust project.
+Clone it, open it in your IDE, and work through the exercises under `examples/`.
 
 Each chapter is a numbered directory under `examples/`. Work through its `.md` prose and `.rs` exercises in filename order. Replace the `todo!()` bodies in the exercise files and run the tests until they pass. The chapter's generated `main.rs` only connects the steps for Cargo, so don't edit it directly.
 

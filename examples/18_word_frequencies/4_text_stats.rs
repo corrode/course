@@ -9,10 +9,8 @@ fn count_words(text: &str) -> HashMap<String, usize> {
 /// Calculates basic text statistics.
 /// Returns (`total_words`, `unique_words`, `average_word_length`).
 ///
-/// In real code you'd reach for a `struct TextStats { total: usize,
-/// unique: usize, avg_len: f64 }` here; a 3-tuple is hard to read at
-/// the call site. We're sticking with a tuple to keep the focus on the
-/// iterator chain in the body.
+/// In application code, I'd use a `struct TextStats { total: usize, unique: usize, avg_len: f64 }` so callers don't have to remember what each tuple position means.
+/// Here we'll keep the tuple and focus on the iterator chain in the body.
 fn text_stats(text: &str) -> (usize, usize, f64) {
     todo!()
 }

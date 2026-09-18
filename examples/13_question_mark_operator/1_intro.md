@@ -17,7 +17,8 @@ fn parse_two(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> {
 ```
 
 The `?` operator is shorthand for that pattern.
-Slap it onto any `Result` expression: if it's `Ok`, the value is unwrapped and execution continues; if it's `Err`, the function returns the error immediately.
+Put it after a `Result` expression to get the value from `Ok` and continue.
+If the result is `Err`, the function returns the error immediately.
 
 ```rust
 fn parse_two(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> {
@@ -34,7 +35,7 @@ It doesn't work in `fn main()` unless `main` itself returns a `Result`.
 
 The test below writes a real file (`test.txt`) into the current working directory before it runs.
 Cargo runs tests in parallel by default, so two tests writing to the same path can race each other and cause spurious failures.
-If you see flaky `Err`s here, force the harness to run them one at a time:
+If you see flaky `Err`s here, run the tests one at a time:
 
 ```sh
 cargo test -- --test-threads=1

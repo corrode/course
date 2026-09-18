@@ -8,7 +8,7 @@ It does *not* make the fields public.
 
 So a caller outside the module cannot write `settings.port`.
 That line fails to compile.
-A public accessor such as `get_port` gives callers a stable path to the value while the field remains free to change.
+A public accessor such as `get_port` lets callers read the value while leaving you free to change how you store it.
 
 The same opt-in rule covers methods.
 `new` and `get_port` are private until you `pub` each one, so this step is broken in more than one place.

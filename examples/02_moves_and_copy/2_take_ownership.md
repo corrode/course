@@ -11,9 +11,8 @@ Append the text to `s`, then return the same `String` so the caller owns it agai
 
 ## Useful from the standard library
 
-- [`String::push_str`](https://doc.rust-lang.org/std/string/struct.String.html#method.push_str)
-  appends a `&str` to an owned `String`.
-  No allocation if there's spare capacity.
+- [`String::push_str`](https://doc.rust-lang.org/std/string/struct.String.html#method.push_str) appends a `&str` to an owned `String`.
+  It doesn't allocate if there's spare capacity.
 - The parameter needs `mut s: String` to call `push_str` on it.
   Mutability is a property of the binding, not the type, so even an owned value has to be declared `mut` before you can mutate it.
   The `mut` is local to the function and doesn't appear in the type.

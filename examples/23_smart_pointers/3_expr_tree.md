@@ -36,7 +36,7 @@ This is how every interpreter and every calculator represents code internally.
 Parsing text like `"(1 + 2) * 4"` produces an `Expr` tree; evaluating that tree is just walking it.
 
 Your job is the evaluation half: implement `Expr::eval(&self) -> i32` so it returns the numeric value of the whole tree.
-Recursion mirrors the data perfectly.
+You can follow the tree's structure with recursion.
 `Num(v)` is the base case (just return `v`); `Add(l, r)` returns `l.eval() + r.eval()`; `Mul(l, r)` does the same with `*`.
 
 The `match` gives you a borrow of each inner `Box<Expr>`, and method calls auto-deref through the box, so `l.eval()` works directly without `(*l).eval()`.

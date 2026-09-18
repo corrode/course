@@ -1,13 +1,13 @@
-/// A composable validation rule. `Ok(())` means the input is fine
-/// for this rule; `Err(message)` explains what's wrong.
+/// A validation rule you can combine with other rules.
+/// `Ok(())` means the input passes this rule; `Err(message)` explains what's wrong.
 trait Validator {
     fn check(&self, input: &str) -> Result<(), String>;
 }
 
 /// Rule: the input must be at least `n` characters long.
 ///
-/// Already implemented for you as the worked example. Read it,
-/// then write the other two impls in the same way.
+/// This rule is already implemented as a worked example.
+/// Read it, then write the other two impls in the same way.
 struct MinLength {
     n: usize,
 }
@@ -48,16 +48,13 @@ impl Validator for MustNotContain {
     }
 }
 
-/// Run every validator against `input` and collect the failure
-/// messages in the order the validators appear.
+/// Run every validator against `input` and collect the failure messages in the order the validators appear.
 ///
-/// The slice element type is `&dyn Validator`: a reference to a
-/// trait object. The slice can mix `MinLength`, `MustContain`, and
-/// `MustNotContain` (and any future implementor) freely. That's the
-/// whole point of trait objects.
+/// The slice element type is `&dyn Validator`, a reference to a trait object.
+/// This lets you mix `MinLength`, `MustContain`, and `MustNotContain` (and any future implementor) in one slice.
 ///
-/// An input that passes everything returns an empty `Vec`. The
-/// returned `Vec<String>` contains only the `Err` messages.
+/// Return an empty `Vec` if the input passes everything.
+/// The returned `Vec<String>` should contain only the `Err` messages.
 fn collect_errors(validators: &[&dyn Validator], input: &str) -> Vec<String> {
     todo!()
 }

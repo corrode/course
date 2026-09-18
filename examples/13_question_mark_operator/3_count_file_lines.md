@@ -4,7 +4,9 @@ Here you use the same operator with a different error type.
 File I/O returns [`std::io::Error`](https://doc.rust-lang.org/std/io/struct.Error.html), and this function declares that same error type so `?` can pass failures back unchanged.
 
 `?` doesn't care which concrete error type is involved.
-It only needs the surrounding function to return the same error type, or one it can convert into with `From`.
+It needs the surrounding function to return the same error type, or one it can convert into with `From`.
+When `?` fails to compile, I would check those two error types first.
+Working out the conversion can take a few tries; this exercise avoids that by using `std::io::Error` throughout.
 
 ## Useful from the standard library
 

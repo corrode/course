@@ -4,7 +4,9 @@ With `map` you transformed every item, while `filter` keeps some items and drops
 There is one borrowing detail to watch: `.iter()` yields `&T`, but `filter` gives its closure another reference on top, so the closure sees `&&T`.
 
 That's why you'll often see `**c == ...` or `s.starts_with(...)` (which auto-derefs) instead of plain `c == ...`.
-If the compiler reports a missing `&`, the [iterators entry in the cheatsheet](/cheatsheet) shows the reference layers side by side.
+The extra references can be hard to track at first.
+If the compiler reports a missing `&`, check what the iterator yields and what the closure receives.
+The [iterators entry in the cheatsheet](/cheatsheet) shows those reference layers side by side.
 
 ## Useful from the standard library
 
@@ -13,4 +15,4 @@ If the compiler reports a missing `&`, the [iterators entry in the cheatsheet](/
 - [`str::starts_with`](https://doc.rust-lang.org/std/primitive.str.html#method.starts_with) takes a `char` (or another `&str`) and answers yes/no.
   Method-call syntax auto-derefs through the extra reference.
 - `collect()` here picks `Vec<&str>` straight from the return type.
-  No turbofish needed.
+  You don't need a turbofish here.

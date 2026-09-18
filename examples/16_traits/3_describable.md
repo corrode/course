@@ -22,8 +22,9 @@ fn print_one<T: Describable>(item: &T) {
 }
 ```
 
-This is Rust's answer to "polymorphism."
-The compiler stamps out one specialized copy of `print_one` per type you call it with (called *monomorphization*; the C++ template crowd will feel at home).
+This is one way Rust supports polymorphism.
+The compiler produces one specialized copy of `print_one` per type you call it with.
+That's called *monomorphization*; the C++ template crowd will feel at home.
 There's no runtime dispatch and no boxing.
 
 Real code often spells the same kind of bound in one of these forms:
@@ -47,7 +48,7 @@ fn show(item: &impl Describable) { /* ... */ }
 ```
 
 For this exercise, use the simple `<T: Describable>` form.
-You only need to recognize the others as different spellings of the same machinery.
+You don't need to memorize all three spellings now; recognize the bound they express.
 
 ## Useful from the standard library
 

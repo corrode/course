@@ -1,12 +1,12 @@
 # Rust fundamentals quiz
 
-*If you can answer these without flipping back, you've internalised more Rust than you think.*
+*You can look things up here, just as you would while writing code.*
 
 These are twenty multiple-choice questions about the topics from the previous chapters: ownership and borrowing, `Option` and `Result`, lifetimes, traits, enums, modules.
 Pick an answer to lock it in and reveal the explanation for every choice, not just the right one.
-The distractor explanations show why the plausible alternatives do not fit.
+The explanations for the other answers are worth reading too, especially when you were choosing between two.
 
 > [!TIP]
-> No grade, no time limit, no record kept.
+> You won't get a grade, there's no time limit, and the course doesn't keep a record of your answers.
 > Skim the explanations even for the ones you got right.
 > Sometimes the *why* is more interesting than the *what*.

@@ -1,8 +1,6 @@
-/// A small `Logger` trait. One required method (`log`), plus two
-/// default methods that build on it (`warn` and `error`).
+/// A small `Logger` trait with one required method (`log`) and two default methods (`warn` and `error`) that build on it.
 ///
-/// Implementors only have to write `log`; they get `warn` and
-/// `error` for free unless they explicitly override them.
+/// You only have to implement `log`; you get `warn` and `error` for free unless you override them.
 trait Logger {
     /// Required: turn a message into the final log line.
     fn log(&self, msg: &str) -> String;
@@ -18,8 +16,8 @@ trait Logger {
     }
 }
 
-/// A logger that returns the message untouched. It should use the
-/// default `warn` and `error` (do *not* write them in this impl).
+/// A logger that returns the message untouched.
+/// Use the default `warn` and `error`; do *not* write them in this impl.
 struct PlainLogger;
 
 impl Logger for PlainLogger {
@@ -31,9 +29,8 @@ impl Logger for PlainLogger {
 
 /// A logger that prepends a tag, like `"auth: something went wrong"`.
 ///
-/// It uses the default `warn` (so warnings come out as
-/// `"auth: [WARN] ..."`), but *overrides* `error` to use a louder
-/// `[CRITICAL]` prefix instead of the default `[ERROR]`.
+/// Use the default `warn`, so warnings come out as `"auth: [WARN] ..."`.
+/// Override `error` to use a louder `[CRITICAL]` prefix instead of the default `[ERROR]`.
 struct TaggedLogger {
     tag: String,
 }
@@ -44,10 +41,8 @@ impl Logger for TaggedLogger {
         todo!()
     }
 
-    /// Override: build a `[CRITICAL]`-prefixed message and forward
-    /// it through `log` (so the tag still wraps the result).
-    /// Expected output for `TaggedLogger { tag: "auth" }.error("nope")`
-    /// is `"auth: [CRITICAL] nope"`.
+    /// Build a `[CRITICAL]`-prefixed message and forward it through `log` so the tag still wraps the result.
+    /// The expected output for `TaggedLogger { tag: "auth" }.error("nope")` is `"auth: [CRITICAL] nope"`.
     fn error(&self, msg: &str) -> String {
         todo!()
     }

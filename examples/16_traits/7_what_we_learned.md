@@ -6,21 +6,21 @@ Finally, you switched from a generic to a trait object so one slice could hold s
 
 ## What we learned
 
-- A **trait** is a named collection of method signatures.
+- A trait is a named collection of method signatures.
   Any type can opt in with `impl TraitName for TypeName { ... }`.
   Same idea as Java/C# interfaces, Haskell type classes, Swift protocols, or C++ abstract classes with pure virtual methods.
-- **`#[derive(...)]`** is sugar: the compiler writes the obvious `impl Trait for Type` block for you.
+- `#[derive(...)]` saves you typing: the compiler writes the obvious `impl Trait for Type` block for you.
   `Debug`, `PartialEq`, `Eq`, `Clone`, `Copy`, `Default`, `Hash`, and `Ord` are the everyday derivable ones.
   `Display` is *not* derivable because there's no one-size-fits-all human-readable format.
-- **`impl Display`** is the `toString` / `__str__` of Rust.
+- `impl Display` is the `toString` / `__str__` of Rust.
   Implement `fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result` with a single `write!(...)` call.
-- **Trait bounds** on a generic say "I accept any `T` that implements this trait."
+- Trait bounds on a generic say "I accept any `T` that implements this trait."
   `fn f<T: Trait>(x: &T)` is the basic form, `T: A + B` combines bounds, and `where` clauses let you push long bounds out of the signature.
-- **Default methods** in the trait body give every implementor a baseline behavior.
+- Default methods in the trait body give every implementor a baseline behavior.
   Override per type when you need to.
-- **Generics** dispatch statically, so the compiler creates one specialized copy of the function per concrete `T`.
+- Generics dispatch statically, so the compiler creates one specialized copy of the function per concrete `T`.
   Use them when each call only needs one concrete type.
-- **Trait objects (`dyn Trait`)** dispatch dynamically through a vtable.
+- Trait objects (`dyn Trait`) dispatch dynamically through a vtable.
   Use them when one slice or `Vec` needs to hold several concrete types at once.
 - `Box<dyn Trait>` solves the "trait objects have no known size" problem so they can live in owning containers like `Vec`.
   Related ownership patterns with `Box`, `Rc`, and `RefCell` appear in the optional **smart pointers** material.

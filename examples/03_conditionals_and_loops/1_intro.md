@@ -1,11 +1,12 @@
 # Conditionals and loops
 
+Rust's `if` can return a value, and its condition has to be a `bool`.
 You've already seen `if` and `for` in passing.
-Now we'll slow down and look at them on purpose, along with the other two loop forms (`while` and `loop`) and the keywords that control them (`break` and `continue`).
+Here you'll also use `while`, `loop`, `break`, and `continue`.
 
 ## `if` / `else` / `else if`
 
-The usage is unsurprising:
+The syntax will look familiar:
 
 ```rust
 if x > 0 {
@@ -17,7 +18,7 @@ if x > 0 {
 }
 ```
 
-You might notice two things:
+Two Rust details matter here:
 
 - The condition is a `bool`.
   No truthy strings, no zero-as-false, no parentheses required around the condition.

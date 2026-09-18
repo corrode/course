@@ -1,6 +1,6 @@
-/// Returns the length (in characters) of the longest word in
-/// `text`. Words are whitespace-separated. Returns 0 when the
-/// text has no words.
+/// Returns the length (in characters) of the longest word in `text`.
+/// Words are whitespace-separated.
+/// Returns 0 when the text has no words.
 fn longest_word(text: &str) -> usize {
     // 1. let mut max = 0;
     // 2. for word in text.split_whitespace() {

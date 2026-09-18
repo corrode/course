@@ -2,7 +2,8 @@
 
 You've been inside a function since the first line you wrote.
 `fn main()` is one, and every `println!(...)` is a call (the `!` marks it as a macro).
-Functions are already familiar, so the focus is on Rust's explicit parameter and return types, blocks as expressions, and the trailing-semicolon rule that decides what gets returned.
+In Rust, you spell out parameter and return types.
+The less familiar part is that a block can produce a value, and a trailing semicolon changes what it returns.
 
 ## Anatomy
 
@@ -44,7 +45,7 @@ fn double(n: i32) -> i32 {
 
 That semicolon thing trips up newcomers.
 The rule is short: a semicolon turns an expression into a statement (which has no value).
-Forgetting one at the end of the function is the *correct* thing to do when you want the value to be returned.
+Leave the semicolon off the final expression when you want to return its value.
 Adding one accidentally turns the body into "do this, then return `()`" and the compiler will complain that the types don't match.
 In the first exercise, you'll make that error disappear by changing a single character.
 
@@ -61,4 +62,3 @@ In the first exercise, you'll make that error disappear by changing a single cha
   Borrowing does not clone the string, and moving a `String` would transfer ownership without moving its heap allocation.
 
   The same idea extends to other types, such as `&[T]` instead of `&Vec<T>` and `&Path` instead of `&PathBuf`.
-  The same pattern applies to vectors and to ownership more broadly.

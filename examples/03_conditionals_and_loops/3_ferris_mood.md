@@ -18,11 +18,12 @@ The `'static` *lifetime* is just the compiler's way of saying "this reference wi
 If you've written C, it's the same intuition as a `const char *` pointing at a string literal.
 For now, the only thing to take away is *"string literals are always safe to return as `&'static str`."*
 
-**Combining conditions.** The `"Grumpy"` rule needs *both* parts to be true.
+The `"Grumpy"` rule needs *both* parts to be true.
 Rust spells this `&&` (logical AND).
 Its sibling `||` is logical OR.
 Both short-circuit: if the left side already decides the answer, the right side isn't evaluated.
 
-**Order matters.** An `if`/`else if`/`else` chain is checked top-to-bottom and stops at the first match.
+Order matters.
+Rust checks an `if`/`else if`/`else` chain from top to bottom and stops at the first match.
 If you put the `naps` check before the `hunger` check, a hungry crab who happens to have napped a lot will get classified as `"Sleepy"` instead of `"Hangry"`.
 The tests deliberately include cases (like `ferris_mood(9, 5)`) that only pass with the right ordering.

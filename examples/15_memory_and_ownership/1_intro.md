@@ -1,8 +1,8 @@
 # Memory and ownership
 
-You've been using ownership for a while now without making a fuss about it.
+You've already used ownership in several forms.
 You moved `String`s, borrowed slices, passed `&mut` references into functions, and handed values to `Vec`, `HashMap`, `Option`, `Result`, and your own structs.
-Ownership ties these moves, borrows, and container operations into Rust's memory-safety model without a garbage collector.
+Now we can connect those operations and see how Rust manages memory safely without a garbage collector.
 
 ## What the borrow checker buys you
 

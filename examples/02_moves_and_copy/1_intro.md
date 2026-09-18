@@ -17,7 +17,8 @@ In a language with shared mutable pointers this would be a silent bug (two varia
 Why move instead of copy?
 A `String` owns a buffer on the heap.
 Copying it on every assignment would mean duplicating that buffer over and over, silently.
-Rust makes the cheap thing (a move: hand over the pointer) the default and the expensive thing (a deep copy with `.clone()`) something you ask for out loud.
+Rust makes the cheap thing the default: move the `String` without copying its heap buffer.
+The expensive thing, a deep copy with `.clone()`, is something you ask for out loud.
 
 ## Copy types
 

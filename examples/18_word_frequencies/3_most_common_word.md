@@ -1,6 +1,6 @@
 # The most common word
 
-Now that you can count, finding the maximum is a one-liner, almost.
+Once you have the counts, you can ask the iterator for the largest one.
 The choice between `iter` and `into_iter` determines whether you can return the winning word without cloning it.
 
 `count_words` is duplicated below as a `todo!()` stub so this step compiles in isolation; you don't need to fill it in again.

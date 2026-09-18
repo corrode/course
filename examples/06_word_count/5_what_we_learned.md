@@ -1,21 +1,21 @@
 # Wrapping up word count
 
-Three tiny functions, all cut from the same template: a counter variable, a `for` loop, and a return statement.
-That's enough to build a real, useful tool, and it's the same shape you'll keep reaching for as the chapters get bigger.
+You wrote three functions using a counter or running maximum, a `for` loop, and a return value.
+We'll keep using these patterns as the examples get bigger.
 
 ## What we learned
 
 - `text.split_whitespace()` walks the words in a string for you.
-  It handles any kind of whitespace and skips empties without ceremony.
+  It handles any kind of whitespace and skips empty pieces.
 - `text.chars()` walks every character in a string, whitespace and all.
   It's the right tool for "how many characters?".
-- "Track the running maximum" is the same shape every time: `let mut max = 0; for x in xs { if x > max { max = x; } }`.
+- To track the running maximum, use `let mut max = 0; for x in xs { if x > max { max = x; } }`.
 - `word.chars().count()` measures string length in characters, which is usually what you want.
   `str::len` returns *bytes*, and the two differ the moment you hit a non-ASCII character.
 
 ## What comes next
 
-Iterator methods collapse the three loops to:
+Iterator methods let you write the same three functions without explicit loops:
 
 ```rust
 fn word_count(text: &str)    -> usize { text.split_whitespace().count() }
