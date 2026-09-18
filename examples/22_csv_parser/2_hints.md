@@ -18,7 +18,7 @@
    - anything else → push the character into the current field.
 3. After the loop, push the final field.
    Use `std::mem::take(&mut current)` to move a completed field into the results without cloning.
-4. If you're still stuck, use the skeleton in the chapter intro as the body of `parse_csv_line` and run the tests.
+4. Trace `"a""b",c` on paper. Which quote changes state, and which quote is data?
 
 ## `parse_file`
 

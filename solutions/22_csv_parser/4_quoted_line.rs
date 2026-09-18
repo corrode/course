@@ -1,5 +1,5 @@
 /// Parses a CSV line with proper quote handling.
-/// Handles: "field,with,commas", "field with \"quotes\"", etc.
+/// Handles embedded commas and doubled quotes, as in `"a""b",c`.
 fn parse_csv_line(line: &str) -> Vec<String> {
     let mut fields = Vec::new();
     let mut field = String::new();
@@ -20,8 +20,7 @@ fn parse_csv_line(line: &str) -> Vec<String> {
             }
             '"' => in_quotes = true,
             ',' if !in_quotes => {
-                fields.push(field.clone());
-                field.clear();
+                fields.push(std::mem::take(&mut field));
             }
             _ => field.push(c),
         }
@@ -31,7 +30,14 @@ fn parse_csv_line(line: &str) -> Vec<String> {
 }
 
 #[test]
-fn test_parse_csv_line_basic() {
+fn test_parse_csv_line_plain_numbers() {
+    let line = r#"1,2,3"#;
+    let fields = parse_csv_line(line);
+    assert_eq!(fields, vec!["1", "2", "3"]);
+}
+
+#[test]
+fn test_parse_csv_line_plain_strings() {
     // Warm-up: every field is quoted, no commas inside, no escapes.
     // Get this passing first; it forces you to enter and exit a quoted
     // field, but nothing trickier.
@@ -48,7 +54,7 @@ fn test_parse_csv_line_quoted() {
 }
 
 #[test]
-fn test_parse_csv_line_escaped_quotes() {
+fn test_parse_csv_line_quoted_escaped() {
     let line = r#""John ""Johnny"" Doe","25","New York""#;
     let fields = parse_csv_line(line);
     assert_eq!(fields, vec![r#"John "Johnny" Doe"#, "25", "New York"]);

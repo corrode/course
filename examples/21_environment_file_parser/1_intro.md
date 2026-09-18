@@ -26,25 +26,23 @@ The two halves are slices of the original string, so you don't allocate anything
 ## Generic functions
 
 You could write separate functions to read a port as a `u16` and a flag as a `bool`.
-I'd rather write the lookup once and let the caller choose the type:
+I'd rather write the lookup once and let the caller choose the type.
+First, here's a smaller generic helper with no map lookup yet:
 
 ```rust
-fn get<T>(env: &HashMap<String, String>, key: &str) -> Option<T>
-where
-    T: std::str::FromStr,
-{
-    env.get(key)?.parse().ok()
+fn parse_value<T: std::str::FromStr>(text: &str) -> Result<T, T::Err> {
+    text.parse()
 }
 
-let port: Option<u16> = get(&env, "PORT");
-let debug: Option<bool> = get(&env, "DEBUG");
+assert_eq!(parse_value::<u16>("8080"), Ok(8080));
+assert_eq!(parse_value::<bool>("true"), Ok(true));
 ```
 
-`<T>` declares a type parameter.
-The `where T: FromStr` clause says "T must implement the `FromStr` trait", which is what makes `.parse()` work.
-`.parse()` returns `Result<T, T::Err>`.
-Calling `.ok()` discards the error and gives back `Option<T>`.
-Together with the `?` after `env.get(key)`, that means both a missing key and a failed conversion return `None`.
+`<T>` declares a type parameter. The `FromStr` bound makes `.parse()` available.
+The equivalent `where T: std::str::FromStr` spelling puts the bound after the
+parameters. `T::Err` is the error type chosen by that implementation of `FromStr`.
+Your lookup exercise will combine this conversion with `HashMap::get` and decide
+how to represent a missing key or a failed conversion.
 
 ## Trim and skip
 

@@ -16,3 +16,6 @@ Once that worked, you reused the line parser to collect headers and rows.
   It passes the easy tests and gives you a baseline; the state-machine upgrade then has concrete failing cases to react to.
 - Hand production CSV files to the [`csv` crate](https://docs.rs/csv), which handles BOMs, custom delimiters, and newlines inside quoted fields.
   Keep the state-machine loop for parsers you do need to write yourself.
+
+Want a little more practice? Try the optional [CSV parser challenges](22_csv_parser_challenges):
+choose a delimiter, then put the parser behind a module boundary. These don't count toward course completion.

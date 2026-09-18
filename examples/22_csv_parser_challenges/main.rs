@@ -12,15 +12,9 @@
     clippy::boxed_local
 )]
 
-#[path = "2_display_temperature.rs"]
-mod _2_display_temperature;
-#[path = "3_describable.rs"]
-mod _3_describable;
-#[path = "4_logger.rs"]
-mod _4_logger;
-#[path = "5_validate.rs"]
-mod _5_validate;
-#[path = "7_mixed_shelf.rs"]
-mod _7_mixed_shelf;
+#[path = "2_delimited_line.rs"]
+mod _2_delimited_line;
+#[path = "3_parser_module.rs"]
+mod _3_parser_module;
 
 fn main() {}

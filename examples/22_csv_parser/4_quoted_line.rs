@@ -1,5 +1,5 @@
 /// Parses a CSV line with proper quote handling.
-/// Handles: "field,with,commas", "field with \"quotes\"", etc.
+/// Handles embedded commas and doubled quotes, as in `"a""b",c`.
 fn parse_csv_line(line: &str) -> Vec<String> {
     todo!()
 }
