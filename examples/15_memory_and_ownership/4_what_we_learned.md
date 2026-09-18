@@ -1,7 +1,7 @@
 # Wrapping up
 
 Ownership is the model underneath the moves, borrows, and references you've been using throughout the course.
-The username task put it to work: a borrowed result depends on the records staying alive, while an owned result can survive their drop.
+In the username exercise, returning an owned `String` let the caller keep the name after the records were dropped.
 
 ## The whole picture
 

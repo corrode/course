@@ -31,7 +31,7 @@ fn test_first_match() {
 
 #[test]
 fn test_username_survives_records() {
-    todo!("Remove this todo and uncomment the survival check below");
+    todo!("Remove this todo and uncomment the code below");
 
     /*
     let username = {

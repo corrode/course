@@ -6,9 +6,9 @@ fn find_user_by_id(users: &[(u32, String)], id: u32) -> Option<String> {
         .map(|(_, name)| name.clone())
 }
 
-// The input is borrowed, so we copy only the matching username.
-// The returned String owns its buffer independently of the records.
-// A borrowed return avoids this copy when the records outlive its use.
+// Cloning the matching username leaves the caller's records unchanged.
+// The returned String has its own buffer, so dropping the records won't free it.
+// Returning &str avoids the copy if the records stay alive while we use the name.
 
 #[test]
 fn test_find_user_by_id() {
