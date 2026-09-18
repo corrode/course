@@ -18,5 +18,5 @@ fn test_read_config_file() {
         read_config_file("app.toml"),
         Ok("config content".to_string())
     );
-    assert!(read_config_file("").is_err());
+    assert_eq!(read_config_file(""), Err("File not found"));
 }

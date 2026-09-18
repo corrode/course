@@ -11,5 +11,8 @@ fn count_chars(text: &str) -> usize {
 fn test_count_chars() {
     assert_eq!(count_chars("hello"), 5);
     assert_eq!(count_chars("rust"), 4);
+    assert_eq!(count_chars("café🦀"), 5);
+    // A combining accent is a separate Unicode scalar value.
+    assert_eq!(count_chars("e\u{301}"), 2);
     assert_eq!(count_chars(""), 0);
 }

@@ -35,11 +35,20 @@ fn test_can_access_premium() {
     // Not enough logins yet
     assert_eq!(user.can_access_premium(), false);
 
-    // Record enough logins
-    for _ in 0..5 {
+    user.record_login();
+    assert_eq!(user.can_access_premium(), false);
+
+    for _ in 0..3 {
         user.record_login();
     }
-
-    // Now has premium access
+    // Verified, but still one login short.
+    assert_eq!(user.can_access_premium(), false);
+    user.record_login();
     assert_eq!(user.can_access_premium(), true);
+    user.record_login();
+    assert_eq!(user.can_access_premium(), true);
+
+    // Enough logins alone cannot grant access if verification is revoked.
+    user.is_verified = false;
+    assert_eq!(user.can_access_premium(), false);
 }

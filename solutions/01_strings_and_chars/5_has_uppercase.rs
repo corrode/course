@@ -13,5 +13,7 @@ fn test_has_uppercase() {
     assert!(has_uppercase("Hello"));
     assert!(has_uppercase("rustY"));
     assert!(!has_uppercase("hello"));
+    assert!(!has_uppercase("École"));
+    assert!(has_uppercase("éZ"));
     assert!(!has_uppercase(""));
 }

@@ -18,4 +18,6 @@ fn test_damage_with_bonus() {
     // Fractional HP truncates toward zero:
     // 7 + 7 * 0.155 = 8.085 → 8, not 9.
     assert_eq!(damage_with_bonus(7, 15.5), 8);
+    // 8.75 still truncates to 8; rounding would give 9.
+    assert_eq!(damage_with_bonus(7, 25.0), 8);
 }
