@@ -1,9 +1,9 @@
 # Keeping elements with `filter`
 
 With `map` you transformed every item, while `filter` keeps some items and drops the rest.
-There is one borrowing detail to watch: `.iter()` yields `&T`, but `filter` gives its closure another reference on top, so the closure sees `&&T`.
+There is one borrowing detail to watch: `usernames.into_iter()` yields `&str`, and `filter` gives its closure a reference to each item, so the closure sees `&&str`.
 
-That's why you'll often see `**c == ...` or `s.starts_with(...)` (which auto-derefs) instead of plain `c == ...`.
+Method calls such as `s.starts_with(...)` automatically dereference these layers.
 The extra references can be hard to track at first.
 If the compiler reports a missing `&`, check what the iterator yields and what the closure receives.
 The [iterators entry in the cheatsheet](/cheatsheet) shows those reference layers side by side.

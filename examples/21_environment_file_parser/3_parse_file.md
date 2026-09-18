@@ -5,7 +5,7 @@ Iterate over `content.lines()`, skip blank lines and `#` comments, and collect t
 Stop at the first malformed line and return an error.
 Strict parsing makes configuration bugs obvious instead of silently dropping values.
 
-To keep this page runnable on its own, `parse_env_line` and `ParseError` are re-declared here with `todo!()` bodies.
+To keep this page runnable on its own, `ParseError` is re-declared and `parse_env_line` has a `todo!()` stub.
 Paste or reimplement your earlier solution before building the file-level parser.
 
 ## Useful from the standard library

@@ -6,8 +6,7 @@ That means every item needs to become an owned `String` before it can live in th
 ## Useful from the standard library
 
 - [`Vec::new`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.new) creates an empty vector you can push into.
-  The [`vec!`](https://doc.rust-lang.org/std/macro.vec.html) macro is more common when you already know the contents.
 - [`Vec::push`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.push) appends one item.
   Combine with a `for` loop over `items` to fill the result.
-- [`String::from`](https://doc.rust-lang.org/std/string/struct.String.html#method.from), [`str::to_string`](https://doc.rust-lang.org/std/primitive.str.html#method.to_string), and [`str::to_owned`](https://doc.rust-lang.org/std/primitive.str.html#method.to_owned) all turn a `&str` into a fresh `String`.
-  Pick whichever reads best.
+- [`str::to_string`](https://doc.rust-lang.org/std/primitive.str.html#method.to_string) copies the text into an owned `String`.
+  A `for &item in items` loop gives you each input as a `&str`, ready to convert.

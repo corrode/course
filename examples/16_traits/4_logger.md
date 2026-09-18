@@ -18,7 +18,7 @@ A type that says `impl Greet for X { fn name(&self) -> &str { "world" } }` autom
 Provide a `fn hello` in the impl block and yours wins instead.
 
 This is how `Iterator` gets away with offering dozens of methods (`map`, `filter`, `sum`, `count`, ...) while only requiring you to implement one: `fn next(&mut self) -> Option<Self::Item>`.
-Every other method is a default body written in terms of `next`.
+The other methods have defaults, so you can implement them selectively when your iterator has a more efficient approach.
 Haskellers will recognise the pattern from type class default methods; Java added the same feature as "default methods on interfaces" in Java 8.
 
 ## A logger with shared behavior
@@ -54,7 +54,5 @@ You only have to override the behavior you want to change.
 
 ## Useful from the standard library
 
-- The `format!` macro is the workhorse here.
+- [`format!`](https://doc.rust-lang.org/std/macro.format.html) builds the warning, error, and tagged messages.
   Default `warn` builds `"[WARN] {msg}"` and hands it back to `self.log`, so whatever decoration `log` does (the tag, in `TaggedLogger`'s case) wraps the warning prefix.
-- Default methods are written *inside* the `trait` block, with a body instead of a trailing semicolon.
-  A method ending in a semicolon remains required, while a method with a body can be inherited or overridden.

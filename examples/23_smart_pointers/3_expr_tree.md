@@ -15,7 +15,8 @@ The compiler has to decide how many bytes one `Expr` occupies.
 The size is infinite, and the compiler refuses to lay out the type.
 
 `Box<Expr>` fixes it.
-A `Box` is always one pointer wide, regardless of what it points to, so the compiler now knows that `Add` is two pointers' worth of memory.
+A `Box<Expr>` is one pointer wide, so the two fields of `Add` have a fixed size.
+The enum also needs space to distinguish its variants.
 The actual sub-expressions live on the heap, reached through those pointers.
 
 ```rust
@@ -32,20 +33,14 @@ Rust just wants you to ask for the indirection explicitly.
 ## What you're building
 
 `Expr` is a tiny *expression tree*: a value is either a literal number, the sum of two sub-expressions, or the product of two sub-expressions.
-This is how every interpreter and every calculator represents code internally.
+Interpreters and calculators often use trees like this to represent expressions.
 Parsing text like `"(1 + 2) * 4"` produces an `Expr` tree; evaluating that tree is just walking it.
 
 Your job is the evaluation half: implement `Expr::eval(&self) -> i32` so it returns the numeric value of the whole tree.
 You can follow the tree's structure with recursion.
-`Num(v)` is the base case (just return `v`); `Add(l, r)` returns `l.eval() + r.eval()`; `Mul(l, r)` does the same with `*`.
+`Num(v)` is the base case (return `*v`, since `self` is borrowed); `Add(l, r)` returns `l.eval() + r.eval()`; `Mul(l, r)` does the same with `*`.
 
-The `match` gives you a borrow of each inner `Box<Expr>`, and method calls auto-deref through the box, so `l.eval()` works directly without `(*l).eval()`.
+The `match` binds `l` and `r` as `&Box<Expr>`, and method calls auto-deref through the box, so `l.eval()` works directly without `(*l).eval()`.
 
-## Useful from the standard library
-
-- `Box::new(Expr::Num(2))` builds a leaf you can put on either side of an `Add` or `Mul`.
-  The tests wire larger trees together for you.
-- Pattern matching on a reference: `match self { Expr::Add(l, r) => ... }` binds `l: &Box<Expr>` and `r: &Box<Expr>`.
-  Method calls auto-deref, so `l.eval()` is fine; `*l` would reach the inner `Expr` if you ever needed it directly.
-- Recursion in Rust works exactly like recursion anywhere else.
-  There's no tail-call optimization guarantee, but the test trees are tiny.
+The tests build the trees for you; no new boxes are needed in `eval`.
+There's no tail-call optimization guarantee, but the test trees are tiny.

@@ -4,7 +4,7 @@ You've already used ownership in several forms.
 You moved `String`s, borrowed slices, passed `&mut` references into functions, and handed values to `Vec`, `HashMap`, `Option`, `Result`, and your own structs.
 Now we can connect those operations and see how Rust manages memory safely without a garbage collector.
 
-## What the borrow checker buys you
+## What the borrow checker checks
 
 Languages with manual memory management (C, C++) hand you the power to free memory yourself, and with it the power to free it twice, free it too early, or forget to free it at all.
 Languages with a garbage collector take that power back and spend runtime and memory tracking what's still alive.
@@ -20,5 +20,5 @@ Rules 1 and 2 give each value one place where cleanup normally happens, which ru
 The aliasing part of rule 3 rules out data races because you can't write through one reference while reading through another.
 Lifetime checks supply the other half: a reference can't remain usable after its owner has been dropped.
 
-The payoff is that "did I free this?" and "is this pointer still valid?" stop being questions you answer at 2am with a debugger.
-The compiler answers them for you on every build.
+For an owned `String`, dropping the value frees its buffer automatically.
+If a reference would still be used after that drop, safe Rust rejects the code at compile time.

@@ -7,6 +7,4 @@ The error type is `&'static str`, so you can return a fixed error message withou
 ## Useful from the standard library
 
 - The `Result` constructors `Ok(value)` and `Err(message)` are in the prelude, so you can use them without importing anything.
-- `f64 == 0.0` detects the failure case.
-  Floating-point comparison has plenty of nasty edge cases in general, but checking for exact zero is fine here.
-- [`Result::is_err`](https://doc.rust-lang.org/std/result/enum.Result.html#method.is_err) is what the test uses; you don't need it inside the function.
+- `divisor == 0.0` detects both positive and negative zero, the failure cases for this exercise.

@@ -10,7 +10,4 @@ Use `chars()` to count Unicode scalar values rather than bytes.
 ## Useful from the standard library
 
 - [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars) iterates over the `char`s of a string.
-  The starting point for almost any character-level work.
 - [`Iterator::count`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.count) consumes an iterator and returns how many items it produced.
-- [`str::len`](https://doc.rust-lang.org/std/primitive.str.html#method.len) is *byte* length, not character count.
-  Useful, but not what you want here.

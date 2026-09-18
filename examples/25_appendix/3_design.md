@@ -19,7 +19,7 @@ I haven't built all the ideas below, but I don't want to lose them:
 
 - More warning before the hard spots, so you know when to set aside extra time.
 - A dedicated closures chapter (`Fn`, `FnMut`, `FnOnce`, and capture semantics) as another turn of the ownership spiral.
-- A fearless-concurrency chapter, the fourth pillar alongside no null, no exceptions, and memory safety without a GC.
+- A concurrency chapter on threads, shared state, and the compiler checks that prevent data races.
 - A problem-first language picker: ask which language you're coming from and show the bug in that language first.
   For now, I keep the prose language-neutral.
 - Pillar slogan titles for the chapters ("No null", "No exceptions", and so on).

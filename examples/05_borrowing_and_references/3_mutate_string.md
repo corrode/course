@@ -17,4 +17,3 @@ Mutability is opt-in at every layer.
 
 - [`String::push_str`](https://doc.rust-lang.org/std/string/struct.String.html#method.push_str) works on `&mut String` exactly the same way as on an owned `String`.
   The compiler reaches through the reference for you.
-- [`String::push`](https://doc.rust-lang.org/std/string/struct.String.html#method.push) is the single-`char` version, in case you want to append one character at a time.

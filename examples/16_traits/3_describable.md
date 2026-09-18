@@ -1,6 +1,5 @@
 # Defining your own trait
 
-Now you're on the other side of the contract.
 Instead of `impl`ing a trait someone else wrote, you'll write the trait yourself, give two types their own implementation, and then write a *generic* function that accepts anything implementing it.
 
 ```rust
@@ -52,7 +51,6 @@ You don't need to memorize all three spellings now; recognize the bound they exp
 
 ## Useful from the standard library
 
-- [The Rust Book on traits](https://doc.rust-lang.org/book/ch10-02-traits.html) walks through definitions, implementations, and bounds with more examples than fit here.
-- `Vec<String>::join("\n")` (and any `&[String].join(...)`) is handy for the `print_descriptions` exercise: build a `Vec<String>` of per-item descriptions, then join them with newlines.
-- The standard `Iterator::map` plus `.collect::<Vec<_>>()` is the idiomatic way to turn a `&[T]` into a `Vec<String>`.
-  `Iterator::map` and `collect` appear throughout the iterator exercises.
+- [`[String]::join`](https://doc.rust-lang.org/std/primitive.slice.html#method.join) works on a `Vec<String>` too: build a `Vec<String>` of per-item descriptions, then join them with newlines.
+- [`Iterator::map`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map) can call `describe` on each item; `.collect::<Vec<_>>()` gathers the returned strings.
+  A `for` loop with `Vec::push` works too if you prefer to wait for the iterators chapter.

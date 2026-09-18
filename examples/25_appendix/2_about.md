@@ -10,8 +10,7 @@ The [official book](https://doc.rust-lang.org/book/) is excellent, and you shoul
 So is [Rust by Example](https://doc.rust-lang.org/rust-by-example/), and plenty of others.
 
 What was missing, for me, was a path you could open in a browser and just *do*.
-Not a book to read on the couch, not a lecture to watch on 2x speed: a sequence of small, real problems with tests that turn green.
-Something where the code leaves your fingers and lands in the machine right away.
+A sequence of small problems where you write code and run the tests right there.
 
 These exercises started as a folder on my laptop, the kind of thing I'd pull out whenever someone asked "where do I start with Rust?"
 Over the years it grew into a structured path through the language.
@@ -26,7 +25,6 @@ Practice the core mechanics on a problem that matters to you:
   A scraper.
   A toy interpreter.
   The smaller and more personal, the better.
-  Finishing it teaches more than reading another tutorial.
 - Read other people's Rust.
   Pick a small crate you use and trace one path through its source, from a public function to its return value.
   You do not need to understand the whole crate to pick up an idiom or two.
@@ -43,4 +41,3 @@ Issues and pull requests are welcome.
 If you'd like Rust training, code review, or consulting for your team, see [corrode.dev](https://corrode.dev).
 
 Thanks for spending time here.
-Now go write some Rust.

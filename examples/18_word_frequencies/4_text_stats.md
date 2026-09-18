@@ -10,13 +10,14 @@ Converting an already-truncated result won't bring the fraction back.
 The test compares the result against a small tolerance because calculations with `f64` can introduce rounding error.
 
 `count_words` is stubbed with `todo!()` again so this file compiles on its own.
+Paste your earlier implementation into it before calling it from `text_stats`.
 You can organize the body of `text_stats` as you like.
 The test only cares about the returned tuple.
 
 ## Useful from the standard library
 
-- Each map value is an occurrence count, so adding the values gives you the total number of words.
-- The map's length gives you the number of unique words because each key appears once.
-- For the average length, account for both the length of each word and the number of times it occurred.
-  Convert the total characters and total words to `f64` before dividing.
-- [`HashMap::values`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.values) and [`HashMap::iter`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.iter) are the two iterator entry points you'll likely use here.
+- [`HashMap::values`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.values) yields the occurrence counts; [`Iterator::sum`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.sum) adds them to give the total number of words.
+- [`HashMap::len`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.len) gives the number of unique words because each key appears once.
+- [`HashMap::iter`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.iter) yields each word and its count.
+  Multiply `word.chars().count()` by its occurrence count, then sum those lengths for the average.
+  `chars()` counts Unicode scalar values; `len()` would count bytes.

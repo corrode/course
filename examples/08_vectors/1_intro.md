@@ -1,7 +1,6 @@
 # Vectors
 
-If you stare at a problem for long enough, it starts to turn into a vector.
-`Vec<T>` is the workhorse of Rust's collection types.
+`Vec<T>` stores a sequence of values that can grow or shrink.
 
 ## Arrays first: where vectors come from
 
@@ -15,18 +14,18 @@ let bytes: [u8; 4] = [10, 20, 30, 40];   // exactly four u8s, forever
 Because this array is a local variable with a compile-time length, its elements can live directly **on the stack** alongside the function's other local data.
 Setting aside that stack space is cheap, and Rust reclaims it automatically when the function returns.
 The catch is that you can't grow it.
-`bytes.push(50)` doesn't compile, because there's nowhere to grow *into*: the next bytes on the stack already belong to somebody else.
+`bytes.push(50)` doesn't compile because arrays have no `push` method: `[u8; 4]` holds exactly four elements, wherever it is stored.
 
 `Vec<T>` solves that by storing the elements **on the heap** instead.
 The local `Vec` value is a small header containing a pointer, a length, and a capacity, while the allocator provides the buffer it points to.
-When you `push` and the buffer fills up, `Vec` asks for a bigger one and copies the elements over.
+When you `push` and the buffer fills up, `Vec` requests more space and may move the elements to a new allocation.
 The header stays the same size; the buffer behind it grows.
 
 A quick mental model:
 
 | Type        | Where the data lives | Size known at | Can grow? |
 |-------------|----------------------|---------------|-----------|
-| `[T; N]`    | Stack                | Compile time  | No        |
+| `[T; N]`    | Inline in its owner (often on the stack) | Compile time | No |
 | `Vec<T>`    | Heap                 | Run time      | Yes       |
 | `&[T]`      | Wherever the owner put it (just a pointer + length) | n/a | n/a |
 
@@ -36,7 +35,6 @@ Rust gives you both choices, and its ownership rules apply to either one.
 
 ## Vectors: growable, heap-allocated
 
-`Vec<T>` is what you reach for most of the time.
 The `<T>` is a generic parameter: it works with any type, but a single `Vec` only holds one type at a time.
 So `Vec<i32>` is a vector of 32-bit integers, `Vec<String>` is a vector of owned strings.
 
@@ -65,7 +63,4 @@ When you choose a parameter type, start from what the function needs to do:
 - Take `Vec<T>` (no reference) when you actually want to consume the vector and take ownership.
 
 Index access (`list[0]`) panics if out of bounds.
-`list.get(0)` returns `Option<&T>` instead, which is the safer default.
-Use this unless you like panics.
-
-
+`list.get(0)` returns `Option<&T>` instead, so you can handle a missing element without panicking.

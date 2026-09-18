@@ -19,7 +19,8 @@ fn main() {
 ```
 
 You can declare a module inline (as above) or in a separate file.
-The syntax `mod foo;` (no body) tells the compiler to look for `foo.rs` or `foo/mod.rs` next to the current file.
+At the crate root, `mod foo;` (no body) tells the compiler to look for `foo.rs` or `foo/mod.rs` next to the root file.
+Nested modules follow the module hierarchy: `mod bar;` inside `foo.rs` looks for `foo/bar.rs` or `foo/bar/mod.rs`.
 
 ## Visibility for struct fields
 

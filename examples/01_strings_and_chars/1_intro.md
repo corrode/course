@@ -15,8 +15,8 @@ Rust splits "string" across distinct types:
 I'll use two words a lot in this course:
 
 - Owned means *this value is mine; when I go out of scope, the memory behind it is freed*.
-  In C++ terms, it's the object held by `std::unique_ptr`; in Python or Java terms, it's the role of the variable that decides when the object can be collected.
-  In Rust every heap value has exactly one owner at a time.
+  In C++ terms, think of `std::unique_ptr`: dropping the owner frees its allocation.
+  Python and Java don't assign that responsibility to one variable.
 - Borrowed means *I'm looking at someone else's value without taking it over*.
   It's the equivalent of passing a `const T&` in C++, or handing out a read-only pointer in C.
   Borrows are written with an `&` (or `&mut` if you also want to mutate).
@@ -49,6 +49,7 @@ let louder = shout(&s); // &String coerces to &str
 There's one common gotcha: If you call `.len()` on a string, it returns the number of *bytes*, not the number of characters in that string. 
 Rust uses UTF-8 for strings, which means a single visible character can take more than one byte.
 If you need to count `char` values rather than bytes, use `s.chars().count()` instead.
+A visible character can contain multiple `char` values, such as a letter followed by a combining accent.
 
 `.chars()` lets you walk through the `char` values in a string, one at a time.
 The returned value is an *iterator* over those characters.
@@ -67,7 +68,7 @@ let greeting: String = format!("Hello, {name}!");
 
 In the format string, `{name}` is a **captured identifier**.
 Rust pulls the variable from the surrounding scope.
-Sometimes you still see `format!("Hello, {}!", name)` instead, which is the pre-2021 version, but both forms still work.
+You can also pass the argument explicitly: `format!("Hello, {}!", name)`.
 The exclamation mark (`!`) means `format!` is a macro rather than a regular function call.
 
 ## Consuming an iterator 

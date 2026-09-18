@@ -57,7 +57,7 @@ That extra control matters here because the loop sometimes calls `chars.next()` 
 You also used tuple patterns in `let (a, b) = pair`; here, `match` inspects the character and quote state together.
 A guard adds the lookahead check only to the escaped-quote arm.
 
-These tests use the raw strings you met in the env-file parser, so the CSV examples can contain literal commas and quotes without an escape forest.
+These tests use the raw strings you met in the env-file parser, so the CSV examples can contain quotes without backslash escapes.
 
 ## A useful tactic
 
@@ -65,5 +65,5 @@ When stateful parsing gets hairy, write the simple version first (`split_once`, 
 Then upgrade to the state-machine version for the harder cases.
 Failing tests give you concrete examples to think against, instead of trying to imagine every edge case up front.
 
-For real CSV in production code, reach for the [`csv` crate](https://docs.rs/csv); it handles all the corners that this exercise glosses over.
+For production code, use the [`csv` crate](https://docs.rs/csv); it handles cases this exercise leaves out, such as quoted fields containing newlines.
 This exercise focuses on the state-machine loop rather than a production-ready CSV implementation.

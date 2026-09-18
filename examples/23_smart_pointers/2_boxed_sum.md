@@ -1,8 +1,7 @@
 # Putting a value on the heap with `Box`
 
-`Box::new(value)` allocates space on the heap, moves `value` into it, and hands you back a `Box<T>` that owns that allocation.
+[`Box::new(value)`](https://doc.rust-lang.org/std/boxed/struct.Box.html#method.new) allocates space on the heap, moves `value` into it, and hands you back a `Box<T>` that owns that allocation.
 When the box goes out of scope, Rust drops the inner value and frees the memory.
-No `free`, no leaks.
 
 A `Box<T>` *acts* like the value it holds.
 The `*` operator dereferences it, and most method calls work through automatic dereferencing without you writing `*` at all.
@@ -24,8 +23,5 @@ You usually wouldn't.
 For this exercise, take two boxed integers, add them, and return the sum.
 The small values let you focus on how to read through a box before you use one in a recursive type.
 
-## Useful from the standard library
-
-- [`Box::new`](https://doc.rust-lang.org/std/boxed/struct.Box.html#method.new) is the only constructor you need here.
-- Deref with `*a` and `*b`, or rely on auto-deref and just write `*a + *b`.
-  Both work because `i32` is `Copy`, so reading through the box doesn't move anything out.
+The tests construct the boxes for you.
+Use `*a` and `*b` to read their values: `i32` is `Copy`, so these expressions copy the integers out of the boxes.

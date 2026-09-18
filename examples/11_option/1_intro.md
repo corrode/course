@@ -11,8 +11,7 @@ enum Option<T> {
 ```
 
 The compiler will not let you accidentally use a `None` as if it were a real value.
-Every time you have an `Option`, you have to deal with both cases.
-That's the whole point.
+To extract the inner value, you need to decide what to do if it is missing.
 
 There are two main ways to unwrap an option.
 You can spell out both cases with pattern matching:
@@ -51,7 +50,7 @@ let greet = |name: &str| {
 };
 ```
 
-We'll cover closures in their own chapter.
+We'll use more closures in the iterators chapter.
 For this chapter, just read `|s| s.len()` as "a small function that takes `s` and returns `s.len()`."
 
 When you only need to handle `Some`, you can use `if let` instead of a full `match`:
@@ -62,7 +61,5 @@ if let Some(user) = find_user(id) {
 }
 ```
 
-Many standard-library methods return `Option`.
-`.first()`, `.last()`, `.next()` on iterators, `.get()` on slices and maps, `.find(...)` on iterators.
-You'll meet `Option` everywhere.
+Many standard-library methods return `Option`: `.first()` and `.last()` on slices, `.next()` and `.find(...)` on iterators, and `.get()` on slices and maps.
 

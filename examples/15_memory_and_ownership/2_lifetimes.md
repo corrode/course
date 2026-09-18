@@ -27,5 +27,4 @@ The syntax can take some getting used to, but keep the same question in mind: wh
 You don't need the syntax yet.
 For now, recognize this kind of error and connect it to the same safety rule you've already been using.
 
-Lifetimes are a hard part of learning Rust, so give yourself time to work through examples.
-Each compiler error gives you specific values and scopes to trace.
+When the compiler reports a lifetime error, trace the borrowed value, its owner, and the last use of the reference.

@@ -3,12 +3,11 @@
 Passing the previous tests verifies the basic borrowing syntax.
 Now you'll deliberately break the rules and use the compiler messages to work out what went wrong.
 
-Each test below is paired with a commented-out line.
-Uncomment one at a time, run the tests, read the error carefully, then comment it out again before moving on.
-The errors *are* the lesson here.
-The tests themselves don't assert anything interesting.
+Each test below contains commented-out code.
+Follow its comment to uncomment one line (or the pair of lines in the second test), run the tests, and read the error.
+Comment the code out again before moving on.
 
-The three errors you'll trigger correspond to the three rules of the borrow checker:
+The three errors illustrate these ownership and borrowing restrictions:
 
 1. You can't use a value after you've moved it.
 2. You can't have two mutable references to the same value at once.
@@ -16,10 +15,3 @@ The three errors you'll trigger correspond to the three rules of the borrow chec
 
 Re-read each compiler message until you can explain in one sentence *why* the compiler is complaining.
 Once you can do that, you can change the code for a reason instead of guessing.
-
-## Useful from the standard library
-
-- [`Clone::clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html#tymethod.clone) makes an explicit deep copy when you need two independently owned values.
-  A good "escape hatch" once you've understood why a borrow won't compile, but not the first thing to reach for.
-- The compiler errors themselves are the documentation here.
-  Each one is a paragraph you'd otherwise have to read in a book.

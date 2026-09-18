@@ -11,7 +11,7 @@
 2. `base` is `u32` and `bonus_percent` is `f64`, so you can't multiply them directly.
    Cast `base` with `as f64` first.
 3. To go back to `u32` for the return value, use a plain `as u32` cast.
-   That *truncates* the fractional part (drops any fractional HP), which is what the `15.5%` test pins down.
+   That *truncates* the fractional part (drops any fractional HP), so the `15.5%` example returns `8`.
 
 ## `parse_positive_integer`
 

@@ -8,9 +8,7 @@ Passing a tuple of `String`s by value moves the whole tuple into the function, s
 A tuple of integers is `Copy`, which gives the function its own copy and leaves the caller's value usable.
 This is the same move-versus-copy distinction you worked through in the moves chapter.
 
-## Useful from the standard library
+## Destructuring syntax
 
-- [Rust by Example: destructuring tuples](https://doc.rust-lang.org/rust-by-example/flow_control/match/destructuring/destructure_tuple.html) shows the `let (a, b) = pair;` form and how `_` can ignore parts you don't want to bind.
-- Field-by-index access (`full_name.0`) also works, but a destructure with a meaningful name like `first` reads better at the call site.
-- Anything that isn't `Copy`, such as `String`, moves when destructured by value.
-  A tuple is only `Copy` when all of its elements are `Copy`.
+- [Rust by Example: destructuring tuples](https://doc.rust-lang.org/rust-by-example/flow_control/match/destructuring/destructure_tuple.html) shows tuple patterns in `match` arms.
+- Field-by-index access (`full_name.0`) also works, but a destructure with a meaningful name like `first` makes the function body easier to read.

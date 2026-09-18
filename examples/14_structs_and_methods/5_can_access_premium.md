@@ -6,7 +6,7 @@ A method lets you keep the checks together and tells callers what they're asking
 `can_access_premium` combines two conditions into a single `bool`.
 In Rust, the body of a function is an expression, so you can just write the boolean expression with no `return` and no semicolon.
 
-## Useful from the standard library
+## Returning a boolean expression
 
 - The `&&` operator short-circuits, so a `false` condition on the left skips the condition on the right.
   Here an unverified user doesn't need a login-count check.

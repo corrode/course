@@ -29,7 +29,7 @@ fn validate(password: &str) -> PasswordReport {
 
 ## Useful one-liners
 
-- Length: `password.len()` or, more correctly, `password.chars().count()`.
+- Length: `password.chars().count()` counts Unicode scalar values; `password.len()` counts bytes.
 - Has uppercase: `password.chars().any(|c| c.is_ascii_uppercase())`.
 - Has digit: `password.chars().any(|c| c.is_ascii_digit())`.
 - Has special: `password.chars().any(|c| "!@#$%^&*".contains(c))`.
@@ -46,5 +46,5 @@ let strength = match score {
 
 ## On `PasswordGenerator::generate_secure_password`
 
-The exercise text suggests using `SystemTime::now().duration_since(UNIX_EPOCH)?.subsec_nanos()` as a source of variability.
+The exercise text suggests using `SystemTime::now().duration_since(UNIX_EPOCH).unwrap().subsec_nanos()` as a source of variability.
 That's enough to pass the test; in real code, reach for the [`rand`](https://docs.rs/rand) crate.

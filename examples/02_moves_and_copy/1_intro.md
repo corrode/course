@@ -12,17 +12,17 @@ println!("{s}");    // ERROR: borrow of moved value: `s`
 Assigning `s` to `t` *moves* the string.
 There's now one owner, `t`, and `s` no longer names a value you can use.
 Reach for `s` again and the compiler points to the exact move that made it unavailable.
-In a language with shared mutable pointers this would be a silent bug (two variables aliasing one buffer, one of them freeing it first), and Rust turns it into a compile error.
+With manual memory management, keeping two pointers to the same buffer can cause a use-after-free if one frees the buffer while the other still uses it.
 
 Why move instead of copy?
 A `String` owns a buffer on the heap.
 Copying it on every assignment would mean duplicating that buffer over and over, silently.
 Rust makes the cheap thing the default: move the `String` without copying its heap buffer.
-The expensive thing, a deep copy with `.clone()`, is something you ask for out loud.
+To duplicate the string's buffer, call `.clone()` explicitly.
 
 ## Copy types
 
-Small values that live entirely on the stack don't have this problem.
+Types that can safely be duplicated bit-for-bit can implement `Copy`.
 Integers, `bool`, `char`, and fixed-size arrays of them implement the `Copy` trait, so assigning one duplicates the bits instead of moving:
 
 ```rust

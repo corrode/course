@@ -10,7 +10,8 @@ let pipeline: Vec<Box<dyn Command>> = vec![
 ];
 ```
 
-Every entry in the vector is one box, one pointer wide, all the same size.
+Every entry in the vector is a `Box<dyn Command>` of the same size.
+Unlike `Box<i32>`, it holds both a data pointer and a vtable pointer.
 Each box owns whatever concrete type it wraps.
 Dropping the vector drops the boxes, which drops the inner values.
 The env-file parser uses the same pattern with `Box<dyn Error>`: one owned value of any concrete type that implements the trait.
@@ -33,7 +34,7 @@ trait Command {
 Three commands are already implemented for you:
 
 - `Uppercase` upper-cases the input.
-- `Reverse` reverses the input.
+- `Reverse` reverses the input by Unicode scalar value, which can separate combining marks from their letters.
 - `Append { suffix }` appends a configured suffix.
 
 Implement `apply_pipeline` to pass the input string through every command in order.
@@ -47,7 +48,6 @@ A generic `Vec<C>` where `C: Command` would only let you pick *one* concrete com
 
 - A `for` loop over `&[Box<dyn Command>]` yields `&Box<dyn Command>` on each iteration.
   Method calls auto-deref through the box (and through the `&`), so `cmd.run(...)` just works.
-- The pipeline is a *fold*: start with the input, and at each step the next command takes the previous output.
-  Start with `let mut current = input.to_string();` and reassign it in the loop.
-- `str::chars().rev().collect::<String>()` is one way to reverse a string (it's already written in the `Reverse` impl below).
-  This reverses by Unicode scalar value, not by grapheme; the tests stick to ASCII so it doesn't matter here.
+- [`ToString::to_string`](https://doc.rust-lang.org/std/string/trait.ToString.html#tymethod.to_string) gives you an owned starting value: `let mut current = input.to_string();`.
+  Reassign it after each command.
+- [`Iterator::fold`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.fold) is an alternative to the loop: use the starting string as the accumulator and pass each command the previous output.

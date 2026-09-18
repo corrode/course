@@ -2,8 +2,8 @@
 
 `PasswordValidator::validate(password)` combines the character checks and scoring rules into a `PasswordReport` with a numeric score, a list of feedback messages, and a `PasswordStrength` label.
 
-The shared types and the four `has_*` character-class helpers are stubbed below.
-Fill them in (the intro shows the `.chars().any(...)` pattern) and then write `validate` on top of them.
+The shared types are declared below, and the four `has_*` character-class helpers are stubbed.
+Fill in the helpers (the intro shows the `.chars().any(...)` pattern), copy your `is_strong` implementation, and then write `validate`.
 
 Here's a suggested scoring scheme.
 You can adjust it as long as the results stay within the broad ranges the tests check:
@@ -27,8 +27,8 @@ The length-related complaint should mention "characters", "length", "short", "lo
 
 ## Useful from the standard library
 
-- [`str::len`](https://doc.rust-lang.org/std/primitive.str.html#method.len) is byte length, but for an ASCII-only check it's also the character count.
-  Good enough for the length thresholds.
+- [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars) followed by `.count()` gives the length in Unicode scalar values.
+  `str::len` counts bytes, which can overestimate the length of non-ASCII passwords.
 - [`Vec::new`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.new) for the `feedback` accumulator; push a `String` for every failed rule.
 - A `match` on the final score with range patterns (`0..30 => Weak, 30..70 => Medium, _ => Strong`) keeps the classification clean.
   Range patterns are end-exclusive by default; use `..=` if you want the upper bound included.

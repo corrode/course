@@ -35,7 +35,6 @@ That trades one vtable lookup per call for the ability to mix concrete types in 
 
 I'd start with generics for performance and flexibility.
 Reach for `dyn Trait` when you need to store different concrete types together or want a smaller binary.
-The choice depends on what you need the code to do.
 
 ## A validation example
 
@@ -49,7 +48,7 @@ trait Validator {
 }
 ```
 
-You'll give three structs one rule each:
+Each struct has one rule; `MinLength` is already implemented for you:
 
 - `MinLength { n }`: input must have at least `n` characters.
 - `MustContain { needle }`: input must contain the given substring.
@@ -74,13 +73,13 @@ let rules: Vec<Box<dyn Validator>> = vec![
 `dyn Trait` has no statically known size.
 The three implementors above can carry different fields, so they don't all take up the same number of bytes.
 That's why the compiler won't let you put bare `dyn Validator` values directly in a `Vec`.
-A `Box` is a heap allocation with a fixed-size pointer that lives on the stack, which sidesteps the size problem.
+A `Box` owns a heap allocation through a fixed-size pointer, which sidesteps the size problem.
+The pointer itself can live on the stack or inside another allocation, such as a `Vec` buffer.
 `Box<dyn Trait>` is the owning form of this fixed-size handle.
 `&dyn Validator` borrows through a fixed-size handle instead of taking ownership.
 
 ## Useful from the standard library
 
-- [The Rust Book on trait objects](https://doc.rust-lang.org/book/ch18-02-trait-objects.html).
-- `str::contains` (with a `&str` argument) is all you need for the `MustContain` / `MustNotContain` checks.
+- [`str::contains`](https://doc.rust-lang.org/std/primitive.str.html#method.contains) (with a `&str` argument) is all you need for the `MustContain` / `MustNotContain` checks.
 - Inside `collect_errors`, a plain `for` loop pushing into a `Vec<String>` is the most direct form.
   An `.iter().filter_map(...)` chain expresses the same loop with iterator adapters.

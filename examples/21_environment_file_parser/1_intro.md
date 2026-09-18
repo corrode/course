@@ -72,7 +72,9 @@ A function using `?` insists on one error type, so you need something both can t
 This is a fiddly part of `?`: when it won't compile, check the error types as well as the success types.
 
 `Box<T>` puts a value on the heap and owns it.
-`Box<dyn std::error::Error>` is a return type that accepts almost any error, because nearly every error type converts into it automatically:
+`Box<dyn std::error::Error>` can hold different error types through a shared interface.
+An owned error implementing `std::error::Error + 'static` converts into it automatically.
+For this example to compile, you'd first need to implement `Display` and `std::error::Error` for the exercise's `ParseError`:
 
 ```rust
 fn load(path: &str) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
@@ -83,9 +85,9 @@ fn load(path: &str) -> Result<HashMap<String, String>, Box<dyn std::error::Error
 ```
 
 The two `?` lines return different error types, and both convert into `Box<dyn Error>` on the way out.
-That's the quick, lossy option: you give up the specific type and keep only "some error happened."
-A custom enum (like the `ParseError` you're about to write, but with a variant per source) keeps the type information at the cost of more code, and the [`thiserror`](https://docs.rs/thiserror) crate generates most of that boilerplate for you.
-For quick programs, [`anyhow`](https://docs.rs/anyhow) wraps the `Box<dyn Error>` approach with nicer ergonomics; for libraries where callers need to match on the error, prefer an enum.
+The box preserves the error's message and source chain, but callers no longer get a concrete error type to match on directly.
+A custom enum (like `ParseError`, but with a variant per source) lets callers match on each case, and the [`thiserror`](https://docs.rs/thiserror) crate generates the trait implementations for you.
+For application code, [`anyhow`](https://docs.rs/anyhow) offers a similar approach with convenient error context; for libraries where callers need to match on the error, prefer an enum.
 
 ## A note on raw strings: `r#"..."#`
 

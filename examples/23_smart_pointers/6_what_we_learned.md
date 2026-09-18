@@ -5,16 +5,15 @@ Boxing the integer was practice; the tree and pipeline give you reasons to use `
 
 ## What we learned
 
-- A smart pointer is a type that owns heap data and runs cleanup automatically on drop.
-  It's RAII: the destructor releases the resource, so you never write `free` or `delete`.
+- Smart pointers such as `Box` and `Rc` manage ownership and drop the value when its last owner is dropped.
+  They use RAII to release resources without an explicit `free` or `delete`.
 - `Box<T>` is the simplest smart pointer: one owner, one heap allocation, dropped when the box goes out of scope.
   C++ devs: this is `std::unique_ptr<T>`.
 - `Box::new(value)` constructs a box.
   `*boxed` dereferences it, and most method calls auto-deref so you rarely need to write `*` by hand.
 - Recursive enums need indirection.
-  `Add(Expr, Expr)` is infinitely sized; `Add(Box<Expr>, Box<Expr>)` is two pointers.
-  The compiler can lay it out, and recursion mirrors the data exactly.
-  The same concept underpins parsers, interpreters, and ASTs everywhere.
+  `Add(Expr, Expr)` is infinitely sized; the fields of `Add(Box<Expr>, Box<Expr>)` are two pointers.
+  The compiler can lay out the enum, and evaluation follows the tree recursively.
 - `Box<dyn Trait>` is the owned form of a trait object.
   It lets one vector own different concrete types behind a shared interface, just as `Box<dyn Error>` held different error types in the env-file parser.
 - Dynamic dispatch through a trait object costs one vtable lookup per call.
@@ -30,9 +29,5 @@ Boxing the integer was practice; the tree and pipeline give you reasons to use `
   The value inside still has to be safe to share between threads.
 - `RefCell<T>` provides *interior mutability*: borrow checking moves from compile time to runtime, so you can mutate through a shared reference.
   It pairs with `Rc` for graphs and shows up in some testing patterns.
-  You can go a long way without needing it.
-
-## Connections to earlier chapters
 
 You could also write the loop in `apply_pipeline` with `.fold(...)`: each command receives the previous output and produces the next one.
-`Box<dyn Error>` in the env-file parser uses the same owned trait-object pattern to hold different error types.

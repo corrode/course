@@ -7,10 +7,8 @@ You call it as `User::new(..)`.
 
 You'll write a constructor for `User` so every new account starts unverified, with zero logins recorded.
 
-## Useful from the standard library
+## Constructor syntax
 
-- [The Rust Book on structs](https://doc.rust-lang.org/book/ch05-00-structs.html) covers struct literal syntax, the field shorthand (`User { email, name, .. }`), and tuple/unit structs.
-- [`#[derive(Debug)]`](https://doc.rust-lang.org/std/fmt/trait.Debug.html) and [`#[derive(PartialEq)]`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html) are already on the struct.
-  They make the test's `assert_eq!` work and let you use `println!("{user:?}")`.
+- [The Rust Book on structs](https://doc.rust-lang.org/book/ch05-00-structs.html) covers struct literals and field shorthand: write `email` instead of `email: email` when the names match.
 - `Self` (capital S) is interchangeable with the struct's name inside an `impl` block.
   Returning `Self` keeps the constructor signature stable if you ever rename the type.

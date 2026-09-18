@@ -12,4 +12,5 @@ You counted UTF-8 characters, took a `&str` and produced a new `String`, and wal
   You can use it in a loop or with iterator methods: `for c in s.chars()`, `s.chars().any(...)`, `s.chars().count()`, and so on.
 - Case conversion (`to_uppercase`, `to_lowercase`) returns a new `String`.
   It doesn't change the original string.
-- The `is_ascii_*` family of functions is fast when you know the input is ASCII, but `char::is_uppercase` is the Unicode-aware version and is the safer default.
+- `char::is_ascii_uppercase` checks for `A` through `Z`, as required by `has_uppercase`.
+  `char::is_uppercase` also recognizes uppercase letters outside ASCII.

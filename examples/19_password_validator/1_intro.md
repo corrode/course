@@ -39,7 +39,7 @@ You can push messages into a `Vec<String>` as you check each rule:
 
 ```rust
 let mut feedback = Vec::new();
-if password.len() < 8 {
+if password.chars().count() < 8 {
     feedback.push("Use at least 8 characters".to_string());
 }
 ```

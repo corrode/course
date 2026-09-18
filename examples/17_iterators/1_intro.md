@@ -2,7 +2,7 @@
 
 With iterators, you can work through a collection without managing an index or checking its bounds yourself.
 You build a pipeline of operations, but they're lazy: the work waits until you ask for a result.
-The compiler usually fuses chained iterator calls into a single tight loop, so the abstraction is free at runtime.
+With optimizations enabled, the compiler can often turn chained iterator calls into a loop comparable to one you would write by hand.
 
 Here's how iterators work in practice:
 
@@ -55,6 +55,5 @@ fn longest_word(text: &str) -> usize {
 ```
 
 You no longer have to maintain the `mut` counters or keep track of the maximum yourself.
-For work like this, reducing a collection to one number or building a new collection, iterators often leave you with less code to get wrong.
 
 

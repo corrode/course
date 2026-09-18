@@ -3,9 +3,9 @@
 Once you have the counts, you can ask the iterator for the largest one.
 The choice between `iter` and `into_iter` determines whether you can return the winning word without cloning it.
 
-`count_words` is duplicated below as a `todo!()` stub so this step compiles in isolation; you don't need to fill it in again.
-You only need to work on `most_common_word`.
-The test will call both functions and unwrap the result.
+`count_words` is duplicated below as a `todo!()` stub so this step compiles in isolation.
+Paste your earlier implementation into it, then work on `most_common_word`.
+The test calls `most_common_word` and unwraps the result.
 
 ## Useful from the standard library
 

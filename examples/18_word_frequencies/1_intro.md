@@ -44,7 +44,7 @@ let top = counts.iter().max_by_key(|(_, count)| *count);
 Add the lengths, convert the totals to `f64`, and only then divide so integer truncation can't discard the fraction:
 
 ```rust
-let total_chars: usize = words.iter().map(|w| w.len()).sum();
+let total_chars: usize = words.iter().map(|w| w.chars().count()).sum();
 let avg = total_chars as f64 / words.len() as f64;
 ```
 

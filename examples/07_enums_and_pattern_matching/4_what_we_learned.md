@@ -12,5 +12,5 @@ You defined an enum with a fixed set of variants, mapped each variant to a value
   Add a new variant later and every `match` that needs updating tells you exactly where.
 - `|` lets multiple patterns share an arm (`200 | 201 | 204 => ...`), and `_` is the catch-all when you want to ignore the rest.
 - Derive `Debug` when you want `{:?}` printing and `PartialEq` when you want `==` comparisons.
-  Add `Clone, Copy` when the variants carry no heap data so values can be passed around freely.
+  Deriving `Clone, Copy` lets callers reuse a value after passing it by value; `Copy` requires every field to be `Copy` too.
 - For a single-variant check, `matches!(value, Variant)` is the compact form; `value == Variant` works equally well when `PartialEq` is derived.

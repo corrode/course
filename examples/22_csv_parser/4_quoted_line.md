@@ -1,6 +1,5 @@
 # Quotes, embedded commas, and escapes
 
-Real CSV is a state machine in disguise.
 A field can be wrapped in double quotes, in which case any commas *inside* the quotes are part of the field, not separators.
 And a literal `"` inside a quoted field is encoded as `""` (two quotes).
 

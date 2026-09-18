@@ -12,5 +12,3 @@ Look at the test: it reads `x` again after passing it to `double`.
 
 - `i32`, the other integer types, `bool`, `char`, and fixed-size arrays of `Copy` values all implement [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html).
   Assigning or passing one duplicates its bits instead of moving it.
-- Heap-owning types like `String` and `Vec<T>` are deliberately not `Copy`.
-  When you need a second owner of one of those, ask for it with [`Clone::clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html#tymethod.clone).

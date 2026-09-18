@@ -2,8 +2,7 @@
 
 Now the `Ok` value is a borrow of the input.
 The `&str` in the return type implicitly borrows from `email`, so the compiler infers a lifetime linking input and output via lifetime elision.
-That lifetime relationship becomes explicit in the memory and ownership material.
-For now, notice that the function compiles even though no lifetime appears in the signature.
+The memory and ownership chapter explains why a returned reference must not outlive the value it borrows.
 
 ## Useful from the standard library
 

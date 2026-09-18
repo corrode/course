@@ -2,8 +2,8 @@
 
 ## ferris_mood
 
-1. The order of an `if`/`else if` chain decides everything: top to bottom, first match wins.
-   Translate the rule table line by line and the order falls out for you.
+1. An `if`/`else if` chain checks conditions from top to bottom; the first match wins.
+   Follow the order in the rule table.
 2. The `"Grumpy"` rule needs both conditions to be true.
    Combine them with `&&` (logical AND).
 
@@ -19,7 +19,7 @@
 1. `let mut count = 0u32;` plus a `for n in numbers` loop.
    The suffix `0u32` pins the integer type so you don't need a separate annotation.
 2. `for n in numbers` over a `&[i32]` yields `&i32`.
-   The `%` operator works through the reference, so `n % 2` Just Works.
+   The `%` operator accepts the reference, so you can write `n % 2`.
    `continue` skips the rest of the current iteration.
 
 ## digit_count

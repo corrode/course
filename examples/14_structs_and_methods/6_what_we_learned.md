@@ -5,7 +5,7 @@ You defined a struct, wrote a `new` constructor, added a `&self` method that for
 ## What we learned
 
 - A `struct` groups related fields under a single named type.
-  Build instances with the literal syntax `User { email, name, .. }` and read fields with dot notation.
+  Build instances with a struct literal, supplying every field, and read fields with dot notation.
 - An `impl` block attaches functions to the type.
   Without `self`, it's an associated function (called as `User::new(..)`); with `self`, it's a method (called as `user.method()`).
 - The three flavors of `self` say what the method intends to do: `&self` reads, `&mut self` mutates in place, plain `self` consumes.
@@ -15,4 +15,4 @@ You defined a struct, wrote a `new` constructor, added a `&self` method that for
 - `format!` is the idiomatic way to build a `String` from a template; same syntax as `println!` but returns the string.
 - `#[derive(Debug, PartialEq)]` covers the common pair: `{:?}` printing for debugging and `==` for tests.
   Derive `Default`, `Clone`, or `Copy` only when the generated behavior matches the type.
-- Encoding business rules as predicates on the type (`user.can_access_premium()`) keeps the rule in one place and makes call sites self-documenting.
+- Encoding business rules as predicates on the type (`user.can_access_premium()`) keeps the checks in one place and gives callers a name for the rule.

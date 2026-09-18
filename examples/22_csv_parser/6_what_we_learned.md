@@ -14,5 +14,5 @@ Once that worked, you reused the line parser to collect headers and rows.
   You can move the accumulated string into your results without cloning it and then clearing the original.
 - The simple `split`/`trim` version is worth writing first.
   It passes the easy tests and gives you a baseline; the state-machine upgrade then has concrete failing cases to react to.
-- Hand production CSV files to the [`csv` crate](https://docs.rs/csv), which handles BOMs, custom delimiters, and escaped newlines inside fields.
+- Hand production CSV files to the [`csv` crate](https://docs.rs/csv), which handles BOMs, custom delimiters, and newlines inside quoted fields.
   Keep the state-machine loop for parsers you do need to write yourself.

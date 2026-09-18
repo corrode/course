@@ -6,11 +6,10 @@ Inside the method, `self` behaves like any other reference, so you can read fiel
 
 `display_name` formats two fields into a new `String`.
 Use `format!` rather than building the string by hand.
-It reads exactly like the format you want.
 
 ## Useful from the standard library
 
 - [`format!`](https://doc.rust-lang.org/std/macro.format.html) builds a new `String` from a template and arguments.
   It uses the same syntax as `println!`, but returns the string instead of printing it.
 - Field access uses dot notation: `self.name`, `self.email`.
-  Inside a `format!` template you can interpolate them inline: `format!("{} ({})", self.name, self.email)`.
+  Pass those fields as arguments to `format!`: `format!("{} ({})", self.name, self.email)`.

@@ -29,7 +29,6 @@
 ## logger
 
 1. `PlainLogger::log` is one line: `msg.to_string()`.
-   That's all.
    Do not write `warn` or `error` for `PlainLogger`; the defaults already do the right thing.
 2. `TaggedLogger::log` is also one line: `format!("{}: {}", self.tag, msg)`.
    The default `warn` calls this `log`, so `warn("slow")` ends up as `"auth: [WARN] slow"` automatically.
@@ -41,7 +40,6 @@
    }
    ```
 4. Notice the symmetry with object-oriented "inheritance": `PlainLogger` inherits both defaults, `TaggedLogger` inherits one and overrides the other.
-   The trait is the only place a default ever lives, so there's no surprise about where behavior comes from.
 
 ## validate
 
@@ -73,5 +71,5 @@
    errors
    ```
 3. The slice element type `&dyn Validator` means each `v` in the loop is a `&&dyn Validator`.
-   Method calls auto-deref, so `v.check(input)` works without ceremony.
+   Method calls auto-deref, so `v.check(input)` works without an explicit dereference.
 4. Once you've met iterators (the iterators chapter), the same body collapses to `validators.iter().filter_map(|v| v.check(input).err()).collect()`.

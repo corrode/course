@@ -53,9 +53,8 @@ In the first exercise, you'll make that error disappear by changing a single cha
 
 - Start with the smallest function you can.
   Single-purpose functions are easier to test and easier to read.
-- Use parameter names that say what the value *is*, not what type it is: `width: u32`, not `w: u32`.
+- Use descriptive parameter names: `width: u32`, not `w: u32`.
 - Prefer the *least demanding* parameter type that still lets you do the job.
-  In other words, ask the caller for as little as possible.
   If you only need to *read* a string, take `&str`, not `String`.
   Taking `String` would force the caller to hand over the value or clone it, while `&str` lets them keep it.
   A `&str` parameter also accepts string literals, borrowed `String` values, and slices of larger text buffers without conversion at the call site.

@@ -28,20 +28,8 @@ fn parse_two(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> {
 }
 ```
 
-`?` only works inside a function whose return type is also a `Result` (or `Option`).
-It doesn't work in `fn main()` unless `main` itself returns a `Result`.
-
-## A note on these tests and the filesystem
-
-The test below writes a real file (`test.txt`) into the current working directory before it runs.
-Cargo runs tests in parallel by default, so two tests writing to the same path can race each other and cause spurious failures.
-If you see flaky `Err`s here, run the tests one at a time:
-
-```sh
-cargo test -- --test-threads=1
-```
-
-Or give each test its own filename if you're feeling tidy.
-In production code you'd reach for [`tempfile::NamedTempFile`](https://docs.rs/tempfile) so the OS hands you a guaranteed-unique path and cleans up after itself.
+For these exercises, `?` on a `Result` needs a function that also returns a `Result`.
+It also works on `Option` inside functions returning `Option`, where `None` causes an early return.
+To use `?` on a `Result` in `main`, give `main` a `Result` return type.
 
 

@@ -18,8 +18,7 @@
    - anything else → push the character into the current field.
 3. After the loop, push the final field.
    Use `std::mem::take(&mut current)` to move a completed field into the results without cloning.
-4. The full skeleton is in the chapter intro; if you've read it and are still stuck, copy the skeleton verbatim and run the tests.
-   The compiler errors will tell you what's left to wire up.
+4. If you're still stuck, use the skeleton in the chapter intro as the body of `parse_csv_line` and run the tests.
 
 ## `parse_file`
 

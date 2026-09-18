@@ -1,16 +1,14 @@
 # Wrapping up word count
 
 You wrote three functions using a counter or running maximum, a `for` loop, and a return value.
-We'll keep using these patterns as the examples get bigger.
 
 ## What we learned
 
 - `text.split_whitespace()` walks the words in a string for you.
   It handles any kind of whitespace and skips empty pieces.
-- `text.chars()` walks every character in a string, whitespace and all.
-  It's the right tool for "how many characters?".
+- `text.chars()` walks every Unicode scalar value in a string, whitespace and all.
 - To track the running maximum, use `let mut max = 0; for x in xs { if x > max { max = x; } }`.
-- `word.chars().count()` measures string length in characters, which is usually what you want.
+- `word.chars().count()` counts `char` values, not necessarily visible characters.
   `str::len` returns *bytes*, and the two differ the moment you hit a non-ASCII character.
 
 ## What comes next

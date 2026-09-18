@@ -1,11 +1,7 @@
 # Smart pointers
 
-*A pointer that cleans up after itself walks into a scope.
-Nothing leaks.*
-
-A **smart pointer** is a type that owns a value on the heap and runs cleanup automatically when it goes out of scope.
-The "smart" part is the cleanup: there's no `free`, no `delete`, no `dispose()`.
-When the owning binding drops, the destructor runs and the memory comes back.
+**Smart pointers** such as `Box<T>` and `Rc<T>` manage ownership of heap values.
+They drop the value when its last owner is dropped, so you don't call `free` or `delete` yourself.
 
 If you've used C++, you already know the idea.
 `Box<T>` is Rust's `std::unique_ptr<T>`: one owner, freed on drop.
@@ -13,9 +9,9 @@ If you've used C++, you already know the idea.
 Both patterns are an instance of **RAII** (Resource Acquisition Is Initialization): tie the lifetime of a resource to the lifetime of a stack value, and let scope exit do the cleanup.
 
 If your background is Java, Python, or JavaScript, the comparison is trickier.
-A `String` in Java is a reference to a heap object that the garbage collector reclaims when no one is looking at it anymore.
+A `String` variable in Java holds a reference to a heap object that becomes eligible for garbage collection when it is no longer reachable.
 Those references are not smart pointers in the Rust sense: there is no single *owner*, and you don't know when (or whether) cleanup happens.
-Rust's smart pointers give you the heap allocation without the GC, because ownership tells the compiler exactly when to drop.
+Rust's smart pointers use ownership to determine when to drop a value; `Rc` tracks its owners at runtime.
 
 ## Where `Box` earns its keep
 
@@ -58,7 +54,6 @@ The borrow checker normally enforces "one mutable reference or many immutable on
 `RefCell<T>` moves that check to *runtime*: you can hand out an `&RefCell<T>`, and someone holding it can still mutate the inner value by calling `.borrow_mut()`.
 If the borrowing rules are violated, the program panics instead of failing to compile.
 
-If you're coming from Java, this is close to a field with a private setter: outside code holds an immutable handle to the object, but the object can still mutate itself.
 You don't need `RefCell` for these exercises.
 It pairs with `Rc` to build graphs, and it shows up in some testing patterns.
 For now, recognizing the name is enough.

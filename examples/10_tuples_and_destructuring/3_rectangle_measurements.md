@@ -3,7 +3,7 @@
 When two results are naturally produced together, returning them as a tuple is often clearer than two separate function calls.
 The caller destructures the result into named bindings.
 
-## Useful from the standard library
+## Syntax to use
 
 - The arithmetic operators `*` and `+` are all you need here.
   The dimensions in the tests keep both `u32` results within range.

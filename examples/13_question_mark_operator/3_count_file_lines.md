@@ -15,3 +15,13 @@ Working out the conversion can take a few tries; this exercise avoids that by us
 - [`str::lines`](https://doc.rust-lang.org/std/primitive.str.html#method.lines) iterates over the file's lines without keeping the trailing newlines.
 - [`Iterator::count`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.count) consumes the iterator and returns how many lines there were.
 - Once you have the file contents, `lines()` and `count()` can remain in the same expression.
+
+## The test and the filesystem
+
+This test creates `test.txt` in the current working directory and removes it afterward.
+It also expects `missing.txt` not to exist.
+Avoid running multiple copies of this test in the same directory: they can overwrite or remove each other's file.
+For tests in one process that share a path, `cargo test -- --test-threads=1` prevents them from running at the same time.
+Separate test processes still need separate paths.
+
+In production tests, [`tempfile::NamedTempFile`](https://docs.rs/tempfile/latest/tempfile/struct.NamedTempFile.html) creates a uniquely named file and removes it when dropped.

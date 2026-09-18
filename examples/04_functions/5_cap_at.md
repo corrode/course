@@ -2,9 +2,7 @@
 
 Write `cap_at(value, max)` so it returns `value` if it's at or below `max`, and `max` otherwise.
 Both arguments are `i32`.
-The logic is one `if` away.
-
-Write the function the most natural way you can think of.
+Use an `if` to assign `max` to `value` when it exceeds the limit, then return `value`.
 Your first version may not compile, and that failure is part of the exercise.
 Read the error before changing anything because it tells you why the assignment is rejected.
 
