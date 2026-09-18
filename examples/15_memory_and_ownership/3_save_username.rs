@@ -29,14 +29,15 @@ fn test_first_match() {
     assert_eq!(find_user_by_id(&users, 7).as_deref(), Some("Férris 🦀"));
 }
 
-// Predict, then remove the block comment to enable the transfer test.
-/*
 #[test]
 fn test_username_survives_records() {
+    todo!("Remove this todo and uncomment the survival check below");
+
+    /*
     let username = {
         let users = [(42, String::from("Férris 🦀"))];
         find_user_by_id(&users, 42)
     };
     assert_eq!(username.as_deref(), Some("Férris 🦀"));
+    */
 }
-*/
