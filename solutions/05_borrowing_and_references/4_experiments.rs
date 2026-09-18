@@ -13,28 +13,28 @@ fn mutate_string(s: &mut String) {
 #[test]
 fn experiment_use_after_move() {
     let s = String::from("Rust");
-    let _result = take_ownership(s);
-    // Uncomment the next line. Expect: "borrow of moved value: `s`".
-    // assert_eq!(s, "Rust");
+    let result = take_ownership(s);
+    // `s` moved into the function; `result` now owns the returned string.
+    assert_eq!(result, "Rust - owned by Rust!");
 }
 
 #[test]
 fn experiment_two_mutable_borrows() {
     let mut s = String::from("Ferris");
     let r1 = &mut s;
-    // Uncomment the next two lines together. Expect:
-    // "cannot borrow `s` as mutable more than once at a time".
-    // let r2 = &mut s;
-    // r2.push('!');
     r1.push('!');
+    // The borrow through `r1` ends at its last use, before we create `r2`.
+    let r2 = &mut s;
+    r2.push('!');
+    assert_eq!(s, "Ferris!!");
 }
 
 #[test]
 fn experiment_mix_shared_and_mutable() {
     let mut s = String::from("Ferris");
     let shared = &s;
-    // Uncomment the next line. Expect:
-    // "cannot borrow `s` as mutable because it is also borrowed as immutable".
-    // mutate_string(&mut s);
     println!("{shared}");
+    // Nothing uses `shared` after this point, so we can borrow `s` mutably.
+    mutate_string(&mut s);
+    assert_eq!(s, "Ferris - now with extra crab");
 }

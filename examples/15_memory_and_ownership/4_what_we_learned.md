@@ -1,6 +1,7 @@
 # Wrapping up
 
 Ownership is the model underneath the moves, borrows, and references you've been using throughout the course.
+In the username exercise, returning an owned `String` let the caller keep the name after the records were dropped.
 
 ## The whole picture
 
