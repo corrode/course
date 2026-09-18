@@ -65,6 +65,7 @@
 // handle so call sites don't need to branch.
 
 import { proseHighlightStyle, proseEditorTheme } from "./cm-theme.js";
+import { indentRustSource, rustIndentUnit } from "./rust-indent.js";
 
 const VIM_PREF_KEY = "corrode:editor:vim";
 /** @type {Set<{setVim: (on:boolean)=>void}>} */
@@ -297,8 +298,9 @@ export async function mountInlineEditor(section, opts = {}) {
   const copyBtn = $("copy-btn");
 
   const exerciseKey = opts.slug || section.dataset.exerciseKey || "playground";
-  const starter =
-    opts.starter != null ? opts.starter : fallback ? fallback.value : "";
+  const starter = indentRustSource(
+    opts.starter != null ? opts.starter : fallback ? fallback.value : "",
+  );
   // Source of the participant's most recent server-side submission, if
   // any. Seeds the editor on a device that has no local draft so
   // submitted solutions follow the session token across browsers.
@@ -497,8 +499,8 @@ export async function mountInlineEditor(section, opts = {}) {
       history(),
       drawSelection(),
       indentOnInput(),
-      // Match the course's code examples: 2-space indent.
-      indentUnit.of("  "),
+      indentUnit.of(rustIndentUnit),
+      EditorState.tabSize.of(rustIndentUnit.length),
       bracketMatching(),
       syntaxHighlighting(proseHighlightStyle, { fallback: true }),
       closeBrackets(),
@@ -1055,8 +1057,9 @@ export async function mountInlineEditor(section, opts = {}) {
           }
           return;
         }
-        if (data.code && data.code !== api.getValue()) {
-          api.setValue(data.code);
+        const formatted = data.code ? indentRustSource(data.code) : data.code;
+        if (formatted && formatted !== api.getValue()) {
+          api.setValue(formatted);
           if (runStatus) {
             runStatus.textContent = "Formatted.";
             runStatus.style.color = "var(--color-success, #2e7d32)";
