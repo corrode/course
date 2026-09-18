@@ -86,7 +86,7 @@ In this case, for each character in the string `"hello"`, do something with it.
 The loop variable is a fresh binding scoped to each iteration.
 Ranges, arrays, and collections can also go on the right-hand side because each can produce an iterator.
 
-## Where to look things up
+## Useful resources
 
 - [`std::fmt`](https://doc.rust-lang.org/std/fmt/) contains everything the formatting macros can do (padding, precision, hex, debug output…).
 - [`str`](https://doc.rust-lang.org/std/primitive.str.html): the inventory of operations available on any `&str`.

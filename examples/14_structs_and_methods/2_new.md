@@ -7,7 +7,7 @@ You call it as `User::new(..)`.
 
 You'll write a constructor for `User` so every new account starts unverified, with zero logins recorded.
 
-## Constructor syntax
+## Useful resources
 
 - [The Rust Book on structs](https://doc.rust-lang.org/book/ch05-00-structs.html) covers struct literals and field shorthand: write `email` instead of `email: email` when the names match.
 - `Self` (capital S) is interchangeable with the struct's name inside an `impl` block.

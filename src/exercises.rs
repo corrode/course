@@ -1176,11 +1176,11 @@ pub fn render_markdown(md: &str) -> String {
 
 /// Headings whose body (the immediately-following `<ul>...</ul>`) should
 /// be wrapped in a NOTE-style blockquote. The H2 stays inside the
-/// blockquote and acts as the label, so all three render with the same
+/// blockquote and acts as the label, so these sections render with the same
 /// alert chrome that pulldown-cmark emits for `> [!NOTE]`.
 const ALERT_HEADINGS: &[&str] = &[
     "<h2>Useful from the standard library</h2>",
-    "<h2>Where to look things up</h2>",
+    "<h2>Useful resources</h2>",
     "<h2>What we learned</h2>",
 ];
 
@@ -1255,6 +1255,45 @@ fn escape_attr(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reference_sections_share_callout_markup() {
+        for heading in ["Useful from the standard library", "Useful resources"] {
+            let md = format!(
+                "Before.\n\n## {heading}\n\n- [Documentation](https://doc.rust-lang.org/) explains it.\n\n## Next section\n\nAfter.\n"
+            );
+            let html = render_markdown(&md);
+            assert!(html.contains(&format!(
+                "<blockquote class=\"markdown-alert-note\">\n<h2>{heading}</h2>\n<ul>"
+            )));
+            assert!(html.contains("</ul>\n</blockquote>\n<h2>Next section</h2>"));
+            assert!(html.contains("target=\"_blank\" rel=\"noopener noreferrer\""));
+            assert_eq!(html.matches("<blockquote").count(), 1);
+        }
+    }
+
+    #[test]
+    fn chapter_resource_lists_render_as_callouts() {
+        for md in [
+            include_str!("../examples/00_integers/4_damage_with_bonus.md"),
+            include_str!("../examples/01_strings_and_chars/1_intro.md"),
+            include_str!("../examples/07_enums_and_pattern_matching/2_status_code.md"),
+            include_str!("../examples/10_tuples_and_destructuring/4_get_first_name.md"),
+            include_str!("../examples/14_structs_and_methods/2_new.md"),
+            include_str!("../examples/20_modules_and_visibility/1_intro.md"),
+        ] {
+            let html = render_markdown(md);
+            assert!(html.contains(
+                "<blockquote class=\"markdown-alert-note\">\n<h2>Useful resources</h2>\n<ul>"
+            ));
+        }
+    }
+
+    #[test]
+    fn ordinary_teaching_sections_remain_unwrapped() {
+        let html = render_markdown("## Path syntax\n\n- `crate::` starts at the root.\n");
+        assert!(!html.contains("<blockquote"));
+    }
 
     #[test]
     fn scans_real_examples_dir() {
