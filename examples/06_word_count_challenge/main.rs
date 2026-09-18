@@ -12,11 +12,7 @@
     clippy::boxed_local
 )]
 
-#[path = "2_word_count.rs"]
-mod _2_word_count;
-#[path = "3_char_count.rs"]
-mod _3_char_count;
-#[path = "4_longest_word.rs"]
-mod _4_longest_word;
+#[path = "2_long_words.rs"]
+mod _2_long_words;
 
 fn main() {}
