@@ -143,9 +143,11 @@ Inside a code chapter directory:
 
 Set `bonus = true` in a chapter's `.chapter.toml` to make it optional.
 The chapter picker lists every chapter, marking optional entries with a star
-and “Optional” instead of a chapter number. The dashboard also lists them in
-an “Optional Chapters” section below the numbered table of contents, using
-stars instead of numbers and preserving participant completion marks. Links
+and “Optional” instead of a chapter number. The homepage and exercise pages
+share `partials/chapter_list.html`, including its “Optional Chapters” section
+below the numbered table of contents. Both lists use `partials/chapter_row.html`
+and the shared styles in `static/css/base.css`, preserving completion marks and
+marking the current chapter as a non-link. Optional rows use stars instead of numbers. Links
 use `/exercise/{slug}` for anonymous visitors and `/exercise/{ulid}/{slug}`
 for participants. The section is omitted when there are no optional chapters;
 its columns are balanced independently of the numbered TOC.

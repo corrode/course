@@ -257,7 +257,7 @@ struct ProgressDot {
     /// count toward progress.
     has_exercises: bool,
     /// `true` for optional bonus chapters: listed in the picker and the
-    /// dashboard's optional section, but excluded from the numbered TOC,
+    /// shared TOC's optional section, but excluded from the numbered TOC,
     /// progress, and the default next-chapter flow.
     is_bonus: bool,
     /// Optional explicit link target. When `Some`, the TOC partial and
@@ -365,10 +365,8 @@ struct DashboardTemplate {
     team_token: Option<TeamToken>,
 }
 
-impl DashboardTemplate {
-    fn optional_chapter_rows(&self) -> usize {
-        self.dots.iter().filter(|d| d.is_bonus).count().div_ceil(2)
-    }
+fn optional_chapter_rows(dots: &[ProgressDot]) -> usize {
+    dots.iter().filter(|d| d.is_bonus).count().div_ceil(2)
 }
 
 /// Template for the slim signup form.
@@ -3738,6 +3736,51 @@ mod tests {
                     }
                 }
             }
+        }
+    }
+
+    #[tokio::test]
+    async fn exercise_toc_shares_optional_chapters_and_marks_the_current_chapter() {
+        let state = optional_discovery_state().await;
+        for participant in [None, Some("participant")] {
+            let dashboard = rendered_dashboard(&state, participant).await;
+            let prefix =
+                participant.map_or_else(|| "/exercise/".to_string(), |u| format!("/exercise/{u}/"));
+            for stem in ["06_word_count_challenge", "18_word_frequencies"] {
+                let html = rendered_exercise(&state, stem, participant).await;
+                let optional = dashboard_nav(&html, "Optional chapters");
+                let required = dashboard_nav(&html, "All exercises");
+                assert_eq!(
+                    optional.matches("class=\"chapter-row").count(),
+                    state.exercises.iter().filter(|e| e.is_bonus()).count()
+                );
+                assert_eq!(html.matches("id=\"current-chapter-row\"").count(), 1);
+                let current_list = if stem == "06_word_count_challenge" {
+                    optional
+                } else {
+                    let mut dashboard_optional =
+                        dashboard_nav(&dashboard, "Optional chapters").to_string();
+                    for chapter in state.exercises.iter().filter(|e| e.is_bonus()) {
+                        dashboard_optional = dashboard_optional.replace(
+                            &format!("{prefix}{}\"", chapter.file_stem),
+                            &format!("{prefix}{}\"", chapter.slug),
+                        );
+                    }
+                    assert_eq!(optional, dashboard_optional);
+                    required
+                };
+                assert!(current_list.contains("aria-current=\"page\""));
+                assert!(current_list.contains("class=\"chapter-row current"));
+                for chapter in state.exercises.iter().filter(|e| e.is_bonus()) {
+                    let href = format!("href=\"{prefix}{}\"", chapter.slug);
+                    assert_eq!(optional.contains(&href), chapter.file_stem != stem);
+                    assert!(!required.contains(&href));
+                }
+            }
+            let mut required_only = state.clone();
+            Arc::make_mut(&mut required_only.exercises).retain(|e| !e.is_bonus());
+            let html = rendered_exercise(&required_only, "18_word_frequencies", participant).await;
+            assert!(!html.contains("id=\"optional-chapters-heading\""));
         }
     }
 
