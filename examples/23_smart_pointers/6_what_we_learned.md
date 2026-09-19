@@ -1,33 +1,29 @@
 # Wrapping Up Smart Pointers
 
-You used `Box` to put an integer on the heap, then to build a recursive expression tree and a pipeline of different command types.
-Boxing the integer was practice; the tree and pipeline give you reasons to use `Box` in your own code.
+Boxing an integer was practice.
+The tree and pipeline gave you reasons to own values through pointers.
 
 ## What We Learned
 
-- Smart pointers such as `Box` and `Rc` manage ownership and drop the value when its last owner is dropped.
-  They use RAII to release resources without an explicit `free` or `delete`.
-- `Box<T>` is the simplest smart pointer: one owner, one heap allocation, dropped when the box goes out of scope.
-  C++ devs: this is `std::unique_ptr<T>`.
-- `Box::new(value)` constructs a box.
-  `*boxed` dereferences it, and most method calls auto-deref so you rarely need to write `*` by hand.
-- Recursive enums need indirection.
-  `Add(Expr, Expr)` is infinitely sized; the fields of `Add(Box<Expr>, Box<Expr>)` are two pointers.
-  The compiler can lay out the enum, and evaluation follows the tree recursively.
-- `Box<dyn Trait>` is the owned form of a trait object.
-  It lets one vector own different concrete types behind a shared interface, just as `Box<dyn Error>` held different error types in the env-file parser.
-- Dynamic dispatch through a trait object costs one vtable lookup per call.
-  For this small command pipeline, one lookup per stage is unlikely to matter.
-  Reach for generics (`fn f<T: Command>`) when you want the compiler to monomorphize away the indirection.
+- `Box<T>` owns a heap value and drops it when the box is dropped.
+  `Box::new` constructs a box, `*` dereferences it, and method calls usually auto-deref.
+- Recursive types need indirection for a finite layout.
+  `Expr::add` moves child expressions into boxes; `eval` borrows the resulting tree without consuming it.
+- `Box<dyn Command>` lets a factory return ownership of different concrete command types behind one interface.
+  A borrowed `&dyn Command` instead depends on an owner elsewhere.
+- Owning commands does not mean consuming them on every run.
+  `apply_pipeline` borrows the slice and dispatches through the trait, leaving the pipeline available for reuse.
 
-## Other Smart Pointers, Briefly
+## Recognizing Other Smart Pointers
 
-- `Rc<T>` ("reference counted") gives you multiple owners on a single thread.
-  The value is dropped when the last `Rc` goes away.
-  C++ analogue: `std::shared_ptr<T>` without the atomic overhead.
+These types are for recognition only here, not additional exercise requirements.
+
+- `Rc<T>` provides shared ownership on one thread through reference counting.
+  Cloning an `Rc` adds an owner without cloning the inner value; the value is dropped when the last strong owner is gone.
+  Strong `Rc` cycles keep their values alive, so use non-owning `Weak<T>` links where a relationship should not keep a value alive.
+  Upgrading a `Weak` returns an `Option` because the value may already have been dropped.
 - `Arc<T>` uses atomic reference counting for shared ownership across threads.
-  The value inside still has to be safe to share between threads.
-- `RefCell<T>` provides *interior mutability*: borrow checking moves from compile time to runtime, so you can mutate through a shared reference.
-  It pairs with `Rc` for graphs and shows up in some testing patterns.
-
-You could also write the loop in `apply_pipeline` with `.fold(...)`: each command receives the previous output and produces the next one.
+  It does not make an unsafe-to-share inner value thread-safe or provide mutation by itself.
+- `RefCell<T>` allows mutation through a shared reference by checking borrowing rules at runtime.
+  Conflicting calls to `borrow` or `borrow_mut` panic; the `try_borrow` variants return errors instead.
+  It can pair with `Rc` for shared mutable data on one thread, but it does not prevent reference cycles.

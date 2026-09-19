@@ -1,4 +1,3 @@
-# The password validator is an optional, open-ended project.
-# It appears in the chapter picker, but not the main table of contents,
-# progress totals, or default next-chapter flow.
+# Optional practice combining character checks, reports, and test-data generation.
+# Listed in optional navigation, outside required progress and default flow.
 bonus = true

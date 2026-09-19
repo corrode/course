@@ -14,5 +14,7 @@
 
 #[path = "2_long_words.rs"]
 mod _2_long_words;
+#[path = "3_longest_long_word_run.rs"]
+mod _3_longest_long_word_run;
 
 fn main() {}

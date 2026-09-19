@@ -1276,6 +1276,44 @@ mod tests {
     }
 
     #[test]
+    fn password_project_steps_keep_context_hints_and_solutions_together() {
+        let exercises = scan_dir(Path::new("examples")).unwrap();
+        let chapter = exercises
+            .iter()
+            .find(|e| e.slug == "password_validator")
+            .unwrap();
+        assert!(chapter.is_bonus());
+        assert_eq!(chapter.title, "Password Validator");
+        let code = chapter.code_steps();
+        assert_eq!(
+            code.iter().map(|step| step.key()).collect::<Vec<_>>(),
+            [
+                "2_character_checks",
+                "3_is_strong",
+                "5_validate",
+                "6_generate"
+            ]
+        );
+        for step in code {
+            assert!(step.hints_html.is_some(), "missing hints for {}", step.slug);
+            assert!(
+                step.solution_code.is_some(),
+                "missing solution for {}",
+                step.slug
+            );
+            assert!(chapter.notes().iter().any(|note| note.slug == step.slug));
+        }
+        let intro = chapter
+            .notes()
+            .into_iter()
+            .find(|n| n.slug == "intro")
+            .unwrap();
+        assert!(intro.html.contains("markdown-alert-warning"));
+        assert!(intro.html.contains("markdown-alert-tip"));
+        assert!(intro.html.contains("Rust Playground"));
+    }
+
+    #[test]
     fn chapter_resource_lists_render_as_callouts() {
         for md in [
             include_str!("../examples/00_integers/4_damage_with_bonus.md"),

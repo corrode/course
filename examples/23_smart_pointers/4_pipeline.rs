@@ -1,13 +1,9 @@
-/// A single step in a text-transformation pipeline.
-///
-/// `dyn Command` is unsized (different implementors have different
-/// sizes), so values of type `dyn Command` always live behind some
-/// kind of pointer. `Box<dyn Command>` is the owned form.
+/// A text transformation that borrows its command and returns an owned string.
 trait Command {
     fn run(&self, input: &str) -> String;
 }
 
-/// Upper-case the input.
+/// Uppercase the input.
 struct Uppercase;
 
 impl Command for Uppercase {
@@ -16,7 +12,7 @@ impl Command for Uppercase {
     }
 }
 
-/// Reverse the input (by Unicode scalar value).
+/// Reverse the input by Unicode scalar value.
 struct Reverse;
 
 impl Command for Reverse {
@@ -25,7 +21,7 @@ impl Command for Reverse {
     }
 }
 
-/// Append a fixed suffix.
+/// Append an owned suffix.
 struct Append {
     suffix: String,
 }
@@ -36,23 +32,49 @@ impl Command for Append {
     }
 }
 
-/// Thread `input` through every command in order, feeding each
-/// command's output into the next command's input. Returns the
-/// final string.
-///
-/// An empty pipeline returns `input` unchanged.
-///
-/// The slice element type is `Box<dyn Command>`, so the caller can
-/// mix `Uppercase`, `Reverse`, `Append` (and any future implementor)
-/// freely in a single pipeline.
+/// Return exactly two owned commands: Uppercase, then Append with the supplied suffix.
+fn make_pipeline(suffix: String) -> Vec<Box<dyn Command>> {
+    todo!()
+}
+
+/// Pass input through every command in slice order and return the final output.
+/// An empty pipeline returns the input unchanged.
+/// Borrow the pipeline so it can be reused, and support any Command implementation.
 fn apply_pipeline(commands: &[Box<dyn Command>], input: &str) -> String {
     todo!()
+}
+
+#[test]
+fn factory_returns_uppercase_then_append() {
+    let pipeline = make_pipeline(String::from("x"));
+    assert_eq!(pipeline.len(), 2);
+
+    // Inspect each stage independently of apply_pipeline.
+    assert_eq!(pipeline[0].run("hi"), "HI");
+    assert_eq!(pipeline[1].run("hi"), "hix");
+    assert_eq!(pipeline[1].run(&pipeline[0].run("hi")), "HIx");
+}
+
+#[test]
+fn factory_owns_the_supplied_suffix() {
+    let pipeline = {
+        let suffix = String::from(" fin");
+        make_pipeline(suffix)
+    };
+    assert_eq!(pipeline.len(), 2);
+    assert_eq!(pipeline[1].run("one"), "one fin");
+    assert_eq!(pipeline[1].run("two"), "two fin");
+
+    let empty_suffix = make_pipeline(String::new());
+    assert_eq!(empty_suffix.len(), 2);
+    assert_eq!(empty_suffix[1].run("hi"), "hi");
 }
 
 #[test]
 fn empty_pipeline_returns_input_unchanged() {
     let pipeline: Vec<Box<dyn Command>> = Vec::new();
     assert_eq!(apply_pipeline(&pipeline, "hello"), "hello");
+    assert_eq!(apply_pipeline(&pipeline, ""), "");
 }
 
 #[test]
@@ -62,25 +84,25 @@ fn single_command_uppercase() {
 }
 
 #[test]
-fn two_commands_in_order() {
-    // hello -> HELLO -> OLLEH
-    let pipeline: Vec<Box<dyn Command>> = vec![Box::new(Uppercase), Box::new(Reverse)];
-    assert_eq!(apply_pipeline(&pipeline, "hello"), "OLLEH");
-}
-
-#[test]
 fn order_matters() {
-    // hello -> olleh -> OLLEH
-    let pipeline: Vec<Box<dyn Command>> = vec![Box::new(Reverse), Box::new(Uppercase)];
-    assert_eq!(apply_pipeline(&pipeline, "hello"), "OLLEH");
-    // Same commands, opposite order, same result here only because
-    // both ops are case- and order-symmetric on ASCII. The next test
-    // exercises a non-symmetric case.
+    let append_then_uppercase: Vec<Box<dyn Command>> = vec![
+        Box::new(Append {
+            suffix: "x".to_string(),
+        }),
+        Box::new(Uppercase),
+    ];
+    let uppercase_then_append: Vec<Box<dyn Command>> = vec![
+        Box::new(Uppercase),
+        Box::new(Append {
+            suffix: "x".to_string(),
+        }),
+    ];
+    assert_eq!(apply_pipeline(&append_then_uppercase, "hi"), "HIX");
+    assert_eq!(apply_pipeline(&uppercase_then_append, "hi"), "HIx");
 }
 
 #[test]
 fn mixed_pipeline_with_append() {
-    // hi -> hi! -> HI! -> !IH
     let pipeline: Vec<Box<dyn Command>> = vec![
         Box::new(Append {
             suffix: "!".to_string(),
@@ -89,4 +111,26 @@ fn mixed_pipeline_with_append() {
         Box::new(Reverse),
     ];
     assert_eq!(apply_pipeline(&pipeline, "hi"), "!IH");
+}
+
+#[test]
+fn borrowed_pipeline_supports_custom_commands_and_reuse() {
+    // This implementation exists only in the test, outside the supplied command set.
+    struct Bracket;
+
+    impl Command for Bracket {
+        fn run(&self, input: &str) -> String {
+            format!("[{input}]")
+        }
+    }
+
+    let pipeline: Vec<Box<dyn Command>> = vec![
+        Box::new(Bracket),
+        Box::new(Append {
+            suffix: "x".to_string(),
+        }),
+    ];
+    assert_eq!(apply_pipeline(&pipeline, "hi"), "[hi]x");
+    assert_eq!(apply_pipeline(&pipeline, "bye"), "[bye]x");
+    assert_eq!(apply_pipeline(&pipeline, "hi"), "[hi]x");
 }

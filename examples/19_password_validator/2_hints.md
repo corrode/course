@@ -1,50 +1,32 @@
 # Hints
 
-There are several reasonable ways to build this project.
-These hints give you a starting point without filling in the whole solution.
-I'd get the basic checks passing before adding more scoring rules.
+## character_checks
 
-## Where to Start
+Ask whether any character matches each rule; you don't need to count matches or allocate a new string.
+Check the difference between the ASCII predicates and their Unicode counterparts.
+For the special rule, treat the allowed characters as a small set, not as a substring that must appear in full.
 
-1. Implement `PasswordReport::is_strong` first.
-   It's a one-liner: `self.score >= 70`.
-2. Implement `PasswordValidator::validate` with the **base requirements only** (length + uppercase + lowercase + digit + special).
-   Skip the advanced ideas until the four base tests pass.
+## is_strong
 
-## Skeleton for `validate`
+Separate the two jobs.
+`from_score` chooses a label from a number; `is_strong` reads a label from an existing report.
+Walk through the values immediately below and at each boundary before you run the tests.
+If you use range patterns, `..=` includes its upper endpoint.
 
-```rust
-fn validate(password: &str) -> PasswordReport {
-    let mut score: u8 = 0;
-    let mut feedback: Vec<String> = Vec::new();
+## validate
 
-    // 1. length checks (each adds to score; failure adds feedback)
-    // 2. character-class checks (uppercase/lowercase/digit/special)
-    // 3. compute strength from score
-    // 4. construct PasswordReport { input: password.to_string(), ... }
+Keep a score and an initially empty feedback vector.
+For each base rule, either award its points or add its message, then continue to the next rule.
+Check the two length bonuses independently: reaching 16 characters must not skip the reward for reaching 12.
+Classify the finished score with the supplied method and construct the report last.
 
-    todo!()
-}
-```
+If only the non-ASCII tests fail, check how you measure length.
+If a long input fails, check whether you converted its length to `u8` before comparing it with the thresholds.
 
-## Useful One-Liners
+## generate
 
-- Length: `password.chars().count()` counts Unicode scalar values; `password.len()` counts bytes.
-- Has uppercase: `password.chars().any(|c| c.is_ascii_uppercase())`.
-- Has digit: `password.chars().any(|c| c.is_ascii_digit())`.
-- Has special: `password.chars().any(|c| "!@#$%^&*".contains(c))`.
-
-## Strength Enum
-
-```rust
-let strength = match score {
-    0..=29 => PasswordStrength::Weak,
-    30..=69 => PasswordStrength::Medium,
-    _      => PasswordStrength::Strong,
-};
-```
-
-## On `PasswordGenerator::generate_secure_password`
-
-The exercise text suggests using `SystemTime::now().duration_since(UNIX_EPOCH).unwrap().subsec_nanos()` as a source of variability.
-That's enough to pass the test; in real code, reach for the [`rand`](https://docs.rs/rand) crate.
+Deal with an impossible length before constructing the string.
+Guaranteeing each class appears is easier than generating arbitrary characters and hoping all four classes turn up.
+Once those requirements are satisfied, extend the string to the requested length using allowed characters.
+Since every allowed character is ASCII, its byte length and scalar count are the same.
+No clock, random-number generator, or external crate is needed.

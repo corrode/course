@@ -54,6 +54,20 @@ fn empty_file_and_headers_only() {
 }
 
 #[test]
+fn blank_interior_line_is_one_empty_field() {
+    let (headers, rows) = csv::parse_file("a,b\n\n1,2\n");
+    assert_eq!(headers, vec!["a", "b"]);
+    assert_eq!(rows, vec![vec![""], vec!["1", "2"]]);
+}
+
+#[test]
+fn trailing_empty_field_is_preserved_without_an_extra_record() {
+    let (headers, rows) = csv::parse_file("a,b\n1,\n");
+    assert_eq!(headers, vec!["a", "b"]);
+    assert_eq!(rows, vec![vec!["1", ""]]);
+}
+
+#[test]
 fn multiple_rows_and_crlf() {
     let (headers, rows) = csv::parse_file("a,b\r\n1,2\r\n3,4\r\n");
     assert_eq!(headers, vec!["a", "b"]);
