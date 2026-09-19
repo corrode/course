@@ -1,27 +1,21 @@
-# Putting a Value on the Heap with `Box`
+# Reading a Boxed Value
 
-[`Box::new(value)`](https://doc.rust-lang.org/std/boxed/struct.Box.html#method.new) allocates space on the heap, moves `value` into it, and hands you back a `Box<T>` that owns that allocation.
-When the box goes out of scope, Rust drops the inner value and frees the memory.
+[`Box::new(value)`](https://doc.rust-lang.org/std/boxed/struct.Box.html#method.new) moves a value into a heap allocation and returns its owner, a `Box<T>`.
+When the box is dropped, Rust drops the inner value and frees the allocation.
 
-A `Box<T>` *acts* like the value it holds.
-The `*` operator dereferences it, and most method calls work through automatic dereferencing without you writing `*` at all.
+The `*` operator dereferences a box.
+For a `Copy` type such as `i32`, reading this way copies the inner value.
+Most method calls work through automatic dereferencing instead.
 
 ```rust
 let boxed: Box<i32> = Box::new(7);
-let n: i32 = *boxed;            // explicit deref
+let n: i32 = *boxed;
 assert_eq!(n + 1, 8);
 ```
 
-Why bother boxing a tiny `i32`?
-You usually wouldn't.
-`Box` earns its keep when:
+Implement `boxed_sum` to take ownership of two boxed integers and return their sum as an `i32`.
+The tests supply the boxes.
+The function does not need to allocate any new ones.
 
-- The value is large and you'd rather not copy it around on the stack.
-- The type would otherwise be infinitely sized (next step).
-- You need a trait object (the step after that).
-
-For this exercise, take two boxed integers, add them, and return the sum.
-The small values let you focus on how to read through a box before you use one in a recursive type.
-
-The tests construct the boxes for you.
-Use `*a` and `*b` to read their values: `i32` is `Copy`, so these expressions copy the integers out of the boxes.
+You usually wouldn't box a tiny integer.
+This warmup lets you practice reading through a box before using one to own recursive data or a trait object.

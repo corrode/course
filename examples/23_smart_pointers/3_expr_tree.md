@@ -1,23 +1,23 @@
 # A Recursive Type That Needs `Box`
 
-Try to imagine this enum without the `Box`:
+This enum cannot compile:
 
 ```rust
+// Each recursive field would contain another whole Expr inline.
 enum Expr {
     Num(i32),
-    Add(Expr, Expr),   // a node holds two whole sub-expressions inline
+    Add(Expr, Expr),
     Mul(Expr, Expr),
 }
 ```
 
-The compiler has to decide how many bytes one `Expr` occupies.
-`Add` is at least two `Expr`s, each of which is at least two `Expr`s, which is... you see the problem.
-The size is infinite, and the compiler refuses to lay out the type.
+The compiler must know how many bytes one `Expr` occupies.
+Each `Add` would contain two complete `Expr` values, which could themselves contain more `Expr` values with no fixed limit.
+There is no finite layout for this type.
 
-`Box<Expr>` fixes it.
-A `Box<Expr>` is one pointer wide, so the two fields of `Add` have a fixed size.
+`Box<Expr>` fixes the layout by owning each child through a pointer.
+A `Box<Expr>` is one pointer wide, regardless of how large the child's tree becomes.
 The enum also needs space to distinguish its variants.
-The actual sub-expressions live on the heap, reached through those pointers.
 
 ```rust
 enum Expr {
@@ -27,20 +27,22 @@ enum Expr {
 }
 ```
 
-This is the same trick C uses with `struct node { struct node *l; struct node *r; }` and that Java/C# get for free because every object is already a reference.
-Rust just wants you to ask for the indirection explicitly.
+Each parent owns its children, rather than borrowing nodes kept alive elsewhere.
+Dropping the root drops the owned tree.
 
-## What You're Building
+## Build and Evaluate a Tree
 
-`Expr` is a tiny *expression tree*: a value is either a literal number, the sum of two sub-expressions, or the product of two sub-expressions.
-Interpreters and calculators often use trees like this to represent expressions.
-Parsing text like `"(1 + 2) * 4"` produces an `Expr` tree; evaluating that tree is just walking it.
+The supplied `Expr` represents a literal number, a sum, or a product.
+For example, an interpreter might represent `(1 + 2) * 4` as a multiplication node with an addition node on the left and a number on the right.
 
-Your job is the evaluation half: implement `Expr::eval(&self) -> i32` so it returns the numeric value of the whole tree.
-Match on the variant and evaluate child expressions recursively where needed.
+Implement both methods:
 
-Here `self` is a `&Expr`, so matching on it borrows the fields.
-If you bind the child expressions as `l` and `r`, their type is `&Box<Expr>`, and method calls auto-deref through the box, so `l.eval()` works directly without `(*l).eval()`.
+- `Expr::add(left: Self, right: Self) -> Self` takes ownership of two expressions and returns an `Add` node containing them in the same left/right order.
+  Preserve the child trees rather than replacing them with evaluated numbers.
+- `Expr::eval(&self) -> i32` returns the numeric value of the tree.
+  It borrows the tree, so the same tree can be evaluated again without rebuilding it.
+  Evaluation needs no new boxes.
 
-The tests build the trees for you; no new boxes are needed in `eval`.
-There's no tail-call optimization guarantee, but the test trees are tiny.
+The construction test checks the shape without calling `eval`.
+The evaluation tests build their own trees, so you can work on either method independently.
+These trees are small; recursive evaluation and dropping are not a strategy for arbitrarily deep input.

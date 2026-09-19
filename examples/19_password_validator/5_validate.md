@@ -1,35 +1,41 @@
-# Putting the Checks Together
+# Return a Useful Report
 
-`PasswordValidator::validate(password)` combines the character checks and scoring rules into a `PasswordReport` with a numeric score, a list of feedback messages, and a `PasswordStrength` label.
+Now put the pieces together in `PasswordValidator::validate(password)`.
+A caller should get both a summary and every missing base requirement from a single call.
+Unlike a parser that stops at its first error, this function must keep checking after it finds a problem.
 
-The shared types are declared below, and the four `has_*` character-class helpers are stubbed.
-Fill in the helpers (the intro shows the `.chars().any(...)` pattern), copy your `is_strong` implementation, and then write `validate`.
+The character helpers and report methods are already implemented in this editor.
+Your task is only the body of `validate`.
+Borrow the input, apply the following scoring rules, and return a `PasswordReport`.
 
-Here's a suggested scoring scheme.
-You can adjust it as long as the results stay within the broad ranges the tests check:
+| Rule | Points | Feedback When Missing |
+| --- | --- | --- |
+| At least 8 characters | 20 | `Use at least 8 characters.` |
+| An uppercase ASCII letter | 15 | `Add an uppercase ASCII letter.` |
+| A lowercase ASCII letter | 15 | `Add a lowercase ASCII letter.` |
+| An ASCII digit | 15 | `Add an ASCII digit.` |
+| A character from `!@#$%^&*` | 15 | `Add one of !@#$%^&*.` |
+| At least 12 characters | 10 more | None |
+| At least 16 characters | 10 more | None |
 
-- At least 8 characters: +20
-- Contains uppercase: +15
-- Contains lowercase: +15
-- Contains a digit: +15
-- Contains a special char from `!@#$%^&*`: +15
-- At least 12 characters: +10
-- At least 16 characters: +10
+Here, "characters" means Unicode scalar values, not bytes or visible symbols.
+Keep whitespace and punctuation as they are; they count toward length even when they don't satisfy a character-class rule.
+The length rewards accumulate, so an input of at least 16 characters earns all 40 length points.
+Each character class earns its points once, regardless of how many matching characters appear.
 
-Map the final score to `PasswordStrength`:
-- `< 30` → `Weak`
-- `30..70` → `Medium`
-- `>= 70` → `Strong`
+Use the exact feedback strings in the table, in table order, and only for failed base rules.
+The two extra length rewards do not create complaints.
+Use `PasswordStrength::from_score` for the label rather than writing the classification rules again.
 
-Push a short message into `feedback` for every rule that *fails*.
-That way your own follow-up code has something to react to.
-The length-related complaint should mention "characters", "length", "short", "longer", or "at least" so the test below can recognise it.
+For example, `"Rust1234"` has eight characters and three of the four classes.
+Its report has a score of 65, the label `Medium`, and one feedback message: `"Add one of !@#$%^&*."`.
+An empty input scores zero and receives all five base-rule messages.
+
+The fixed rules make the tests precise.
+Once they pass, you can experiment with another policy, but change its tests too.
 
 ## Useful from the Standard Library
 
-- [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars) followed by `.count()` gives the length in Unicode scalar values.
-  `str::len` counts bytes, which can overestimate the length of non-ASCII passwords.
-- [`Vec::new`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.new) for the `feedback` accumulator; push a `String` for every failed rule.
-- A `match` on the final score with range patterns (`0..30 => Weak, 30..70 => Medium, _ => Strong`) keeps the classification clean.
-  Range patterns are end-exclusive by default; use `..=` if you want the upper bound included.
-- The four character-class helpers are the `.chars().any(...)` predicates from the intro, so the body of `validate` is mostly bookkeeping: add to `score`, push to `feedback`, then build the report.
+- [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars) with [`Iterator::count`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.count) counts scalar values; `str::len` counts bytes.
+- [`Vec::push`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.push) adds a message while preserving the order of the checks.
+- [`str::to_string`](https://doc.rust-lang.org/std/primitive.str.html#method.to_string) creates an owned message for the report's `Vec<String>`.

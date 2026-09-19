@@ -1,29 +1,10 @@
-# Mixed Types behind One Trait: `Box<dyn Trait>`
+# Owning Different Command Types
 
-Different `dyn Trait` implementors have different sizes, so the compiler won't let you put a trait object directly in a `Vec` or return one from a function.
-The fix is to put it behind a pointer, and the *owned* pointer is `Box<dyn Trait>`.
+A factory cannot return references to commands it creates locally; those commands would be dropped when the factory returns.
+`Box<dyn Command>` lets it return ownership instead.
+Each box owns a concrete command, while the caller uses the shared `Command` interface.
 
-```rust
-let pipeline: Vec<Box<dyn Command>> = vec![
-    Box::new(Uppercase),
-    Box::new(Append { suffix: "!".to_string() }),
-];
-```
-
-Every entry in the vector is a `Box<dyn Command>` of the same size.
-Unlike `Box<i32>`, it holds both a data pointer and a vtable pointer.
-Each box owns whatever concrete type it wraps.
-Dropping the vector drops the boxes, which drops the inner values.
-The env-file parser uses the same pattern with `Box<dyn Error>`: one owned value of any concrete type that implements the trait.
-
-Calling a method on a `Box<dyn Command>` looks like calling it on the concrete type: `cmd.run(input)`.
-Under the hood, Rust does a *vtable lookup* (the same trick C++ uses for virtual methods) to pick the right implementation.
-You pay one extra indirection per call in exchange for storing different concrete types in one vector.
-
-## What You're Building
-
-You'll build a tiny text-transformation pipeline.
-The trait is one method:
+The supplied trait has one method:
 
 ```rust
 trait Command {
@@ -31,23 +12,35 @@ trait Command {
 }
 ```
 
-Three commands are already implemented for you:
+Three implementations are provided:
 
-- `Uppercase` upper-cases the input.
-- `Reverse` reverses the input by Unicode scalar value, which can separate combining marks from their letters.
-- `Append { suffix }` appends a configured suffix.
+- `Uppercase` uppercases the input.
+- `Reverse` reverses Unicode scalar values, which can separate combining marks from their letters.
+- `Append { suffix: String }` appends its owned suffix.
 
-Implement `apply_pipeline` to pass the input string through every command in order.
-Feed each command's output into the next command, then return the final result.
-An empty pipeline returns the input unchanged.
+A `Vec<C>` with `C: Command` has just one concrete element type.
+A `Vec<Box<dyn Command>>` can own different command types in the same collection.
+Each element has the same size, holding a data pointer and a vtable pointer for dispatching method calls to the concrete implementation.
+The unsized `dyn Command` lives behind the pointer, not directly in the vector.
+Dropping the vector drops its boxes and their commands, including any owned strings.
 
-Because each command sits behind `Box<dyn Command>`, the same `Vec` can hold `Uppercase`, `Reverse`, and `Append { suffix: String }` even though their concrete types have different sizes.
-A generic `Vec<C>` where `C: Command` would only let you pick *one* concrete command type per pipeline.
+## Build and Run a Pipeline
 
-## Useful from the Standard Library
+Implement both functions:
 
-- A `for` loop over `&[Box<dyn Command>]` yields `&Box<dyn Command>` on each iteration.
-  Method calls auto-deref through the box (and through the `&`), so `cmd.run(...)` just works.
-- [`ToString::to_string`](https://doc.rust-lang.org/std/string/trait.ToString.html#tymethod.to_string) gives you an owned starting value: `let mut current = input.to_string();`.
-  Reassign it after each command.
-- [`Iterator::fold`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.fold) is an alternative to the loop: use the starting string as the accumulator and pass each command the previous output.
+- `make_pipeline(suffix: String) -> Vec<Box<dyn Command>>` returns exactly two commands, first `Uppercase`, then `Append` with the supplied suffix.
+  The returned pipeline owns its commands and suffix, so it remains usable after the factory returns.
+- `apply_pipeline(commands: &[Box<dyn Command>], input: &str) -> String` passes the input through every command in slice order and returns the final output.
+  An empty pipeline returns the input unchanged.
+  It must work with any implementation of `Command`, not just the three supplied types.
+
+For a suffix of `"x"`, the factory's pipeline transforms `"hi"` into `"HIx"`, not `"HIX"`.
+The factory tests call the returned commands directly, independently of `apply_pipeline`.
+The runner tests supply their own pipelines.
+
+## Owning Is Different from Borrowing
+
+`Box<dyn Command>` owns a command; `&dyn Command` borrows one whose owner lives elsewhere.
+Here `apply_pipeline` borrows a slice of owned boxes rather than taking the vector away from its caller.
+`Command::run` also borrows its command through `&self`.
+The caller can therefore run the same pipeline again with another input.

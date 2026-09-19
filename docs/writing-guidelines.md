@@ -118,7 +118,17 @@ reflowed paragraph, and writing one sentence per line nudges you to check each
 sentence on its own. Don't wrap a single sentence to a fixed column width; let it
 run to the end of its line, however long it is.
 
-## 10. Code Comments in Examples
+## 10. Info Boxes
+
+GitHub-style alerts such as `> [!NOTE]`, `> [!TIP]`, and `> [!WARNING]` render as callouts in the course.
+Use them for an aside the reader should notice without interrupting the exercise: an editor tip, a limitation of a teaching example, or a safety warning.
+Keep the task's motivation, contract, and instructions in the main prose.
+Don't wrap every section in a box or repeat the same warning at every step.
+
+Put implementation nudges in the chapter's hints file under `## <step_slug>` so the app reveals them beside the matching editor.
+A prompt should explain the required behavior without giving away the function body.
+
+## 11. Code Comments in Examples
 
 Comments in example code should teach, not label. Prefer a full sentence (or two)
 on its own line above the line it explains, rather than a terse trailing comment.

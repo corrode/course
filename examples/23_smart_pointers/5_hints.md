@@ -2,23 +2,39 @@
 
 ## boxed_sum
 
-1. `*a` reads the `i32` out of the box.
-2. `i32` is `Copy`, so reading through the box doesn't move anything out.
-   You can use `*a` and `*b` as many times as you want.
+1. `*a` reads the `i32` inside the first box.
+2. `i32` is `Copy`, so you can read the two integers through their boxes and add them.
 
 ## expr_tree
 
-1. Pattern-match on `self`.
-   There are three arms: `Expr::Num`, `Expr::Add`, and `Expr::Mul`.
-2. Evaluate child expressions recursively where needed.
-   Here `self` is a `&Expr`, so matching on it borrows the fields; dereference a borrowed integer when you need its value.
-   Method calls auto-deref through the `Box`, so you do not need to write `(*l).eval()`.
+### Expr::add
+
+1. The arguments are owned `Expr` values, but the `Add` fields require `Box<Expr>`.
+2. Use `Box::new` on each argument and put the resulting boxes in `Self::Add`, preserving their order.
+
+### Expr::eval
+
+1. Match on `self` with arms for `Self::Num`, `Self::Add`, and `Self::Mul`.
+2. Because `self` is borrowed, the pattern bindings borrow the fields too.
+   Dereference the integer in the `Num` arm to return its value.
+3. Evaluate both children recursively and combine their results with the appropriate operator.
+   Method calls auto-deref through `&Box<Expr>`, so `left.eval()` works without `(*left).eval()`.
 
 ## pipeline
 
-1. The pipeline is a fold: keep a running `current` string, replace it with `cmd.run(&current)` on each iteration, return it at the end.
-2. An empty pipeline never enters the loop, so `current` ends up as the original input.
-   That gets the empty-pipeline test for free.
-3. Method calls go through the box automatically.
-   `cmd.run(...)` is the only thing you call inside the loop.
-4. The same loop can also be written as the `.fold()` you met in the iterators chapter.
+### make_pipeline
+
+1. Wrap each concrete command in `Box::new`.
+   Construct `Append` by moving `suffix` into its field.
+2. Return a `vec!` with the uppercase command first and the append command second.
+   The return type tells Rust to convert both boxes to `Box<dyn Command>`.
+   If you use a local vector, annotate it as `Vec<Box<dyn Command>>` so it does not infer a single concrete command type.
+
+### apply_pipeline
+
+1. Start with an owned string, `let mut current = input.to_string();`.
+2. A `for` loop over `commands` borrows each box.
+   Replace `current` with `command.run(&current)` on each iteration.
+   Method calls auto-deref through the reference and the box.
+3. Return `current` after the loop.
+   An empty pipeline leaves that starting string unchanged.

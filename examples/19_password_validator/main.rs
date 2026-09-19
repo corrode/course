@@ -12,11 +12,13 @@
     clippy::boxed_local
 )]
 
+#[path = "2_character_checks.rs"]
+mod _2_character_checks;
 #[path = "3_is_strong.rs"]
 mod _3_is_strong;
-#[path = "4_generate.rs"]
-mod _4_generate;
 #[path = "5_validate.rs"]
 mod _5_validate;
+#[path = "6_generate.rs"]
+mod _6_generate;
 
 fn main() {}
