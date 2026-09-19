@@ -1,5 +1,5 @@
-/// Parses a simple CSV line without quotes.
-/// Splits on commas and trims whitespace.
+/// Parses a simple CSV line without quotes. Splits on commas and trims
+/// whitespace.
 fn parse_simple_csv_line(line: &str) -> Vec<String> {
     line.split(',')
         .map(|field| field.trim().to_string())

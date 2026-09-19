@@ -1,8 +1,8 @@
 # Conditionals and Loops
 
-Rust's `if` can return a value, and its condition has to be a `bool`.
-You've already seen `if` and `for` in passing.
-Here you'll also use `while`, `loop`, `break`, and `continue`.
+Rust's `if` can return a value, and its condition has to be a `bool`. You've
+already seen `if` and `for` in passing. Here you'll also use `while`, `loop`,
+`break`, and `continue`.
 
 ## `if` / `else` / `else if`
 
@@ -20,22 +20,24 @@ if x > 0 {
 
 Two Rust details matter here:
 
-- The condition is a `bool`.
-  No truthy strings, no zero-as-false, no parentheses required around the condition.
-- The whole `if` is itself an *expression*.
-  You can use it on the right-hand side of a `let` binding:
+- The condition is a `bool`. No truthy strings, no zero-as-false, no parentheses
+  required around the condition.
+- The whole `if` is itself an *expression*. You can use it on the right-hand
+  side of a `let` binding:
 
   ```rust
   let label = if x >= 0 { "non-negative" } else { "negative" };
   ```
 
-  Both branches have to produce the same type, and there's no trailing semicolon on the value-producing expression in each branch (just like a function body, see the functions chapter).
+  Both branches have to produce the same type, and there's no trailing semicolon
+  on the value-producing expression in each branch (just like a function body,
+  see the functions chapter).
 
 ## `for` Loops
 
-A `for` loop can walk through a range of numbers, the elements of an array, or the items in a collection.
-Rust supports all of these through iterators, but you do not need to understand iterators yet to use the loop.
-For example:
+A `for` loop can walk through a range of numbers, the elements of an array, or
+the items in a collection. Rust supports all of these through iterators, but you
+do not need to understand iterators yet to use the loop. For example:
 
 ```rust
 for i in 0..5 {            // 0, 1, 2, 3, 4
@@ -47,12 +49,13 @@ for word in ["hi", "rust"] {
 }
 ```
 
-`0..5` is a *range*: a value that produces the integers from `0` up to (but not including) `5`.
-The inclusive form is `0..=5`, which also yields `5`.
-Ranges also work as patterns in `match`, such as `1..=10 => ...`.
+`0..5` is a *range*: a value that produces the integers from `0` up to (but not
+including) `5`. The inclusive form is `0..=5`, which also yields `5`. Ranges
+also work as patterns in `match`, such as `1..=10 => ...`.
 
-For larger collections, you'll usually iterate over a `Vec`, a slice, a `HashMap`, or the result of `s.chars()`.
-For now, "anything you can put on the right of `for x in ...`" is enough.
+For larger collections, you'll usually iterate over a `Vec`, a slice, a
+`HashMap`, or the result of `s.chars()`. For now, "anything you can put on the
+right of `for x in ...`" is enough.
 
 ## `while` and `loop`
 
@@ -66,8 +69,9 @@ while n > 0 {
 }
 ```
 
-`loop` runs forever, until you `break` out of it.
-It is useful when the exit condition is not a simple boolean check at the top, or when you only know whether to stop after doing some work:
+`loop` runs forever, until you `break` out of it. It is useful when the exit
+condition is not a simple boolean check at the top, or when you only know
+whether to stop after doing some work:
 
 ```rust
 let mut attempts = 0;
@@ -78,7 +82,8 @@ loop {
 }
 ```
 
-`loop` can also produce a value: pass an expression to `break` and the whole `loop` evaluates to it.
+`loop` can also produce a value: pass an expression to `break` and the whole
+`loop` evaluates to it.
 
 ```rust
 let answer = loop {
@@ -106,9 +111,12 @@ for n in 0..10 {
 
 When you need to pick one:
 
-- Use `for` when you know what you're iterating over (a range, a slice, a map, the chars of a string).
+- Use `for` when you know what you're iterating over (a range, a slice, a map,
+  the chars of a string).
 - Use `while` when the exit condition is a simple "keep going while X is true".
-- Use `loop` only when neither of the above fits, usually because the exit condition is in the middle of the body.
+- Use `loop` only when neither of the above fits, usually because the exit
+  condition is in the middle of the body.
 
-If you are unsure, start with `for` when there is already a collection or range to walk through.
-Ranges, slices, and collections all fit this syntax because each can produce an iterator.
+If you are unsure, start with `for` when there is already a collection or range
+to walk through. Ranges, slices, and collections all fit this syntax because
+each can produce an iterator.

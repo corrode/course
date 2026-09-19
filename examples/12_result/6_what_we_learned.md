@@ -1,19 +1,23 @@
 # Wrapping Up `Result`
 
-The examples use simple `if` checks to build `Result`s with owned and borrowed success values.
-Combining `strip_suffix`, `parse`, and a bounds check produces a validating parser with several failure cases.
+The examples use simple `if` checks to build `Result`s with owned and borrowed
+success values. Combining `strip_suffix`, `parse`, and a bounds check produces a
+validating parser with several failure cases.
 
 ## What We Learned
 
-- `Result<T, E>` is how Rust expresses fallibility.
-  There are no exceptions; a function that can fail says so in its signature.
-- `Ok(value)` and `Err(error)` are the constructors.
-  Both are in the prelude.
-- `Result` has the same combinator family as `Option`: `unwrap_or`, `map`, `map_or`, plus `map_err` for transforming the error side and `ok` to drop the error and convert to `Option<T>`.
-- `&'static str` is a convenient error type when every message is a fixed string literal.
-  Applications often use error enums or owned `String`s once errors need data of their own.
-- The turbofish (`parse::<u8>()`) spells out a generic type argument at the call site when the type isn't clear from context.
-- Match guards (`Ok(n) if n > 0 => ...`) attach a boolean condition to a pattern.
-  The arm only fires when both hold.
+- `Result<T, E>` is how Rust expresses fallibility. There are no exceptions; a
+  function that can fail says so in its signature.
+- `Ok(value)` and `Err(error)` are the constructors. Both are in the prelude.
+- `Result` has the same combinator family as `Option`: `unwrap_or`, `map`,
+  `map_or`, plus `map_err` for transforming the error side and `ok` to drop the
+  error and convert to `Option<T>`.
+- `&'static str` is a convenient error type when every message is a fixed string
+  literal. Applications often use error enums or owned `String`s once errors
+  need data of their own.
+- The turbofish (`parse::<u8>()`) spells out a generic type argument at the call
+  site when the type isn't clear from context.
+- Match guards (`Ok(n) if n > 0 => ...`) attach a boolean condition to a
+  pattern. The arm only fires when both hold.
 - The `?` operator chains fallible calls without requiring a `match` each time.
   For now, `match` keeps both paths visible.

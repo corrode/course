@@ -1,17 +1,16 @@
-/// Parses a CSV line with proper quote handling.
-/// (Re-stubbed from step 4 so this file compiles on its own.)
+/// Parses a CSV line with proper quote handling. (Re-stubbed from step 4 so
+/// this file compiles on its own.)
 fn parse_csv_line(line: &str) -> Vec<String> {
     todo!()
 }
 
-/// Parses a complete CSV file.
-/// First line is headers, remaining lines are data.
+/// Parses a complete CSV file. First line is headers, remaining lines are data.
 ///
-/// Use [`str::lines`](https://doc.rust-lang.org/std/primitive.str.html#method.lines)
-/// to split on newlines. `lines()` already handles a trailing `\n`
-/// gracefully; it won't yield an empty last line for `"a,b\n"`. Real
-/// CSVs often end with a newline, so this is the right tool.
-/// Returns (headers, rows).
+/// Use
+/// [`str::lines`](https://doc.rust-lang.org/std/primitive.str.html#method.lines)
+/// to split on newlines. `lines()` already handles a trailing `\n` gracefully;
+/// it won't yield an empty last line for `"a,b\n"`. Real CSVs often end with a
+/// newline, so this is the right tool. Returns (headers, rows).
 fn parse_csv_file(content: &str) -> (Vec<String>, Vec<Vec<String>>) {
     todo!()
 }

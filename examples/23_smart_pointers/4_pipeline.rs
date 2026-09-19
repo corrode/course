@@ -32,14 +32,15 @@ impl Command for Append {
     }
 }
 
-/// Return exactly two owned commands: Uppercase, then Append with the supplied suffix.
+/// Return exactly two owned commands: Uppercase, then Append with the supplied
+/// suffix.
 fn make_pipeline(suffix: String) -> Vec<Box<dyn Command>> {
     todo!()
 }
 
 /// Pass input through every command in slice order and return the final output.
-/// An empty pipeline returns the input unchanged.
-/// Borrow the pipeline so it can be reused, and support any Command implementation.
+/// An empty pipeline returns the input unchanged. Borrow the pipeline so it can
+/// be reused, and support any Command implementation.
 fn apply_pipeline(commands: &[Box<dyn Command>], input: &str) -> String {
     todo!()
 }
@@ -115,7 +116,8 @@ fn mixed_pipeline_with_append() {
 
 #[test]
 fn borrowed_pipeline_supports_custom_commands_and_reuse() {
-    // This implementation exists only in the test, outside the supplied command set.
+    // This implementation exists only in the test, outside the supplied command
+    // set.
     struct Bracket;
 
     impl Command for Bracket {

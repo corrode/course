@@ -78,7 +78,8 @@ typos:
 links:
 	lychee --root-dir . --config ./lychee.toml README.md docs examples static/cheatsheet.md
 
-# Everything from CI that is reproducible locally without publishing or deploying.
+# Everything from CI that is reproducible locally without publishing or
+# deploying.
 ci: fmt-check clippy build test examples solutions js-check typos links
 
 fmt-check:

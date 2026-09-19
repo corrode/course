@@ -173,7 +173,8 @@ try {
         && !btn.hasAttribute('aria-describedby')
         && !btn.matches('.is-chosen, .is-correct, .is-wrong-pick')
         && btn.querySelector('[data-quiz-answer-status]').textContent === ''))`), true);
-  // A correct answer selected with Space also opens every distractor explanation.
+  // A correct answer selected with Space also opens every distractor
+  // explanation.
   await js('answers(cards[0]).find(btn => btn.dataset.correct === "true").focus()');
   await key(" ", "Space", 32);
   assert.equal(await js('progress() === "1" && explanations(cards[0]).every(exp => !exp.hidden)'), true);

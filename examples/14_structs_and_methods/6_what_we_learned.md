@@ -1,18 +1,27 @@
 # Wrapping Up Structs and Methods
 
-You defined a struct, wrote a `new` constructor, added a `&self` method that formatted fields into a `String`, mutated state with `&mut self`, and combined two fields into a predicate.
+You defined a struct, wrote a `new` constructor, added a `&self` method that
+formatted fields into a `String`, mutated state with `&mut self`, and combined
+two fields into a predicate.
 
 ## What We Learned
 
-- A `struct` groups related fields under a single named type.
-  Build instances with a struct literal, supplying every field, and read fields with dot notation.
-- An `impl` block attaches functions to the type.
-  Without `self`, it's an associated function (called as `User::new(..)`); with `self`, it's a method (called as `user.method()`).
-- The three flavors of `self` say what the method intends to do: `&self` reads, `&mut self` mutates in place, plain `self` consumes.
-  These are the same ownership choices you've already made with function parameters.
-- `Self` (capital S) inside an `impl` block is shorthand for the type.
-  Returning `Self` keeps the constructor signature stable if the type is later renamed.
-- `format!` is the idiomatic way to build a `String` from a template; same syntax as `println!` but returns the string.
-- `#[derive(Debug, PartialEq)]` covers the common pair: `{:?}` printing for debugging and `==` for tests.
-  Derive `Default`, `Clone`, or `Copy` only when the generated behavior matches the type.
-- Encoding business rules as predicates on the type (`user.can_access_premium()`) keeps the checks in one place and gives callers a name for the rule.
+- A `struct` groups related fields under a single named type. Build instances
+  with a struct literal, supplying every field, and read fields with dot
+  notation.
+- An `impl` block attaches functions to the type. Without `self`, it's an
+  associated function (called as `User::new(..)`); with `self`, it's a method
+  (called as `user.method()`).
+- The three flavors of `self` say what the method intends to do: `&self` reads,
+  `&mut self` mutates in place, plain `self` consumes. These are the same
+  ownership choices you've already made with function parameters.
+- `Self` (capital S) inside an `impl` block is shorthand for the type. Returning
+  `Self` keeps the constructor signature stable if the type is later renamed.
+- `format!` is the idiomatic way to build a `String` from a template; same
+  syntax as `println!` but returns the string.
+- `#[derive(Debug, PartialEq)]` covers the common pair: `{:?}` printing for
+  debugging and `==` for tests. Derive `Default`, `Clone`, or `Copy` only when
+  the generated behavior matches the type.
+- Encoding business rules as predicates on the type
+  (`user.can_access_premium()`) keeps the checks in one place and gives callers
+  a name for the rule.

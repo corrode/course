@@ -1,5 +1,5 @@
-/// Parse one line using the supplied delimiter and CSV-style quoting.
-/// The delimiter is not a quote, CR, or LF; input has balanced quotes.
+/// Parse one line using the supplied delimiter and CSV-style quoting. The
+/// delimiter is not a quote, CR, or LF; input has balanced quotes.
 fn parse_delimited_line(line: &str, delimiter: char) -> Vec<String> {
     todo!()
 }

@@ -1,4 +1,5 @@
-/// Counts whitespace-separated words containing more than three Unicode scalar values.
+/// Counts whitespace-separated words containing more than three Unicode scalar
+/// values.
 fn count_long_words(text: &str) -> usize {
     let mut count = 0;
     for word in text.split_whitespace() {

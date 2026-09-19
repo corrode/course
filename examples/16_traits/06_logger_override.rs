@@ -21,8 +21,8 @@ impl Logger for TaggedLogger {
         format!("{}: {msg}", self.tag)
     }
 
-    // Add an error override here, using [CRITICAL] instead of [ERROR].
-    // Forward through self.log so the tag appears exactly once.
+    // Add an error override here, using [CRITICAL] instead of [ERROR]. Forward
+    // through self.log so the tag appears exactly once.
 }
 
 #[test]

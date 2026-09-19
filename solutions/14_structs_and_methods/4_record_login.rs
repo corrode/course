@@ -19,9 +19,9 @@ impl User {
     /// Records a successful login attempt.
     ///
     /// Increments `login_count` and sets `is_verified` to `true`. The
-    /// verification flag is idempotent: setting it on every login is
-    /// fine because once you're verified you stay verified. (A real
-    /// system would only set it on first login; we keep it simple here.)
+    /// verification flag is idempotent: setting it on every login is fine
+    /// because once you're verified you stay verified. (A real system would
+    /// only set it on first login; we keep it simple here.)
     fn record_login(&mut self) {
         self.login_count += 1;
         self.is_verified = true;

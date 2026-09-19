@@ -1,10 +1,10 @@
-/// Parses a percentage from a string. Accepts integers in `0..=100`,
-/// optionally with a trailing `%` (so `"42"` and `"42%"` both work).
+/// Parses a percentage from a string. Accepts integers in `0..=100`, optionally
+/// with a trailing `%` (so `"42"` and `"42%"` both work).
 ///
-/// Returns `Ok(value)` on success.
-/// If the text cannot be parsed as u8, returns `Err("not a valid percentage")`.
-/// A parsed value above 100 returns `Err("percentage must be between 0 and 100")`.
-/// Only one trailing `%` is allowed.
+/// Returns `Ok(value)` on success. If the text cannot be parsed as u8, returns
+/// `Err("not a valid percentage")`. A parsed value above 100 returns
+/// `Err("percentage must be between 0 and 100")`. Only one trailing `%` is
+/// allowed.
 fn parse_percentage(input: &str) -> Result<u8, &'static str> {
     let digits = input.strip_suffix('%').unwrap_or(input);
     match digits.parse::<u8>() {

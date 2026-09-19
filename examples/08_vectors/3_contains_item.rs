@@ -2,9 +2,10 @@
 ///
 /// You only need to read the list, comparing each element against `item`.
 ///
-/// `Vec::contains` looks like a good fit, but its signature is `fn contains(&self, x: &T) -> bool`, and here that's `&String`, while you have a `&str`.
-/// The most direct fix at this point in the course is a `for` loop.
-/// We will cover iterators later.
+/// `Vec::contains` looks like a good fit, but its signature is
+/// `fn contains(&self, x: &T) -> bool`, and here that's `&String`, while you
+/// have a `&str`. The most direct fix at this point in the course is a `for`
+/// loop. We will cover iterators later.
 fn contains_item(list: &[String], item: &str) -> bool {
     todo!()
 }

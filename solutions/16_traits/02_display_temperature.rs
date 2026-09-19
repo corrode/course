@@ -5,10 +5,9 @@ struct Temperature {
     celsius: f64,
 }
 
-/// Formats the temperature as `"<value>°C"` with one decimal place.
-/// Examples:
-///   - `Temperature { celsius: 21.5 }`  → `"21.5°C"`
-///   - `Temperature { celsius: -3.0 }`  → `"-3.0°C"`
+/// Formats the temperature as `"<value>°C"` with one decimal place. Examples:
+///   - `Temperature { celsius: 21.5 }` → `"21.5°C"`
+///   - `Temperature { celsius: -3.0 }` → `"-3.0°C"`
 ///   - `Temperature { celsius: 100.0 }` → `"100.0°C"`
 impl fmt::Display for Temperature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

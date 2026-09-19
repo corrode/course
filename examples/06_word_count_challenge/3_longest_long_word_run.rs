@@ -1,7 +1,7 @@
-/// Returns the greatest number of consecutive words with more than three Unicode scalar values.
-/// Words are whitespace-separated, and punctuation remains part of each word.
-/// A word with three or fewer scalar values breaks the run; whitespace alone does not.
-/// Returns 0 when no words qualify.
+/// Returns the greatest number of consecutive words with more than three
+/// Unicode scalar values. Words are whitespace-separated, and punctuation
+/// remains part of each word. A word with three or fewer scalar values breaks
+/// the run; whitespace alone does not. Returns 0 when no words qualify.
 fn longest_long_word_run(text: &str) -> usize {
     todo!()
 }

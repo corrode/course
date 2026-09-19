@@ -13,9 +13,8 @@ struct Movie {
     year: u16,
 }
 
-// Implement Describable for Book and Movie here.
-// Book descriptions use "<title> by <author>".
-// Movie descriptions use "<title> (<year>)".
+// Implement Describable for Book and Movie here. Book descriptions use "<title>
+// by <author>". Movie descriptions use "<title> (<year>)".
 
 #[test]
 fn books_use_their_own_fields() {

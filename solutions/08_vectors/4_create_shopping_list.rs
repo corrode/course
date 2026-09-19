@@ -1,9 +1,9 @@
 /// Creates a shopping list from the given items.
 ///
-/// The trickiest of the four: each input is a `&str`, but the output is
-/// a `Vec<String>`. Each borrowed slice has to become an owned `String`
-/// somewhere along the way. The `String::from` / `.to_string()` /
-/// `.to_owned()` family all do this.
+/// The trickiest of the four: each input is a `&str`, but the output is a
+/// `Vec<String>`. Each borrowed slice has to become an owned `String` somewhere
+/// along the way. The `String::from` / `.to_string()` / `.to_owned()` family
+/// all do this.
 fn create_shopping_list(items: &[&str]) -> Vec<String> {
     let mut list = Vec::new();
     for &item in items {

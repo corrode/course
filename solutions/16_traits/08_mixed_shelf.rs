@@ -25,10 +25,11 @@ impl Describable for Movie {
     }
 }
 
-// One generic T cannot be both Book and Movie. An enum would work for a
-// closed set of types; trait objects also accept future implementors.
-// These references borrow the originals, so no Box or clone is needed.
-/// Describe a mixed shelf in order, separated by newlines. Empty input returns "".
+// One generic T cannot be both Book and Movie. An enum would work for a closed
+// set of types; trait objects also accept future implementors. These references
+// borrow the originals, so no Box or clone is needed.
+/// Describe a mixed shelf in order, separated by newlines. Empty input returns
+/// "".
 fn print_mixed_descriptions(items: &[&dyn Describable]) -> String {
     let mut lines = Vec::new();
     for item in items {

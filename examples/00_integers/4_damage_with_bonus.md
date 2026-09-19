@@ -1,15 +1,18 @@
 # `damage_with_bonus`
 
-Rust never converts between numeric types implicitly.
-If you want to multiply a `u32` by an `f64`, you have to convert one of them first.
-You can use `as` for that.
+Rust never converts between numeric types implicitly. If you want to multiply a
+`u32` by an `f64`, you have to convert one of them first. You can use `as` for
+that.
 
-The function takes base damage as a `u32` and an `f64` bonus percentage, then returns the final damage as a `u32`.
-A bonus of `50.0` means adding half of the base damage again, whether it came from a critical hit, equipment, or some other modifier.
-Keep the calculation in `f64` so the fractional percentage is not lost, then convert the final damage back to `u32`.
+The function takes base damage as a `u32` and an `f64` bonus percentage, then
+returns the final damage as a `u32`. A bonus of `50.0` means adding half of the
+base damage again, whether it came from a critical hit, equipment, or some other
+modifier. Keep the calculation in `f64` so the fractional percentage is not
+lost, then convert the final damage back to `u32`.
 
-Converting the final value back to `u32` *truncates* the fractional part toward zero.
-That matches games which use whole HP, so `8.085` damage becomes `8`, not `9`.
+Converting the final value back to `u32` *truncates* the fractional part toward
+zero. That matches games which use whole HP, so `8.085` damage becomes `8`, not
+`9`.
 
 ## Useful Resources
 

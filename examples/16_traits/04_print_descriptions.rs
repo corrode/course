@@ -2,9 +2,9 @@ trait Describable {
     fn describe(&self) -> String;
 }
 
-// Write print_descriptions here, including its generic signature.
-// Borrow a slice whose elements implement Describable.
-// Return the descriptions in order with one newline between them.
+// Write print_descriptions here, including its generic signature. Borrow a
+// slice whose elements implement Describable. Return the descriptions in order
+// with one newline between them.
 
 #[cfg(test)]
 mod tests {

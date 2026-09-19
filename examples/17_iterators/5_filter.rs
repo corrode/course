@@ -1,8 +1,9 @@
 /// Returns all users whose usernames start with 'a'.
 ///
-/// Instead of transforming each element, keep some and drop others.
-/// Watch out for one borrowing detail: the closure receives a reference to each element, not the element itself.
-/// See: <https://doc.rust-lang.org/std/primitive.str.html#method.starts_with>
+/// Instead of transforming each element, keep some and drop others. Watch out
+/// for one borrowing detail: the closure receives a reference to each element,
+/// not the element itself. See:
+/// <https://doc.rust-lang.org/std/primitive.str.html#method.starts_with>
 fn select_usernames_starting_with_a(usernames: Vec<&str>) -> Vec<&str> {
     todo!()
 }

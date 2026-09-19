@@ -1,8 +1,8 @@
 # Rust Cheatsheet
 
-Forgot the syntax? That's what this page is for.
-It covers the syntax you'll use in the course, with [cheats.rs](https://cheats.rs/) as inspiration.
-Press `?` from any page to bring this up, and `Esc` to close it.
+Forgot the syntax? That's what this page is for. It covers the syntax you'll use
+in the course, with [cheats.rs](https://cheats.rs/) as inspiration. Press `?`
+from any page to bring this up, and `Esc` to close it.
 
 ## Variables and Types
 
@@ -100,8 +100,9 @@ Press `?` from any page to bring this up, and `Esc` to close it.
 
 ### What Does My Closure Receive?
 
-`filter` hands its closure a *reference* to whatever the iterator yields.
-If you're wondering where that extra `&` came from, check the iterator's item type first:
+`filter` hands its closure a *reference* to whatever the iterator yields. If
+you're wondering where that extra `&` came from, check the iterator's item type
+first:
 
 | Source | `.iter()` yields | `.filter` closure sees |
 | --- | --- | --- |
@@ -110,8 +111,10 @@ If you're wondering where that extra `&` came from, check the iterator's item ty
 | `&[&str]` | `&&str` | `&&&str` (auto-derefs for `.ends_with(".rs")`) |
 | `Vec<i32>` after `.into_iter()` | `i32` | `&i32` |
 
-Method calls like `.starts_with`, `.len`, and `.contains` auto-dereference, so `|s| s.starts_with("a")` works through those layers of references.
-Direct comparisons (`==`, `<`, `>`) don't, which is why you sometimes need `**` or `&&` to make the types match.
+Method calls like `.starts_with`, `.len`, and `.contains` auto-dereference, so
+`|s| s.starts_with("a")` works through those layers of references. Direct
+comparisons (`==`, `<`, `>`) don't, which is why you sometimes need `**` or `&&`
+to make the types match.
 
 
 ## Error Handling with `?`
@@ -154,7 +157,6 @@ Direct comparisons (`==`, `<`, `>`) don't, which is why you sometimes need `**` 
 
 ## Where to Look Next
 
-[`std` docs](https://doc.rust-lang.org/std/) ·
-[Rust by Example](https://doc.rust-lang.org/rust-by-example/) ·
-[The Rust Book](https://doc.rust-lang.org/book/) ·
-[cheats.rs](https://cheats.rs/)
+[`std` docs](https://doc.rust-lang.org/std/) · [Rust by
+Example](https://doc.rust-lang.org/rust-by-example/) · [The Rust
+Book](https://doc.rust-lang.org/book/) · [cheats.rs](https://cheats.rs/)

@@ -5,8 +5,8 @@ mod calculator {
     }
 }
 
-/// Wraps `calculator::add` so callers don't have to know which
-/// module the addition lives in.
+/// Wraps `calculator::add` so callers don't have to know which module the
+/// addition lives in.
 fn calculate(x: i32, y: i32) -> i32 {
     calculator::add(x, y)
 }

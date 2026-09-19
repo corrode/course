@@ -1,5 +1,5 @@
-/// Parses a CSV line with proper quote handling.
-/// Handles embedded commas and doubled quotes, as in `"a""b",c`.
+/// Parses a CSV line with proper quote handling. Handles embedded commas and
+/// doubled quotes, as in `"a""b",c`.
 fn parse_csv_line(line: &str) -> Vec<String> {
     todo!()
 }
@@ -13,9 +13,9 @@ fn test_parse_csv_line_plain_numbers() {
 
 #[test]
 fn test_parse_csv_line_plain_strings() {
-    // Warm-up: every field is quoted, no commas inside, no escapes.
-    // Get this passing first; it forces you to enter and exit a quoted
-    // field, but nothing trickier.
+    // Warm-up: every field is quoted, no commas inside, no escapes. Get this
+    // passing first; it forces you to enter and exit a quoted field, but
+    // nothing trickier.
     let line = r#""a","b","c""#;
     let fields = parse_csv_line(line);
     assert_eq!(fields, vec!["a", "b", "c"]);

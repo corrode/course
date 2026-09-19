@@ -1,7 +1,7 @@
 # Option<T>: When a Value Might Be Missing
 
-Rust has no `null`.
-Instead, when a value might be absent, the type makes that explicit using `Option<T>`:
+Rust has no `null`. Instead, when a value might be absent, the type makes that
+explicit using `Option<T>`:
 
 ```rust
 enum Option<T> {
@@ -10,11 +10,12 @@ enum Option<T> {
 }
 ```
 
-The compiler will not let you accidentally use a `None` as if it were a real value.
-To extract the inner value, you need to decide what to do if it is missing.
+The compiler will not let you accidentally use a `None` as if it were a real
+value. To extract the inner value, you need to decide what to do if it is
+missing.
 
-There are two main ways to unwrap an option.
-You can spell out both cases with pattern matching:
+There are two main ways to unwrap an option. You can spell out both cases with
+pattern matching:
 
 ```rust
 match find_user(id) {
@@ -33,8 +34,9 @@ let len = maybe_str.map_or(0, |s| s.len());   // transform-or-default
 
 ### A Note on `|x| ...` (Closures)
 
-Those `|s| s.to_uppercase()` and `|s| s.len()` bits are *closures*: anonymous functions you can pass as arguments.
-The pipes hold the parameters; everything after them is the body:
+Those `|s| s.to_uppercase()` and `|s| s.len()` bits are *closures*: anonymous
+functions you can pass as arguments. The pipes hold the parameters; everything
+after them is the body:
 
 ```rust
 let add_one = |x| x + 1;
@@ -50,10 +52,11 @@ let greet = |name: &str| {
 };
 ```
 
-We'll use more closures in the iterators chapter.
-For this chapter, just read `|s| s.len()` as "a small function that takes `s` and returns `s.len()`."
+We'll use more closures in the iterators chapter. For this chapter, just read
+`|s| s.len()` as "a small function that takes `s` and returns `s.len()`."
 
-When you only need to handle `Some`, you can use `if let` instead of a full `match`:
+When you only need to handle `Some`, you can use `if let` instead of a full
+`match`:
 
 ```rust
 if let Some(user) = find_user(id) {
@@ -61,5 +64,7 @@ if let Some(user) = find_user(id) {
 }
 ```
 
-Many standard-library methods return `Option`: `.first()` and `.last()` on slices, `.next()` and `.find(...)` on iterators, and `.get()` on slices and maps.
+Many standard-library methods return `Option`: `.first()` and `.last()` on
+slices, `.next()` and `.find(...)` on iterators, and `.get()` on slices and
+maps.
 

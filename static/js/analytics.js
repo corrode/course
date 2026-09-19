@@ -37,8 +37,9 @@ export function trackCourseEvent(eventType, exerciseName = null) {
     exercise_name: exerciseName,
   });
 
-  // UI analytics must never delay navigation or interrupt the course. sendBeacon
-  // is reliable during page unload; fetch is the fallback for older browsers.
+  // UI analytics must never delay navigation or interrupt the course.
+  // sendBeacon is reliable during page unload; fetch is the fallback for older
+  // browsers.
   if (navigator.sendBeacon) {
     const blob = new Blob([body], { type: "application/json" });
     if (navigator.sendBeacon("/api/events", blob)) return;

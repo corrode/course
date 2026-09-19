@@ -1,19 +1,20 @@
 # Mutable Borrows
 
 Sometimes you want to modify a value in place without taking ownership of it.
-That's a mutable borrow: `&mut T`.
-The caller still owns the value, but the callee gets exclusive write access for the duration of the call.
+That's a mutable borrow: `&mut T`. The caller still owns the value, but the
+callee gets exclusive write access for the duration of the call.
 
-The parameter is `&mut String`, not `&mut str`.
-Appending text may require the owned `String` to grow its buffer, while a string slice has a fixed length.
+The parameter is `&mut String`, not `&mut str`. Appending text may require the
+owned `String` to grow its buffer, while a string slice has a fixed length.
 
-The function does not need to return the `String`.
-It changes the value through the reference, and the caller sees that change after the call returns.
+The function does not need to return the `String`. It changes the value through
+the reference, and the caller sees that change after the call returns.
 
-At the call site (see the test), you need both `&mut s` and a binding declared with `let mut s = ...`.
-Mutability is opt-in at every layer.
+At the call site (see the test), you need both `&mut s` and a binding declared
+with `let mut s = ...`. Mutability is opt-in at every layer.
 
 ## Useful from the Standard Library
 
-- [`String::push_str`](https://doc.rust-lang.org/std/string/struct.String.html#method.push_str) works on `&mut String` exactly the same way as on an owned `String`.
-  The compiler reaches through the reference for you.
+- [`String::push_str`](https://doc.rust-lang.org/std/string/struct.String.html#method.push_str)
+  works on `&mut String` exactly the same way as on an owned `String`. The
+  compiler reaches through the reference for you.

@@ -3,16 +3,16 @@ trait Validator {
     fn check(&self, input: &str) -> Result<(), String>;
 }
 
-/// Require a case-sensitive substring.
-/// On failure, return `must contain '<needle>'` with the configured needle.
+/// Require a case-sensitive substring. On failure, return
+/// `must contain '<needle>'` with the configured needle.
 struct MustContain {
     needle: String,
 }
 
 // Implement Validator for MustContain here.
 
-/// Reject a case-sensitive substring.
-/// On failure, return `must not contain '<forbidden>'` with the configured text.
+/// Reject a case-sensitive substring. On failure, return
+/// `must not contain '<forbidden>'` with the configured text.
 struct MustNotContain {
     forbidden: String,
 }

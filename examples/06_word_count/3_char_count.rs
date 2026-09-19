@@ -1,5 +1,5 @@
-/// Returns the number of characters in `text`.
-/// Counts every `char` the string contains, whitespace included.
+/// Returns the number of characters in `text`. Counts every `char` the string
+/// contains, whitespace included.
 fn char_count(text: &str) -> usize {
     todo!()
 }
@@ -17,15 +17,15 @@ fn test_char_count_empty() {
 
 #[test]
 fn test_char_count_whitespace_counts() {
-    // Whitespace characters are real characters too:
-    // 3 spaces + '\n' + '\t' = 5.
+    // Whitespace characters are real characters too: 3 spaces + '\n' + '\t'
+    // = 5.
     assert_eq!(char_count("   \n\t"), 5);
 }
 
 #[test]
 fn test_char_count_unicode() {
-    // `café` is 4 characters even though it's 5 bytes in UTF-8.
-    // `"hi café"` → h, i, ' ', c, a, f, é = 7.
+    // `café` is 4 characters even though it's 5 bytes in UTF-8. `"hi café"` →
+    // h, i, ' ', c, a, f, é = 7.
     assert_eq!(char_count("café"), 4);
     assert_eq!(char_count("hi café"), 7);
 }

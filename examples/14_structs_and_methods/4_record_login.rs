@@ -18,9 +18,10 @@ impl User {
 
     /// Records a successful login attempt.
     ///
-    /// Increment `login_count` and set `is_verified` to `true`.
-    /// Setting the verification flag is idempotent, so you can set it on every login without checking it first.
-    /// We keep verification simple here; a real system would decide separately when an account counts as verified.
+    /// Increment `login_count` and set `is_verified` to `true`. Setting the
+    /// verification flag is idempotent, so you can set it on every login
+    /// without checking it first. We keep verification simple here; a real
+    /// system would decide separately when an account counts as verified.
     fn record_login(&mut self) {
         todo!()
     }

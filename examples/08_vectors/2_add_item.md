@@ -1,10 +1,16 @@
 # Adding Items
 
-Here you change the list in place by pushing a new item onto the end.
-The `&mut Vec<String>` says "I need exclusive access for a moment," and that exclusive borrow is what lets you push.
+Here you change the list in place by pushing a new item onto the end. The
+`&mut Vec<String>` says "I need exclusive access for a moment," and that
+exclusive borrow is what lets you push.
 
 ## Useful from the Standard Library
 
-- [`Vec::push`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.push) appends one item to the end of the vector.
-  It takes `&mut self`, which is why the parameter here is `&mut Vec<String>`.
-- [`str::to_string`](https://doc.rust-lang.org/std/primitive.str.html#method.to_string) (or [`String::from`](https://doc.rust-lang.org/std/string/struct.String.html#method.from)) turns the borrowed `&str` parameter into the owned `String` the vector wants to hold.
+- [`Vec::push`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.push)
+  appends one item to the end of the vector. It takes `&mut self`, which is why
+  the parameter here is `&mut Vec<String>`.
+- [`str::to_string`](https://doc.rust-lang.org/std/primitive.str.html#method.to_string)
+  (or
+  [`String::from`](https://doc.rust-lang.org/std/string/struct.String.html#method.from))
+  turns the borrowed `&str` parameter into the owned `String` the vector wants
+  to hold.

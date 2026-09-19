@@ -1,9 +1,9 @@
 /// Returns `value` if it is at or below `max`, otherwise `max`.
 ///
 /// The catch is the keyword `mut`: to reassign the parameter inside the
-/// function it has to be declared `mut value`. Because `i32` is `Copy`,
-/// the function mutates its own copy, so the caller's variable is left
-/// untouched (see `caller_value_is_unchanged`).
+/// function it has to be declared `mut value`. Because `i32` is `Copy`, the
+/// function mutates its own copy, so the caller's variable is left untouched
+/// (see `caller_value_is_unchanged`).
 fn cap_at(mut value: i32, max: i32) -> i32 {
     if value > max {
         value = max;
@@ -20,8 +20,8 @@ fn test_cap_at() {
     assert_eq!(cap_at(1_000, 0), 0);
 }
 
-// Even if the function reassigns its parameter, the caller keeps
-// its original value: `i32` is `Copy`.
+// Even if the function reassigns its parameter, the caller keeps its original
+// value: `i32` is `Copy`.
 #[test]
 fn caller_value_is_unchanged() {
     let original = 42;
