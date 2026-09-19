@@ -1332,6 +1332,22 @@ a.submission-card-who:focus-visible {
 /* Rendered by `templates/partials/chapter_list.html` on both
    the homepage and every exercise page. One set of styles,
    two consumers. */
+.chapter-list-optional {
+    max-width: 60rem;
+    margin: 3rem auto 0;
+}
+.chapter-list-optional h2 {
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem;
+}
+.chapter-list-optional p {
+    color: var(--color-text-muted);
+    line-height: 1.6;
+    margin: 0 0 1rem;
+}
+.chapter-list-optional .chapter-list {
+    margin-top: 0;
+}
 .chapter-list {
     margin: 3rem auto 0;
     display: grid;
