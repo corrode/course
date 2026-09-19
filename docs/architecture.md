@@ -101,9 +101,11 @@ fn main() {}
 The `#[path]` attributes let the on-disk filenames stay
 human-friendly (digits first) while the module names are valid Rust
 identifiers (`_<n>_<slug>`). Database keys for code steps are stored as
-`<chapter>/<step>` (for example, `11_option/2_transform`). Legacy
-single-file chapters remain supported; notes-only and quiz chapters
-simply have no code steps.
+`<chapter>/<step>` (for example, `11_option/2_transform`).
+Numeric prefixes may be zero-padded for alphabetical file listings, as in `16_traits/03_describable.rs`.
+Step keys remain unpadded (`16_traits/3_describable`), so padding does not change saved progress or draft keys.
+`CodeStep::filename` preserves the actual filename for solution loading and editor links.
+Legacy single-file chapters remain supported; notes-only and quiz chapters simply have no code steps.
 
 Inside a code chapter directory:
 

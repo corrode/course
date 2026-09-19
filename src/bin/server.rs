@@ -1740,14 +1740,9 @@ async fn render_exercise_page(
                 } else {
                     "Exercise".to_string()
                 };
-                let filename = if step_key.is_empty() {
-                    "main.rs".to_string()
-                } else {
-                    format!("{step_key}.rs")
-                };
                 let github_dev_url = format!(
                     "https://github.dev/corrode/course/blob/main/examples/{}/{}",
-                    exercise.file_stem, filename
+                    exercise.file_stem, code.filename
                 );
                 let status = step_progress
                     .get(&exercise_key)

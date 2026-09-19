@@ -196,6 +196,8 @@ pub struct CodeStep {
     /// Slug after the leading number, e.g. `unwrap` for `2_unwrap.rs`.
     /// For the legacy single-step format, this is the chapter slug itself.
     pub slug: String,
+    /// Actual source filename, preserving any zero-padding in its numeric prefix.
+    pub filename: String,
     /// Step title. Source priority: paired `<N>_<slug>.md` H1 (if it
     /// exists) > first H1 in the file's `//!` block > slug. Used as
     /// the section heading above the editor when there is no paired
@@ -223,9 +225,9 @@ impl CodeStep {
     /// Stable identifier for a step within its chapter, used in URLs and
     /// in `submissions.exercise_name` as `<chapter>/<step_key>`.
     ///
-    /// For multi-step chapters this is `<order>_<slug>` (e.g. `2_unwrap`)
-    /// so the on-disk filename is recoverable from the key. For the
-    /// legacy single-step format the key is the empty string, so the
+    /// For multi-step chapters this is `<order>_<slug>` (e.g. `2_unwrap`),
+    /// without zero-padding, so filename padding does not change saved progress.
+    /// For the legacy single-step format the key is the empty string, so the
     /// chapter slug alone identifies the step.
     #[must_use]
     pub fn key(&self) -> String {
@@ -666,21 +668,13 @@ fn parse_chapter(dir: &Path, solutions_root: Option<&Path>) -> Result<Exercise> 
 
     let directives = load_chapter_directives(dir);
 
-    // Attach reference solutions. The on-disk filename is recoverable from
-    // each step's `key()` exactly as the github.dev link and submission
-    // routing reconstruct it: legacy single-step chapters use `main.rs`,
-    // multi-step files use `<order>_<slug>.rs`.
+    // Solutions mirror source filenames, including any numeric zero-padding.
     if let Some(sol_root) = solutions_root {
         let sol_chapter = sol_root.join(&file_stem);
         for step in &mut steps {
             let Step::Code(code) = step else { continue };
-            let key = code.key();
-            let filename = if key.is_empty() {
-                "main.rs".to_string()
-            } else {
-                format!("{key}.rs")
-            };
-            match std::fs::read_to_string(sol_chapter.join(&filename)) {
+            let filename = &code.filename;
+            match std::fs::read_to_string(sol_chapter.join(filename)) {
                 Ok(src) => {
                     code.solution_code = Some(trim_trailing_blank_lines(&strip_inner_doc(&src)));
                 }
@@ -923,11 +917,17 @@ fn parse_code_file(
     let (title_opt, _body_md) = split_title(&intro_md);
     let title = title_opt.unwrap_or_else(|| fallback_title.to_string());
     let starter_code = trim_trailing_blank_lines(&strip_inner_doc(&starter_code_full));
+    let filename = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| anyhow!("invalid exercise filename: {}", path.display()))?
+        .to_string();
 
     Ok((
         CodeStep {
             order,
             slug: slug.to_string(),
+            filename,
             title: title.clone(),
             starter_code,
             hints_html: None,
@@ -1466,29 +1466,25 @@ mod tests {
 
     #[test]
     fn attaches_reference_solutions_from_sibling_tree() {
-        // `scan_dir` derives the `solutions/` tree as a sibling of the
-        // scanned `examples/` dir. Every code step in the integers chapter
-        // has a matching solution file, so each should carry stripped,
-        // non-empty solution source.
+        // Both unpadded and zero-padded source filenames must find their
+        // matching files in the sibling solutions tree.
         let exercises =
             scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
-        let integers = exercises
-            .iter()
-            .find(|e| e.slug == "integers")
-            .expect("expected 00_integers to be present");
         let mut checked = 0;
-        for step in &integers.steps {
-            let Step::Code(code) = step else { continue };
-            let solution = code
-                .solution_code
-                .as_ref()
-                .expect("each integers code step ships a reference solution");
-            assert!(
-                !solution.contains("//!"),
-                "solution should have the inner doc comment stripped"
-            );
-            assert!(!solution.trim().is_empty(), "solution should not be empty");
-            checked += 1;
+        for slug in ["integers", "traits"] {
+            let chapter = exercises.iter().find(|e| e.slug == slug).unwrap();
+            for code in chapter.code_steps() {
+                let solution = code
+                    .solution_code
+                    .as_ref()
+                    .expect("each code step ships a reference solution");
+                assert!(
+                    !solution.contains("//!"),
+                    "solution should have the inner doc comment stripped"
+                );
+                assert!(!solution.trim().is_empty(), "solution should not be empty");
+                checked += 1;
+            }
         }
         assert!(
             checked > 0,

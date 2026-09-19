@@ -12,21 +12,21 @@
     clippy::boxed_local
 )]
 
-#[path = "2_display_temperature.rs"]
+#[path = "02_display_temperature.rs"]
 mod _2_display_temperature;
-#[path = "3_describable.rs"]
+#[path = "03_describable.rs"]
 mod _3_describable;
-#[path = "4_print_descriptions.rs"]
+#[path = "04_print_descriptions.rs"]
 mod _4_print_descriptions;
-#[path = "5_logger.rs"]
+#[path = "05_logger.rs"]
 mod _5_logger;
-#[path = "6_logger_override.rs"]
+#[path = "06_logger_override.rs"]
 mod _6_logger_override;
-#[path = "7_validation_rules.rs"]
+#[path = "07_validation_rules.rs"]
 mod _7_validation_rules;
-#[path = "8_mixed_shelf.rs"]
+#[path = "08_mixed_shelf.rs"]
 mod _8_mixed_shelf;
-#[path = "9_collect_errors.rs"]
+#[path = "09_collect_errors.rs"]
 mod _9_collect_errors;
 
 fn main() {}

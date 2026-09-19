@@ -89,5 +89,5 @@ Finally implement validation rules, borrow a mixed shelf, and collect results fr
 
 Each editor has one job and includes its own support code and tests.
 Some ask you to write an entire implementation or function, so their first run intentionally reports missing code rather than reaching a `todo!()`.
-If you work locally, run one file independently with `rustc --edition=2024 --test examples/16_traits/3_describable.rs -o /tmp/traits-test && /tmp/traits-test` (change the filename for another step).
+If you work locally, run one file independently with `rustc --edition=2024 --test examples/16_traits/03_describable.rs -o /tmp/traits-test && /tmp/traits-test` (change the filename for another step).
 A chapter-wide `cargo test` needs every missing definition filled in, even when a test-name filter selects only one step.
