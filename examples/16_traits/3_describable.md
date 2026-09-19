@@ -1,56 +1,17 @@
-# Defining Your Own Trait
+# Implement a Shared Interface
 
-Instead of `impl`ing a trait someone else wrote, you'll write the trait yourself, give two types their own implementation, and then write a *generic* function that accepts anything implementing it.
+A book and a movie store different information, but both can describe themselves.
+The `Describable` trait below defines the interface; your job is to implement it for both types.
+Write the implementation blocks and methods yourself rather than filling in prewritten bodies.
 
-```rust
-trait Describable {
-    fn describe(&self) -> String;
-}
-```
+- A `Book` returns `"<title> by <author>"`, for example `"Dune by Herbert"`.
+- A `Movie` returns `"<title> (<year>)"`, for example `"Arrival (2016)"`.
 
-That's the entire interface.
-Any type can opt in by writing `impl Describable for MyType { fn describe(&self) -> String { ... } }`.
+Use the fields of the value you receive, not fixed strings from the examples.
+Descriptions must borrow the value without changing it, so callers can describe the same value again.
+There is no generic function to write in this step.
 
-## Trait Bounds on Generics
-
-Once a trait exists, you can use it as a *bound* on a generic parameter to say "I accept any `T`, as long as `T` implements this trait":
-
-```rust
-fn print_one<T: Describable>(item: &T) {
-    println!("{}", item.describe());
-}
-```
-
-This is one way Rust supports polymorphism.
-The compiler produces one specialized copy of `print_one` per type you call it with.
-That's called *monomorphization*; the C++ template crowd will feel at home.
-There's no runtime dispatch and no boxing.
-
-Real code often spells the same kind of bound in one of these forms:
-
-```rust
-// Multiple bounds with `+`:
-fn show<T: Describable + std::fmt::Debug>(item: &T) { /* ... */ }
-
-// Same thing, written with a `where` clause. Easier to read once you
-// have several parameters or long bounds:
-fn show<T>(item: &T)
-where
-    T: Describable + std::fmt::Debug,
-{
-    /* ... */
-}
-
-// `impl Trait` in argument position is shorthand for a single
-// unnamed generic parameter:
-fn show(item: &impl Describable) { /* ... */ }
-```
-
-For this exercise, use the simple `<T: Describable>` form.
-You don't need to memorize all three spellings now; recognize the bound they express.
-
-## Useful from the Standard Library
-
-- [`[String]::join`](https://doc.rust-lang.org/std/primitive.slice.html#method.join) works on a `Vec<String>` too: build a `Vec<String>` of per-item descriptions, then join them with newlines.
-- [`Iterator::map`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map) can call `describe` on each item; `.collect::<Vec<_>>()` gathers the returned strings.
-  A `for` loop with `Vec::push` works too if you prefer to wait for the iterators chapter.
+The tests use `Describable::describe(&value)` to require an actual trait implementation.
+Writing an unrelated method with the same name won't satisfy that contract.
+Until you add the implementations, **Run** will report that the types do not implement `Describable`.
+Those compiler errors are the starting point, not broken exercise setup.
