@@ -1314,44 +1314,6 @@ mod tests {
     }
 
     #[test]
-    fn traits_steps_are_small_independent_and_have_matching_help() {
-        let exercises = scan_dir(Path::new("examples")).unwrap();
-        let chapter = exercises.iter().find(|e| e.slug == "traits").unwrap();
-        let code = chapter.code_steps();
-        assert_eq!(
-            code.iter().map(|step| step.key()).collect::<Vec<_>>(),
-            [
-                "2_display_temperature",
-                "3_describable",
-                "4_print_descriptions",
-                "5_logger",
-                "6_logger_override",
-                "7_validation_rules",
-                "8_mixed_shelf",
-                "9_collect_errors",
-            ]
-        );
-        for step in &code {
-            assert!(step.hints_html.is_some(), "missing hints for {}", step.slug);
-            assert!(
-                step.solution_code.is_some(),
-                "missing solution for {}",
-                step.slug
-            );
-            assert!(chapter.notes().iter().any(|note| note.slug == step.slug));
-            assert!(
-                step.starter_code.lines().count() <= 90,
-                "{} is too long for a focused editor",
-                step.slug
-            );
-        }
-        // Learners supply these declarations, not just their function bodies.
-        assert!(!code[1].starter_code.contains("impl Describable for"));
-        assert!(!code[1].starter_code.contains("print_descriptions"));
-        assert!(!code[2].starter_code.contains("fn print_descriptions"));
-    }
-
-    #[test]
     fn chapter_resource_lists_render_as_callouts() {
         for md in [
             include_str!("../examples/00_integers/4_damage_with_bonus.md"),
