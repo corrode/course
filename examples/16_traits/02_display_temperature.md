@@ -1,4 +1,4 @@
-# Implementing `Display` for Your Own Type
+# Implementing Display for Your Own Type
 
 `Display` is the trait behind the `{}` placeholder in `println!`, `format!`, and friends.
 Implement it for your struct, and you can format its values as user-facing text just like a number or a `String`.
@@ -41,5 +41,4 @@ The Java/C# parallel is overriding `toString()`; the Python one is `__str__`.
   `use std::fmt;` and then `impl fmt::Display for T` is the idiomatic spelling.
 - [`write!`](https://doc.rust-lang.org/std/macro.write.html) is the formatter-targeted cousin of `println!`.
   It returns `std::fmt::Result`, which is exactly what your `fmt` method needs to return, so a single `write!(...)` call is usually the whole body.
-- Format specifiers carry over: `{:.1}` rounds a float to one decimal place, so `format!("{:.1}", 21.5_f64)` is `"21.5"`.
-  You'll want that for the temperature output.
+- The [formatting syntax reference](https://doc.rust-lang.org/std/fmt/#precision) explains how to set floating-point precision.
