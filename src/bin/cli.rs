@@ -49,7 +49,8 @@ enum CourseCommands {
     },
     /// Submit an exercise solution
     Submit {
-        /// Path to the exercise file (e.g., `examples/01_strings_and_chars/2_welcome.rs`)
+        /// Path to the exercise file (e.g.,
+        /// `examples/01_strings_and_chars/2_welcome.rs`)
         file: Option<String>,
         /// Run fmt and clippy for a pedantic submission to earn a star
         #[arg(long)]
@@ -150,11 +151,10 @@ async fn handle_submit(file: Option<&str>, pedantic: bool, all: bool) -> Result<
     let source_code =
         fs::read_to_string(file).map_err(|_| anyhow!("Failed to read file: {file}"))?;
 
-    // Extract chapter + optional step from the path. For legacy
-    // single-step chapters the step is `None`, and `exercise_name` is just
-    // the chapter slug. For multi-step (`<chapter>/<n>_<slug>.rs`) the
-    // exercise key is `<chapter>/<n>_<slug>` and the test filter is
-    // `_<n>_<slug>::`.
+    // Extract chapter + optional step from the path. For legacy single-step
+    // chapters the step is `None`, and `exercise_name` is just the chapter
+    // slug. For multi-step (`<chapter>/<n>_<slug>.rs`) the exercise key is
+    // `<chapter>/<n>_<slug>` and the test filter is `_<n>_<slug>::`.
     let target = extract_submission_target(file)?;
     let exercise_name = target.exercise_key();
 
@@ -263,8 +263,8 @@ async fn handle_submit_all(pedantic: bool) -> Result<()> {
     Ok(())
 }
 
-/// Process a single exercise: test, validate, and submit if successful.
-/// Returns `Ok(exercise_name)` on success, `Err(exercise_name)` on failure.
+/// Process a single exercise: test, validate, and submit if successful. Returns
+/// `Ok(exercise_name)` on success, `Err(exercise_name)` on failure.
 async fn process_single_exercise(
     file_path: String,
     pedantic: bool,
@@ -332,10 +332,10 @@ async fn process_single_exercise(
 
 /// Find all exercise files in the examples directory.
 ///
-/// For legacy single-step chapters, returns the chapter's `main.rs`.
-/// For multi-step chapters (those with `<n>_<slug>.rs` step files
-/// alongside the generated `main.rs`), returns one entry per step file
-/// instead so `--all` submits each step individually.
+/// For legacy single-step chapters, returns the chapter's `main.rs`. For
+/// multi-step chapters (those with `<n>_<slug>.rs` step files alongside the
+/// generated `main.rs`), returns one entry per step file instead so `--all`
+/// submits each step individually.
 fn find_exercise_files() -> Result<Vec<String>> {
     let examples_dir = Path::new("examples");
     if !examples_dir.exists() {
@@ -431,16 +431,16 @@ async fn handle_status() -> Result<()> {
 
 /// A submission target derived from a file or chapter path.
 ///
-/// For legacy single-step chapters this is just a chapter name; for
-/// multi-step chapters it also carries a `cargo test` filter so we
-/// only run the relevant step's tests.
+/// For legacy single-step chapters this is just a chapter name; for multi-step
+/// chapters it also carries a `cargo test` filter so we only run the relevant
+/// step's tests.
 struct SubmissionTarget {
     /// Chapter directory name (the `--example <chapter>` argument).
     chapter: String,
     /// `Some("<n>_<slug>")` for a step file; `None` for legacy chapters.
     step_key: Option<String>,
-    /// `Some("_<n>_<slug>::")` filter passed to `cargo test`; `None` to
-    /// run every test in the chapter.
+    /// `Some("_<n>_<slug>::")` filter passed to `cargo test`; `None` to run
+    /// every test in the chapter.
     test_filter: Option<String>,
 }
 
@@ -460,11 +460,11 @@ impl SubmissionTarget {
 ///
 /// Recognised inputs:
 ///
-/// * `examples/<chapter>/main.rs`       (legacy single-step chapter)
+/// * `examples/<chapter>/main.rs` (legacy single-step chapter)
 /// * `examples/<chapter>/<n>_<slug>.rs` (multi-step file: step `n_slug`)
-/// * `examples/<chapter>/` (or bare)    (legacy single-step chapter)
-/// * `<chapter>` (bare slug)            (legacy single-step chapter)
-/// * `examples/<chapter>.rs`            (legacy flat layout)
+/// * `examples/<chapter>/` (or bare) (legacy single-step chapter)
+/// * `<chapter>` (bare slug) (legacy single-step chapter)
+/// * `examples/<chapter>.rs` (legacy flat layout)
 fn extract_submission_target(file_path: &str) -> Result<SubmissionTarget> {
     let path = Path::new(file_path);
     let filename = path.file_name().and_then(|n| n.to_str());
@@ -494,8 +494,8 @@ fn extract_submission_target(file_path: &str) -> Result<SubmissionTarget> {
             .and_then(|p| p.file_name())
             .and_then(|s| s.to_str())
         {
-            // Verify the stem starts with `<n>_` so we don't
-            // misclassify a bare `examples/foo.rs`.
+            // Verify the stem starts with `<n>_` so we don't misclassify a bare
+            // `examples/foo.rs`.
             if let Some((num, _rest)) = stem.split_once('_')
                 && num.parse::<u32>().is_ok()
             {

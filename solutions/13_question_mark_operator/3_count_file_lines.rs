@@ -1,4 +1,5 @@
-/// Reads a file and counts lines. Note how `?` works with a different error type.
+/// Reads a file and counts lines. Note how `?` works with a different error
+/// type.
 fn count_file_lines(filename: &str) -> Result<usize, std::io::Error> {
     let content = std::fs::read_to_string(filename)?;
     Ok(content.lines().count())

@@ -1,9 +1,9 @@
 # Course Analytics
 
-The course records a small set of first-party events in SQLite's
-`course_events` table. The goal is to answer where learners stop or ask for
-help without persisting source code, names, URLs, user agents, or arbitrary
-client metadata in the analytics table.
+The course records a small set of first-party events in SQLite's `course_events`
+table. The goal is to answer where learners stop or ask for help without
+persisting source code, names, URLs, user agents, or arbitrary client metadata
+in the analytics table.
 
 Running code still sends the source through this server to the third-party Rust
 Playground at `play.rust-lang.org`, just as it did before analytics were added.
@@ -92,6 +92,6 @@ WHERE event_type IN ('chapter_view', 'editor_focus')
 GROUP BY chapter;
 ```
 
-For reports, prefer a read-only SQLite backup rather than querying the live file.
-SQLite's backup API or `.backup` command produces a consistent snapshot without
-interrupting the server.
+For reports, prefer a read-only SQLite backup rather than querying the live
+file. SQLite's backup API or `.backup` command produces a consistent snapshot
+without interrupting the server.

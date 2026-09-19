@@ -1,7 +1,7 @@
-{# Shared required and optional chapter lists for the homepage and exercise pages.
-Required variables: `dots`, `ulid`, and `chapter_rows`. The current chapter renders
-as a non-link with id `current-chapter-row` so the editor can update its completion
-mark after a successful submission. #}
+{# Shared required and optional chapter lists for the homepage and exercise
+pages. Required variables: `dots`, `ulid`, and `chapter_rows`. The current
+chapter renders as a non-link with id `current-chapter-row` so the editor can
+update its completion mark after a successful submission. #}
 <nav
     class="chapter-list"
     aria-label="All exercises"
@@ -18,7 +18,8 @@ mark after a successful submission. #}
 {% if optional_rows > 0 %}
 <section class="chapter-list-optional" aria-labelledby="optional-chapters-heading">
     <h2 id="optional-chapters-heading">Optional Chapters</h2>
-    <p>Extra practice to explore at your own pace. These chapters do not count toward course progress.</p>
+    <p>Extra practice to explore at your own pace. These chapters do not count
+    toward course progress.</p>
     <nav class="chapter-list" aria-label="Optional chapters" style="--chapter-rows: {{ optional_rows }}">
         {% for d in dots %}
         {% if d.is_bonus %}

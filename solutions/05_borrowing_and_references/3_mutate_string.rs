@@ -1,5 +1,5 @@
-/// Takes a mutable reference to modify the string in place.
-/// The &mut allows us to change the string's contents.
+/// Takes a mutable reference to modify the string in place. The &mut allows us
+/// to change the string's contents.
 fn mutate_string(s: &mut String) {
     s.push_str(" - now with extra crab");
 }

@@ -2,20 +2,20 @@
 //!
 //! Each chapter is a directory `examples/NN_slug/` containing one or more
 //! exercise files (`.rs`) and zero or more notes (`.md`), interleaved by a
-//! leading `<n>_` ordering prefix. The chapter is exposed to the rest of
-//! the application as an ordered list of [`Step`]s: prose notes, editable
-//! code exercises, or interactive quizzes.
+//! leading `<n>_` ordering prefix. The chapter is exposed to the rest of the
+//! application as an ordered list of [`Step`]s: prose notes, editable code
+//! exercises, or interactive quizzes.
 //!
 //! Two formats are supported:
 //!
-//! * **Single-step (legacy):** only a `main.rs` and (optionally) one or
-//!   more `<n>_<slug>.md` notes. The chapter is treated as a single code
-//!   step whose source is `main.rs`; notes render before its editor.
-//! * **Multi-step:** sibling `<n>_<slug>.rs` files alongside (or instead
-//!   of) `main.rs`. Each `.rs` file becomes a `CodeStep`, ordered with
-//!   the notes by its leading number. A generated `main.rs` (built by
-//!   `build.rs`) aggregates the step files as `mod _N_slug;` so
-//!   `cargo test --example <chapter>` still runs every step's tests.
+//! * **Single-step (legacy):** only a `main.rs` and (optionally) one or more
+//!   `<n>_<slug>.md` notes. The chapter is treated as a single code step whose
+//!   source is `main.rs`; notes render before its editor.
+//! * **Multi-step:** sibling `<n>_<slug>.rs` files alongside (or instead of)
+//!   `main.rs`. Each `.rs` file becomes a `CodeStep`, ordered with the notes by
+//!   its leading number. A generated `main.rs` (built by `build.rs`) aggregates
+//!   the step files as `mod _N_slug;` so `cargo test --example <chapter>` still
+//!   runs every step's tests.
 //!
 //! See `docs/multi_step_chapters_plan.md` for the rollout plan.
 
@@ -27,10 +27,10 @@ use std::sync::Arc;
 /// Multiple-choice quiz loaded from a chapter's `quiz.toml`.
 ///
 /// The quiz file format is intentionally tiny: a list of `[[questions]]`
-/// tables, each with a prompt, an optional hint, and an inline-table
-/// `answers` array. Exactly one answer per question must be marked
-/// `correct = true`; this is enforced when the chapter is parsed so a
-/// malformed quiz fails fast at startup rather than at render time.
+/// tables, each with a prompt, an optional hint, and an inline-table `answers`
+/// array. Exactly one answer per question must be marked `correct = true`; this
+/// is enforced when the chapter is parsed so a malformed quiz fails fast at
+/// startup rather than at render time.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Quiz {
     pub questions: Vec<Question>,
@@ -38,8 +38,8 @@ pub struct Quiz {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Question {
-    /// The question itself, in markdown (rendered server-side, so
-    /// inline code, `**bold**`, and fenced code blocks all work).
+    /// The question itself, in markdown (rendered server-side, so inline code,
+    /// `**bold**`, and fenced code blocks all work).
     pub prompt: String,
     /// Optional nudge shown above the answers.
     #[serde(default)]
@@ -54,18 +54,17 @@ pub struct Answer {
     pub text: String,
     /// True for exactly one answer per question.
     pub correct: bool,
-    /// Per-answer commentary revealed after the visitor picks an
-    /// answer, not just for the right answer, but for every
-    /// distractor too, since the wrong answers are usually where the
-    /// learning lives.
+    /// Per-answer commentary revealed after the visitor picks an answer, not
+    /// just for the right answer, but for every distractor too, since the wrong
+    /// answers are usually where the learning lives.
     pub explanation: String,
 }
 
 impl Quiz {
-    /// Render the whole quiz to HTML. One outer `<section data-quiz>`
-    /// wraps an `<ol>` of question cards; each card carries the
-    /// per-answer `data-correct` flag so `static/js/quiz.js` can
-    /// evaluate clicks without an extra round trip.
+    /// Render the whole quiz to HTML. One outer `<section data-quiz>` wraps an
+    /// `<ol>` of question cards; each card carries the per-answer
+    /// `data-correct` flag so `static/js/quiz.js` can evaluate clicks without
+    /// an extra round trip.
     #[must_use]
     pub fn render_html(&self) -> String {
         use std::fmt::Write;
@@ -110,9 +109,9 @@ impl Quiz {
                 );
             }
             out.push_str("<ol class=\"quiz-answers\">");
-            // Shuffle answers per render so the correct option doesn't
-            // sit in the same slot every time. Re-rendered on every
-            // request, so each page load gets a fresh order.
+            // Shuffle answers per render so the correct option doesn't sit in
+            // the same slot every time. Re-rendered on every request, so each
+            // page load gets a fresh order.
             let mut shuffled: Vec<&Answer> = q.answers.iter().collect();
             {
                 use rand::seq::SliceRandom;
@@ -155,8 +154,8 @@ impl Quiz {
     }
 }
 
-/// Render a short markdown snippet (one paragraph) and strip the
-/// outer `<p>…</p>` so the result can be spliced inline.
+/// Render a short markdown snippet (one paragraph) and strip the outer
+/// `<p>…</p>` so the result can be spliced inline.
 fn render_inline_markdown(md: &str) -> String {
     let html = render_markdown(md.trim());
     let trimmed = html.trim();
@@ -171,9 +170,8 @@ fn render_inline_markdown(md: &str) -> String {
 
 /// A short prose note that lives next to an exercise.
 ///
-/// Notes give us a place to put preliminary information ("solve with
-/// std only", section preambles, etc.) without bloating the exercise's
-/// own `//!` block.
+/// Notes give us a place to put preliminary information ("solve with std only",
+/// section preambles, etc.) without bloating the exercise's own `//!` block.
 #[derive(Debug, Clone)]
 pub struct Note {
     /// In-chapter ordering taken from the leading `<n>_` of the filename.
@@ -186,49 +184,49 @@ pub struct Note {
     pub html: String,
 }
 
-/// An exercise file: prose + starter code + tests, rendered as one
-/// editable section on the web.
+/// An exercise file: prose + starter code + tests, rendered as one editable
+/// section on the web.
 #[derive(Debug, Clone)]
 pub struct CodeStep {
     /// In-chapter ordering taken from the leading `<n>_` of the filename.
     /// Single-step (legacy) chapters use order `0`.
     pub order: u8,
-    /// Slug after the leading number, e.g. `unwrap` for `2_unwrap.rs`.
-    /// For the legacy single-step format, this is the chapter slug itself.
+    /// Slug after the leading number, e.g. `unwrap` for `2_unwrap.rs`. For the
+    /// legacy single-step format, this is the chapter slug itself.
     pub slug: String,
-    /// Actual source filename, preserving any zero-padding in its numeric prefix.
+    /// Actual source filename, preserving any zero-padding in its numeric
+    /// prefix.
     pub filename: String,
-    /// Step title. Source priority: paired `<N>_<slug>.md` H1 (if it
-    /// exists) > first H1 in the file's `//!` block > slug. Used as
-    /// the section heading above the editor when there is no paired
-    /// note rendered immediately above.
+    /// Step title. Source priority: paired `<N>_<slug>.md` H1 (if it exists) >
+    /// first H1 in the file's `//!` block > slug. Used as the section heading
+    /// above the editor when there is no paired note rendered immediately
+    /// above.
     pub title: String,
     /// File contents with the `//!` block stripped, used as the editor's
     /// starter content.
     pub starter_code: String,
-    /// Rendered HTML for this step's slice of `hints.md`, if the chapter
-    /// has a hints note with a `## <slug>` subsection matching this
-    /// step. Wired up in [`parse_chapter`] after both the steps and the
-    /// hints note have been parsed. `None` means "no per-step hint":
-    /// either the chapter has no hints at all, or the hints file has no
-    /// section matching this step's slug.
+    /// Rendered HTML for this step's slice of `hints.md`, if the chapter has a
+    /// hints note with a `## <slug>` subsection matching this step. Wired up in
+    /// [`parse_chapter`] after both the steps and the hints note have been
+    /// parsed. `None` means "no per-step hint": either the chapter has no hints
+    /// at all, or the hints file has no section matching this step's slug.
     pub hints_html: Option<String>,
-    /// Full source of the reference solution for this step, loaded from
-    /// the sibling `solutions/<chapter>/<file>` tree (the `//!` inner-doc
-    /// block stripped, mirroring `starter_code`). `None` when no solution
-    /// file exists for the step. Surfaced in the UI as a separate
-    /// "Reveal the full solution" disclosure shown directly below the hints.
+    /// Full source of the reference solution for this step, loaded from the
+    /// sibling `solutions/<chapter>/<file>` tree (the `//!` inner-doc block
+    /// stripped, mirroring `starter_code`). `None` when no solution file exists
+    /// for the step. Surfaced in the UI as a separate "Reveal the full
+    /// solution" disclosure shown directly below the hints.
     pub solution_code: Option<String>,
 }
 
 impl CodeStep {
-    /// Stable identifier for a step within its chapter, used in URLs and
-    /// in `submissions.exercise_name` as `<chapter>/<step_key>`.
+    /// Stable identifier for a step within its chapter, used in URLs and in
+    /// `submissions.exercise_name` as `<chapter>/<step_key>`.
     ///
     /// For multi-step chapters this is `<order>_<slug>` (e.g. `2_unwrap`),
-    /// without zero-padding, so filename padding does not change saved progress.
-    /// For the legacy single-step format the key is the empty string, so the
-    /// chapter slug alone identifies the step.
+    /// without zero-padding, so filename padding does not change saved
+    /// progress. For the legacy single-step format the key is the empty string,
+    /// so the chapter slug alone identifies the step.
     #[must_use]
     pub fn key(&self) -> String {
         if self.order == 0 {
@@ -239,18 +237,18 @@ impl CodeStep {
     }
 }
 
-/// One position in a chapter's ordered sequence of content: either a
-/// prose note, a code step, or an interactive quiz.
+/// One position in a chapter's ordered sequence of content: either a prose
+/// note, a code step, or an interactive quiz.
 #[derive(Debug, Clone)]
 pub enum Step {
     /// A markdown note rendered as-is.
     Prose(Note),
     /// An exercise file with its own editor and tests.
     Code(CodeStep),
-    /// An interactive multiple-choice quiz loaded from `quiz.toml`.
-    /// Only used by the dedicated quiz chapter today, but the step
-    /// type is general: any chapter with a `quiz.toml` will pick one
-    /// up at the end of its render plan.
+    /// An interactive multiple-choice quiz loaded from `quiz.toml`. Only used
+    /// by the dedicated quiz chapter today, but the step type is general: any
+    /// chapter with a `quiz.toml` will pick one up at the end of its render
+    /// plan.
     Quiz(Quiz),
 }
 
@@ -270,50 +268,47 @@ impl Step {
 /// Optional per-chapter UI customisation, loaded from
 /// `examples/<chapter>/.chapter.toml` if that file exists.
 ///
-/// The struct is intentionally small and additive: unknown keys are
-/// rejected (so typos surface), and every field has a sensible default
-/// so omitting the file is the same as having an empty one.
+/// The struct is intentionally small and additive: unknown keys are rejected
+/// (so typos surface), and every field has a sensible default so omitting the
+/// file is the same as having an empty one.
 ///
-/// The whole struct is serialised to JSON and emitted on the exercise
-/// page root as `data-corrode-config`. Adding a new knob therefore
-/// requires only:
+/// The whole struct is serialised to JSON and emitted on the exercise page root
+/// as `data-corrode-config`. Adding a new knob therefore requires only:
 ///   1. a field here (with `#[serde(default)]`),
 ///   2. a handler in the JS `applyChapterDirectives()` registry.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, default)]
 pub struct ChapterDirectives {
-    /// Allow-list of buttons to keep visible in every code section.
-    /// `None` (the field is omitted) means "show every button", which is
-    /// the default for any chapter without a `.chapter.toml`. An explicit
-    /// list (including the empty list) hides any button not named in
-    /// it. See the `Buttons` map in `exercise.html` for valid names
-    /// (`run`, `submit`, `format`, `reset`, `copy`, `vim`, `vscode`).
+    /// Allow-list of buttons to keep visible in every code section. `None` (the
+    /// field is omitted) means "show every button", which is the default for
+    /// any chapter without a `.chapter.toml`. An explicit list (including the
+    /// empty list) hides any button not named in it. See the `Buttons` map in
+    /// `exercise.html` for valid names (`run`, `submit`, `format`, `reset`,
+    /// `copy`, `vim`, `vscode`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub show: Option<Vec<String>>,
-    /// Whether the page-wide table of contents (the chapter list at
-    /// the bottom of the page) is rendered. `None` = default visible.
-    /// `Some(false)` hides it; `Some(true)` is identical to `None` and
-    /// exists only for explicitness.
+    /// Whether the page-wide table of contents (the chapter list at the bottom
+    /// of the page) is rendered. `None` = default visible. `Some(false)` hides
+    /// it; `Some(true)` is identical to `None` and exists only for
+    /// explicitness.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub show_toc: Option<bool>,
-    /// Names of effects to fire when a run finishes successfully.
-    /// See the `PassHooks` map in `exercise.html` for valid names
-    /// (`confetti`, ...).
+    /// Names of effects to fire when a run finishes successfully. See the
+    /// `PassHooks` map in `exercise.html` for valid names (`confetti`, ...).
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub on_pass: Vec<String>,
-    /// When set on a chapter rendered anonymously, the inline signup
-    /// card embedded in `exercise.html` is revealed the moment a code
-    /// section passes its tests, and the next-chapter button is gated
-    /// behind it. Used on the welcome chapter so a brand-new visitor
-    /// signs up after their very first successful run, before moving
-    /// on. `None` / `Some(false)` is the default (no inline signup).
+    /// When set on a chapter rendered anonymously, the inline signup card
+    /// embedded in `exercise.html` is revealed the moment a code section passes
+    /// its tests, and the next-chapter button is gated behind it. Used on the
+    /// welcome chapter so a brand-new visitor signs up after their very first
+    /// successful run, before moving on. `None` / `Some(false)` is the default
+    /// (no inline signup).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signup_on_pass: Option<bool>,
-    /// When `true`, this chapter is an optional "bonus": hidden from the
-    /// table of contents, excluded from progress totals and the default
-    /// next-chapter flow, and rendered without a number. It is available
-    /// in the chapter picker and by direct URL. `None` / `Some(false)` is the
-    /// default.
+    /// When `true`, this chapter is an optional "bonus": hidden from the table
+    /// of contents, excluded from progress totals and the default next-chapter
+    /// flow, and rendered without a number. It is available in the chapter
+    /// picker and by direct URL. `None` / `Some(false)` is the default.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bonus: Option<bool>,
 }
@@ -321,27 +316,26 @@ pub struct ChapterDirectives {
 /// A single chapter, parsed from one `examples/NN_slug/` directory.
 #[derive(Debug, Clone)]
 pub struct Exercise {
-    /// 1-based, human-facing chapter number used in headings, the TOC,
-    /// and the chapter picker. Assigned in [`scan_dir`] as a running
-    /// ordinal over the non-bonus chapters in disk order, so the first
-    /// chapter is **1** and hiding a bonus chapter leaves no gap in the
-    /// sequence. Bonus chapters get `0`, which templates render as
-    /// "Bonus" instead of a number.
+    /// 1-based, human-facing chapter number used in headings, the TOC, and the
+    /// chapter picker. Assigned in [`scan_dir`] as a running ordinal over the
+    /// non-bonus chapters in disk order, so the first chapter is **1** and
+    /// hiding a bonus chapter leaves no gap in the sequence. Bonus chapters get
+    /// `0`, which templates render as "Bonus" instead of a number.
     pub number: u8,
     /// Slug without the numeric prefix, e.g. `integers` for `00_integers`.
     pub slug: String,
-    /// Directory name including the prefix, e.g. `00_integers`. Doubles
-    /// as the chapter half of `submissions.exercise_name` and the URL
-    /// segment under `/exercise/`.
+    /// Directory name including the prefix, e.g. `00_integers`. Doubles as the
+    /// chapter half of `submissions.exercise_name` and the URL segment under
+    /// `/exercise/`.
     pub file_stem: String,
     /// Chapter title, taken from the first note's H1, then the first code
     /// step's `//!` H1, and finally `file_stem`.
     pub title: String,
     /// Ordered prose + code steps as they should render top-to-bottom.
     pub steps: Vec<Step>,
-    /// Optional chapter-wide hints left after matching hint sections have
-    /// been attached to individual code steps. Sourced from a sibling note
-    /// whose slug is exactly `hints`.
+    /// Optional chapter-wide hints left after matching hint sections have been
+    /// attached to individual code steps. Sourced from a sibling note whose
+    /// slug is exactly `hints`.
     pub hints: Option<Note>,
     /// Per-chapter UI tweaks loaded from `.chapter.toml` (if present).
     /// Empty/default when the file is absent.
@@ -355,10 +349,10 @@ impl Exercise {
         self.slug.contains("quiz")
     }
 
-    /// True for optional "bonus" chapters (`bonus = true` in
-    /// `.chapter.toml`). Bonus chapters are excluded from the TOC,
-    /// progress totals, and the default next-chapter flow, but are listed
-    /// in the chapter picker and reachable by direct URL. See [`ChapterDirectives::bonus`].
+    /// True for optional "bonus" chapters (`bonus = true` in `.chapter.toml`).
+    /// Bonus chapters are excluded from the TOC, progress totals, and the
+    /// default next-chapter flow, but are listed in the chapter picker and
+    /// reachable by direct URL. See [`ChapterDirectives::bonus`].
     #[must_use]
     pub fn is_bonus(&self) -> bool {
         self.directives.bonus.unwrap_or(false)
@@ -388,9 +382,9 @@ impl Exercise {
             .collect()
     }
 
-    /// The single code step for legacy single-step chapters. Returns
-    /// the first code step for multi-step chapters; callers that need
-    /// to render every step should use [`Self::code_steps`] instead.
+    /// The single code step for legacy single-step chapters. Returns the first
+    /// code step for multi-step chapters; callers that need to render every
+    /// step should use [`Self::code_steps`] instead.
     #[must_use]
     pub fn primary_step(&self) -> Option<&CodeStep> {
         self.code_steps().into_iter().next()
@@ -402,40 +396,39 @@ impl Exercise {
         self.code_steps().len() > 1
     }
 
-    /// Serialise this chapter's directives as a compact JSON string,
-    /// suitable for embedding in a `data-corrode-config` attribute.
-    /// Falls back to `"{}"` if serialisation somehow fails so the
-    /// template never panics.
+    /// Serialise this chapter's directives as a compact JSON string, suitable
+    /// for embedding in a `data-corrode-config` attribute. Falls back to `"{}"`
+    /// if serialisation somehow fails so the template never panics.
     #[must_use]
     pub fn directives_json(&self) -> String {
         serde_json::to_string(&self.directives).unwrap_or_else(|_| "{}".into())
     }
 
     /// Convenience for templates: did this chapter opt into the inline
-    /// signup-on-pass card? Treats `Some(true)` as enabled and
-    /// everything else (missing field, `Some(false)`) as disabled.
+    /// signup-on-pass card? Treats `Some(true)` as enabled and everything else
+    /// (missing field, `Some(false)`) as disabled.
     #[must_use]
     pub fn wants_signup_on_pass(&self) -> bool {
         self.directives.signup_on_pass.unwrap_or(false)
     }
 
-    /// Convenience for templates: should the page-wide chapter list at
-    /// the bottom render? `show_toc = false` in `.chapter.toml` hides
-    /// it; any other value (the default) keeps it visible. Mirrored on
-    /// the server so the welcome chapter doesn't flash the TOC and
-    /// then yank it away after JS boots.
+    /// Convenience for templates: should the page-wide chapter list at the
+    /// bottom render? `show_toc = false` in `.chapter.toml` hides it; any other
+    /// value (the default) keeps it visible. Mirrored on the server so the
+    /// welcome chapter doesn't flash the TOC and then yank it away after JS
+    /// boots.
     #[must_use]
     pub fn shows_toc(&self) -> bool {
         self.directives.show_toc.unwrap_or(true)
     }
 
-    /// Convenience for templates: should the named editor button
-    /// (`run`, `submit`, `format`, `reset`, `copy`, `vim`, `vscode`)
-    /// render in this chapter? When `.chapter.toml` doesn't set
-    /// `show`, every button is visible (the default). When `show` is
-    /// an explicit allow-list, only the names in it survive.
-    /// Mirrored on the server so the welcome chapter doesn't flash a
-    /// full toolbar and then strip it down to just Run after JS boots.
+    /// Convenience for templates: should the named editor button (`run`,
+    /// `submit`, `format`, `reset`, `copy`, `vim`, `vscode`) render in this
+    /// chapter? When `.chapter.toml` doesn't set `show`, every button is
+    /// visible (the default). When `show` is an explicit allow-list, only the
+    /// names in it survive. Mirrored on the server so the welcome chapter
+    /// doesn't flash a full toolbar and then strip it down to just Run after JS
+    /// boots.
     #[must_use]
     pub fn shows_button(&self, name: &str) -> bool {
         self.directives
@@ -445,7 +438,8 @@ impl Exercise {
     }
 }
 
-/// One position in a chapter's rendered output: prose, editable code, or a quiz.
+/// One position in a chapter's rendered output: prose, editable code, or a
+/// quiz.
 ///
 /// Built per-request by the server from a chapter's `steps` plus the
 /// participant's progress; rendered by the `exercise.html` template.
@@ -463,39 +457,36 @@ pub struct RenderItem {
 pub enum RenderKind {
     /// A markdown note rendered as raw HTML.
     Prose { html: String },
-    /// An editable code step. Carries every per-step value the template
-    /// needs so the editor JS can stay scoped to one `<section>`.
+    /// An editable code step. Carries every per-step value the template needs
+    /// so the editor JS can stay scoped to one `<section>`.
     Code {
-        /// Stable per-step id used for DOM ids. Equal to the chapter `file_stem` for
-        /// legacy single-step chapters, or
+        /// Stable per-step id used for DOM ids. Equal to the chapter
+        /// `file_stem` for legacy single-step chapters, or
         /// `<chapter_file_stem>__<n>_<step_slug>` for multi-step.
         dom_id: String,
-        /// Full `submissions.exercise_name` value the editor will
-        /// post back. `<chapter>` for legacy, `<chapter>/<step_key>`
-        /// for multi-step.
+        /// Full `submissions.exercise_name` value the editor will post back.
+        /// `<chapter>` for legacy, `<chapter>/<step_key>` for multi-step.
         exercise_key: String,
-        /// Section eyebrow text, e.g. `"Exercise"` or
-        /// `"Exercise 2 of 4"`.
+        /// Section eyebrow text, e.g. `"Exercise"` or `"Exercise 2 of 4"`.
         eyebrow: String,
-        /// Step title shown above the editor. Suppressed by the
-        /// template when `show_title` is false, which happens when an
-        /// immediately-preceding note already shows the same heading.
+        /// Step title shown above the editor. Suppressed by the template when
+        /// `show_title` is false, which happens when an immediately-preceding
+        /// note already shows the same heading.
         title: String,
-        /// Whether the template should render `title` above the editor.
-        /// False whenever a paired note is rendered directly above this
-        /// step (its H2 acts as the section heading instead, avoiding a
-        /// duplicate).
+        /// Whether the template should render `title` above the editor. False
+        /// whenever a paired note is rendered directly above this step (its H2
+        /// acts as the section heading instead, avoiding a duplicate).
         show_title: bool,
         /// Editor starter content (file with `//!` stripped).
         starter_code: String,
-        /// Source of the participant's most recent submission for this
-        /// step, if any. The editor seeds from this when the device has
-        /// no local draft, so submitted solutions follow the session
-        /// token across devices instead of living only in the
-        /// `localStorage` of whichever browser made the submission.
+        /// Source of the participant's most recent submission for this step, if
+        /// any. The editor seeds from this when the device has no local draft,
+        /// so submitted solutions follow the session token across devices
+        /// instead of living only in the `localStorage` of whichever browser
+        /// made the submission.
         submitted_code: Option<String>,
-        /// Whether the most recent submission passed its tests. False
-        /// when there is no submission; independent of aggregate completion.
+        /// Whether the most recent submission passed its tests. False when
+        /// there is no submission; independent of aggregate completion.
         submitted_passed: bool,
         /// True if at least one submission exists for this step.
         attempted: bool,
@@ -505,26 +496,25 @@ pub enum RenderKind {
         perfected: bool,
         /// github.dev URL pointing at the right file in this chapter.
         github_dev_url: String,
-        /// Optional rendered HTML for this step's slice of `hints.md`,
-        /// surfaced as an inline `<details>` immediately under the
-        /// editor section.
+        /// Optional rendered HTML for this step's slice of `hints.md`, surfaced
+        /// as an inline `<details>` immediately under the editor section.
         hints_html: Option<String>,
-        /// Optional reference solution source for this step, surfaced as
-        /// a separate "Reveal the full solution" disclosure below the hints.
+        /// Optional reference solution source for this step, surfaced as a
+        /// separate "Reveal the full solution" disclosure below the hints.
         solution_code: Option<String>,
     },
-    /// A rendered quiz block. The server pre-renders the full HTML
-    /// (one card per question, with prompts and explanations already
-    /// converted from markdown) so the template just splices it in.
-    /// Interaction lives in `static/js/quiz.js`.
+    /// A rendered quiz block. The server pre-renders the full HTML (one card
+    /// per question, with prompts and explanations already converted from
+    /// markdown) so the template just splices it in. Interaction lives in
+    /// `static/js/quiz.js`.
     Quiz { html: String },
 }
 
 /// Scan a directory for `NN_slug/` chapter dirs and parse each one.
 ///
-/// Directories whose name does not match `^\d+_` are skipped. A chapter
-/// may contain numbered code steps, a legacy `main.rs`, prose notes, or a
-/// quiz; malformed chapters are logged and skipped.
+/// Directories whose name does not match `^\d+_` are skipped. A chapter may
+/// contain numbered code steps, a legacy `main.rs`, prose notes, or a quiz;
+/// malformed chapters are logged and skipped.
 pub fn scan_dir(dir: &Path) -> Result<Vec<Exercise>> {
     if !dir.exists() {
         return Err(anyhow!("Examples directory not found: {}", dir.display()));
@@ -544,9 +534,9 @@ pub fn scan_dir(dir: &Path) -> Result<Vec<Exercise>> {
 
     chapter_dirs.sort();
 
-    // Reference solutions live in a sibling `solutions/` tree that mirrors
-    // the `examples/` layout (same chapter dir + filename). Derive it from
-    // the scanned examples dir; if it doesn't exist, steps simply carry no
+    // Reference solutions live in a sibling `solutions/` tree that mirrors the
+    // `examples/` layout (same chapter dir + filename). Derive it from the
+    // scanned examples dir; if it doesn't exist, steps simply carry no
     // solution.
     let solutions_root = dir.with_file_name("solutions");
     let solutions_root = solutions_root.is_dir().then_some(solutions_root);
@@ -562,9 +552,9 @@ pub fn scan_dir(dir: &Path) -> Result<Vec<Exercise>> {
     }
 
     // Assign human-facing chapter numbers as a running ordinal over the
-    // non-bonus chapters (in disk order), so hiding a bonus chapter leaves
-    // no gap. Bonus chapters get `0`, which templates render as "Bonus".
-    // This overrides the provisional `prefix + 1` set in `parse_chapter`.
+    // non-bonus chapters (in disk order), so hiding a bonus chapter leaves no
+    // gap. Bonus chapters get `0`, which templates render as "Bonus". This
+    // overrides the provisional `prefix + 1` set in `parse_chapter`.
     let mut display = 0u8;
     for ex in &mut out {
         if ex.is_bonus() {
@@ -592,13 +582,13 @@ fn parse_chapter(dir: &Path, solutions_root: Option<&Path>) -> Result<Exercise> 
 
     let (prefix, slug) = split_numeric_prefix(&file_stem)
         .ok_or_else(|| anyhow!("directory does not start with NN_: {file_stem}"))?;
-    // Display number is 1-based: directory `00_integers` is "Chapter 1".
-    // See the doc comment on `Exercise::number`.
+    // Display number is 1-based: directory `00_integers` is "Chapter 1". See
+    // the doc comment on `Exercise::number`.
     let number = prefix + 1;
 
-    // Discover sibling step files (`<n>_<slug>.rs`) before deciding the
-    // layout. The presence of any such file flips us into multi-step mode,
-    // even if there's also a `main.rs` (which in that case is generated).
+    // Discover sibling step files (`<n>_<slug>.rs`) before deciding the layout.
+    // The presence of any such file flips us into multi-step mode, even if
+    // there's also a `main.rs` (which in that case is generated).
     let step_files = scan_step_files(dir)?;
     let mut notes = scan_notes(dir)?;
     let hints = notes
@@ -700,9 +690,9 @@ fn parse_chapter(dir: &Path, solutions_root: Option<&Path>) -> Result<Exercise> 
 
 /// Read `quiz.toml` from a chapter directory if present.
 ///
-/// A missing file yields `Ok(None)` (most chapters don't have a quiz).
-/// A malformed file rejects the chapter so a typo cannot silently strip
-/// the quiz from the page; [`scan_dir`] logs the error and skips that chapter.
+/// A missing file yields `Ok(None)` (most chapters don't have a quiz). A
+/// malformed file rejects the chapter so a typo cannot silently strip the quiz
+/// from the page; [`scan_dir`] logs the error and skips that chapter.
 fn load_chapter_quiz(dir: &Path) -> Result<Option<Quiz>> {
     let path = dir.join("quiz.toml");
     let raw = match std::fs::read_to_string(&path) {
@@ -737,9 +727,9 @@ fn load_chapter_quiz(dir: &Path) -> Result<Option<Quiz>> {
 
 /// Read `.chapter.toml` from a chapter directory if present.
 ///
-/// A missing file is not an error; it just yields the default
-/// (empty) directives. A malformed file is logged and ignored so a
-/// typo in one chapter doesn't take down the whole server.
+/// A missing file is not an error; it just yields the default (empty)
+/// directives. A malformed file is logged and ignored so a typo in one chapter
+/// doesn't take down the whole server.
 fn load_chapter_directives(dir: &Path) -> ChapterDirectives {
     let path = dir.join(".chapter.toml");
     let raw = match std::fs::read_to_string(&path) {
@@ -759,15 +749,14 @@ fn load_chapter_directives(dir: &Path) -> ChapterDirectives {
     }
 }
 
-/// Distribute the chapter's `hints.md` over its code steps and rebuild
-/// the chapter-wide leftover block in one pass.
+/// Distribute the chapter's `hints.md` over its code steps and rebuild the
+/// chapter-wide leftover block in one pass.
 ///
-/// Sections whose heading contains a backticked token matching a code
-/// step's slug are attached to that step. For example,
-/// `` ## `quoted_line`, the State Machine `` matches the `quoted_line`
-/// step. Anything that
-/// doesn't match stays in the chapter-wide leftover, which falls back
-/// to the old "all hints in one block at the bottom" behaviour.
+/// Sections whose heading contains a backticked token matching a code step's
+/// slug are attached to that step. For example,
+/// `` ## `quoted_line`, the State Machine `` matches the `quoted_line` step.
+/// Anything that doesn't match stays in the chapter-wide leftover, which falls
+/// back to the old "all hints in one block at the bottom" behaviour.
 ///
 /// On any I/O failure we log and pass through unchanged.
 fn apply_hints(
@@ -811,9 +800,9 @@ fn apply_hints(
         }
     }
 
-    // Rebuild the leftover block from the intro plus any unconsumed
-    // sections. If everything got consumed and the intro is just
-    // whitespace, drop the bottom block entirely.
+    // Rebuild the leftover block from the intro plus any unconsumed sections.
+    // If everything got consumed and the intro is just whitespace, drop the
+    // bottom block entirely.
     let mut leftover = intro.trim_end().to_string();
     for (i, (heading, body)) in sections.iter().enumerate() {
         if consumed[i] {
@@ -852,15 +841,15 @@ fn find_hints_path(chapter_dir: &Path) -> Option<PathBuf> {
         })
 }
 
-/// Split a `hints.md` markdown source into an intro chunk (everything
-/// before the first `## ` heading) and a sequence of `(heading_text,
-/// body)` sections. Heading text is returned verbatim minus the
-/// trailing newline so it can be inspected by [`heading_matches_slug`].
+/// Split a `hints.md` markdown source into an intro chunk (everything before
+/// the first `## ` heading) and a sequence of `(heading_text, body)` sections.
+/// Heading text is returned verbatim minus the trailing newline so it can be
+/// inspected by [`heading_matches_slug`].
 ///
-/// This is a deliberately tiny line-based scan rather than a full
-/// markdown re-parse: the hints files only ever use H2 dividers, and
-/// keeping the splitter dumb means we can hand each section back to
-/// [`render_markdown`] unchanged.
+/// This is a deliberately tiny line-based scan rather than a full markdown
+/// re-parse: the hints files only ever use H2 dividers, and keeping the
+/// splitter dumb means we can hand each section back to [`render_markdown`]
+/// unchanged.
 fn split_hints_markdown(md: &str) -> (String, Vec<(String, String)>) {
     let mut intro = String::new();
     let mut sections: Vec<(String, String)> = Vec::new();
@@ -884,11 +873,10 @@ fn split_hints_markdown(md: &str) -> (String, Vec<(String, String)>) {
     (intro, sections)
 }
 
-/// Match a hints H2 heading against a step slug. The first backticked
-/// token in the heading (if any) is treated as the key, otherwise the
-/// whole heading text is used. This lets authors write descriptive
-/// headings like `` `quoted_line`, the State Machine `` while still
-/// keying off the file slug.
+/// Match a hints H2 heading against a step slug. The first backticked token in
+/// the heading (if any) is treated as the key, otherwise the whole heading text
+/// is used. This lets authors write descriptive headings like
+/// `` `quoted_line`, the State Machine `` while still keying off the file slug.
 fn heading_matches_slug(heading: &str, step_slug: &str) -> bool {
     let key = heading.find('`').map_or_else(
         || heading.trim(),
@@ -903,8 +891,8 @@ fn heading_matches_slug(heading: &str, step_slug: &str) -> bool {
 }
 
 /// Parse a single `.rs` file (`main.rs` or a step file) into a `CodeStep`.
-/// Returns the step plus the title we parsed from any leading `//!`
-/// block (used as a fallback when there is no paired note).
+/// Returns the step plus the title we parsed from any leading `//!` block (used
+/// as a fallback when there is no paired note).
 fn parse_code_file(
     path: &Path,
     order: u8,
@@ -937,8 +925,8 @@ fn parse_code_file(
     ))
 }
 
-/// Collapse trailing whitespace-only lines down to a single newline so
-/// the editor doesn't show empty padding below short step files.
+/// Collapse trailing whitespace-only lines down to a single newline so the
+/// editor doesn't show empty padding below short step files.
 fn trim_trailing_blank_lines(s: &str) -> String {
     let trimmed_end = s.trim_end_matches(['\n', '\r', ' ', '\t']);
     let mut out = String::with_capacity(trimmed_end.len() + 1);
@@ -950,8 +938,8 @@ fn trim_trailing_blank_lines(s: &str) -> String {
 /// Discover `<n>_<slug>.rs` step files in a chapter dir.
 ///
 /// `main.rs` is excluded: in multi-step chapters it's an auto-generated
-/// aggregator (`build.rs`), and in single-step chapters it's the only
-/// file and is handled separately by [`parse_chapter`].
+/// aggregator (`build.rs`), and in single-step chapters it's the only file and
+/// is handled separately by [`parse_chapter`].
 fn scan_step_files(chapter_dir: &Path) -> Result<Vec<(u8, PathBuf, String)>> {
     let mut out: Vec<(u8, PathBuf, String)> = std::fs::read_dir(chapter_dir)
         .with_context(|| format!("reading {}", chapter_dir.display()))?
@@ -969,10 +957,10 @@ fn scan_step_files(chapter_dir: &Path) -> Result<Vec<(u8, PathBuf, String)>> {
     Ok(out)
 }
 
-/// Find `<n>_<slug>.md` notes in a chapter dir and parse each into a
-/// `Note`. Parsed notes are ordered by their numeric prefix, with the slug
-/// used as a deterministic tie-breaker. Multi-step chapters later interleave
-/// parsed notes and code by their numeric order.
+/// Find `<n>_<slug>.md` notes in a chapter dir and parse each into a `Note`.
+/// Parsed notes are ordered by their numeric prefix, with the slug used as a
+/// deterministic tie-breaker. Multi-step chapters later interleave parsed notes
+/// and code by their numeric order.
 fn scan_notes(chapter_dir: &Path) -> Result<Vec<Note>> {
     let mut paths: Vec<PathBuf> = std::fs::read_dir(chapter_dir)
         .with_context(|| format!("reading {}", chapter_dir.display()))?
@@ -1013,10 +1001,10 @@ fn parse_note(path: &Path) -> Result<Note> {
 
     let md =
         std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
-    // The leading H1 is consumed as the note's `title`; the rendered
-    // HTML body excludes it. Chapter pages render the title separately
-    // (as the chapter heading for the first note, or as a section
-    // heading for subsequent notes) so the H1 doesn't appear twice.
+    // The leading H1 is consumed as the note's `title`; the rendered HTML body
+    // excludes it. Chapter pages render the title separately (as the chapter
+    // heading for the first note, or as a section heading for subsequent notes)
+    // so the H1 doesn't appear twice.
     let (title_opt, body_md) = split_title(&md);
     let title = title_opt.unwrap_or_else(|| slug.clone());
     let html = render_markdown(&body_md);
@@ -1029,8 +1017,8 @@ fn parse_note(path: &Path) -> Result<Note> {
     })
 }
 
-/// Drop the leading run of inner doc-comment lines (`//!` or `/*! */`) plus
-/// any blank lines that follow, leaving the rest of the source intact.
+/// Drop the leading run of inner doc-comment lines (`//!` or `/*! */`) plus any
+/// blank lines that follow, leaving the rest of the source intact.
 fn strip_inner_doc(source: &str) -> String {
     let mut out: Vec<&str> = Vec::with_capacity(source.lines().count());
     let mut header = true;
@@ -1075,8 +1063,8 @@ fn split_numeric_prefix(stem: &str) -> Option<(u8, String)> {
     Some((n, rest.to_string()))
 }
 
-/// Use `syn` to extract the file's inner doc attributes (`//!` and
-/// `/*! */`) joined into a single Markdown string.
+/// Use `syn` to extract the file's inner doc attributes (`//!` and `/*! */`)
+/// joined into a single Markdown string.
 fn extract_inner_doc(source: &str) -> Result<String> {
     let file: syn::File = syn::parse_file(source).context("parsing file with syn")?;
 
@@ -1091,8 +1079,8 @@ fn extract_inner_doc(source: &str) -> Result<String> {
                 ..
             }) = &nv.value
         {
-            // syn gives us the doc string with the leading space stripped
-            // by rustc, but keep it verbatim. Markdown handles whitespace.
+            // syn gives us the doc string with the leading space stripped by
+            // rustc, but keep it verbatim. Markdown handles whitespace.
             let raw = s.value();
             // Each `//! foo` becomes a single line; strip a single leading
             // space if present (matches the convention in our examples).
@@ -1104,8 +1092,8 @@ fn extract_inner_doc(source: &str) -> Result<String> {
     Ok(lines.join("\n"))
 }
 
-/// If the first non-empty line is a `# Heading`, peel it off as the title
-/// and return the rest as the body Markdown.
+/// If the first non-empty line is a `# Heading`, peel it off as the title and
+/// return the rest as the body Markdown.
 fn split_title(md: &str) -> (Option<String>, String) {
     let mut lines = md.lines();
     let mut title = None;
@@ -1136,14 +1124,15 @@ pub fn render_markdown(md: &str) -> String {
     let mut opts = Options::empty();
     opts.insert(Options::ENABLE_TABLES);
     // GFM unlocks GitHub-style alerts: `> [!NOTE]`, `> [!TIP]`, etc.
-    // pulldown-cmark recognizes them as `BlockQuote(Some(BlockQuoteKind))`,
-    // and the default HTML renderer wraps them in `<blockquote class="markdown-alert-note">`.
+    // pulldown-cmark recognizes them as `BlockQuote(Some(BlockQuoteKind))`, and
+    // the default HTML renderer wraps them in
+    // `<blockquote class="markdown-alert-note">`.
     opts.insert(Options::ENABLE_GFM);
 
     // Rewrite outbound links so they open in a new tab. Anything with an
-    // `http(s)://` scheme is treated as external; relative links and
-    // intra-doc anchors are left alone. CommonMark forbids nested links,
-    // so a single bool is enough state to pair Start ↔ End.
+    // `http(s)://` scheme is treated as external; relative links and intra-doc
+    // anchors are left alone. CommonMark forbids nested links, so a single bool
+    // is enough state to pair Start ↔ End.
     let mut in_external = false;
     let parser = Parser::new_ext(md, opts).map(move |ev| match ev {
         Event::Start(Tag::Link {
@@ -1173,10 +1162,10 @@ pub fn render_markdown(md: &str) -> String {
     wrap_alert_sections(&out)
 }
 
-/// Headings whose body (the immediately-following `<ul>...</ul>`) should
-/// be wrapped in a NOTE-style blockquote. The H2 stays inside the
-/// blockquote and acts as the label, so these sections render with the same
-/// alert chrome that pulldown-cmark emits for `> [!NOTE]`.
+/// Headings whose body (the immediately-following `<ul>...</ul>`) should be
+/// wrapped in a NOTE-style blockquote. The H2 stays inside the blockquote and
+/// acts as the label, so these sections render with the same alert chrome that
+/// pulldown-cmark emits for `> [!NOTE]`.
 const ALERT_HEADINGS: &[&str] = &[
     "<h2>Useful from the Standard Library</h2>",
     "<h2>Useful Resources</h2>",
@@ -1184,10 +1173,10 @@ const ALERT_HEADINGS: &[&str] = &[
 ];
 
 /// Wrap every recognized H2-plus-following-`<ul>` block in the same
-/// `<blockquote class="markdown-alert-note">` markup that
-/// pulldown-cmark emits for `> [!NOTE]`. The H2 stays inside the
-/// blockquote and acts as the label (the alert CSS hides its
-/// auto-injected "Note" cap when an H2 is the first child).
+/// `<blockquote class="markdown-alert-note">` markup that pulldown-cmark emits
+/// for `> [!NOTE]`. The H2 stays inside the blockquote and acts as the label
+/// (the alert CSS hides its auto-injected "Note" cap when an H2 is the first
+/// child).
 fn wrap_alert_sections(html: &str) -> String {
     let mut current = html.to_string();
     for heading in ALERT_HEADINGS {
@@ -1200,10 +1189,10 @@ fn wrap_one_alert_section(html: &str, heading: &str) -> String {
     let Some(h_start) = html.find(heading) else {
         return html.to_string();
     };
-    // Find the matching closing `</ul>` after the heading. The list may
-    // contain nested HTML, but pulldown-cmark doesn't emit nested `<ul>`
-    // here (each item is its own `<li>` with no sub-list), so the next
-    // `</ul>` is the one we want.
+    // Find the matching closing `</ul>` after the heading. The list may contain
+    // nested HTML, but pulldown-cmark doesn't emit nested `<ul>` here (each
+    // item is its own `<li>` with no sub-list), so the next `</ul>` is the one
+    // we want.
     let after_h = h_start + heading.len();
     let rest = &html[after_h..];
     // Skip whitespace, expect `<ul>`.
@@ -1367,7 +1356,8 @@ mod tests {
                 .into_iter()
                 .find(|code| code.slug == step_slug)
                 .unwrap();
-            // Paired notes supply the visible heading; the code title is suppressed.
+            // Paired notes supply the visible heading; the code title is
+            // suppressed.
             let note = chapter
                 .steps
                 .iter()
@@ -1535,8 +1525,8 @@ mod tests {
 
     #[test]
     fn discovers_chapter_notes() {
-        // The first chapter (`00_integers`) ships with an introductory
-        // note (`1_intro.md`). Verify the parser surfaces it.
+        // The first chapter (`00_integers`) ships with an introductory note
+        // (`1_intro.md`). Verify the parser surfaces it.
         let exercises =
             scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
         let chapter = exercises
@@ -1591,8 +1581,8 @@ mod tests {
             .iter()
             .find(|e| e.slug == "rust_fundamentals_quiz")
             .expect("expected 24_rust_fundamentals_quiz to be present");
-        // No code editors on the quiz chapter; it's intro prose plus
-        // an interactive quiz block, nothing to submit.
+        // No code editors on the quiz chapter; it's intro prose plus an
+        // interactive quiz block, nothing to submit.
         assert!(
             chapter.code_steps().is_empty(),
             "quiz chapter should not expose any code steps"
@@ -1731,9 +1721,9 @@ mod tests {
 
     #[test]
     fn renamed_chapters_distribute_hints_per_step() {
-        // 17_iterators and 22_csv_parser use hints H2 headings keyed by
-        // the file slug (e.g. `` ## `quoted_line`, the State Machine ``).
-        // Every code step should receive its slice.
+        // 17_iterators and 22_csv_parser use hints H2 headings keyed by the
+        // file slug (e.g. `` ## `quoted_line`, the State Machine ``). Every
+        // code step should receive its slice.
         let exercises =
             scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
         for slug in ["iterators", "csv_parser"] {

@@ -1,16 +1,23 @@
 # Wrapping Up Enums and Pattern Matching
 
-You defined an enum with a fixed set of variants, mapped each variant to a value with a `match`, and used `matches!` to ask a yes/no question about a single variant.
+You defined an enum with a fixed set of variants, mapped each variant to a value
+with a `match`, and used `matches!` to ask a yes/no question about a single
+variant.
 
 ## What We Learned
 
-- An `enum` is a "this or that or that" type.
-  Each value is exactly one of its variants, and the compiler tracks which one.
-- `match` checks a value against patterns top to bottom and runs the first arm that fits.
-  Every arm is `pattern => expression`, and the whole `match` is itself an expression that produces a value.
-- `match` is exhaustive: leave a variant unhandled and the compiler refuses to build.
-  Add a new variant later and every `match` that needs updating tells you exactly where.
-- `|` lets multiple patterns share an arm (`200 | 201 | 204 => ...`), and `_` is the catch-all when you want to ignore the rest.
-- Derive `Debug` when you want `{:?}` printing and `PartialEq` when you want `==` comparisons.
-  Deriving `Clone, Copy` lets callers reuse a value after passing it by value; `Copy` requires every field to be `Copy` too.
-- For a single-variant check, `matches!(value, Variant)` is the compact form; `value == Variant` works equally well when `PartialEq` is derived.
+- An `enum` is a "this or that or that" type. Each value is exactly one of its
+  variants, and the compiler tracks which one.
+- `match` checks a value against patterns top to bottom and runs the first arm
+  that fits. Every arm is `pattern => expression`, and the whole `match` is
+  itself an expression that produces a value.
+- `match` is exhaustive: leave a variant unhandled and the compiler refuses to
+  build. Add a new variant later and every `match` that needs updating tells you
+  exactly where.
+- `|` lets multiple patterns share an arm (`200 | 201 | 204 => ...`), and `_` is
+  the catch-all when you want to ignore the rest.
+- Derive `Debug` when you want `{:?}` printing and `PartialEq` when you want
+  `==` comparisons. Deriving `Clone, Copy` lets callers reuse a value after
+  passing it by value; `Copy` requires every field to be `Copy` too.
+- For a single-variant check, `matches!(value, Variant)` is the compact form;
+  `value == Variant` works equally well when `PartialEq` is derived.

@@ -15,8 +15,9 @@ max_cache_age = "2d"
 # Treat rate-limited responses as success instead of failing the build.
 accept = ["200..=299", "429"]
 
-# Bare chapter slugs in examples prose are sibling /exercise/[participant/] routes.
-# Validate their chapter introductions; leave ordinary file links unchanged.
+# Bare chapter slugs in examples prose are sibling /exercise/[participant/]
+# routes. Validate their chapter introductions; leave ordinary file links
+# unchanged.
 remap = ['file://(.*/examples)/[^/]+/([0-9]+_[a-z0-9_]+)$ file://$1/$2/1_intro.md']
 
 # Local server routes and dev URLs that can't be resolved as static files.

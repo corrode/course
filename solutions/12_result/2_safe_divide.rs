@@ -3,11 +3,11 @@
 /// Returns `Ok(quotient)` when the division is well-defined, or
 /// `Err("cannot divide by zero")` when `divisor` is `0.0`.
 ///
-/// Start here. The simplest way to produce a `Result`: an `if` checks
-/// the failure case, the `else` branch returns `Ok(...)`.
+/// Start here. The simplest way to produce a `Result`: an `if` checks the
+/// failure case, the `else` branch returns `Ok(...)`.
 ///
-/// The signature is the interesting part: `&'static str` for the error
-/// is the simplest possible error type and is fine while you're learning.
+/// The signature is the interesting part: `&'static str` for the error is the
+/// simplest possible error type and is fine while you're learning.
 fn safe_divide(dividend: f64, divisor: f64) -> Result<f64, &'static str> {
     if divisor == 0.0 {
         Err("cannot divide by zero")

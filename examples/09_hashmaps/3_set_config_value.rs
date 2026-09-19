@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-/// Updates a configuration value.
-/// Inserts or updates the key-value pair.
+/// Updates a configuration value. Inserts or updates the key-value pair.
 ///
-/// One method on `HashMap` covers both cases; it doesn't care whether the key was already there.
+/// One method on `HashMap` covers both cases; it doesn't care whether the key
+/// was already there.
 fn set_config_value(config: &mut HashMap<String, String>, key: &str, value: &str) {
     todo!()
 }

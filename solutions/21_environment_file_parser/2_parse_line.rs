@@ -5,10 +5,10 @@ pub enum ParseError {
     EmptyValue,
 }
 
-/// Parses a single line of an .env file.
-/// Format: `KEY=value`. Surrounding whitespace on either side of `=` is
-/// trimmed (so `KEY = value` is accepted and yields `("KEY", "value")`).
-/// Returns `Ok((key, value))` or `Err(ParseError)`.
+/// Parses a single line of an .env file. Format: `KEY=value`. Surrounding
+/// whitespace on either side of `=` is trimmed (so `KEY = value` is accepted
+/// and yields `("KEY", "value")`). Returns `Ok((key, value))` or
+/// `Err(ParseError)`.
 fn parse_env_line(line: &str) -> Result<(String, String), ParseError> {
     let (key, value) = line.split_once('=').ok_or(ParseError::InvalidFormat)?;
     let key = key.trim();

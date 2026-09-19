@@ -8,60 +8,120 @@
 # choice.
 
 [[questions]]
-prompt = "What happens to `s` when you call `consume(s)` with `fn consume(s: String)`?"
+prompt = """
+What happens to `s` when you call `consume(s)` with `fn consume(s: String)`?"""
 hint = "Think about ownership rules."
-answers = [
-  { text = "The `String` is copied, and both caller and function own it.", correct = false, explanation = """
-`String` does not implement `Copy`. This call moves it; use `s.clone()` if you need a separate copy of its bytes.""" },
-  { text = "The `String`'s ownership moves into the function, and it's no longer valid in the caller.", correct = true, explanation = """
-Passing a `String` by value transfers ownership; you can't use it in the caller again unless the function returns it.""" },
-  { text = "The function borrows the `String`, and ownership stays with the caller.", correct = false, explanation = """
+
+[[questions.answers]]
+text = "The `String` is copied, and both caller and function own it."
+correct = false
+explanation = """
+`String` does not implement `Copy`. This call moves it; use `s.clone()` if you \
+need a separate copy of its bytes."""
+
+[[questions.answers]]
+text = """
+The `String`'s ownership moves into the function, and it's no longer valid in \
+the caller."""
+correct = true
+explanation = """
+Passing a `String` by value transfers ownership; you can't use it in the \
+caller again unless the function returns it."""
+
+[[questions.answers]]
+text = "The function borrows the `String`, and ownership stays with the caller."
+correct = false
+explanation = """
 Borrowing requires an explicit `&String` (or `&str`).
-Bare `String` means a move.""" },
-  { text = "The function automatically gets a reference to the `String`.", correct = false, explanation = """
-This function takes a `String` by value. Method calls can automatically borrow their receiver, but this is an ordinary function call.""" },
-]
+Bare `String` means a move."""
+
+[[questions.answers]]
+text = "The function automatically gets a reference to the `String`."
+correct = false
+explanation = """
+This function takes a `String` by value. Method calls can automatically borrow \
+their receiver, but this is an ordinary function call."""
 
 [[questions]]
 prompt = "Which of these creates a *mutable* variable in Rust?"
-answers = [
-  { text = "`const x = 5;`", correct = false, explanation = """
-`const` is for compile-time constants and is never mutable.""" },
-  { text = "`let x = 5;`", correct = false, explanation = """
-Bindings are immutable by default; this one can't be reassigned.""" },
-  { text = "`let mut x = 5;`", correct = true, explanation = """
-The `mut` keyword opts a binding into mutability.""" },
-  { text = "`var x = 5;`", correct = false, explanation = """
-Rust has no `var` keyword.""" },
-]
+
+[[questions.answers]]
+text = "`const x = 5;`"
+correct = false
+explanation = "`const` is for compile-time constants and is never mutable."
+
+[[questions.answers]]
+text = "`let x = 5;`"
+correct = false
+explanation = "Bindings are immutable by default; this one can't be reassigned."
+
+[[questions.answers]]
+text = "`let mut x = 5;`"
+correct = true
+explanation = "The `mut` keyword opts a binding into mutability."
+
+[[questions.answers]]
+text = "`var x = 5;`"
+correct = false
+explanation = "Rust has no `var` keyword."
 
 [[questions]]
 prompt = "What is `Option<T>` for?"
 hint = "Think about what other languages reach for `null` to express."
-answers = [
-  { text = "Handling errors during execution.", correct = false, explanation = """
+
+[[questions.answers]]
+text = "Handling errors during execution."
+correct = false
+explanation = """
 That's `Result<T, E>`.
-`Option` only models absence, not failure.""" },
-  { text = "Representing a value that may be absent.", correct = true, explanation = """
-You use `Some(value)` when the value is present and `None` when it isn't, without needing null.""" },
-  { text = "Creating optional function parameters.", correct = false, explanation = """
-Rust functions don't have optional parameters; callers always pass every argument.""" },
-  { text = "Converting between numeric types.", correct = false, explanation = """
-Numeric conversion is done with `as`, `From`/`Into`, or `try_from`.""" },
-]
+`Option` only models absence, not failure."""
+
+[[questions.answers]]
+text = "Representing a value that may be absent."
+correct = true
+explanation = """
+You use `Some(value)` when the value is present and `None` when it isn't, \
+without needing null."""
+
+[[questions.answers]]
+text = "Creating optional function parameters."
+correct = false
+explanation = """
+Rust functions don't have optional parameters; callers always pass every \
+argument."""
+
+[[questions.answers]]
+text = "Converting between numeric types."
+correct = false
+explanation = """
+Numeric conversion is done with `as`, `From`/`Into`, or `try_from`."""
 
 [[questions]]
-prompt = "Given `let value = String::from(\"hello\");`, how do you borrow this `String` immutably?"
-answers = [
-  { text = "`&mut value`", correct = false, explanation = """
-That's a *mutable* borrow.""" },
-  { text = "`&value`", correct = true, explanation = """
-The `&` operator produces a shared, immutable reference.""" },
-  { text = "`*value`", correct = false, explanation = """
-`*` *dereferences* a reference; it doesn't create one.""" },
-  { text = "`value.clone()`", correct = false, explanation = """
-`String::clone()` copies the string bytes into another owned `String`. This is specific to `String`; cloning a shared pointer can keep sharing its data.""" },
-]
+prompt = """
+Given `let value = String::from(\"hello\");`, how do you borrow this `String` \
+immutably?"""
+
+[[questions.answers]]
+text = "`&mut value`"
+correct = false
+explanation = "That's a *mutable* borrow."
+
+[[questions.answers]]
+text = "`&value`"
+correct = true
+explanation = "The `&` operator produces a shared, immutable reference."
+
+[[questions.answers]]
+text = "`*value`"
+correct = false
+explanation = "`*` *dereferences* a reference; it doesn't create one."
+
+[[questions.answers]]
+text = "`value.clone()`"
+correct = false
+explanation = """
+`String::clone()` copies the string bytes into another owned `String`. This is \
+specific to `String`; cloning a shared pointer can keep sharing its data."""
 
 [[questions]]
 prompt = """
@@ -75,123 +135,241 @@ let name = String::from("Ada");
 // Can we use name here?
 ```
 """
-answers = [
-  { text = "`moved` drops the string; `name` can no longer be used.", correct = true, explanation = """
-The assignment moves this `String` into `moved`. At the end of the inner scope, `moved` drops it and frees its buffer.""" },
-  { text = "`name` becomes usable again when `moved` goes out of scope.", correct = false, explanation = """
-A move does not temporarily lend ownership. Use a borrow (`let borrowed = &name;`) if you want `name` to keep owning the string.""" },
-  { text = "Both bindings own separate copies of the string.", correct = false, explanation = """
-Assignment does not clone a `String`. `let copied = name.clone();` would create a separate string.""" },
-  { text = "Rust keeps the string alive because `name` is still in scope.", correct = false, explanation = """
-`name` has been moved from. Shared ownership is possible with types such as `Rc`, a reference-counted pointer, but this code uses a plain `String`.""" },
-]
+
+[[questions.answers]]
+text = "`moved` drops the string; `name` can no longer be used."
+correct = true
+explanation = """
+The assignment moves this `String` into `moved`. At the end of the inner \
+scope, `moved` drops it and frees its buffer."""
+
+[[questions.answers]]
+text = "`name` becomes usable again when `moved` goes out of scope."
+correct = false
+explanation = """
+A move does not temporarily lend ownership. Use a borrow \
+(`let borrowed = &name;`) if you want `name` to keep owning the string."""
+
+[[questions.answers]]
+text = "Both bindings own separate copies of the string."
+correct = false
+explanation = """
+Assignment does not clone a `String`. `let copied = name.clone();` would \
+create a separate string."""
+
+[[questions.answers]]
+text = "Rust keeps the string alive because `name` is still in scope."
+correct = false
+explanation = """
+`name` has been moved from. Shared ownership is possible with types such as \
+`Rc`, a reference-counted pointer, but this code uses a plain `String`."""
 
 [[questions]]
 prompt = "What's the difference between `String` and `&str`?"
-answers = [
-  { text = "`String` is mutable; `&str` is always immutable.", correct = false, explanation = """
-You can make a `String` mutable with `let mut`, but it can also be immutable; the distinction here is ownership.""" },
-  { text = "`String` is heap-allocated and owned; `&str` is a borrowed string slice.", correct = true, explanation = """
-A `String` owns its bytes; an `&str` borrows bytes from somewhere else, such as a `String` or a literal.""" },
-  { text = "`String` is ASCII-only; `&str` supports Unicode.", correct = false, explanation = """
-Both are UTF-8 all the way down.""" },
-  { text = "`String` is a compile-time construct; `&str` is runtime-only.", correct = false, explanation = """
+
+[[questions.answers]]
+text = "`String` is mutable; `&str` is always immutable."
+correct = false
+explanation = """
+You can make a `String` mutable with `let mut`, but it can also be immutable; \
+the distinction here is ownership."""
+
+[[questions.answers]]
+text = """
+`String` is heap-allocated and owned; `&str` is a borrowed string slice."""
+correct = true
+explanation = """
+A `String` owns its bytes; an `&str` borrows bytes from somewhere else, such \
+as a `String` or a literal."""
+
+[[questions.answers]]
+text = "`String` is ASCII-only; `&str` supports Unicode."
+correct = false
+explanation = "Both are UTF-8 all the way down."
+
+[[questions.answers]]
+text = "`String` is a compile-time construct; `&str` is runtime-only."
+correct = false
+explanation = """
 Both exist at runtime.
-String *literals* (`\"...\"`) are baked into the binary as `&'static str`, but `String` values are very much runtime.""" },
-]
+String *literals* (`\"...\"`) are baked into the binary as `&'static str`, but \
+`String` values are very much runtime."""
 
 [[questions]]
 prompt = "What does `#[derive(Debug)]` do?"
-answers = [
-  { text = "Prints debug information at runtime.", correct = false, explanation = """
-It doesn't print anything on its own; it just makes printing *possible*.""" },
-  { text = "Auto-implements the `Debug` trait for the type.", correct = true, explanation = """
-Once `Debug` is implemented, you can format the value with `{:?}` or `{:#?}`.""" },
-  { text = "Enables extra compiler warnings for the type.", correct = false, explanation = """
-Lints are configured separately (e.g. `#[warn(...)]`, `#[deny(...)]`).""" },
-  { text = "Inserts a debugger breakpoint at the type's definition.", correct = false, explanation = """
-Breakpoints belong in the debugger, not the source.""" },
-]
+
+[[questions.answers]]
+text = "Prints debug information at runtime."
+correct = false
+explanation = """
+It doesn't print anything on its own; it just makes printing *possible*."""
+
+[[questions.answers]]
+text = "Auto-implements the `Debug` trait for the type."
+correct = true
+explanation = """
+Once `Debug` is implemented, you can format the value with `{:?}` or `{:#?}`."""
+
+[[questions.answers]]
+text = "Enables extra compiler warnings for the type."
+correct = false
+explanation = """
+Lints are configured separately (e.g. `#[warn(...)]`, `#[deny(...)]`)."""
+
+[[questions.answers]]
+text = "Inserts a debugger breakpoint at the type's definition."
+correct = false
+explanation = "Breakpoints belong in the debugger, not the source."
 
 [[questions]]
 prompt = "What does the `?` operator do on a `Result<T, E>`?"
 hint = "It collapses a very common `match` pattern."
-answers = [
-  { text = "Checks whether the value is null.", correct = false, explanation = """
+
+[[questions.answers]]
+text = "Checks whether the value is null."
+correct = false
+explanation = """
 Rust has no null.
-`?` only operates on `Result` (and `Option`).""" },
-  { text = "Unwraps the `Ok` value, or returns the `Err` from the surrounding function.", correct = true, explanation = """
-You can read it as `match res { Ok(v) => v, Err(e) => return Err(e.into()) }`.""" },
-  { text = "Converts the `Result` into an `Option`.", correct = false, explanation = """
-There are methods for that (`.ok()`, `.err()`), but `?` is not one of them.""" },
-  { text = "Throws an exception if the `Result` is `Err`.", correct = false, explanation = """
+`?` only operates on `Result` (and `Option`)."""
+
+[[questions.answers]]
+text = """
+Unwraps the `Ok` value, or returns the `Err` from the surrounding function."""
+correct = true
+explanation = """
+You can read it as \
+`match res { Ok(v) => v, Err(e) => return Err(e.into()) }`."""
+
+[[questions.answers]]
+text = "Converts the `Result` into an `Option`."
+correct = false
+explanation = """
+There are methods for that (`.ok()`, `.err()`), but `?` is not one of them."""
+
+[[questions.answers]]
+text = "Throws an exception if the `Result` is `Err`."
+correct = false
+explanation = """
 Rust doesn't have exceptions.
-`?` returns early, it doesn't unwind.""" },
-]
+`?` returns early, it doesn't unwind."""
 
 [[questions]]
 prompt = "Which of these creates an empty `Vec`?"
-answers = [
-  { text = "`let v: Vec<i32> = vec![];`", correct = true, explanation = """
-The `vec!` macro with no elements gives you an empty vector.""" },
-  { text = "`let v = Vector::new();`", correct = false, explanation = """
-The type is `Vec`, not `Vector`.""" },
-  { text = "`let v = new Vec<i32>();`", correct = false, explanation = """
+
+[[questions.answers]]
+text = "`let v: Vec<i32> = vec![];`"
+correct = true
+explanation = "The `vec!` macro with no elements gives you an empty vector."
+
+[[questions.answers]]
+text = "`let v = Vector::new();`"
+correct = false
+explanation = "The type is `Vec`, not `Vector`."
+
+[[questions.answers]]
+text = "`let v = new Vec<i32>();`"
+correct = false
+explanation = """
 Rust has no `new` keyword.
-Constructors are just associated functions: `Vec::new()`.""" },
-  { text = "`let v = [];`", correct = false, explanation = """
-That's an *array* literal, not a vector.""" },
-]
+Constructors are just associated functions: `Vec::new()`."""
+
+[[questions.answers]]
+text = "`let v = [];`"
+correct = false
+explanation = "That's an *array* literal, not a vector."
 
 [[questions]]
 prompt = "What happens if you call `HashMap::get` for a key that doesn't exist?"
 hint = "Rust prefers types over panics for expected absence."
-answers = [
-  { text = "The program panics with \"key not found\".", correct = false, explanation = """
+
+[[questions.answers]]
+text = "The program panics with \"key not found\"."
+correct = false
+explanation = """
 `get` never panics.
-Indexing (`map[\"key\"]`) does, but `get` returns an `Option`.""" },
-  { text = "A default value is returned based on the value type.", correct = false, explanation = """
+Indexing (`map[\"key\"]`) does, but `get` returns an `Option`."""
+
+[[questions.answers]]
+text = "A default value is returned based on the value type."
+correct = false
+explanation = """
 There's no implicit default.
-(`entry().or_default()` is opt-in.)""" },
-  { text = "`get` returns `None`.", correct = true, explanation = """
-The return type is `Option<&V>`, so you can handle a missing key through the API.""" },
-  { text = "A new entry with a default value is inserted automatically.", correct = false, explanation = """
-Insertion-on-miss is opt-in via the `entry` API, not the default behaviour of `get`.""" },
-]
+(`entry().or_default()` is opt-in.)"""
+
+[[questions.answers]]
+text = "`get` returns `None`."
+correct = true
+explanation = """
+The return type is `Option<&V>`, so you can handle a missing key through the \
+API."""
+
+[[questions.answers]]
+text = "A new entry with a default value is inserted automatically."
+correct = false
+explanation = """
+Insertion-on-miss is opt-in via the `entry` API, not the default behaviour of \
+`get`."""
 
 [[questions]]
 prompt = "How do you create an owned `String` from a string literal?"
-answers = [
-  { text = "`let s = \"hello\".to_owned();`", correct = true, explanation = """
+
+[[questions.answers]]
+text = "`let s = \"hello\".to_owned();`"
+correct = true
+explanation = """
 `to_owned()` clones the `&str` into a heap-allocated `String`.
-`String::from(\"hello\")` and `\"hello\".to_string()` also work.""" },
-  { text = "`let s = new String(\"hello\");`", correct = false, explanation = """
-There is no `new` keyword in Rust.""" },
-  { text = "`let s = String(\"hello\");`", correct = false, explanation = """
+`String::from(\"hello\")` and `\"hello\".to_string()` also work."""
+
+[[questions.answers]]
+text = "`let s = new String(\"hello\");`"
+correct = false
+explanation = "There is no `new` keyword in Rust."
+
+[[questions.answers]]
+text = "`let s = String(\"hello\");`"
+correct = false
+explanation = """
 Type names aren't callable like that.
-Use `String::from(\"hello\")`.""" },
-  { text = "`let s = \"hello\".to_String();`", correct = false, explanation = """
-The method is lower-case `to_string()`, from the `ToString` trait.""" },
-]
+Use `String::from(\"hello\")`."""
+
+[[questions.answers]]
+text = "`let s = \"hello\".to_String();`"
+correct = false
+explanation = """
+The method is lower-case `to_string()`, from the `ToString` trait."""
 
 [[questions]]
 prompt = "Which of these is true of Rust enums?"
 hint = "Rust enums are closer to algebraic data types than to C-style enums."
-answers = [
-  { text = "They can only hold numeric values.", correct = false, explanation = """
-C-style enums work that way; Rust enums are much richer.""" },
-  { text = "Each variant can carry data of a different type.", correct = true, explanation = """
+
+[[questions.answers]]
+text = "They can only hold numeric values."
+correct = false
+explanation = "C-style enums work that way; Rust enums are much richer."
+
+[[questions.answers]]
+text = "Each variant can carry data of a different type."
+correct = true
+explanation = """
 That lets you model states that need different data.
-`Option`, `Result`, and many parser ASTs are enums.""" },
-  { text = "They must implement an `Enum` trait.", correct = false, explanation = """
-There is no `Enum` trait.""" },
-  { text = "They can only be compared with `==`.", correct = false, explanation = """
-Usually you reach for `match` instead, and `==` only works if the enum derives `PartialEq`.""" },
-]
+`Option`, `Result`, and many parser ASTs are enums."""
+
+[[questions.answers]]
+text = "They must implement an `Enum` trait."
+correct = false
+explanation = "There is no `Enum` trait."
+
+[[questions.answers]]
+text = "They can only be compared with `==`."
+correct = false
+explanation = """
+Usually you reach for `match` instead, and `==` only works if the enum derives \
+`PartialEq`."""
 
 [[questions]]
 prompt = """
-A named lifetime ties the returned borrow to the input borrows; it does not keep their owners alive.
+A named lifetime ties the returned borrow to the input borrows; it does not \
+keep their owners alive.
 What does the lifetime in this signature say?
 
 ```rust
@@ -199,16 +377,33 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str
 ```
 """
 hint = "`'a` is the *shorter* of `x`'s and `y`'s lifetimes."
-answers = [
-  { text = "Both inputs must outlive the function call.", correct = false, explanation = """
-That's true of every reference parameter; it's not what `'a` adds.""" },
-  { text = "The return value lives strictly *less* than the shorter input.", correct = false, explanation = """
-Not quite: the returned reference can be valid for that whole window, so the bound is \"no longer than\" (it may be equal), not \"strictly less than\".""" },
-  { text = "The return value can't outlive the shorter of the two inputs.", correct = true, explanation = """
-`'a` is the intersection of the two input lifetimes, so you can't use the returned reference after either input is dropped.""" },
-  { text = "The two inputs must have identical lifetimes.", correct = false, explanation = """
-They don't; the compiler can use the shorter lifetime for `'a` because a longer-lived reference is valid for that shorter borrow too.""" },
-]
+
+[[questions.answers]]
+text = "Both inputs must outlive the function call."
+correct = false
+explanation = """
+That's true of every reference parameter; it's not what `'a` adds."""
+
+[[questions.answers]]
+text = "The return value lives strictly *less* than the shorter input."
+correct = false
+explanation = """
+Not quite: the returned reference can be valid for that whole window, so the \
+bound is \"no longer than\" (it may be equal), not \"strictly less than\"."""
+
+[[questions.answers]]
+text = "The return value can't outlive the shorter of the two inputs."
+correct = true
+explanation = """
+`'a` is the intersection of the two input lifetimes, so you can't use the \
+returned reference after either input is dropped."""
+
+[[questions.answers]]
+text = "The two inputs must have identical lifetimes."
+correct = false
+explanation = """
+They don't; the compiler can use the shorter lifetime for `'a` because a \
+longer-lived reference is valid for that shorter borrow too."""
 
 [[questions]]
 prompt = """
@@ -223,136 +418,303 @@ let shared = Rc::new(String::from("hello"));
 let shared_copy = Rc::clone(&shared);
 ```
 
-`Rc<T>` is a reference-counted pointer: several handles can own the same allocation.
-Cloning an `Rc` adds a handle, and the contained value is dropped when the last strong handle is dropped.
+`Rc<T>` is a reference-counted pointer: several handles can own the same \
+allocation.
+Cloning an `Rc` adds a handle, and the contained value is dropped when the \
+last strong handle is dropped.
 Which pair still shares the same string allocation?
 """
-answers = [
-  { text = "Only `shared` and `shared_copy`.", correct = true, explanation = """
-`String::clone` copies the bytes into a separate buffer. `Rc::clone` increments a reference count without cloning the contained `String`. `Clone` does not promise a deep copy.""" },
-  { text = "Only `text` and `text_copy`.", correct = false, explanation = """
-These are separate owned strings. Changing a mutable `text_copy` would not change `text`. The two `Rc` handles share instead.""" },
-  { text = "Both pairs.", correct = false, explanation = """
-The `Rc` pair shares its allocation, but cloning this nonempty `String` creates another buffer.""" },
-  { text = "Neither pair: `clone` always copies all the data.", correct = false, explanation = """
-Each type defines its own `Clone` implementation. A new `Rc` handle still points to the same data; a new `String` owns copied bytes.""" },
-]
+
+[[questions.answers]]
+text = "Only `shared` and `shared_copy`."
+correct = true
+explanation = """
+`String::clone` copies the bytes into a separate buffer. `Rc::clone` \
+increments a reference count without cloning the contained `String`. `Clone` \
+does not promise a deep copy."""
+
+[[questions.answers]]
+text = "Only `text` and `text_copy`."
+correct = false
+explanation = """
+These are separate owned strings. Changing a mutable `text_copy` would not \
+change `text`. The two `Rc` handles share instead."""
+
+[[questions.answers]]
+text = "Both pairs."
+correct = false
+explanation = """
+The `Rc` pair shares its allocation, but cloning this nonempty `String` \
+creates another buffer."""
+
+[[questions.answers]]
+text = "Neither pair: `clone` always copies all the data."
+correct = false
+explanation = """
+Each type defines its own `Clone` implementation. A new `Rc` handle still \
+points to the same data; a new `String` owns copied bytes."""
 
 [[questions]]
 prompt = "What is `match` primarily for?"
-answers = [
-  { text = "Matching values against a series of patterns (exhaustively).", correct = true, explanation = """
-The compiler checks that your patterns cover every possible value you're matching on.""" },
-  { text = "Find-and-replace on strings.", correct = false, explanation = """
-String mutation lives on `String`/`str` methods, not in control flow.""" },
-  { text = "Checking whether a value has a specific type at runtime.", correct = false, explanation = """
-Rust is statically typed; you usually express alternatives with an enum and `match` *on the variants*.""" },
-  { text = "Matching regular expressions against strings.", correct = false, explanation = """
+
+[[questions.answers]]
+text = "Matching values against a series of patterns (exhaustively)."
+correct = true
+explanation = """
+The compiler checks that your patterns cover every possible value you're \
+matching on."""
+
+[[questions.answers]]
+text = "Find-and-replace on strings."
+correct = false
+explanation = """
+String mutation lives on `String`/`str` methods, not in control flow."""
+
+[[questions.answers]]
+text = "Checking whether a value has a specific type at runtime."
+correct = false
+explanation = """
+Rust is statically typed; you usually express alternatives with an enum and \
+`match` *on the variants*."""
+
+[[questions.answers]]
+text = "Matching regular expressions against strings."
+correct = false
+explanation = """
 Regex lives in the `regex` crate.
-Not built into the language.""" },
-]
+Not built into the language."""
 
 [[questions]]
 prompt = "In `{ let s = String::from(\"hello\"); }`, when is `s` dropped?"
-hint = "Here, `s` is neither moved nor explicitly dropped before the closing brace."
-answers = [
-  { text = "When the value is explicitly set to null.", correct = false, explanation = """
-Rust has no null.""" },
-  { text = "When the value goes out of scope.", correct = true, explanation = """
-Here `s` still owns the string when its scope ends, so its buffer is freed. Dropping one `Rc` handle would not drop shared data while another strong handle remains.""" },
-  { text = "When `Drop::drop` is called manually.", correct = false, explanation = """
+hint = """
+Here, `s` is neither moved nor explicitly dropped before the closing brace."""
+
+[[questions.answers]]
+text = "When the value is explicitly set to null."
+correct = false
+explanation = "Rust has no null."
+
+[[questions.answers]]
+text = "When the value goes out of scope."
+correct = true
+explanation = """
+Here `s` still owns the string when its scope ends, so its buffer is freed. \
+Dropping one `Rc` handle would not drop shared data while another strong \
+handle remains."""
+
+[[questions.answers]]
+text = "When `Drop::drop` is called manually."
+correct = false
+explanation = """
 You're not allowed to call `Drop::drop` directly.
-Use `std::mem::drop` if you need to drop early.""" },
-  { text = "Only when the standalone `drop()` function is called.", correct = false, explanation = """
-`drop()` is one way to force early dropping, but normal end-of-scope drops happen automatically.""" },
-]
+Use `std::mem::drop` if you need to drop early."""
+
+[[questions.answers]]
+text = "Only when the standalone `drop()` function is called."
+correct = false
+explanation = """
+`drop()` is one way to force early dropping, but normal end-of-scope drops \
+happen automatically."""
 
 [[questions]]
 prompt = "What does `'static` mean in the reference type `&'static str`?"
-answers = [
-  { text = "The value is valid for the entire program's lifetime.", correct = true, explanation = """
-The referenced string can remain valid for the whole program, as a string literal does. This describes a reference; a type bound such as `T: 'static` does not mean an owned value must live forever.""" },
-  { text = "The variable cannot be modified.", correct = false, explanation = """
+
+[[questions.answers]]
+text = "The value is valid for the entire program's lifetime."
+correct = true
+explanation = """
+The referenced string can remain valid for the whole program, as a string \
+literal does. This describes a reference; a type bound such as `T: 'static` \
+does not mean an owned value must live forever."""
+
+[[questions.answers]]
+text = "The variable cannot be modified."
+correct = false
+explanation = """
 `'static` is about *lifetime*, not mutability.
-A `static mut` is `'static` and mutable (but unsafe to touch).""" },
-  { text = "The memory lives on the stack, not the heap.", correct = false, explanation = """
-`'static` says nothing about *where* the memory lives, only *how long*.""" },
-  { text = "The size is known at compile time.", correct = false, explanation = """
-That's the `Sized` trait, which is unrelated.""" },
-]
+A `static mut` is `'static` and mutable (but unsafe to touch)."""
+
+[[questions.answers]]
+text = "The memory lives on the stack, not the heap."
+correct = false
+explanation = """
+`'static` says nothing about *where* the memory lives, only *how long*."""
+
+[[questions.answers]]
+text = "The size is known at compile time."
+correct = false
+explanation = "That's the `Sized` trait, which is unrelated."
 
 [[questions]]
 prompt = "What is a *trait* in Rust?"
-answers = [
-  { text = "A compile-time attribute that controls codegen.", correct = false, explanation = """
-That sounds more like an attribute macro.""" },
-  { text = "A collection of methods that types can implement.", correct = true, explanation = """
-You can think of a trait as an interface with associated types, default methods, and generics built in.""" },
-  { text = "A special enum that supports inheritance.", correct = false, explanation = """
+
+[[questions.answers]]
+text = "A compile-time attribute that controls codegen."
+correct = false
+explanation = "That sounds more like an attribute macro."
+
+[[questions.answers]]
+text = "A collection of methods that types can implement."
+correct = true
+explanation = """
+You can think of a trait as an interface with associated types, default \
+methods, and generics built in."""
+
+[[questions.answers]]
+text = "A special enum that supports inheritance."
+correct = false
+explanation = """
 Rust has no inheritance.
-Traits give you shared behaviour without the inheritance hierarchy.""" },
-  { text = "A marker for memory-managed types.", correct = false, explanation = """
-Marker traits (`Send`, `Sync`, `Copy`, …) are a kind of trait, but traits in general aren't about memory management.""" },
-]
+Traits give you shared behaviour without the inheritance hierarchy."""
+
+[[questions.answers]]
+text = "A marker for memory-managed types."
+correct = false
+explanation = """
+Marker traits (`Send`, `Sync`, `Copy`, …) are a kind of trait, but traits in \
+general aren't about memory management."""
 
 [[questions]]
 prompt = "How do you make an item visible from outside its module?"
-answers = [
-  { text = "Declare it with the `global` keyword.", correct = false, explanation = """
-There is no `global` keyword.""" },
-  { text = "Mark it `pub`.", correct = true, explanation = """
-`pub` makes the item visible across modules; you can also limit its visibility with `pub(crate)` or `pub(super)`.""" },
-  { text = "Mark it `extern`.", correct = false, explanation = """
-`extern` is for FFI bindings, not module visibility.""" },
-  { text = "`static` items are visible everywhere automatically.", correct = false, explanation = """
-`static`s still default to private; they need `pub static` to escape the module.""" },
-]
+
+[[questions.answers]]
+text = "Declare it with the `global` keyword."
+correct = false
+explanation = "There is no `global` keyword."
+
+[[questions.answers]]
+text = "Mark it `pub`."
+correct = true
+explanation = """
+`pub` makes the item visible across modules; you can also limit its visibility \
+with `pub(crate)` or `pub(super)`."""
+
+[[questions.answers]]
+text = "Mark it `extern`."
+correct = false
+explanation = "`extern` is for FFI bindings, not module visibility."
+
+[[questions.answers]]
+text = "`static` items are visible everywhere automatically."
+correct = false
+explanation = """
+`static`s still default to private; they need `pub static` to escape the \
+module."""
 
 [[questions]]
-prompt = "Given `let mut x: &i32 = &42;`, which line binds `r` to an `i32` rather than a reference?"
+prompt = """
+Given `let mut x: &i32 = &42;`, which line binds `r` to an `i32` rather than a \
+reference?"""
 hint = "`*` is the dereference operator."
-answers = [
-  { text = "`let r = &x;`", correct = false, explanation = """
-That *is* a reference, a shared one.""" },
-  { text = "`let r = &mut x;`", correct = false, explanation = """
-That's also a reference, a mutable one.""" },
-  { text = "`let r = *x;`", correct = true, explanation = """
-Here `x` is an `&i32`, so `*x` reads the integer. Since `i32` implements `Copy`, `r` receives a copy of `42`.""" },
-  { text = "`let r = &*x;`", correct = false, explanation = """
-`*x` refers to the integer, then `&` borrows it again. The type of `r` is `&i32`.""" },
-]
+
+[[questions.answers]]
+text = "`let r = &x;`"
+correct = false
+explanation = "That *is* a reference, a shared one."
+
+[[questions.answers]]
+text = "`let r = &mut x;`"
+correct = false
+explanation = "That's also a reference, a mutable one."
+
+[[questions.answers]]
+text = "`let r = *x;`"
+correct = true
+explanation = """
+Here `x` is an `&i32`, so `*x` reads the integer. Since `i32` implements \
+`Copy`, `r` receives a copy of `42`."""
+
+[[questions.answers]]
+text = "`let r = &*x;`"
+correct = false
+explanation = """
+`*x` refers to the integer, then `&` borrows it again. The type of `r` is \
+`&i32`."""
 
 [[questions]]
-prompt = '''
-In the CSV project, a comma inside quotes is data, and `""` inside a quoted field encodes one literal `"`.
+prompt = """
+In the CSV project, a comma inside quotes is data, and `""` inside a quoted \
+field encodes one literal `"`.
 Predict the fields for this row:
 
 ```text
 "a""b,c",d
 ```
-'''
-hint = "Trace whether the parser is inside quotes after consuming the escaped pair."
-answers = [
-  { text = '`["a\"b,c", "d"]`', correct = true, explanation = "The doubled quote adds one literal quote and leaves the parser inside the quoted field. The first comma stays in that field; the comma after the closing quote separates `d`." },
-  { text = '`["ab", "c", "d"]`', correct = false, explanation = "This loses the escaped quote and splits at a comma that is still inside quotes. Consuming the escaped pair must not exit quoted mode." },
-  { text = '`["a\"\"b,c", "d"]`', correct = false, explanation = "The two input quotes encode one output quote. The parser pushes one quote and consumes the second without pushing it again." },
-  { text = '`["a\"b,c,d"]`', correct = false, explanation = "The quote before the final comma closes the quoted field. That comma is a separator, so `d` belongs in a second field." },
-]
+"""
+hint = """
+Trace whether the parser is inside quotes after consuming the escaped pair."""
+
+[[questions.answers]]
+text = '`["a\"b,c", "d"]`'
+correct = true
+explanation = """
+The doubled quote adds one literal quote and leaves the parser inside the \
+quoted field. The first comma stays in that field; the comma after the closing \
+quote separates `d`."""
+
+[[questions.answers]]
+text = '`["ab", "c", "d"]`'
+correct = false
+explanation = """
+This loses the escaped quote and splits at a comma that is still inside \
+quotes. Consuming the escaped pair must not exit quoted mode."""
+
+[[questions.answers]]
+text = '`["a\"\"b,c", "d"]`'
+correct = false
+explanation = """
+The two input quotes encode one output quote. The parser pushes one quote and \
+consumes the second without pushing it again."""
+
+[[questions.answers]]
+text = '`["a\"b,c,d"]`'
+correct = false
+explanation = """
+The quote before the final comma closes the quoted field. That comma is a \
+separator, so `d` belongs in a second field."""
 
 [[questions]]
-prompt = '''
-The environment-file project's typed lookup returns `Option<T>`. For a `u16` port, its body could be:
+prompt = """
+The environment-file project's typed lookup returns `Option<T>`. For a `u16` \
+port, its body could be:
 
 ```rust
 values.get(key).and_then(|raw| raw.parse::<u16>().ok())
 ```
 
-Predict the results when `PORT` is absent, is `"8080"`, and is `"eight"`, in that order.
-'''
-hint = "`and_then` calls the closure only for `Some`. `.ok()` converts a successful `Result` to `Some` and an error to `None`."
-answers = [
-  { text = "`None`, `Some(8080)`, `None`.", correct = true, explanation = "A missing key skips the closure. Valid text parses to `Some(8080)`. `.ok()` discards the parse error for `eight`, so this API cannot distinguish invalid text from an absent key." },
-  { text = "`None`, `Some(8080)`, `Err(...)`.", correct = false, explanation = "The parser produces an error, but `.ok()` turns it into `None`. To preserve that distinction, you would need a different return type, such as `Result<Option<u16>, ParseIntError>`." },
-  { text = "`Some(0)`, `Some(8080)`, `None`.", correct = false, explanation = "Nothing supplies a default value. A missing key produces `None`; the caller can choose a default separately." },
-  { text = "`None`, `Some(8080)`, a panic.", correct = false, explanation = "There is no `unwrap` here. Parsing invalid text returns an error, which `.ok()` converts to `None` without panicking." },
-]
+Predict the results when `PORT` is absent, is `"8080"`, and is `"eight"`, in \
+that order.
+"""
+hint = """
+`and_then` calls the closure only for `Some`. `.ok()` converts a successful \
+`Result` to `Some` and an error to `None`."""
+
+[[questions.answers]]
+text = "`None`, `Some(8080)`, `None`."
+correct = true
+explanation = """
+A missing key skips the closure. Valid text parses to `Some(8080)`. `.ok()` \
+discards the parse error for `eight`, so this API cannot distinguish invalid \
+text from an absent key."""
+
+[[questions.answers]]
+text = "`None`, `Some(8080)`, `Err(...)`."
+correct = false
+explanation = """
+The parser produces an error, but `.ok()` turns it into `None`. To preserve \
+that distinction, you would need a different return type, such as \
+`Result<Option<u16>, ParseIntError>`."""
+
+[[questions.answers]]
+text = "`Some(0)`, `Some(8080)`, `None`."
+correct = false
+explanation = """
+Nothing supplies a default value. A missing key produces `None`; the caller \
+can choose a default separately."""
+
+[[questions.answers]]
+text = "`None`, `Some(8080)`, a panic."
+correct = false
+explanation = """
+There is no `unwrap` here. Parsing invalid text returns an error, which \
+`.ok()` converts to `None` without panicking."""

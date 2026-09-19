@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-/// Gets an environment variable with type conversion.
-/// Parses the string value into the requested type.
+/// Gets an environment variable with type conversion. Parses the string value
+/// into the requested type.
 fn get_env_var<T>(env: &HashMap<String, String>, key: &str) -> Option<T>
 where
     T: std::str::FromStr,

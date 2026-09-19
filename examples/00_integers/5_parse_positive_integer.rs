@@ -1,5 +1,5 @@
-/// Parses a string into a positive integer.
-/// Returns the number if valid, 0 if invalid.
+/// Parses a string into a positive integer. Returns the number if valid, 0 if
+/// invalid.
 fn parse_positive_integer(input: &str) -> u32 {
     todo!()
 }

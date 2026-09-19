@@ -1,7 +1,7 @@
 # Tuples and Destructuring
 
-A tuple is a fixed-size group of values.
-Unlike a `Vec`, the elements can be different types, and the size is part of the type.
+A tuple is a fixed-size group of values. Unlike a `Vec`, the elements can be
+different types, and the size is part of the type.
 
 ```rust
 let user: (String, u32) = ("Alice".to_string(), 25);
@@ -16,8 +16,9 @@ let name = user.0;
 let age = user.1;
 ```
 
-I prefer *destructuring* here so I can read `name` and `age` rather than remember what `.0` and `.1` mean.
-It pulls the parts out into named bindings in one step.
+I prefer *destructuring* here so I can read `name` and `age` rather than
+remember what `.0` and `.1` mean. It pulls the parts out into named bindings in
+one step.
 
 ```rust
 let (name, age) = user;
@@ -30,14 +31,16 @@ fn min_max(values: &[i32]) -> (i32, i32) {
 let (lo, hi) = min_max(&[3, 1, 4, 1, 5, 9]);
 ```
 
-You only need a rough reading of the `min_max` body for now.
-These details are enough to follow the example:
+You only need a rough reading of the `min_max` body for now. These details are
+enough to follow the example:
 
-- `values.iter()` walks the slice one element at a time.
-  For now, read it as "give me each element in turn."
-- `.min()` / `.max()` return an `Option` (they'd return `None` for an empty slice).
-  `.unwrap()` says "I'm sure it's `Some`, give me the value or panic."
-- The leading `*` *dereferences* the `&i32` the iterator hands back (the same dereference you met in the hashmaps chapter), so we end up with an owned `i32` instead of a reference.
+- `values.iter()` walks the slice one element at a time. For now, read it as
+  "give me each element in turn."
+- `.min()` / `.max()` return an `Option` (they'd return `None` for an empty
+  slice). `.unwrap()` says "I'm sure it's `Some`, give me the value or panic."
+- The leading `*` *dereferences* the `&i32` the iterator hands back (the same
+  dereference you met in the hashmaps chapter), so we end up with an owned `i32`
+  instead of a reference.
 
 When you only care about some fields, use `_` to ignore the rest:
 
@@ -45,6 +48,7 @@ When you only care about some fields, use `_` to ignore the rest:
 let (first, _) = ("Alice", "Smith");
 ```
 
-Tuples are great for short-lived "two or three values that belong together" situations.
-When the tuple grows or you keep passing the same tuple type around, give those fields names with a `struct` instead.
+Tuples are great for short-lived "two or three values that belong together"
+situations. When the tuple grows or you keep passing the same tuple type around,
+give those fields names with a `struct` instead.
 

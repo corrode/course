@@ -1,8 +1,7 @@
 #![allow(dead_code, unused_variables)]
 
-// A quick tour of Rust, on one page.
-// Hover any keyword or type for a one-line explanation.
-// You don't need to understand every detail yet. Just soak it in,
+// A quick tour of Rust, on one page. Hover any keyword or type for a one-line
+// explanation. You don't need to understand every detail yet. Just soak it in,
 // then press Run to watch World 1-1 play out.
 
 // `let` binds a name to a value. Bindings are immutable unless you add `mut`.

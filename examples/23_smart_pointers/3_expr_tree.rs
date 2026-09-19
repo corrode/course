@@ -1,5 +1,5 @@
-/// An expression tree whose recursive children are owned through boxes.
-/// Each box gives the enum a fixed-size field instead of an inline child tree.
+/// An expression tree whose recursive children are owned through boxes. Each
+/// box gives the enum a fixed-size field instead of an inline child tree.
 #[derive(Debug, PartialEq)]
 enum Expr {
     Num(i32),
@@ -8,7 +8,8 @@ enum Expr {
 }
 
 impl Expr {
-    /// Own both child expressions in an Add node, preserving their order and shape.
+    /// Own both child expressions in an Add node, preserving their order and
+    /// shape.
     fn add(left: Self, right: Self) -> Self {
         todo!()
     }
@@ -25,7 +26,8 @@ fn add_preserves_child_order_and_structure() {
     let right = Expr::Add(Box::new(Expr::Num(4)), Box::new(Expr::Num(5)));
     let tree = Expr::add(left, right);
 
-    // Check construction without relying on evaluation, which would hide swapped children.
+    // Check construction without relying on evaluation, which would hide
+    // swapped children.
     let expected = Expr::Add(
         Box::new(Expr::Mul(Box::new(Expr::Num(2)), Box::new(Expr::Num(3)))),
         Box::new(Expr::Add(Box::new(Expr::Num(4)), Box::new(Expr::Num(5)))),

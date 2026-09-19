@@ -1,5 +1,4 @@
-/// Adds two parsed numbers.
-/// Compare this to doing it with match statements.
+/// Adds two parsed numbers. Compare this to doing it with match statements.
 fn add_parsed_numbers(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> {
     todo!()
 }

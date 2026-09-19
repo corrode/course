@@ -1,4 +1,5 @@
-// Shared CodeMirror mount, with a functional textarea fallback when loading fails.
+// Shared CodeMirror mount, with a functional textarea fallback when loading
+// fails.
 import { proseHighlightStyle, proseEditorTheme } from "./cm-theme.js";
 import { rustIndentUnit } from "./rust-indent.js";
 import {
@@ -467,7 +468,8 @@ async function createMount(section, opts) {
             MatchDecorator,
           })
         : [],
-      // Vim consumes Escape before CodeMirror's default handler can enable this.
+      // Vim consumes Escape before CodeMirror's default handler can enable
+      // this.
       EditorView.domEventObservers({
         keydown(event, editor) {
           if (event.key === "Escape") editor.setTabFocusMode(2000);

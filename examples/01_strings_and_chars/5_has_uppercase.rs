@@ -2,9 +2,11 @@
 ///
 /// `for c in text.chars()` works fine and lets you inspect each character.
 ///
-/// You can also use iterator methods like `any` or `find` to express this kind of "is there at least one ..." check directly.
+/// You can also use iterator methods like `any` or `find` to express this kind
+/// of "is there at least one ..." check directly.
 ///
-/// See: <https://doc.rust-lang.org/std/primitive.char.html#method.is_ascii_uppercase>
+/// See:
+/// <https://doc.rust-lang.org/std/primitive.char.html#method.is_ascii_uppercase>
 fn has_uppercase(text: &str) -> bool {
     todo!()
 }

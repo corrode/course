@@ -14,7 +14,8 @@ fn mutate_string(s: &mut String) {
 fn experiment_use_after_move() {
     let s = String::from("Rust");
     let _result = take_ownership(s);
-    // Will this assertion compile? Make a prediction, then uncomment it and test.
+    // Will this assertion compile? Make a prediction, then uncomment it and
+    // test.
     // assert_eq!(s, "Rust");
 }
 
@@ -33,7 +34,8 @@ fn experiment_two_mutable_borrows() {
 fn experiment_mix_shared_and_mutable() {
     let mut s = String::from("Ferris");
     let shared = &s;
-    // Will this mutation compile? Make a prediction, then uncomment it and test.
+    // Will this mutation compile? Make a prediction, then uncomment it and
+    // test.
     // Fix the error by reordering the statements.
     // mutate_string(&mut s);
     println!("{shared}");

@@ -1,5 +1,5 @@
-/// Borrows a string reference without taking ownership.
-/// The original string remains valid after this function returns.
+/// Borrows a string reference without taking ownership. The original string
+/// remains valid after this function returns.
 fn borrow_string(s: &str) -> usize {
     s.len()
 }

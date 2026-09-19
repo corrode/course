@@ -1,7 +1,7 @@
 //! Shared types for the corrode course system.
 //!
-//! This module provides the core data types used for communication between
-//! the corrode course CLI tool and server. These types handle participant
+//! This module provides the core data types used for communication between the
+//! corrode course CLI tool and server. These types handle participant
 //! registration, exercise submission, and progress tracking.
 //!
 //! The types are designed to be:
@@ -80,15 +80,15 @@ impl std::error::Error for TeamTokenError {}
 impl TeamToken {
     /// Maximum allowed length for a team token, after trimming.
     ///
-    /// 64 chars is generous enough for any team label an instructor
-    /// would actually pick, and tight enough that the value fits
-    /// comfortably in the admin table and any URL we route on.
+    /// 64 chars is generous enough for any team label an instructor would
+    /// actually pick, and tight enough that the value fits comfortably in the
+    /// admin table and any URL we route on.
     pub const MAX_LENGTH: usize = 64;
 
     /// Returns the validated token as a string slice.
     ///
-    /// The returned string is guaranteed to be non-empty, no longer
-    /// than [`Self::MAX_LENGTH`] characters, and made up entirely of
+    /// The returned string is guaranteed to be non-empty, no longer than
+    /// [`Self::MAX_LENGTH`] characters, and made up entirely of
     /// `[A-Za-z0-9_-]`.
     #[must_use]
     pub fn as_str(&self) -> &str {
@@ -203,14 +203,14 @@ pub struct Name(String);
 impl Name {
     /// Maximum allowed character length for a participant name.
     ///
-    /// This limit helps prevent abuse and ensures names fit comfortably
-    /// in database columns and UI displays.
+    /// This limit helps prevent abuse and ensures names fit comfortably in
+    /// database columns and UI displays.
     pub const MAX_LENGTH: usize = 100;
 
     /// Returns the validated name as a string slice.
     ///
-    /// The returned string is guaranteed to be non-empty and no longer
-    /// than [`Self::MAX_LENGTH`] characters.
+    /// The returned string is guaranteed to be non-empty and no longer than
+    /// [`Self::MAX_LENGTH`] characters.
     #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
@@ -276,8 +276,8 @@ pub struct Token(String);
 impl Token {
     /// Creates a new token from a ULID string.
     ///
-    /// This constructor does not validate the ULID format, as tokens
-    /// are typically received from trusted sources (the server).
+    /// This constructor does not validate the ULID format, as tokens are
+    /// typically received from trusted sources (the server).
     #[must_use]
     pub const fn new(ulid: String) -> Self {
         Self(ulid)
@@ -312,8 +312,8 @@ impl fmt::Display for Token {
 
 /// Request payload for registering a new participant.
 ///
-/// This is sent by the CLI during the `cargo course init` flow
-/// when a participant enters their name.
+/// This is sent by the CLI during the `cargo course init` flow when a
+/// participant enters their name.
 #[derive(Serialize, Deserialize)]
 pub struct RegistrationRequest {
     /// The participant's chosen name (already validated)
@@ -322,8 +322,8 @@ pub struct RegistrationRequest {
 
 /// Response payload from successful participant registration.
 ///
-/// The server generates a unique ULID token that the CLI
-/// stores locally for subsequent requests.
+/// The server generates a unique ULID token that the CLI stores locally for
+/// subsequent requests.
 #[derive(Serialize, Deserialize)]
 pub struct RegistrationResponse {
     /// The generated ULID token for this participant
@@ -332,8 +332,8 @@ pub struct RegistrationResponse {
 
 /// Request payload for submitting an exercise solution.
 ///
-/// This contains the participant's code and the results of local
-/// testing and linting checks performed by the CLI.
+/// This contains the participant's code and the results of local testing and
+/// linting checks performed by the CLI.
 #[derive(Serialize, Deserialize)]
 pub struct SubmissionRequest {
     /// The participant's ULID token for identification
@@ -352,8 +352,8 @@ pub struct SubmissionRequest {
 
 /// Status information for a single exercise.
 ///
-/// This represents a participant's progress on one exercise,
-/// including whether they've completed it and achieved perfection.
+/// This represents a participant's progress on one exercise, including whether
+/// they've completed it and achieved perfection.
 #[derive(Serialize, Deserialize)]
 pub struct ExerciseStatus {
     /// The exercise key (e.g., `01_strings_and_chars/2_welcome`)
@@ -366,8 +366,8 @@ pub struct ExerciseStatus {
 
 /// Response payload containing a participant's overall progress.
 ///
-/// This is returned by the status API endpoint and contains
-/// information about all exercises in the course.
+/// This is returned by the status API endpoint and contains information about
+/// all exercises in the course.
 #[derive(Serialize, Deserialize)]
 pub struct ProgressResponse {
     /// Status for each exercise in the course

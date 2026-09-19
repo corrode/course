@@ -15,9 +15,8 @@ trait Logger {
 /// A logger that returns the message untouched.
 struct PlainLogger;
 
-// Implement Logger for PlainLogger here.
-// Only write log, returning the message as a String.
-// Keep the default warn and error methods.
+// Implement Logger for PlainLogger here. Only write log, returning the message
+// as a String. Keep the default warn and error methods.
 
 #[test]
 fn log_returns_the_message_untouched() {

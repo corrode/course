@@ -5,8 +5,9 @@ impl PasswordGenerator {
     ///
     /// Reject lengths below 4 with `"Need at least 4 characters."`. Otherwise,
     /// return exactly `length` ASCII characters drawn from uppercase letters,
-    /// lowercase letters, digits, and `!@#$%^&*`, including at least one of each.
-    /// No randomness or clock is needed; this is not a secure password generator.
+    /// lowercase letters, digits, and `!@#$%^&*`, including at least one of
+    /// each. No randomness or clock is needed; this is not a secure password
+    /// generator.
     fn generate_example_password(length: usize) -> Result<String, &'static str> {
         if length < 4 {
             return Err("Need at least 4 characters.");

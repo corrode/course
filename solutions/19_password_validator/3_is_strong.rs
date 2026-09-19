@@ -6,7 +6,8 @@ enum PasswordStrength {
 }
 
 impl PasswordStrength {
-    /// Classifies any u8: 0..=29 is Weak, 30..=69 is Medium, 70..=255 is Strong.
+    /// Classifies any u8: 0..=29 is Weak, 30..=69 is Medium, 70..=255 is
+    /// Strong.
     const fn from_score(score: u8) -> Self {
         match score {
             0..=29 => Self::Weak,
@@ -88,8 +89,9 @@ mod tests {
 
     #[test]
     fn stored_label_is_authoritative_even_if_a_report_is_manually_inconsistent() {
-        // This method reads the label, not the score. Only the validator guarantees
-        // consistency; a manually constructed report need not have that invariant.
+        // This method reads the label, not the score. Only the validator
+        // guarantees consistency; a manually constructed report need not have
+        // that invariant.
         for (score, strength, expected) in [
             (100, PasswordStrength::Weak, false),
             (100, PasswordStrength::Medium, false),

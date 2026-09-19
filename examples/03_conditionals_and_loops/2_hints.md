@@ -2,10 +2,10 @@
 
 ## ferris_mood
 
-1. An `if`/`else if` chain checks conditions from top to bottom; the first match wins.
-   Follow the order in the rule table.
-2. The `"Grumpy"` rule needs both conditions to be true.
-   Combine them with `&&` (logical AND).
+1. An `if`/`else if` chain checks conditions from top to bottom; the first match
+   wins. Follow the order in the rule table.
+2. The `"Grumpy"` rule needs both conditions to be true. Combine them with `&&`
+   (logical AND).
 
 ## factorial
 
@@ -14,15 +14,16 @@
 
 ## count_evens
 
-1. `let mut count = 0u32;` plus a `for n in numbers` loop.
-   The suffix `0u32` pins the integer type so you don't need a separate annotation.
-2. `for n in numbers` over a `&[i32]` yields `&i32`.
-   The `%` operator accepts the reference, so you can write `n % 2`.
-   `continue` skips the rest of the current iteration.
+1. `let mut count = 0u32;` plus a `for n in numbers` loop. The suffix `0u32`
+   pins the integer type so you don't need a separate annotation.
+2. `for n in numbers` over a `&[i32]` yields `&i32`. The `%` operator accepts
+   the reference, so you can write `n % 2`. `continue` skips the rest of the
+   current iteration.
 
 ## digit_count
 
-1. Special-case `n == 0` returning `1`.
-   Otherwise, divide by 10 in a `while` loop and count the iterations.
-2. Shadow the parameter with `let mut n = n;` so you can mutate it without changing the signature.
-   Loop while `n > 0`, dividing by `10` and bumping a counter.
+1. Special-case `n == 0` returning `1`. Otherwise, divide by 10 in a `while`
+   loop and count the iterations.
+2. Shadow the parameter with `let mut n = n;` so you can mutate it without
+   changing the signature. Loop while `n > 0`, dividing by `10` and bumping a
+   counter.

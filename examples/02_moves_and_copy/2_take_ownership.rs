@@ -1,5 +1,5 @@
-/// Takes ownership of a String and modifies it.
-/// When you pass a String to this function, ownership transfers.
+/// Takes ownership of a String and modifies it. When you pass a String to this
+/// function, ownership transfers.
 fn take_ownership(s: String) -> String {
     // Add " - owned by Rust!" to the end and return
     todo!()

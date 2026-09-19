@@ -1,4 +1,5 @@
-/// Sums whitespace-separated integers with an iterator pipeline and fallible `sum`.
+/// Sums whitespace-separated integers with an iterator pipeline and fallible
+/// `sum`.
 fn sum_numbers(text: &str) -> Result<i32, std::num::ParseIntError> {
     text.split_whitespace()
         .map(|token| token.parse::<i32>())

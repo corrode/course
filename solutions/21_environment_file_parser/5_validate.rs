@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-/// Validates required environment variables are present.
-/// Returns Ok(()) if all required keys exist, Err with missing key otherwise.
+/// Validates required environment variables are present. Returns Ok(()) if all
+/// required keys exist, Err with missing key otherwise.
 fn validate_required_vars(env: &HashMap<String, String>, required: &[&str]) -> Result<(), String> {
     for &key in required {
         if !env.contains_key(key) {

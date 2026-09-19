@@ -21,8 +21,8 @@ impl User {
         self.is_verified = true;
     }
 
-    /// Checks if user can access premium features.
-    /// Requires verification and at least 5 logins.
+    /// Checks if user can access premium features. Requires verification and at
+    /// least 5 logins.
     fn can_access_premium(&self) -> bool {
         self.is_verified && self.login_count >= 5
     }

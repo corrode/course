@@ -1,12 +1,14 @@
 # Borrowing and References
 
-In the moves chapter, `take_ownership` took a `String` and returned it.
-Pass a `String` to a function and the move rules say you've handed it over.
-Try to use it afterwards and the compiler points out the move.
-Returning it back out works but gets tedious fast, especially when the function only needed to *read* the value.
+In the moves chapter, `take_ownership` took a `String` and returned it. Pass a
+`String` to a function and the move rules say you've handed it over. Try to use
+it afterwards and the compiler points out the move. Returning it back out works
+but gets tedious fast, especially when the function only needed to *read* the
+value.
 
-Borrowing is the fix.
-A borrow lets a function use a value without taking ownership of it: `&value` for a shared, read-only borrow, and `&mut value` for an exclusive, writable one.
+Borrowing is the fix. A borrow lets a function use a value without taking
+ownership of it: `&value` for a shared, read-only borrow, and `&mut value` for
+an exclusive, writable one.
 
 ```rust
 fn length(s: &String) -> usize { s.len() }   // borrows, doesn't take
@@ -16,20 +18,22 @@ let n = length(&s);    // lend s out for the call
 println!("{s}");       // s still owns the data
 ```
 
-The caller keeps ownership the whole time.
-The function gets temporary access and gives it back when it returns.
+The caller keeps ownership the whole time. The function gets temporary access
+and gives it back when it returns.
 
 ## Shared or Exclusive Access
 
 For the same value, the borrowing rule is:
 
-> While references are in use, you can have either any number of shared `&` references, or one exclusive `&mut` reference.
-> Never both at once.
+> While references are in use, you can have either any number of shared `&`
+> references, or one exclusive `&mut` reference. Never both at once.
 
-A shared reference promises the data won't change while you're looking at it.
-A mutable reference promises nobody else is looking while you write to it.
-For a `String`, this prevents a write from reallocating the buffer while another reference still points into it.
-Across threads, the same restriction also helps prevent data races.
+A shared reference promises the data won't change while you're looking at it. A
+mutable reference promises nobody else is looking while you write to it. For a
+`String`, this prevents a write from reallocating the buffer while another
+reference still points into it. Across threads, the same restriction also helps
+prevent data races.
 
-Borrowing can take a few tries to get used to, especially when you have to work out where a borrow ends.
-When the compiler rejects your code, I suggest starting with this rule: who needs to read the value, and who needs to change it?
+Borrowing can take a few tries to get used to, especially when you have to work
+out where a borrow ends. When the compiler rejects your code, I suggest starting
+with this rule: who needs to read the value, and who needs to change it?

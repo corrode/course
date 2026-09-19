@@ -1,5 +1,6 @@
-# Configuration for the `typos` spell checker (https://github.com/crate-ci/typos).
-# Run locally with `typos` (install via `cargo install typos-cli`).
+# Configuration for the `typos` spell checker
+# (https://github.com/crate-ci/typos). Run locally with `typos` (install via
+# `cargo install typos-cli`).
 
 [files]
 extend-exclude = [

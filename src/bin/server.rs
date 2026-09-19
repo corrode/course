@@ -32,18 +32,18 @@ use ulid::Ulid;
 /// Surfaced in the site footer so users can tell which release they're on.
 const COURSE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Build-time git metadata baked in by `build.rs` via `cargo:rustc-env`.
-/// The build script emits `unknown` when neither environment overrides nor
-/// local Git metadata are available.
+/// Build-time git metadata baked in by `build.rs` via `cargo:rustc-env`. The
+/// build script emits `unknown` when neither environment overrides nor local
+/// Git metadata are available.
 const GIT_BRANCH_BUILD: Option<&str> = option_env!("GIT_BRANCH");
 const GIT_HASH_BUILD: Option<&str> = option_env!("GIT_HASH");
 
 /// Git branch and short commit shown in the footer, resolved once at startup.
 ///
-/// We prefer explicit runtime metadata, then informative Coolify metadata,
-/// then the value baked into the image by CI. Coolify source deployments expose
-/// the commit through `SOURCE_COMMIT`, but Docker-image deployments set it to
-/// the uninformative sentinel `HEAD`; [`usable`] filters that value so the baked
+/// We prefer explicit runtime metadata, then informative Coolify metadata, then
+/// the value baked into the image by CI. Coolify source deployments expose the
+/// commit through `SOURCE_COMMIT`, but Docker-image deployments set it to the
+/// uninformative sentinel `HEAD`; [`usable`] filters that value so the baked
 /// immutable revision wins. The final fallback is "unknown".
 static GIT_BRANCH: LazyLock<String> = LazyLock::new(|| {
     git_env("GIT_BRANCH")
@@ -131,24 +131,24 @@ async fn store_course_event(pool: &SqlitePool, event: CourseEvent<'_>) -> Result
     Ok(())
 }
 
-/// Database model for participants. Only the fields we actually read
-/// in Rust live here; the SQL queries below select exactly these columns
-/// so `sqlx::FromRow` stays in lockstep.
+/// Database model for participants. Only the fields we actually read in Rust
+/// live here; the SQL queries below select exactly these columns so
+/// `sqlx::FromRow` stays in lockstep.
 #[derive(sqlx::FromRow)]
 struct DbParticipant {
     name: String,
-    /// Optional team label, populated when the participant signed up
-    /// via `/signup/{team_slug}`. `None` for public signups. See
-    /// migration `007_add_team_token.sql`.
+    /// Optional team label, populated when the participant signed up via
+    /// `/signup/{team_slug}`. `None` for public signups. See migration
+    /// `007_add_team_token.sql`.
     team_token: Option<String>,
 }
 
 impl DbParticipant {
-    /// Returns the participant's parsed [`TeamToken`], if any. Rows
-    /// that pre-date the type, or that somehow contain a value the
-    /// validator rejects, surface as `None` rather than panicking;
-    /// the worst case is the participant shows up in the
-    /// "Unassigned" bucket and an admin can re-assign them.
+    /// Returns the participant's parsed [`TeamToken`], if any. Rows that
+    /// pre-date the type, or that somehow contain a value the validator
+    /// rejects, surface as `None` rather than panicking; the worst case is the
+    /// participant shows up in the "Unassigned" bucket and an admin can
+    /// re-assign them.
     fn parsed_team_token(&self) -> Option<TeamToken> {
         self.team_token
             .as_deref()
@@ -156,10 +156,10 @@ impl DbParticipant {
     }
 }
 
-/// Database model for submissions. Mirrors the subset of the
-/// `submissions` table columns we actually read; the SQL queries below
-/// list these columns explicitly so adding a column to the schema
-/// (e.g. `content_hash`) doesn't silently break the row mapping.
+/// Database model for submissions. Mirrors the subset of the `submissions`
+/// table columns we actually read; the SQL queries below list these columns
+/// explicitly so adding a column to the schema (e.g. `content_hash`) doesn't
+/// silently break the row mapping.
 #[derive(sqlx::FromRow)]
 struct DbSubmission {
     exercise_name: String,
@@ -177,9 +177,8 @@ struct PlaygroundTemplate {
     starter: String,
 }
 
-/// Template for the "A Quick Tour of Rust" preamble page.
-/// Renders one editable, runnable code box (the Mario tour) with
-/// concept-class hover explanations.
+/// Template for the "A Quick Tour of Rust" preamble page. Renders one editable,
+/// runnable code box (the Mario tour) with concept-class hover explanations.
 #[derive(Template)]
 #[template(path = "tour.html")]
 struct TourTemplate {
@@ -188,8 +187,8 @@ struct TourTemplate {
     /// Participant context for `/tour/{ulid}`; `None` on the public route.
     /// Present so the tour can share `partials/next_chapter_cta.html`.
     ulid: Option<String>,
-    /// The first real chapter, rendered as the closing "Next chapter"
-    /// CTA via the shared partial. `None` if the catalog is empty.
+    /// The first real chapter, rendered as the closing "Next chapter" CTA via
+    /// the shared partial. `None` if the catalog is empty.
     next_dot: Option<ProgressDot>,
     /// Always `false`: the tour's CTA is never locked behind completion.
     next_locked: bool,
@@ -209,29 +208,28 @@ struct ExerciseTemplate {
     exercise: Exercise,
     /// `Some` when the page is rendered with participant context.
     ulid: Option<String>,
-    /// Rollup status for the chapter as a whole (all code steps).
-    /// All `false` on the public route.
+    /// Rollup status for the chapter as a whole (all code steps). All `false`
+    /// on the public route.
     current_status: UiExerciseStatus,
-    /// One entry per exercise in the catalog, ordered by `number`.
-    /// Used to render the bottom "chapter list" navigation.
+    /// One entry per exercise in the catalog, ordered by `number`. Used to
+    /// render the bottom "chapter list" navigation.
     dots: Vec<ProgressDot>,
     /// Rows in the first TOC column; see [`chapter_rows`].
     chapter_rows: usize,
-    /// Ordered render plan: prose blocks and code sections in display
-    /// order. Each `Code` carries the per-step status and the database
-    /// key (`<chapter>/<step_key>` or just `<chapter>` for legacy).
+    /// Ordered render plan: prose blocks and code sections in display order.
+    /// Each `Code` carries the per-step status and the database key
+    /// (`<chapter>/<step_key>` or just `<chapter>` for legacy).
     items: Vec<RenderItem>,
-    /// The chapter that comes after the current one in the catalog,
-    /// or `None` when this is the last chapter. Used for the
-    /// "Next chapter" call-to-action at the bottom of the page.
+    /// The chapter that comes after the current one in the catalog, or `None`
+    /// when this is the last chapter. Used for the "Next chapter"
+    /// call-to-action at the bottom of the page.
     next_dot: Option<ProgressDot>,
-    /// When `true`, the next-chapter CTA renders hidden (`.is-locked`)
-    /// until the participant completes the current chapter. Always
-    /// `false` on the public route. Consumed by
-    /// `partials/next_chapter_cta.html`.
+    /// When `true`, the next-chapter CTA renders hidden (`.is-locked`) until
+    /// the participant completes the current chapter. Always `false` on the
+    /// public route. Consumed by `partials/next_chapter_cta.html`.
     next_locked: bool,
-    /// Number of completable chapters the participant has finished.
-    /// Quizzes, notes-only chapters, and bonus chapters do not count.
+    /// Number of completable chapters the participant has finished. Quizzes,
+    /// notes-only chapters, and bonus chapters do not count.
     progress_done: usize,
     /// Number of completable chapters in the course (denominator).
     progress_total: usize,
@@ -253,17 +251,17 @@ struct ProgressDot {
     perfected: bool,
     current: bool,
     is_quiz: bool,
-    /// `false` for notes-only chapters (the appendix), which do not
-    /// count toward progress.
+    /// `false` for notes-only chapters (the appendix), which do not count
+    /// toward progress.
     has_exercises: bool,
-    /// `true` for optional bonus chapters: listed in the picker and the
-    /// shared TOC's optional section, but excluded from the numbered TOC,
-    /// progress, and the default next-chapter flow.
+    /// `true` for optional bonus chapters: listed in the picker and the shared
+    /// TOC's optional section, but excluded from the numbered TOC, progress,
+    /// and the default next-chapter flow.
     is_bonus: bool,
-    /// Optional explicit link target. When `Some`, the TOC partial and
-    /// chapter picker link straight here instead of deriving an
-    /// `/exercise/{slug}` URL. Used for non-exercise entries like the
-    /// editable "Quick Tour" preamble (`/tour`).
+    /// Optional explicit link target. When `Some`, the TOC partial and chapter
+    /// picker link straight here instead of deriving an `/exercise/{slug}` URL.
+    /// Used for non-exercise entries like the editable "Quick Tour" preamble
+    /// (`/tour`).
     href: Option<String>,
 }
 
@@ -274,10 +272,10 @@ impl ProgressDot {
 }
 
 /// Synthetic chapter-list entry for the editable "A Quick Tour of Rust"
-/// preamble. It isn't a real exercise (no code steps, no tests,
-/// no progress), so it carries an explicit `/tour` href and
-/// `has_exercises = false` to stay out of the progress totals while
-/// still showing as the first row of the table of contents.
+/// preamble. It isn't a real exercise (no code steps, no tests, no progress),
+/// so it carries an explicit `/tour` href and `has_exercises = false` to stay
+/// out of the progress totals while still showing as the first row of the table
+/// of contents.
 fn tour_dot() -> ProgressDot {
     ProgressDot {
         slug: "tour".to_string(),
@@ -302,66 +300,64 @@ struct UiExerciseStatus {
     attempted: bool,
     completed: bool,
     perfected: bool,
-    /// Source code of the most recent submission for this step, used to
-    /// re-seed the editor on a device that has no local draft. `None`
-    /// when the participant has never submitted this step. Only
-    /// populated for per-step progress (`load_step_progress`); the
-    /// per-chapter rollup leaves it empty.
+    /// Source code of the most recent submission for this step, used to re-seed
+    /// the editor on a device that has no local draft. `None` when the
+    /// participant has never submitted this step. Only populated for per-step
+    /// progress (`load_step_progress`); the per-chapter rollup leaves it empty.
     submitted_code: Option<String>,
-    /// Whether that most recent submission passed its tests, not whether
-    /// any earlier submission passed. False when there is no submission.
+    /// Whether that most recent submission passed its tests, not whether any
+    /// earlier submission passed. False when there is no submission.
     submitted_passed: bool,
 }
 
 /// Template for participant dashboard.
 ///
 /// Rendered in two modes:
-/// - **Anonymous** (`/`): `participant_name` and `ulid` are `None`.
-///   All chapters render with `completed = perfected = false`. Links
-///   from the TOC point at `/exercise/{slug}` (no participant prefix).
-/// - **Participant** (`/dashboard/{ulid}`): both fields are `Some`.
-///   Completion marks reflect real submissions and links carry the ULID.
+/// - **Anonymous** (`/`): `participant_name` and `ulid` are `None`. All
+///   chapters render with `completed = perfected = false`. Links from the TOC
+///   point at `/exercise/{slug}` (no participant prefix).
+/// - **Participant** (`/dashboard/{ulid}`): both fields are `Some`. Completion
+///   marks reflect real submissions and links carry the ULID.
 #[derive(Template)]
 #[template(path = "dashboard.html")]
 struct DashboardTemplate {
     participant_name: Option<String>,
     ulid: Option<String>,
-    /// One entry per chapter, in display order. Renders the bottom
-    /// table of contents on the homepage via the shared
-    /// `templates/partials/chapter_list.html` partial: the same one
-    /// each exercise page uses for its "All exercises" nav, so the
-    /// two stay visually identical. `current` is always `false`
-    /// here because the homepage isn't any one chapter.
+    /// One entry per chapter, in display order. Renders the bottom table of
+    /// contents on the homepage via the shared
+    /// `templates/partials/chapter_list.html` partial: the same one each
+    /// exercise page uses for its "All exercises" nav, so the two stay visually
+    /// identical. `current` is always `false` here because the homepage isn't
+    /// any one chapter.
     dots: Vec<ProgressDot>,
     /// Rows in the first TOC column; see [`chapter_rows`].
     chapter_rows: usize,
-    /// Slug of the first chapter the participant hasn't completed yet,
-    /// or the first chapter overall if they're brand new / fully done.
-    /// Used by the "Start" call-to-action.
+    /// Slug of the first chapter the participant hasn't completed yet, or the
+    /// first chapter overall if they're brand new / fully done. Used by the
+    /// "Start" call-to-action.
     next_slug: String,
-    /// Display label for the CTA ("Start with chapter 1" or
-    /// "Resume chapter 5" depending on whether anything has been
-    /// completed yet).
+    /// Display label for the CTA ("Start with chapter 1" or "Resume chapter 5"
+    /// depending on whether anything has been completed yet).
     next_label: String,
-    /// Number / title of the chapter the participant should pick up at
-    /// next. Used by the "where you left off" prose for authenticated
-    /// participants. Empty / 0 when there is no next chapter (brand-new
-    /// course with no exercises, or course fully completed).
+    /// Number / title of the chapter the participant should pick up at next.
+    /// Used by the "where you left off" prose for authenticated participants.
+    /// Empty / 0 when there is no next chapter (brand-new course with no
+    /// exercises, or course fully completed).
     next_chapter_number: u8,
     next_chapter_title: String,
-    /// Number of completable chapters the participant has finished.
-    /// Always 0 in anonymous mode. Quizzes, notes-only chapters, and
-    /// bonus chapters do not count.
+    /// Number of completable chapters the participant has finished. Always 0 in
+    /// anonymous mode. Quizzes, notes-only chapters, and bonus chapters do not
+    /// count.
     progress_done: usize,
     /// Number of completable chapters in the course (denominator).
     progress_total: usize,
-    /// Optional one-shot reason code shown as a toast on first render
-    /// of the anonymous dashboard. `Some("unknown-token")` after a
-    /// missing-ULID redirect; `None` everywhere else.
+    /// Optional one-shot reason code shown as a toast on first render of the
+    /// anonymous dashboard. `Some("unknown-token")` after a missing-ULID
+    /// redirect; `None` everywhere else.
     reason: Option<String>,
-    /// Team label for the signed-in participant, if any. Drives the
-    /// "View your team" link on the dashboard. `None` for anonymous
-    /// viewers and for participants who signed up via the public form.
+    /// Team label for the signed-in participant, if any. Drives the "View your
+    /// team" link on the dashboard. `None` for anonymous viewers and for
+    /// participants who signed up via the public form.
     team_token: Option<TeamToken>,
 }
 
@@ -371,9 +367,9 @@ fn optional_chapter_rows(dots: &[ProgressDot]) -> usize {
 
 /// Template for the slim signup form.
 ///
-/// `team_slug` is `Some` when reached via `/signup/{team_slug}`; it
-/// renders an inline banner above the form and a hidden `team_token`
-/// input so the team label is round-tripped back to `/register`.
+/// `team_slug` is `Some` when reached via `/signup/{team_slug}`; it renders an
+/// inline banner above the form and a hidden `team_token` input so the team
+/// label is round-tripped back to `/register`.
 #[derive(Template)]
 #[template(path = "signup.html")]
 struct SignupTemplate {
@@ -388,13 +384,13 @@ struct AdminTemplate {
     recent_submissions: Vec<SubmissionSummary>,
     stats: AdminStats,
     exercises: Vec<String>,
-    /// Echoed back into every form action / link so the admin token
-    /// stays attached as the operator clicks around.
+    /// Echoed back into every form action / link so the admin token stays
+    /// attached as the operator clicks around.
     admin_token: String,
-    /// Default sort column / direction / filter baked into the initial
-    /// render of every team table. Subsequent sorts and filters are
-    /// served by `admin_team_members` (the htmx fragment endpoint),
-    /// which renders the same `partials/team_members.html` partial.
+    /// Default sort column / direction / filter baked into the initial render
+    /// of every team table. Subsequent sorts and filters are served by
+    /// `admin_team_members` (the htmx fragment endpoint), which renders the
+    /// same `partials/team_members.html` partial.
     sort: String,
     dir: String,
     filter: String,
@@ -416,10 +412,10 @@ struct AdminParticipantSubmissionsTemplate {
     team_label: String,
 }
 
-/// Fragment template for one team's members table. Rendered both for
-/// the initial `/admin` page (via `{% include %}`) and standalone by
-/// the `admin_team_members` htmx endpoint when the operator sorts a
-/// column or types into the per-team filter box.
+/// Fragment template for one team's members table. Rendered both for the
+/// initial `/admin` page (via `{% include %}`) and standalone by the
+/// `admin_team_members` htmx endpoint when the operator sorts a column or types
+/// into the per-team filter box.
 #[derive(Template)]
 #[template(path = "partials/team_members.html")]
 struct TeamMembersTemplate {
@@ -451,11 +447,12 @@ struct ExerciseProgress {
     perfected: bool,
     title: String,
     is_quiz: bool,
-    /// Notes-only chapters (appendix material) have no code steps and
-    /// can't be "completed". The dashboard skips them when choosing
-    /// the next chapter to resume.
+    /// Notes-only chapters (appendix material) have no code steps and can't be
+    /// "completed". The dashboard skips them when choosing the next chapter to
+    /// resume.
     has_exercises: bool,
-    /// `true` for optional bonus chapters (excluded from progress and default flow).
+    /// `true` for optional bonus chapters (excluded from progress and default
+    /// flow).
     is_bonus: bool,
 }
 
@@ -487,16 +484,15 @@ struct ParticipantSummary {
     completed_count: i64,
     total_exercises: i64,
     last_activity: Option<chrono::DateTime<chrono::Utc>>,
-    /// Team label written by `/signup/{team_slug}`, or `None` for
-    /// participants who came through the public `/signup` form. Used
-    /// to bucket the admin participants table.
+    /// Team label written by `/signup/{team_slug}`, or `None` for participants
+    /// who came through the public `/signup` form. Used to bucket the admin
+    /// participants table.
     team_token: Option<TeamToken>,
 }
 
-/// One row of the admin participants view: a team bucket and the
-/// members in it. `team_token` is `None` for the synthetic
-/// "Unassigned" bucket that gathers every participant without a
-/// team label.
+/// One row of the admin participants view: a team bucket and the members in it.
+/// `team_token` is `None` for the synthetic "Unassigned" bucket that gathers
+/// every participant without a team label.
 #[derive(Serialize, Clone)]
 struct ParticipantTeam {
     team_token: Option<TeamToken>,
@@ -513,9 +509,9 @@ impl ParticipantTeam {
             .map_or_else(String::new, |t| t.as_str().to_string())
     }
 
-    /// Stable DOM-id suffix for the team's table and filter input. The
-    /// team slug for a real team, or the literal `unassigned` for the
-    /// no-team bucket (an empty string can't anchor an element id).
+    /// Stable DOM-id suffix for the team's table and filter input. The team
+    /// slug for a real team, or the literal `unassigned` for the no-team bucket
+    /// (an empty string can't anchor an element id).
     fn key(&self) -> String {
         self.team_token
             .as_ref()
@@ -527,16 +523,16 @@ impl ParticipantTeam {
 #[derive(Serialize, Clone)]
 struct SubmissionSummary {
     participant_name: String,
-    /// Admin-only link to this participant's complete submissions page.
-    /// Omitted from participant-facing views and that participant's history page.
+    /// Admin-only link to this participant's complete submissions page. Omitted
+    /// from participant-facing views and that participant's history page.
     participant_href: Option<String>,
     exercise_name: String,
     /// Human-readable version of `exercise_name`. The DB value is
     /// `<chapter_file_stem>` for legacy single-step chapters and
     /// `<chapter_file_stem>/<step_key>` for multi-step (e.g.
-    /// `01_strings_and_chars/4_shout`). For display we strip the
-    /// numeric ordering prefixes and turn underscores into spaces so
-    /// readers see "Strings and chars · Shout" instead of the raw key.
+    /// `01_strings_and_chars/4_shout`). For display we strip the numeric
+    /// ordering prefixes and turn underscores into spaces so readers see
+    /// "Strings and chars · Shout" instead of the raw key.
     exercise_label: String,
     /// Course URL for this exact exercise step. Participant-facing views keep
     /// the learner ULID in the route; admin views use the public route.
@@ -548,8 +544,7 @@ struct SubmissionSummary {
 }
 
 /// Strip the `NN_` ordering prefix and turn underscores into spaces.
-/// `01_strings_and_chars` -> `Strings and chars`,
-/// `4_shout` -> `Shout`.
+/// `01_strings_and_chars` -> `Strings and chars`, `4_shout` -> `Shout`.
 fn prettify_slug_segment(seg: &str) -> String {
     let trimmed = seg
         .trim_start_matches(|c: char| c.is_ascii_digit())
@@ -562,8 +557,8 @@ fn prettify_slug_segment(seg: &str) -> String {
     })
 }
 
-/// Format `exercise_name` (DB key) into something a reader can scan.
-/// Multi-step keys (`<chapter>/<step>`) become `Chapter · Step`.
+/// Format `exercise_name` (DB key) into something a reader can scan. Multi-step
+/// keys (`<chapter>/<step>`) become `Chapter · Step`.
 fn prettify_exercise_name(name: &str) -> String {
     let parts: Vec<String> = name.split('/').map(prettify_slug_segment).collect();
     parts.join(" · ")
@@ -683,56 +678,52 @@ async fn load_submission_history_page(
 }
 
 /// Per-team page (`/admin/team/{slug}`, `/admin/team-unassigned`,
-/// `/dashboard/{ulid}/team`). Renders a single team's roster plus
-/// a feed of every member's submissions, with the same chrome and
-/// the same code-editor look as the rest of the course site.
+/// `/dashboard/{ulid}/team`). Renders a single team's roster plus a feed of
+/// every member's submissions, with the same chrome and the same code-editor
+/// look as the rest of the course site.
 ///
 /// Two viewer modes share this template:
 ///
-/// - **Admin** (`is_admin = true`): `admin_token` is `Some` so links
-///   back to `/admin` carry the token, member rows show ULIDs and a
-///   "View dashboard" link, and the "Unassigned" bucket is reachable.
-/// - **Participant** (`is_admin = false`): no admin chrome, the
-///   member matching `viewer_ulid` is highlighted as `is_self`, and
-///   `back_href` returns the user to their own dashboard.
+/// - **Admin** (`is_admin = true`): `admin_token` is `Some` so links back to
+///   `/admin` carry the token, member rows show ULIDs and a "View dashboard"
+///   link, and the "Unassigned" bucket is reachable.
+/// - **Participant** (`is_admin = false`): no admin chrome, the member matching
+///   `viewer_ulid` is highlighted as `is_self`, and `back_href` returns the
+///   user to their own dashboard.
 #[derive(Template)]
 #[template(path = "team.html")]
 struct TeamPageTemplate {
-    /// Display label shown in the page heading. The team slug for
-    /// a real team, or the literal string "Unassigned" for the
-    /// no-team bucket.
+    /// Display label shown in the page heading. The team slug for a real team,
+    /// or the literal string "Unassigned" for the no-team bucket.
     team_label: String,
-    /// `true` for the synthetic Unassigned bucket. The template uses
-    /// this to swap the eyebrow text and skip a couple of admin
-    /// affordances that only make sense for real teams.
+    /// `true` for the synthetic Unassigned bucket. The template uses this to
+    /// swap the eyebrow text and skip a couple of admin affordances that only
+    /// make sense for real teams.
     is_unassigned: bool,
-    /// `true` when rendered for an admin operator. Drives whether
-    /// admin-only chrome (ULIDs, dashboard links, the back-to-admin
-    /// link) is rendered.
+    /// `true` when rendered for an admin operator. Drives whether admin-only
+    /// chrome (ULIDs, dashboard links, the back-to-admin link) is rendered.
     is_admin: bool,
-    /// Admin token to thread back into `/admin` and `/dashboard/{ulid}`
-    /// links so the operator stays authenticated as they click
-    /// around. `None` in participant mode. Threaded into the inline
-    /// "move to team" form action so the form posts back with the
-    /// admin token still attached.
+    /// Admin token to thread back into `/admin` and `/dashboard/{ulid}` links
+    /// so the operator stays authenticated as they click around. `None` in
+    /// participant mode. Threaded into the inline "move to team" form action so
+    /// the form posts back with the admin token still attached.
     admin_token: Option<String>,
-    /// ULID of the participant viewing the page, when this is the
-    /// participant view. Used to deep-link the topbar Settings icon
-    /// straight at `/settings/{ulid}`.
+    /// ULID of the participant viewing the page, when this is the participant
+    /// view. Used to deep-link the topbar Settings icon straight at
+    /// `/settings/{ulid}`.
     viewer_ulid: Option<String>,
-    /// Roster: one row per member of this team, ordered by most
-    /// recent activity first.
+    /// Roster: one row per member of this team, ordered by most recent activity
+    /// first.
     members: Vec<TeamMemberView>,
-    /// Chronological feed of every team member's most recent
-    /// submissions, capped to keep the page from blowing up for a
-    /// busy team.
+    /// Chronological feed of every team member's most recent submissions,
+    /// capped to keep the page from blowing up for a busy team.
     submissions: Vec<SubmissionSummary>,
     /// `true` when the submissions list is the cap (see
     /// [`TEAM_SUBMISSIONS_LIMIT`]) rather than the full history.
     submissions_truncated: bool,
-    /// Distinct exercise names that show up in this team's submissions
-    /// feed. Used to populate the per-team "Filter" dropdown so the
-    /// reader can narrow the list without leaving the page.
+    /// Distinct exercise names that show up in this team's submissions feed.
+    /// Used to populate the per-team "Filter" dropdown so the reader can narrow
+    /// the list without leaving the page.
     exercises: Vec<String>,
     /// URL for the "back" link at the top of the page.
     back_href: String,
@@ -749,38 +740,38 @@ struct TeamMemberView {
     completed_count: i64,
     total_exercises: i64,
     last_activity: Option<chrono::DateTime<chrono::Utc>>,
-    /// `true` when this row is the participant currently viewing the
-    /// page. Only ever set in participant mode; the template adds a
-    /// small "You" badge so the user can spot themselves quickly.
+    /// `true` when this row is the participant currently viewing the page. Only
+    /// ever set in participant mode; the template adds a small "You" badge so
+    /// the user can spot themselves quickly.
     is_self: bool,
 }
 
-/// Cap on the number of submissions rendered on a single team page.
-/// Keeps the page snappy for very active teams; admins can open a
-/// participant's paginated submissions page for the full history.
+/// Cap on the number of submissions rendered on a single team page. Keeps the
+/// page snappy for very active teams; admins can open a participant's paginated
+/// submissions page for the full history.
 const TEAM_SUBMISSIONS_LIMIT: i64 = 60;
 
-/// Settings page (`/settings`, `/settings/{ulid}`). Renders
-/// editor/UI preferences (Vim mode, font size, draft data) plus, when
-/// a participant ULID is supplied, a snapshot of their team: the
-/// roster and the most recent submissions. The team section is
-/// populated identically to [`TeamPageTemplate`] so the
-/// `partials/submission_card.html` partial stays usable across both.
+/// Settings page (`/settings`, `/settings/{ulid}`). Renders editor/UI
+/// preferences (Vim mode, font size, draft data) plus, when a participant ULID
+/// is supplied, a snapshot of their team: the roster and the most recent
+/// submissions. The team section is populated identically to
+/// [`TeamPageTemplate`] so the `partials/submission_card.html` partial stays
+/// usable across both.
 #[derive(Template)]
 #[template(path = "settings.html")]
 struct SettingsTemplate {
-    /// Participant name, when the page is rendered under
-    /// `/settings/{ulid}` for a real account. `None` for anonymous
-    /// visitors hitting `/settings` directly.
+    /// Participant name, when the page is rendered under `/settings/{ulid}` for
+    /// a real account. `None` for anonymous visitors hitting `/settings`
+    /// directly.
     participant_name: Option<String>,
     /// Participant ULID, mirrored back into back-links and the
     /// copy-to-clipboard "Your login link" affordance.
     ulid: Option<String>,
-    /// Team slug for participants who joined via `/signup/{slug}`.
-    /// `None` for unassigned participants and anonymous visitors.
+    /// Team slug for participants who joined via `/signup/{slug}`. `None` for
+    /// unassigned participants and anonymous visitors.
     team_token: Option<String>,
-    /// Team roster, sorted by recent activity. Empty when there is no
-    /// team to show.
+    /// Team roster, sorted by recent activity. Empty when there is no team to
+    /// show.
     members: Vec<TeamMemberView>,
     /// Recent submissions feed across the team, capped to
     /// [`TEAM_SUBMISSIONS_LIMIT`]. Empty when there is no team.
@@ -813,10 +804,10 @@ const PARTICIPANT_SUBMISSIONS_PAGE_SIZE: i64 = 50;
 
 /// Optional query parameters on the anonymous dashboard at `/`.
 ///
-/// `reason` carries a short machine-readable code that the template
-/// turns into a toast. Only `unknown-token` is recognized today (set
-/// when `/dashboard/{ulid}` redirects here because the ULID has no
-/// matching participant). Anything else renders as no toast.
+/// `reason` carries a short machine-readable code that the template turns into
+/// a toast. Only `unknown-token` is recognized today (set when
+/// `/dashboard/{ulid}` redirects here because the ULID has no matching
+/// participant). Anything else renders as no toast.
 #[derive(Deserialize, Default)]
 struct DashboardQuery {
     #[serde(default)]
@@ -825,14 +816,14 @@ struct DashboardQuery {
 
 /// Form data for web registration.
 ///
-/// `team_token` is populated from the URL path on `/signup/{team_slug}`
-/// via a hidden input; it's never typed by the user. Public signups at
-/// `/signup` leave it empty / `None`.
+/// `team_token` is populated from the URL path on `/signup/{team_slug}` via a
+/// hidden input; it's never typed by the user. Public signups at `/signup`
+/// leave it empty / `None`.
 ///
-/// `next` is set by the inline signup card embedded in `exercise.html`
-/// (see `signup_on_pass` directive). It carries the URL the visitor
-/// was about to visit so we can redirect there with their fresh ULID
-/// spliced in, instead of bouncing through the dashboard.
+/// `next` is set by the inline signup card embedded in `exercise.html` (see
+/// `signup_on_pass` directive). It carries the URL the visitor was about to
+/// visit so we can redirect there with their fresh ULID spliced in, instead of
+/// bouncing through the dashboard.
 #[derive(Deserialize)]
 struct WebRegistrationForm {
     name: String,
@@ -842,11 +833,11 @@ struct WebRegistrationForm {
     next: Option<String>,
 }
 
-/// Resolves the optional `next` form field from `web_register` to a
-/// safe redirect target. Returns `None` if the value is missing,
-/// malformed, or doesn't match the narrow structure we expect (an
-/// anonymous exercise URL: `/exercise/<slug>`). The slug whitelist is
-/// intentionally tight to keep this from becoming an open redirect.
+/// Resolves the optional `next` form field from `web_register` to a safe
+/// redirect target. Returns `None` if the value is missing, malformed, or
+/// doesn't match the narrow structure we expect (an anonymous exercise URL:
+/// `/exercise/<slug>`). The slug whitelist is intentionally tight to keep this
+/// from becoming an open redirect.
 fn resolve_register_next(next: Option<&str>, ulid: &str) -> Option<String> {
     let raw = next?.trim();
     let slug = raw.strip_prefix("/exercise/")?;
@@ -860,11 +851,10 @@ fn resolve_register_next(next: Option<&str>, ulid: &str) -> Option<String> {
     Some(format!("/exercise/{ulid}/{slug}"))
 }
 
-/// Buckets a flat list of participants into one `ParticipantTeam`
-/// per distinct `team_token`. Participants whose `team_token` is
-/// `None` are gathered into a final "Unassigned" bucket. Assumes the
-/// input is already sorted by `team_token` so a single linear pass
-/// produces stable output.
+/// Buckets a flat list of participants into one `ParticipantTeam` per distinct
+/// `team_token`. Participants whose `team_token` is `None` are gathered into a
+/// final "Unassigned" bucket. Assumes the input is already sorted by
+/// `team_token` so a single linear pass produces stable output.
 fn bucket_participants_by_team(participants: Vec<ParticipantSummary>) -> Vec<ParticipantTeam> {
     let mut teams: Vec<ParticipantTeam> = Vec::new();
     for p in participants {
@@ -879,10 +869,10 @@ fn bucket_participants_by_team(participants: Vec<ParticipantSummary>) -> Vec<Par
     teams
 }
 
-/// Number of *completable* chapters in the catalog: the denominator
-/// every participant's progress is measured against. Quizzes, notes-only
-/// chapters, and bonus chapters never count, matching
-/// `participant_dashboard` and `render_exercise_page`.
+/// Number of *completable* chapters in the catalog: the denominator every
+/// participant's progress is measured against. Quizzes, notes-only chapters,
+/// and bonus chapters never count, matching `participant_dashboard` and
+/// `render_exercise_page`.
 fn completable_total(state: &AppState) -> i64 {
     i64::try_from(
         state
@@ -895,9 +885,9 @@ fn completable_total(state: &AppState) -> i64 {
 }
 
 /// Build one [`ParticipantSummary`], computing the completed count with
-/// `get_exercise_progress` so it matches exactly what the participant
-/// sees on their own dashboard. A failure to compute progress degrades
-/// to `0` rather than taking the admin page down.
+/// `get_exercise_progress` so it matches exactly what the participant sees on
+/// their own dashboard. A failure to compute progress degrades to `0` rather
+/// than taking the admin page down.
 async fn build_participant_summary(
     state: &AppState,
     id: String,
@@ -927,10 +917,10 @@ async fn build_participant_summary(
     }
 }
 
-/// Load the member summaries for a single team bucket. `team` is the
-/// validated [`TeamToken`], or `None` for the Unassigned bucket. Used
-/// by the `admin_team_members` fragment endpoint so a sort/filter only
-/// recomputes progress for the team being viewed instead of everyone.
+/// Load the member summaries for a single team bucket. `team` is the validated
+/// [`TeamToken`], or `None` for the Unassigned bucket. Used by the
+/// `admin_team_members` fragment endpoint so a sort/filter only recomputes
+/// progress for the team being viewed instead of everyone.
 async fn load_team_member_summaries(
     state: &AppState,
     team: Option<&TeamToken>,
@@ -972,11 +962,11 @@ async fn load_team_member_summaries(
     Ok(members)
 }
 
-/// Filter a team's members by a case-insensitive substring of the name,
-/// then sort by the requested column and direction in place. `sort` is
-/// one of `name` | `progress` | `activity` (anything else falls back to
-/// `name`); `dir` is `asc` unless it is exactly `desc`. Name is used as
-/// the stable tie-breaker so equal rows keep a deterministic order.
+/// Filter a team's members by a case-insensitive substring of the name, then
+/// sort by the requested column and direction in place. `sort` is one of `name`
+/// | `progress` | `activity` (anything else falls back to `name`); `dir` is
+/// `asc` unless it is exactly `desc`. Name is used as the stable tie-breaker so
+/// equal rows keep a deterministic order.
 fn apply_member_filter_sort(
     members: &mut Vec<ParticipantSummary>,
     sort: &str,
@@ -1132,14 +1122,13 @@ async fn main() -> Result<()> {
         .route("/admin/team-unassigned", get(admin_team_unassigned_page))
         .route("/dashboard/{ulid}/team", get(participant_team_page))
         .nest("/api", api_routes)
-        // Every route above renders per-participant state (progress
-        // checkmarks, submitted code) keyed only by the ulid in the
-        // URL. Without an explicit policy these HTML pages are freely
-        // cacheable, so a browser or intermediary can serve a stale
-        // copy of someone's own page (e.g. a mobile browser showing an
-        // old `0 of 5` after the work was done on another device).
-        // `no-store` keeps progress always fresh. The layer only
-        // applies to routes registered before it, so the static assets
+        // Every route above renders per-participant state (progress checkmarks,
+        // submitted code) keyed only by the ulid in the URL. Without an
+        // explicit policy these HTML pages are freely cacheable, so a browser
+        // or intermediary can serve a stale copy of someone's own page (e.g. a
+        // mobile browser showing an old `0 of 5` after the work was done on
+        // another device). `no-store` keeps progress always fresh. The layer
+        // only applies to routes registered before it, so the static assets
         // nested below stay cacheable.
         .layer(axum::middleware::map_response(no_store))
         .nest_service("/static", ServeDir::new("static"))
@@ -1156,10 +1145,10 @@ async fn main() -> Result<()> {
 
 /// Stamp `Cache-Control: no-store` on every dynamic HTML/API response.
 ///
-/// These pages embed per-participant state (progress, submitted code)
-/// keyed only by the ulid in the URL, so they must never be reused from
-/// a browser, bfcache, or intermediary cache. Without this, a device
-/// that visited a page once can keep showing stale progress.
+/// These pages embed per-participant state (progress, submitted code) keyed
+/// only by the ulid in the URL, so they must never be reused from a browser,
+/// bfcache, or intermediary cache. Without this, a device that visited a page
+/// once can keep showing stale progress.
 async fn no_store(mut response: Response) -> Response {
     response.headers_mut().insert(
         CACHE_CONTROL,
@@ -1170,9 +1159,8 @@ async fn no_store(mut response: Response) -> Response {
 
 /// Liveness + readiness probe.
 ///
-/// Returns 200 if the process is up *and* the database accepts a
-/// trivial query, 503 otherwise. Cheap enough to hit every few seconds
-/// from uptime monitors.
+/// Returns 200 if the process is up *and* the database accepts a trivial query,
+/// 503 otherwise. Cheap enough to hit every few seconds from uptime monitors.
 async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
     match sqlx::query("SELECT 1").execute(&state.pool).await {
         Ok(_) => (StatusCode::OK, "ok"),
@@ -1183,10 +1171,10 @@ async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
     }
 }
 
-/// Build chapter-list rows for the homepage from per-exercise
-/// progress. Mirrors the dot construction in `render_exercise_page`
-/// so both pages feed the same `partials/chapter_list.html` partial.
-/// `current` is always `false` on the homepage.
+/// Build chapter-list rows for the homepage from per-exercise progress. Mirrors
+/// the dot construction in `render_exercise_page` so both pages feed the same
+/// `partials/chapter_list.html` partial. `current` is always `false` on the
+/// homepage.
 fn dots_from_exercises(exercises: &[ExerciseProgress]) -> Vec<ProgressDot> {
     std::iter::once(tour_dot())
         .chain(exercises.iter().map(|e| ProgressDot {
@@ -1205,26 +1193,25 @@ fn dots_from_exercises(exercises: &[ExerciseProgress]) -> Vec<ProgressDot> {
         .collect()
 }
 
-/// Number of rows in the first column of the two-column table of
-/// contents (`partials/chapter_list.html`). The list uses
-/// `grid-auto-flow: column` with `--chapter-rows` rows, filling the
-/// first column before the second, so this is `ceil(visible / 2)`.
-/// Counts only rendered (non-bonus) rows so the two columns stay
-/// balanced as chapters are added or removed.
+/// Number of rows in the first column of the two-column table of contents
+/// (`partials/chapter_list.html`). The list uses `grid-auto-flow: column` with
+/// `--chapter-rows` rows, filling the first column before the second, so this
+/// is `ceil(visible / 2)`. Counts only rendered (non-bonus) rows so the two
+/// columns stay balanced as chapters are added or removed.
 fn chapter_rows(dots: &[ProgressDot]) -> usize {
     dots.iter().filter(|d| !d.is_bonus).count().div_ceil(2)
 }
 
 /// Anonymous dashboard at `/`.
 ///
-/// Renders the same `dashboard.html` template the participant view
-/// uses, but with no ULID and no name. All chapters render with
-/// `completed = perfected = false`; the TOC links to `/exercise/{slug}`
-/// (the public exercise route). The CTA invites the visitor to start
-/// chapter 1 without registering.
+/// Renders the same `dashboard.html` template the participant view uses, but
+/// with no ULID and no name. All chapters render with
+/// `completed = perfected = false`; the TOC links to `/exercise/{slug}` (the
+/// public exercise route). The CTA invites the visitor to start chapter 1
+/// without registering.
 ///
-/// Optionally accepts a `?reason=...` query param surfaced as a one-shot
-/// toast (e.g. when a participant landed on a missing-ULID dashboard).
+/// Optionally accepts a `?reason=...` query param surfaced as a one-shot toast
+/// (e.g. when a participant landed on a missing-ULID dashboard).
 async fn anonymous_dashboard(
     State(state): State<AppState>,
     Query(query): Query<DashboardQuery>,
@@ -1291,12 +1278,12 @@ async fn signup_page() -> impl IntoResponse {
 
 /// Workshop signup form at `/signup/{team_slug}`.
 ///
-/// The slug is captured server-side and surfaced both as a banner and
-/// as a hidden `team_token` input on the form so it round-trips back
-/// to `/register` without the user typing anything.
+/// The slug is captured server-side and surfaced both as a banner and as a
+/// hidden `team_token` input on the form so it round-trips back to `/register`
+/// without the user typing anything.
 async fn signup_page_with_team(AxumPath(team_slug): AxumPath<String>) -> impl IntoResponse {
-    // Defensive trim. Empty slugs degrade to the public form rather
-    // than rendering a banner that says "Signing up with **(blank)**".
+    // Defensive trim. Empty slugs degrade to the public form rather than
+    // rendering a banner that says "Signing up with **(blank)**".
     let trimmed = team_slug.trim();
     let team = if trimmed.is_empty() {
         None
@@ -1322,18 +1309,18 @@ fn render_signup(team_slug: Option<String>) -> axum::response::Response {
 
 /// "A Quick Tour of Rust" preamble page at `/tour`.
 ///
-/// Ships the annotated Mario tour source (embedded at compile time)
-/// into one editable, runnable code box. Like the playground, edits
-/// live in `localStorage` and "Run" proxies to play.rust-lang.org; the
-/// page adds concept-class hover explanations on top.
+/// Ships the annotated Mario tour source (embedded at compile time) into one
+/// editable, runnable code box. Like the playground, edits live in
+/// `localStorage` and "Run" proxies to play.rust-lang.org; the page adds
+/// concept-class hover explanations on top.
 async fn tour_page(State(state): State<AppState>) -> impl IntoResponse {
     render_tour(&state, None)
 }
 
-/// Same tour page, but reached with a participant ULID (e.g. straight
-/// after signing up on the dashboard warm-up). The ULID is threaded
-/// into the closing "Next chapter" CTA so the learner keeps their
-/// progress context when they move on to chapter 1.
+/// Same tour page, but reached with a participant ULID (e.g. straight after
+/// signing up on the dashboard warm-up). The ULID is threaded into the closing
+/// "Next chapter" CTA so the learner keeps their progress context when they
+/// move on to chapter 1.
 async fn tour_page_with_ulid(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
@@ -1343,9 +1330,9 @@ async fn tour_page_with_ulid(
 
 fn render_tour(state: &AppState, ulid: Option<String>) -> axum::response::Html<String> {
     const STARTER: &str = include_str!("../../static/tour_starter.rs");
-    // Derive the first real chapter the same way the dashboard does, so
-    // the closing CTA keeps pointing at the right place even if chapters
-    // are renamed or reordered.
+    // Derive the first real chapter the same way the dashboard does, so the
+    // closing CTA keeps pointing at the right place even if chapters are
+    // renamed or reordered.
     let first = state
         .exercises
         .iter()
@@ -1378,8 +1365,8 @@ fn render_tour(state: &AppState, ulid: Option<String>) -> axum::response::Html<S
     }
 }
 
-/// Standalone Rust scratchpad. Code is persisted client-side in
-/// `localStorage`; this handler only ships the starter snippet.
+/// Standalone Rust scratchpad. Code is persisted client-side in `localStorage`;
+/// this handler only ships the starter snippet.
 async fn playground_page() -> impl IntoResponse {
     const STARTER: &str = r#"//! Playground scratchpad.
 //!
@@ -1419,9 +1406,9 @@ async fn cheatsheet_page() -> impl IntoResponse {
     }
 }
 
-/// Returns the rendered cheatsheet markdown as a bare HTML fragment.
-/// Used by the in-page modal so we don't have to ship the entire
-/// document with every page load.
+/// Returns the rendered cheatsheet markdown as a bare HTML fragment. Used by
+/// the in-page modal so we don't have to ship the entire document with every
+/// page load.
 async fn cheatsheet_fragment() -> impl IntoResponse {
     Html(load_cheatsheet_html())
 }
@@ -1441,10 +1428,10 @@ async fn web_register(
 ) -> Result<axum::response::Redirect, StatusCode> {
     let name = Name::try_from(form.name).map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    // Treat blank / whitespace-only team tokens as "no team" and
-    // reject any other malformed value. The hidden input on the
-    // workshop signup page only ever sends a known-good slug, so a
-    // bad value here means a hand-crafted POST and a 400 is fine.
+    // Treat blank / whitespace-only team tokens as "no team" and reject any
+    // other malformed value. The hidden input on the workshop signup page only
+    // ever sends a known-good slug, so a bad value here means a hand-crafted
+    // POST and a 400 is fine.
     let team_token = form
         .team_token
         .as_deref()
@@ -1461,10 +1448,9 @@ async fn web_register(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // If the signup came from the inline card on an exercise page,
-    // hop straight back to the exercise (now with the new ULID in the
-    // URL) so the user lands on the next chapter they were already
-    // looking at, not the dashboard.
+    // If the signup came from the inline card on an exercise page, hop straight
+    // back to the exercise (now with the new ULID in the URL) so the user lands
+    // on the next chapter they were already looking at, not the dashboard.
     let target = resolve_register_next(form.next.as_deref(), &ulid)
         .unwrap_or_else(|| format!("/dashboard/{ulid}"));
     Ok(axum::response::Redirect::to(&target))
@@ -1485,11 +1471,11 @@ async fn participant_dashboard(
     let participant: DbParticipant = match participant_result {
         Ok(p) => p,
         Err(_) => {
-            // Unknown ULID. Old behavior was a hard 404, which is
-            // unfriendly because the dashboard URL is the bookmark and
-            // people will mistype it (or follow a stale link from
-            // before we migrated databases). Send them home with a
-            // soft toast instead so they have somewhere to go.
+            // Unknown ULID. Old behavior was a hard 404, which is unfriendly
+            // because the dashboard URL is the bookmark and people will mistype
+            // it (or follow a stale link from before we migrated databases).
+            // Send them home with a soft toast instead so they have somewhere
+            // to go.
             return axum::response::Redirect::to("/?reason=unknown-token").into_response();
         }
     };
@@ -1504,9 +1490,9 @@ async fn participant_dashboard(
             .into_response();
     };
 
-    // CTA: jump to the first unfinished, non-quiz chapter that actually
-    // has exercises. If everything is done, point back to chapter 1 as
-    // a graceful default.
+    // CTA: jump to the first unfinished, non-quiz chapter that actually has
+    // exercises. If everything is done, point back to chapter 1 as a graceful
+    // default.
     let first_unfinished = exercises
         .iter()
         .find(|e| !e.completed && e.counts_toward_progress())
@@ -1608,15 +1594,16 @@ fn html_escape(s: &str) -> String {
     out
 }
 
-// reason: top-level request handler; splitting purely for line count adds indirection without value
+// reason: top-level request handler; splitting purely for line count adds
+// indirection without value
 #[allow(clippy::too_many_lines)]
 async fn render_exercise_page(
     state: &AppState,
     slug: &str,
     ulid: Option<String>,
 ) -> axum::response::Response {
-    // Look up by slug or by file_stem so both `/exercise/strings_and_chars`
-    // and `/exercise/01_strings_and_chars` resolve.
+    // Look up by slug or by file_stem so both `/exercise/strings_and_chars` and
+    // `/exercise/01_strings_and_chars` resolve.
     let Some(idx) = state
         .exercises
         .iter()
@@ -1638,9 +1625,9 @@ async fn render_exercise_page(
                             attempted: r.attempted,
                             completed: r.completed,
                             perfected: r.perfected,
-                            // Chapter rollup is only used for the header
-                            // badge and chapter list, never to seed an
-                            // editor, so the submitted source is irrelevant.
+                            // Chapter rollup is only used for the header badge
+                            // and chapter list, never to seed an editor, so the
+                            // submitted source is irrelevant.
                             submitted_code: None,
                             submitted_passed: false,
                         },
@@ -1655,8 +1642,8 @@ async fn render_exercise_page(
         None => std::collections::HashMap::new(),
     };
 
-    // Per-step status (`<chapter>/<step_key>`). For legacy single-step
-    // chapters the step status is just the chapter status.
+    // Per-step status (`<chapter>/<step_key>`). For legacy single-step chapters
+    // the step status is just the chapter status.
     let step_progress: std::collections::HashMap<String, UiExerciseStatus> = match &ulid {
         Some(u) => load_step_progress(&state.pool, u)
             .await
@@ -1703,8 +1690,8 @@ async fn render_exercise_page(
     for step in &exercise.steps {
         match step {
             Step::Prose(note) => {
-                // The first note's title is also the chapter title (rendered
-                // as the page <h1>), so we only show the title on subsequent
+                // The first note's title is also the chapter title (rendered as
+                // the page <h1>), so we only show the title on subsequent
                 // notes. Otherwise the heading would appear twice on chapter
                 // index pages.
                 let html = if seen_first_note {
@@ -1781,9 +1768,9 @@ async fn render_exercise_page(
 
     // Next chapter for the bottom CTA: the first non-bonus dot after the
     // current one. Quizzes and appendices stay in the default flow; optional
-    // chapters are discoverable in the picker without forcing a detour.
-    // Locate the current dot by its flag rather than by
-    // `idx`, since `dots` is prefixed with the synthetic tour entry.
+    // chapters are discoverable in the picker without forcing a detour. Locate
+    // the current dot by its flag rather than by `idx`, since `dots` is
+    // prefixed with the synthetic tour entry.
     let next_dot = dots
         .iter()
         .skip_while(|d| !d.current)
@@ -1791,8 +1778,8 @@ async fn render_exercise_page(
         .find(|d| !d.is_bonus)
         .cloned();
 
-    // Progress excludes quizzes, notes-only chapters, and bonus chapters
-    // from both the numerator and denominator.
+    // Progress excludes quizzes, notes-only chapters, and bonus chapters from
+    // both the numerator and denominator.
     let progress_total = dots
         .iter()
         .filter(|dot| dot.counts_toward_progress())
@@ -1830,8 +1817,8 @@ async fn render_exercise_page(
 
 /// Load per-step submission status for a participant.
 ///
-/// Keys are the full `submissions.exercise_name` value (`<chapter>` for
-/// legacy single-step chapters or `<chapter>/<step_key>` for multi-step).
+/// Keys are the full `submissions.exercise_name` value (`<chapter>` for legacy
+/// single-step chapters or `<chapter>/<step_key>` for multi-step).
 async fn load_step_progress(
     pool: &SqlitePool,
     ulid: &str,
@@ -1856,9 +1843,9 @@ async fn load_step_progress(
         if row.tests_passed && row.fmt_passed && row.clippy_passed {
             entry.perfected = true;
         }
-        // Rows arrive newest-first per `exercise_name`, so the first one
-        // we see for a key is the latest submission: seed the editor
-        // with it on devices that have no local draft.
+        // Rows arrive newest-first per `exercise_name`, so the first one we see
+        // for a key is the latest submission: seed the editor with it on
+        // devices that have no local draft.
         if entry.submitted_code.is_none() {
             entry.submitted_code = Some(row.source_code.clone());
             entry.submitted_passed = row.tests_passed;
@@ -1866,7 +1853,8 @@ async fn load_step_progress(
     }
     Ok(by_key)
 }
-// reason: top-level request handler; splitting purely for line count adds indirection without value
+// reason: top-level request handler; splitting purely for line count adds
+// indirection without value
 #[allow(clippy::too_many_lines)]
 async fn admin_dashboard(
     Query(query): Query<AdminQuery>,
@@ -1877,10 +1865,10 @@ async fn admin_dashboard(
         return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
     }
 
-    // Get participant summaries. We only pull identity + last-activity
-    // from SQL here; the completed/total counts are computed below with
-    // `get_exercise_progress` so they match exactly what each
-    // participant sees on their own dashboard.
+    // Get participant summaries. We only pull identity + last-activity from SQL
+    // here; the completed/total counts are computed below with
+    // `get_exercise_progress` so they match exactly what each participant sees
+    // on their own dashboard.
     let participant_rows_result = sqlx::query(
         r"
         SELECT 
@@ -1916,10 +1904,10 @@ async fn admin_dashboard(
     let mut participants = Vec::new();
     for row in participant_rows {
         let raw_token: Option<String> = row.get("team_token");
-        // Rows with a column value the validator rejects degrade to
-        // `None` (the participant lands in the "Unassigned" bucket).
-        // That can't happen via our own write paths, but it keeps a
-        // hand-edited DB row from taking the page down.
+        // Rows with a column value the validator rejects degrade to `None` (the
+        // participant lands in the "Unassigned" bucket). That can't happen via
+        // our own write paths, but it keeps a hand-edited DB row from taking
+        // the page down.
         let team_token = raw_token
             .as_deref()
             .and_then(|s| TeamToken::try_from(s).ok());
@@ -1927,27 +1915,25 @@ async fn admin_dashboard(
         let name: String = row.get("name");
         let last_activity = row.get("last_activity");
 
-        // Numerator (inside `build_participant_summary`): distinct
-        // completable chapters this participant has finished. Counting
-        // passing *submissions* badly overcounts, since multiple
-        // submissions per step are allowed and multi-step chapters
-        // store one row per step. A per-participant query is fine on
-        // this low-traffic admin page.
+        // Numerator (inside `build_participant_summary`): distinct completable
+        // chapters this participant has finished. Counting passing
+        // *submissions* badly overcounts, since multiple submissions per step
+        // are allowed and multi-step chapters store one row per step. A
+        // per-participant query is fine on this low-traffic admin page.
         participants.push(
             build_participant_summary(&state, id, name, team_token, last_activity, total_exercises)
                 .await,
         );
     }
 
-    // Bucket the flat list into teams. The query already sorted
-    // by team_token (with NULLs last) so a single linear pass is
-    // enough to produce one bucket per distinct value.
+    // Bucket the flat list into teams. The query already sorted by team_token
+    // (with NULLs last) so a single linear pass is enough to produce one bucket
+    // per distinct value.
     let mut participant_teams = bucket_participants_by_team(participants);
 
-    // Order each bucket by the default sort the template advertises
-    // (name, ascending) so the column header arrow matches what the
-    // operator first sees. Later sorts/filters are handled by
-    // `admin_team_members` over htmx.
+    // Order each bucket by the default sort the template advertises (name,
+    // ascending) so the column header arrow matches what the operator first
+    // sees. Later sorts/filters are handled by `admin_team_members` over htmx.
     for team in &mut participant_teams {
         apply_member_filter_sort(&mut team.members, "name", "asc", "");
     }
@@ -2122,10 +2108,10 @@ async fn admin_participant_submissions_page(
     }
 }
 
-/// Query parameters for the `admin_team_members` htmx fragment. `team`
-/// is the slug (empty string = Unassigned bucket); `sort`/`dir`/`filter`
-/// carry the current table state forwarded by the column-header sort
-/// buttons and the per-team filter box.
+/// Query parameters for the `admin_team_members` htmx fragment. `team` is the
+/// slug (empty string = Unassigned bucket); `sort`/`dir`/`filter` carry the
+/// current table state forwarded by the column-header sort buttons and the
+/// per-team filter box.
 #[derive(Deserialize)]
 struct TeamMembersQuery {
     token: String,
@@ -2139,10 +2125,10 @@ struct TeamMembersQuery {
     filter: String,
 }
 
-/// htmx fragment endpoint backing per-team sorting and filtering on the
-/// admin dashboard. Returns just the `partials/team_members.html`
-/// table (the swap target), re-rendered with the requested sort column,
-/// direction, and name filter applied.
+/// htmx fragment endpoint backing per-team sorting and filtering on the admin
+/// dashboard. Returns just the `partials/team_members.html` table (the swap
+/// target), re-rendered with the requested sort column, direction, and name
+/// filter applied.
 async fn admin_team_members(
     Query(query): Query<TeamMembersQuery>,
     State(state): State<AppState>,
@@ -2168,9 +2154,9 @@ async fn admin_team_members(
             .into_response();
     };
 
-    // Normalise the incoming state so the template's arrows and the
-    // hx-get URLs it bakes back out stay in the {name|progress|activity}
-    // x {asc|desc} space regardless of what arrived on the query string.
+    // Normalise the incoming state so the template's arrows and the hx-get URLs
+    // it bakes back out stay in the {name|progress|activity} x {asc|desc} space
+    // regardless of what arrived on the query string.
     let sort = if matches!(query.sort.as_str(), "progress" | "activity") {
         query.sort
     } else {
@@ -2216,12 +2202,12 @@ struct TeamTokenForm {
 /// Move a participant into a different team bucket (or out of any).
 ///
 /// Submitted by the inline form on the admin participants table. The
-/// `team_token` field is normalised via [`TeamToken::parse_form_input`]:
-/// blank values clear the column (sending the participant to the
-/// "Unassigned" bucket), anything else has to be a short slug.
+/// `team_token` field is normalised via [`TeamToken::parse_form_input`]: blank
+/// values clear the column (sending the participant to the "Unassigned"
+/// bucket), anything else has to be a short slug.
 ///
-/// Always redirects back to `/admin?token=...` on success so the
-/// admin sees the regrouped table immediately.
+/// Always redirects back to `/admin?token=...` on success so the admin sees the
+/// regrouped table immediately.
 async fn admin_set_team_token(
     AxumPath(participant_id): AxumPath<String>,
     Query(query): Query<AdminQuery>,
@@ -2255,10 +2241,10 @@ async fn admin_set_team_token(
         }
         Ok(_) => {
             info!("Admin moved a participant to team {new_token:?}");
-            // The admin token is already taken from the request URL,
-            // which means the operator's browser was OK with it as-is;
-            // echo it straight back, the same way the rest of the
-            // admin UI does (see /admin/remove-participant).
+            // The admin token is already taken from the request URL, which
+            // means the operator's browser was OK with it as-is; echo it
+            // straight back, the same way the rest of the admin UI does (see
+            // /admin/remove-participant).
             axum::response::Redirect::to(&format!("/admin?token={}", state.admin_token))
                 .into_response()
         }
@@ -2269,11 +2255,10 @@ async fn admin_set_team_token(
     }
 }
 
-/// Snapshot of a single team (or the unassigned bucket): roster,
-/// recent submissions, truncation flag, and the distinct exercises
-/// present in the feed. Shared between [`render_team_page`] and the
-/// settings page so both pages see the same data and respect the same
-/// `TEAM_SUBMISSIONS_LIMIT`.
+/// Snapshot of a single team (or the unassigned bucket): roster, recent
+/// submissions, truncation flag, and the distinct exercises present in the
+/// feed. Shared between [`render_team_page`] and the settings page so both
+/// pages see the same data and respect the same `TEAM_SUBMISSIONS_LIMIT`.
 // reason: roster and submission queries are kept together to build one snapshot
 #[allow(clippy::too_many_lines)]
 async fn load_team_view(
@@ -2292,11 +2277,11 @@ async fn load_team_view(
 > {
     let total_exercises = completable_total(state);
 
-    // Roster: every participant in this team, with the timestamp of their
-    // most recent passing submission. Chapter progress is computed below
-    // from the catalog-aware progress model.
-    // We branch on the SQL because SQLite has no portable way to bind
-    // an Option<&str> against `IS NULL` in a single statement.
+    // Roster: every participant in this team, with the timestamp of their most
+    // recent passing submission. Chapter progress is computed below from the
+    // catalog-aware progress model. We branch on the SQL because SQLite has no
+    // portable way to bind an Option<&str> against `IS NULL` in a single
+    // statement.
     let roster_query = match team_token {
         Some(_) => {
             r"
@@ -2364,8 +2349,8 @@ async fn load_team_view(
         });
     }
 
-    // Submissions feed: every member's latest activity, capped so a
-    // very busy team doesn't render thousands of editor instances.
+    // Submissions feed: every member's latest activity, capped so a very busy
+    // team doesn't render thousands of editor instances.
     let member_ids: Vec<String> = roster_rows
         .iter()
         .map(|r| r.get::<String, _>("id"))
@@ -2415,8 +2400,8 @@ async fn load_team_view(
         (subs, truncated)
     };
 
-    // Distinct exercise names from the submissions we're about to
-    // render. Sorted for a stable, alphabetic dropdown.
+    // Distinct exercise names from the submissions we're about to render.
+    // Sorted for a stable, alphabetic dropdown.
     let mut exercises: Vec<String> = submissions
         .iter()
         .map(|s| s.exercise_name.clone())
@@ -2525,9 +2510,9 @@ async fn admin_team_unassigned_page(
 
 /// Participant: read-only view of their own team's submissions.
 ///
-/// Returns 404 if the ULID is unknown; redirects to the dashboard
-/// with a one-shot toast if the participant has no `team_token` (no
-/// team means there's nothing meaningful to show on this page).
+/// Returns 404 if the ULID is unknown; redirects to the dashboard with a
+/// one-shot toast if the participant has no `team_token` (no team means there's
+/// nothing meaningful to show on this page).
 async fn participant_team_page(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
@@ -2562,8 +2547,8 @@ async fn participant_team_page(
     .await
 }
 
-/// Settings page for anonymous visitors: editor preferences only, no
-/// team data. Routed at `/settings`.
+/// Settings page for anonymous visitors: editor preferences only, no team data.
+/// Routed at `/settings`.
 async fn settings_page() -> impl IntoResponse {
     let template = SettingsTemplate {
         participant_name: None,
@@ -2587,10 +2572,10 @@ async fn settings_page() -> impl IntoResponse {
     }
 }
 
-/// Settings page for a known participant: editor preferences plus
-/// their team snapshot (roster + recent submissions). Routed at
-/// `/settings/{ulid}`. Unknown ULIDs redirect to the anonymous
-/// dashboard with the standard one-shot toast.
+/// Settings page for a known participant: editor preferences plus their team
+/// snapshot (roster + recent submissions). Routed at `/settings/{ulid}`.
+/// Unknown ULIDs redirect to the anonymous dashboard with the standard one-shot
+/// toast.
 async fn participant_settings_page(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
@@ -2732,16 +2717,15 @@ async fn api_register(
     }
 }
 
-/// Body returned by `POST /api/submit` so the browser can refresh the
-/// chapter completion badge and the top-bar `progress_done / progress_total`
-/// counter without waiting for the next page navigation. The CLI ignores
-/// this body and only checks the HTTP status, so adding fields here is
-/// safe.
+/// Body returned by `POST /api/submit` so the browser can refresh the chapter
+/// completion badge and the top-bar `progress_done / progress_total` counter
+/// without waiting for the next page navigation. The CLI ignores this body and
+/// only checks the HTTP status, so adding fields here is safe.
 #[derive(Serialize)]
 struct SubmitResponse {
-    /// `true` once every code step in the chapter that this submission
-    /// belongs to has at least one passing submission. Mirrors the
-    /// `completed` flag in `get_exercise_progress`.
+    /// `true` once every code step in the chapter that this submission belongs
+    /// to has at least one passing submission. Mirrors the `completed` flag in
+    /// `get_exercise_progress`.
     chapter_completed: bool,
     /// Number of chapters with code exercises the participant has finished;
     /// quiz, notes-only, and bonus chapters are excluded.
@@ -2750,10 +2734,10 @@ struct SubmitResponse {
     progress_total: usize,
 }
 
-/// Compute the participant's chapter-level progress for the chapter that
-/// owns `exercise_name`. Returns `(chapter_completed, progress_done,
-/// progress_total)`. Quiz, notes-only, and bonus chapters are excluded from
-/// the returned counts.
+/// Compute the participant's chapter-level progress for the chapter that owns
+/// `exercise_name`. Returns
+/// `(chapter_completed, progress_done, progress_total)`. Quiz, notes-only, and
+/// bonus chapters are excluded from the returned counts.
 async fn compute_submit_progress(
     pool: &SqlitePool,
     catalog: &[Exercise],
@@ -2774,7 +2758,8 @@ async fn compute_submit_progress(
 
 /// API submission endpoint
 #[debug_handler]
-// reason: top-level request handler; splitting purely for line count adds indirection without value
+// reason: top-level request handler; splitting purely for line count adds
+// indirection without value
 #[allow(clippy::too_many_lines)]
 async fn api_submit(
     State(state): State<AppState>,
@@ -2826,8 +2811,8 @@ async fn api_submit(
                 request.exercise_name
             );
             // Return success but don't store duplicate. Still recompute
-            // progress so the client can reconcile its UI even when the
-            // user re-submits an already-saved solution.
+            // progress so the client can reconcile its UI even when the user
+            // re-submits an already-saved solution.
             let (chapter_completed, progress_done, progress_total) = compute_submit_progress(
                 &state.pool,
                 &state.exercises,
@@ -3019,13 +3004,13 @@ async fn participant_exists(pool: &SqlitePool, participant_id: &str) -> Result<b
         .await
 }
 
-/// Request body for `/api/run`. We accept any source code; the optional slug
-/// is used for logging and privacy-conscious analytics. `tests` defaults to `true` so
-/// exercise editors continue to compile with `--tests` (which surfaces
-/// `#[test]` results and is also how the Playground exposes a few of
-/// our test-only diagnostics). The standalone scratchpad sends
-/// `tests = false` so it runs `main()` and the user actually sees their
-/// `println!` / `dbg!` output.
+/// Request body for `/api/run`. We accept any source code; the optional slug is
+/// used for logging and privacy-conscious analytics. `tests` defaults to `true`
+/// so exercise editors continue to compile with `--tests` (which surfaces
+/// `#[test]` results and is also how the Playground exposes a few of our
+/// test-only diagnostics). The standalone scratchpad sends `tests = false` so
+/// it runs `main()` and the user actually sees their `println!` / `dbg!`
+/// output.
 #[derive(Deserialize)]
 struct RunRequest {
     code: String,
@@ -3043,8 +3028,8 @@ const fn default_tests() -> bool {
     true
 }
 
-/// Response type mirroring the Playground `/execute` endpoint, plus a
-/// parsed list of test results extracted from stdout.
+/// Response type mirroring the Playground `/execute` endpoint, plus a parsed
+/// list of test results extracted from stdout.
 #[derive(Serialize)]
 struct RunResponse {
     success: bool,
@@ -3067,9 +3052,9 @@ struct PlaygroundResp {
     stderr: String,
 }
 
-/// Forward editor source to play.rust-lang.org and return its result.
-/// The upstream service runs untrusted code in its own sandbox and enforces
-/// rate limits, so this handler maps its status codes without executing code.
+/// Forward editor source to play.rust-lang.org and return its result. The
+/// upstream service runs untrusted code in its own sandbox and enforces rate
+/// limits, so this handler maps its status codes without executing code.
 async fn api_run(
     State(state): State<AppState>,
     Json(req): Json<RunRequest>,
@@ -3113,8 +3098,8 @@ async fn api_run(
     let status = resp.status();
     if !status.is_success() {
         warn!("Playground returned non-2xx: {status}");
-        // Forward 429 so the browser can show a 'rate limited' hint;
-        // collapse anything else to 502.
+        // Forward 429 so the browser can show a 'rate limited' hint; collapse
+        // anything else to 502.
         let mapped = if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
             StatusCode::TOO_MANY_REQUESTS
         } else {
@@ -3264,8 +3249,8 @@ fn first_rust_error_code(stderr: &str) -> Option<String> {
         .then(|| code.to_string())
 }
 
-/// Request body for `/api/format`. Same request as `/api/run` minus the
-/// fields the formatter doesn't care about.
+/// Request body for `/api/format`. Same request as `/api/run` minus the fields
+/// the formatter doesn't care about.
 #[derive(Deserialize)]
 struct FormatRequest {
     code: String,
@@ -3273,10 +3258,9 @@ struct FormatRequest {
     slug: Option<String>,
 }
 
-/// Response returned to the browser. `success = false` means the
-/// formatter rejected the input (almost always a parse error); in that
-/// case `stderr` carries rustfmt's complaint and `code` is the
-/// (unchanged) original input.
+/// Response returned to the browser. `success = false` means the formatter
+/// rejected the input (almost always a parse error); in that case `stderr`
+/// carries rustfmt's complaint and `code` is the (unchanged) original input.
 #[derive(Serialize)]
 struct FormatResponse {
     success: bool,
@@ -3348,9 +3332,9 @@ async fn api_format(Json(req): Json<FormatRequest>) -> Result<Json<FormatRespons
     }))
 }
 
-/// Parse `test some::name ... ok` / `... FAILED` lines from cargo test
-/// output. Anything we don't recognise is ignored, which is fine: the
-/// raw stdout is forwarded too, so the UI can still show it.
+/// Parse `test some::name ... ok` / `... FAILED` lines from cargo test output.
+/// Anything we don't recognise is ignored, which is fine: the raw stdout is
+/// forwarded too, so the UI can still show it.
 fn parse_test_results(stdout: &str) -> Vec<TestResult> {
     let mut out = Vec::new();
     for line in stdout.lines() {
@@ -3361,8 +3345,8 @@ fn parse_test_results(stdout: &str) -> Vec<TestResult> {
         let Some((name, status)) = rest.rsplit_once(" ... ") else {
             continue;
         };
-        // The harness also emits per-suite summaries like
-        // "test result: ok. 4 passed; 0 failed". Skip those.
+        // The harness also emits per-suite summaries like "test result: ok. 4
+        // passed; 0 failed". Skip those.
         if name.starts_with("result:") {
             continue;
         }
@@ -3409,19 +3393,18 @@ async fn get_admin_stats(pool: &SqlitePool) -> Result<AdminStats> {
 /// Build the per-chapter progress vector used by the dashboard.
 ///
 /// Pass `Some(ulid)` for an authenticated participant view; submissions
-/// belonging to that participant are aggregated into per-chapter
-/// `completed` / `perfected` flags. Pass `None` for the anonymous
-/// dashboard at `/`; the database is skipped entirely and every
-/// chapter comes back with both flags `false`.
+/// belonging to that participant are aggregated into per-chapter `completed` /
+/// `perfected` flags. Pass `None` for the anonymous dashboard at `/`; the
+/// database is skipped entirely and every chapter comes back with both flags
+/// `false`.
 async fn get_exercise_progress<'a>(
     pool: &'a SqlitePool,
     ulid: Option<&'a str>,
     catalog: &'a [Exercise],
 ) -> Result<Vec<ExerciseProgress>> {
-    // Anonymous mode: skip the SQL round-trip entirely. The loop below
-    // still has to run to enumerate the catalog, but with no rows to
-    // match against every chapter falls into the "not yet attempted"
-    // branch.
+    // Anonymous mode: skip the SQL round-trip entirely. The loop below still
+    // has to run to enumerate the catalog, but with no rows to match against
+    // every chapter falls into the "not yet attempted" branch.
     let all_submissions: Vec<DbSubmission> = match ulid {
         Some(ulid) => {
             sqlx::query_as(
@@ -3439,8 +3422,8 @@ async fn get_exercise_progress<'a>(
     let mut exercises = Vec::with_capacity(catalog.len());
     for ex in catalog {
         // A chapter's submissions live under `<chapter_file_stem>` (legacy
-        // single-step) or `<chapter_file_stem>/<step_key>` (multi-step).
-        // Match both formats so chapter-level progress aggregates correctly.
+        // single-step) or `<chapter_file_stem>/<step_key>` (multi-step). Match
+        // both formats so chapter-level progress aggregates correctly.
         let chapter_prefix = format!("{}/", ex.file_stem);
         let attempted = all_submissions.iter().any(|submission| {
             submission.exercise_name == ex.file_stem
@@ -3449,9 +3432,9 @@ async fn get_exercise_progress<'a>(
 
         let is_quiz = ex.is_quiz();
 
-        // Chapter is "completed" when every code step has at least one
-        // passing submission. "Perfected" requires tests + fmt + clippy
-        // green on the same submission for every step.
+        // Chapter is "completed" when every code step has at least one passing
+        // submission. "Perfected" requires tests + fmt + clippy green on the
+        // same submission for every step.
         let code_steps = ex.code_steps();
         let (completed, perfected) = if is_quiz || code_steps.is_empty() {
             (false, false)
@@ -3556,7 +3539,8 @@ mod tests {
         assert!(!empty.submitted_passed);
 
         for (key, latest_passed) in [("chapter/1_step", false), ("chapter/2_step", true)] {
-            // Insert newest first so the query must sort rather than rely on insertion order.
+            // Insert newest first so the query must sort rather than rely on
+            // insertion order.
             for (version, passed) in [(2, latest_passed), (1, !latest_passed)] {
                 sqlx::query(
                     "INSERT INTO submissions \
@@ -3616,7 +3600,8 @@ mod tests {
             .await
             .unwrap();
         let mut catalog = exercises::scan_dir(std::path::Path::new("examples")).unwrap();
-        // Extra optional chapters catch a picker or progress rule tied to today's catalog.
+        // Extra optional chapters catch a picker or progress rule tied to
+        // today's catalog.
         let prototype = catalog.iter().find(|e| e.is_bonus()).unwrap().clone();
         for slug in ["extra_optional_a", "extra_optional_b"] {
             let mut extra = prototype.clone();
@@ -3915,14 +3900,16 @@ mod tests {
                         assert!(html.contains(&format!("href=\"{target}\"")));
                         let resolved = base.join(target).unwrap();
                         assert_eq!(resolved.path(), format!("{prefix}{target}"));
-                        // The file-stem links also resolve through the real page handler.
+                        // The file-stem links also resolve through the real
+                        // page handler.
                         rendered_exercise(&state, target, participant).await;
                     }
                 }
             }
         }
 
-        // Completing optional exercises must not advance the progress numerator.
+        // Completing optional exercises must not advance the progress
+        // numerator.
         for chapter in state.exercises.iter().filter(|e| e.is_bonus()) {
             for step in chapter.code_steps() {
                 let key = if step.key().is_empty() {
@@ -3989,10 +3976,9 @@ mod tests {
 
     #[test]
     fn resolve_register_next_rejects_open_redirects() {
-        // Anything that doesn't begin with the literal `/exercise/`
-        // prefix, or contains characters outside the slug allow-list,
-        // gets dropped so we can't be tricked into bouncing the user
-        // off-site after registration.
+        // Anything that doesn't begin with the literal `/exercise/` prefix, or
+        // contains characters outside the slug allow-list, gets dropped so we
+        // can't be tricked into bouncing the user off-site after registration.
         let bad = [
             None,
             Some(""),
@@ -4064,9 +4050,9 @@ mod tests {
 
     #[test]
     fn team_token_rejects_garbage() {
-        // Anything outside [A-Za-z0-9_-], plus anything longer than
-        // 64 chars, gets rejected so an admin can't smuggle HTML,
-        // path separators, or a giant blob into the column.
+        // Anything outside [A-Za-z0-9_-], plus anything longer than 64 chars,
+        // gets rejected so an admin can't smuggle HTML, path separators, or a
+        // giant blob into the column.
         assert!(TeamToken::parse_form_input("team one").is_err());
         assert!(TeamToken::parse_form_input("team/one").is_err());
         assert!(TeamToken::parse_form_input("<script>").is_err());
@@ -4088,8 +4074,8 @@ mod tests {
 
     #[test]
     fn bucket_participants_buckets_by_team_token() {
-        // Pre-sorted as the SQL query produces: alphabetical teams
-        // first, NULLs last.
+        // Pre-sorted as the SQL query produces: alphabetical teams first, NULLs
+        // last.
         let participants = vec![
             make_summary("alice", Some("alpha")),
             make_summary("bob", Some("alpha")),
@@ -4383,7 +4369,8 @@ mod tests {
             expected.iter().collect::<Vec<_>>()
         );
 
-        // Insert older activity last, with a higher ID, to distinguish timestamp ordering.
+        // Insert older activity last, with a higher ID, to distinguish
+        // timestamp ordering.
         team_query_submission(
             &state,
             "zzz-older",

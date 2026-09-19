@@ -47,7 +47,8 @@ def main():
     server = ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(QuietHandler, directory=str(root)))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
-        # Headless Chrome creates its own temporary profile when none is specified.
+        # Headless Chrome creates its own temporary profile when none is
+        # specified.
         command = [args.chrome, "--headless=new", "--disable-gpu", "--no-first-run", "--disable-background-networking", "--window-size=1440,1400", "--virtual-time-budget=10000", "--dump-dom"]
         if args.screenshot:
             command.append(f"--screenshot={args.screenshot.resolve()}")

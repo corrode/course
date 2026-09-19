@@ -15,8 +15,8 @@ mod config {
     }
 }
 
-/// Builds a `config::Settings` for callers that don't live inside
-/// the `config` module.
+/// Builds a `config::Settings` for callers that don't live inside the `config`
+/// module.
 fn create_settings() -> config::Settings {
     config::Settings::new(8080)
 }
@@ -25,7 +25,7 @@ fn create_settings() -> config::Settings {
 fn test_create_settings() {
     let settings = create_settings();
 
-    // `settings.port` would not compile from out here: the field is
-    // private even once `Settings` is `pub`. Go through the accessor.
+    // `settings.port` would not compile from out here: the field is private
+    // even once `Settings` is `pub`. Go through the accessor.
     assert_eq!(settings.get_port(), 8080);
 }

@@ -7,8 +7,8 @@ fn parse_delimited_line(line: &str, delimiter: char) -> Vec<String> {
     while let Some(c) = chars.next() {
         match c {
             '"' if in_quotes => {
-                // A doubled quote inside a quoted field is a literal quote;
-                // a lone quote ends the quoted section.
+                // A doubled quote inside a quoted field is a literal quote; a
+                // lone quote ends the quoted section.
                 if chars.peek() == Some(&'"') {
                     field.push('"');
                     chars.next();

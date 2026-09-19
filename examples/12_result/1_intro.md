@@ -2,8 +2,8 @@
 
 *Failure is not an `Option<T>`, but a `Result<T, E>`.*
 
-`Result` is the sibling of `Option`.
-Where `Option` says "maybe a value, maybe nothing", `Result` says "maybe a value, maybe an error":
+`Result` is the sibling of `Option`. Where `Option` says "maybe a value, maybe
+nothing", `Result` says "maybe a value, maybe an error":
 
 ```rust
 enum Result<T, E> {
@@ -12,9 +12,9 @@ enum Result<T, E> {
 }
 ```
 
-This is how Rust handles fallible operations.
-There are no exceptions.
-A function that can fail says so in its signature, and the caller has to deal with both branches.
+This is how Rust handles fallible operations. There are no exceptions. A
+function that can fail says so in its signature, and the caller has to deal with
+both branches.
 
 ```rust
 fn parse_port(input: &str) -> Result<u16, &'static str> {
@@ -26,19 +26,22 @@ fn parse_port(input: &str) -> Result<u16, &'static str> {
 }
 ```
 
-There are three bits of syntax here you may not have seen yet: `&'static str`, the `::<u16>` after `parse`, and the `if` guard on the first match arm.
+There are three bits of syntax here you may not have seen yet: `&'static str`,
+the `::<u16>` after `parse`, and the `if` guard on the first match arm.
 
 ### `&'static str`
 
-This is a `&str` whose lifetime is `'static`: a fancy way of saying "this string lives for the entire duration of the program."
-String literals like `"port must be greater than 0"` are baked into the binary, so they qualify.
-For now, treat `&'static str` as the right type to use for hard-coded error messages.
-We'll cover lifetimes in more detail later.
+This is a `&str` whose lifetime is `'static`: a fancy way of saying "this string
+lives for the entire duration of the program." String literals like
+`"port must be greater than 0"` are baked into the binary, so they qualify. For
+now, treat `&'static str` as the right type to use for hard-coded error
+messages. We'll cover lifetimes in more detail later.
 
 ### Turbofish: `parse::<u16>()`
 
-`.parse()` doesn't know which type you want to parse into, so you tell it with the funny-looking `::<T>` syntax.
-It's just a way to spell out a generic type argument at the call site:
+`.parse()` doesn't know which type you want to parse into, so you tell it with
+the funny-looking `::<T>` syntax. It's just a way to spell out a generic type
+argument at the call site:
 
 ```rust
 let n = "42".parse::<u16>().unwrap();
@@ -46,14 +49,15 @@ let n = "42".parse::<u16>().unwrap();
 let n: u16 = "42".parse().unwrap();
 ```
 
-You'll see this anywhere a function returns `T` and the type isn't clear from the surrounding code.
+You'll see this anywhere a function returns `T` and the type isn't clear from
+the surrounding code.
 
 ### Match Guards: `Ok(n) if n > 0 => ...`
 
-The `if n > 0` clause on a match arm is called a *guard*.
-The arm only fires when both the pattern matches *and* the guard is true.
-Without it, you'd need a nested `if` inside the arm body.
-I prefer the guard here because it keeps the condition next to the pattern.
+The `if n > 0` clause on a match arm is called a *guard*. The arm only fires
+when both the pattern matches *and* the guard is true. Without it, you'd need a
+nested `if` inside the arm body. I prefer the guard here because it keeps the
+condition next to the pattern.
 
 ```rust
 match n {
@@ -65,7 +69,8 @@ match n {
 
 ### Handling the Two Variants
 
-As with `Option`, you can handle a `Result` with `match`, `if let`, or a combinator when you have a simple fallback:
+As with `Option`, you can handle a `Result` with `match`, `if let`, or a
+combinator when you have a simple fallback:
 
 ```rust
 match safe_divide(10.0, 0.0) {
@@ -80,6 +85,7 @@ if let Ok(n) = safe_divide(10.0, 2.0) {
 }
 ```
 
-`Result` has many of the same combinators as `Option`: `.map`, `.map_or`, `.and_then`, `.unwrap_or`.
-The `?` operator chains fallible operations without repeating the same `match` boilerplate each time.
+`Result` has many of the same combinators as `Option`: `.map`, `.map_or`,
+`.and_then`, `.unwrap_or`. The `?` operator chains fallible operations without
+repeating the same `match` boilerplate each time.
 

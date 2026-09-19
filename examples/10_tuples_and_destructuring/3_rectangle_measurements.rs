@@ -1,5 +1,5 @@
-/// Calculates both area and perimeter of a rectangle.
-/// Returns (area, perimeter) as a tuple.
+/// Calculates both area and perimeter of a rectangle. Returns (area, perimeter)
+/// as a tuple.
 fn rectangle_measurements(width: u32, height: u32) -> (u32, u32) {
     todo!()
 }

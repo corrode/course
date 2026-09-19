@@ -6,7 +6,8 @@ enum PasswordStrength {
 }
 
 impl PasswordStrength {
-    /// Classifies any u8: 0..=29 is Weak, 30..=69 is Medium, 70..=255 is Strong.
+    /// Classifies any u8: 0..=29 is Weak, 30..=69 is Medium, 70..=255 is
+    /// Strong.
     const fn from_score(score: u8) -> Self {
         match score {
             0..=29 => Self::Weak,
@@ -49,12 +50,13 @@ fn has_special(password: &str) -> bool {
 struct PasswordValidator {}
 
 impl PasswordValidator {
-    /// Applies a toy scoring scheme, not a real-world password security assessment.
+    /// Applies a toy scoring scheme, not a real-world password security
+    /// assessment.
     ///
-    /// Count Unicode scalar values without trimming or normalization. Lengths of
-    /// at least 8, 12, and 16 earn 20, 10, and 10 cumulative points. Each ASCII
-    /// character class earns 15 points. Report only failed base rules, in order:
-    /// length >= 8, uppercase, lowercase, digit, special (`!@#$%^&*`).
+    /// Count Unicode scalar values without trimming or normalization. Lengths
+    /// of at least 8, 12, and 16 earn 20, 10, and 10 cumulative points. Each
+    /// ASCII character class earns 15 points. Report only failed base rules, in
+    /// order: length >= 8, uppercase, lowercase, digit, special (`!@#$%^&*`).
     /// Never store the input in the report.
     fn validate(password: &str) -> PasswordReport {
         todo!()
