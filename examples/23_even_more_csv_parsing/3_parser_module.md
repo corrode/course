@@ -1,46 +1,53 @@
-# Optional: Give the Parser a Module Boundary
+# A Module for Our Parser
 
-Rust checks the parser's module boundary at compile time, even when the caller
-and helper live in the same file. This page includes a working comma-line parser
-inside an inline `csv` module, so it runs in the browser without extra files.
-Use it as supplied; this task doesn't depend on your delimiter parser.
+We've spent enough time worrying about commas. Let's give our users a function
+that parses a whole file, so they don't have to worry about individual lines.
 
-Implement `csv::parse_file` by calling the existing `parse_line` for both the
-headers and every data row. Don't paste another copy into the file parser.
-Expose only `parse_file`; leave the line parser private. Empty input returns
-empty headers and rows. Keep blank interior lines as rows with a single empty
-field, and preserve trailing empty fields within a row. A final newline adds no
-extra record. The line parser's quoting rules still apply; malformed quoting and
-quoted newlines remain outside our supported format.
+I've put a working `parse_line` inside `mod csv { ... }` below. You can use it
+as is, even if you skipped the previous exercise. Your job is to implement
+`parse_file`: parse the first line as headers and the remaining lines as rows,
+then return both. Call `parse_line` for each line, including the headers.
+No need to write that parser again!
 
-The tests sit outside `csv`, like application code. The starter exposes
-`parse_file`, so it compiles before you implement the body.
+Keep the same quoting rules as before. We still assume valid input and don't
+support newlines inside quoted fields. A few details to watch out for:
 
-Once the tests pass, check what this API lets callers access with two visibility
-experiments, one at a time.
+- Empty input gives us empty headers and rows.
+- A blank line between records counts as a row with one empty field.
+- A trailing comma leaves an empty field, but a final newline adds no extra row.
 
-1. Remove `pub` from `parse_file`. Predict what happens at the calls in the
-   tests, then compile and inspect the caller's privacy error. Restore `pub` and
-   run the tests again.
-2. Add a call to `csv::parse_line("a,b")` in a test outside `csv`. Compile and
-   inspect the privacy error for the helper, then remove the call and run the
-   tests again. Why can `parse_file` call this private helper while the test
-   cannot?
+I suggest using `str::lines()` to walk through the input. It handles both Unix
+and Windows line endings.
 
-These errors are temporary experiments; finish with both the public API and the
-tests working.
+Notice that `parse_file` has `pub` in front of it, but `parse_line` doesn't.
+That's deliberate: callers use `csv::parse_file`, while `parse_line` stays
+private. This gives us room to change how we parse lines later without breaking
+anyone else's code.
 
-For an optional local multi-file experiment, move the contents of
-`mod csv { ... }` (without the outer braces) into `csv.rs` beside
-`3_parser_module.rs`. Replace the inline module with:
+Once the tests pass, let's see what Rust lets us get away with:
+
+1. Remove `pub` from `parse_file`. Will the tests still compile? Try it, read
+   the error, then put `pub` back.
+2. Call `csv::parse_line("a,b")` from a test. Why can `parse_file` call it,
+   but the test can't? Remove the call when you're done.
+
+The tests live outside `mod csv`, so they follow the same rules as any other
+caller. Being in the same file doesn't give them access to private functions.
+
+## What About a Separate File?
+
+If you're working locally, try moving the code inside `mod csv { ... }` into
+`csv.rs`, next to `3_parser_module.rs`. Leave the tests where they are, and
+replace the module block with:
 
 ```rust
 #[path = "csv.rs"]
 mod csv;
 ```
 
-Keep the tests in `3_parser_module.rs`. The explicit path finds the sibling file
-both when this step is compiled alone and when the chapter's generated `main.rs`
-includes it as a module. Don't edit the generated aggregator. Callers still use
-`csv::parse_file`; only the file layout changes. Keep the inline version in the
-browser, where the editor submits a single source file.
+The path tells Rust where to find our file, including when you run the exercise
+through the chapter's generated `main.rs`. You don't need to edit `main.rs`.
+Callers still use `csv::parse_file`, just as before.
+
+If you're using the course's browser editor, keep everything in one file:
+it only sends that file to the playground.
