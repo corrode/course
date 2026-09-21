@@ -1,5 +1,9 @@
 # Conditionals and Loops
 
+*A programmer goes out to buy some milk.  
+Their partner calls them, “While there are eggs, grab a dozen.”  
+The programmer never returns.*
+
 Rust has a few ways to control the flow of your program, which you already know
 from other languages.
 
