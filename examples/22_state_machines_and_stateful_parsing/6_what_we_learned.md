@@ -24,6 +24,6 @@ to collect headers and rows.
   handles BOMs, custom delimiters, and newlines inside quoted fields. Keep the
   state-machine loop for parsers you do need to write yourself.
 
-Want a little more practice? Try the optional [CSV parser
-challenges](22_csv_parser_challenges): choose a delimiter, then put the parser
+Want a little more practice? Try the optional [Even More CSV
+Parsing](23_even_more_csv_parsing) where we put the parser
 behind a module boundary. These don't count toward course completion.

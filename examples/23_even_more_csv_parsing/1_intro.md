@@ -1,6 +1,7 @@
-# CSV Parser Challenges
+# Even More CSV Parsing
 
-Two optional tasks to try after the CSV parser. Change the separator without
+Two optional tasks to try after [State Machines and Stateful
+Parsing](22_state_machines_and_stateful_parsing). Change the separator without
 breaking quoted fields, then reuse a parser through a small public API.
 
 Each editor is independent and works in the browser or as a local Rust test

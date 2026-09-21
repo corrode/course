@@ -1,4 +1,4 @@
-# Borrowing and References
+# Borrowing and Ownership
 
 In the moves chapter, `take_ownership` took a `String` and returned it. That
 works, but passing ownership back and forth gets tedious fast when the function
