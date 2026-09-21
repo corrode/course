@@ -1,7 +1,11 @@
 # Numbers in Rust
 
-Rust won't mix numeric types for you, and it catches overflow in debug builds.
-The types themselves will look familiar:
+*The integer told the float, “You’re being irrational.”  
+The float replied, “At least I have a point.”*
+
+In Rust, numbers don't always get along.
+Numeric types are kept distinct, and Rust won't let you mix them without an explicit conversion.
+The types themselves are familiar:
 
 ```rust
 let byte: u8 = 255;           // a single byte, holds 0 to 255
@@ -12,7 +16,8 @@ let i: usize = 0;             // the type for sizes and indices
 let price: f64 = 19.99;       // floating point (f32 is the smaller one)
 ```
 
-Those are the types you'll see most often.
+These are the numeric types you'll encounter most often.
+What makes Rust different is how strictly it treats them.
 
 ## No Silent Overflows
 
