@@ -1,8 +1,9 @@
 # A Module for Our Parser
 
-This step deliberately reuses the whole-file parser from the state-machine
-chapter. The new work is experimenting with its module boundary, not inventing
-another parsing loop.
+This step deliberately reuses the whole-file parser from the
+[state-machine chapter](/exercise/state_machines_and_stateful_parsing). The new
+work is experimenting with its module boundary, not inventing another parsing
+loop.
 
 I've put a working `parse_line` inside `mod csv { ... }` below. You can use it
 as is, even if you skipped the delimiter exercise. Fill in `parse_file` by

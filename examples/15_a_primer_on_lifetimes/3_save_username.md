@@ -1,7 +1,8 @@
 # Keep a Username
 
-In the `Option<T>` chapter, `find_user_by_id` returned a borrowed username. Now
-the caller needs to keep that name after the user records are dropped.
+In the [`Option<T>` chapter](/exercise/option_when_a_value_might_be_missing),
+`find_user_by_id` returned a borrowed username. Now the caller needs to keep that
+name after the user records are dropped.
 
 Run the supplied code first: three tests pass, and
 `test_username_survives_records` stops at `todo!()`.

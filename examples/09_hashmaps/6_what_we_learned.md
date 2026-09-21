@@ -20,4 +20,4 @@ the `entry` API to write the counting step of a word counter in one line.
   without needing to call `insert` while holding a reference into the map.
 - Reach through a `&mut T` with `*` to update the value it points at:
   `*map.entry(k).or_insert(0) += 1`. This is the same dereference operation you
-  met in the borrowing chapter.
+  met in the [borrowing chapter](/exercise/borrowing_and_ownership).

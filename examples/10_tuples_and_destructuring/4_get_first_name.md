@@ -7,7 +7,7 @@ Ownership still applies when you destructure. Passing a tuple of `String`s by
 value moves the whole tuple into the function, so the caller cannot use it
 afterward. A tuple of integers is `Copy`, which gives the function its own copy
 and leaves the caller's value usable. This is the same move-versus-copy
-distinction you worked through in the moves chapter.
+distinction you worked through in the [moves chapter](/exercise/moves_and_copy).
 
 ## Useful Resources
 

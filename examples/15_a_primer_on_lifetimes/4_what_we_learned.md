@@ -10,7 +10,8 @@ using throughout the course. In the username exercise, returning an owned
   alone gives you automatic cleanup with no garbage collector and no
   double-frees.
 - Moving transfers ownership; `Copy` types duplicate instead. You met this with
-  `String` (moves) and `i32` (copies) back in the moves chapter.
+  `String` (moves) and `i32` (copies) back in the
+  [moves chapter](/exercise/moves_and_copy).
 - Borrowing (`&T`, `&mut T`) lets you use a value without owning it, under the
   aliasing rule: many shared borrows or one mutable borrow, never both. That
   rule is what turns data races into compile errors.

@@ -31,7 +31,8 @@ impl Greet for German {
 
 ## Standard Library Traits You've Already Met
 
-You've been using traits since the enums chapter. Every time you wrote
+You've been using traits since the
+[enums chapter](/exercise/enums_and_pattern_matching). Every time you wrote
 `#[derive(Debug, PartialEq)]` on an enum or struct, you were asking the compiler
 to write the `impl Debug for ...` and `impl PartialEq for ...` blocks for you.
 That's all `derive` is: a macro that emits the obvious implementation so you

@@ -5,7 +5,8 @@ one that explains which checks failed. The result will be a Rust value a caller
 can inspect, rather than a message printed inside the validator.
 
 This optional project brings together borrowing, enums, structs, iterators, and
-`Result`. Try it after the iterators chapter. There are four steps:
+`Result`. Try it after the [iterators chapter](/exercise/iterators). There are
+four steps:
 
 1. Check which character classes an input contains.
 2. Represent a score and its feedback in a report.

@@ -1,9 +1,9 @@
 # Word Frequencies
 
-Back in the word count chapter you built `word_count`, `char_count`, and
-`longest_word` with simple `for` loops. Then you used iterators to collapse
-those loops into one-liners. Now we'll expand on that to write more complex text
-analysis tools.
+Back in the [word count chapter](/exercise/exercise_break_word_count) you built
+`word_count`, `char_count`, and `longest_word` with simple `for` loops. Then you
+used iterators to collapse those loops into one-liners. Now we'll expand on that
+to write more complex text analysis tools.
 
 Our implementation combines iterators, hash maps, and `Option`, as well as
 `max_by_key` and `HashMap::into_iter`, which are two new iterator tools we'll
