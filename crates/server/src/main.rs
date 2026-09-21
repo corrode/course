@@ -310,7 +310,7 @@ struct UiExerciseStatus {
     submitted_passed: bool,
 }
 
-/// Template for participant dashboard.
+/// Course home page for anonymous visitors and participants.
 ///
 /// Rendered in two modes:
 /// - **Anonymous** (`/`): `participant_name` and `ulid` are `None`. All
@@ -319,8 +319,8 @@ struct UiExerciseStatus {
 /// - **Participant** (`/dashboard/{ulid}`): both fields are `Some`. Completion
 ///   marks reflect real submissions and links carry the ULID.
 #[derive(Template)]
-#[template(path = "dashboard.html")]
-struct DashboardTemplate {
+#[template(path = "index.html")]
+struct IndexTemplate {
     participant_name: Option<String>,
     ulid: Option<String>,
     /// One entry per chapter, in display order. Renders the bottom table of
@@ -1204,7 +1204,7 @@ fn chapter_rows(dots: &[ProgressDot]) -> usize {
 
 /// Anonymous dashboard at `/`.
 ///
-/// Renders the same `dashboard.html` template the participant view uses, but
+/// Renders the same `index.html` template the participant view uses, but
 /// with no ULID and no name. All chapters render with
 /// `completed = perfected = false`; the TOC links to `/exercise/{slug}` (the
 /// public exercise route). The CTA invites the visitor to start chapter 1
@@ -1245,7 +1245,7 @@ async fn anonymous_dashboard(
     let (_, progress_total) = exercise_progress_counts(&exercises);
 
     let dots = dots_from_exercises(&exercises);
-    let template = DashboardTemplate {
+    let template = IndexTemplate {
         participant_name: None,
         ulid: None,
         chapter_rows: chapter_rows(&dots),
@@ -1524,7 +1524,7 @@ async fn participant_dashboard(
 
     let team_token = participant.parsed_team_token();
     let dots = dots_from_exercises(&exercises);
-    let template = DashboardTemplate {
+    let template = IndexTemplate {
         participant_name: Some(participant.name),
         ulid: Some(ulid.clone()),
         chapter_rows: chapter_rows(&dots),
@@ -2794,13 +2794,16 @@ async fn api_submit(
     let content_hash =
         calculate_submission_hash(&request.ulid, &request.exercise_name, &request.source_code);
 
-    // Check if identical submission already exists
+    // Rename migrations preserve hashes computed with the old chapter name.
+    // Comparing source as well keeps those rows deduplicated without rewriting history.
     let existing_submission = sqlx::query(
-        "SELECT id FROM submissions WHERE participant_id = ? AND exercise_name = ? AND content_hash = ?"
+        "SELECT id FROM submissions WHERE participant_id = ? AND exercise_name = ? \
+         AND (content_hash = ? OR source_code = ?) LIMIT 1",
     )
     .bind(&request.ulid)
     .bind(&request.exercise_name)
     .bind(&content_hash)
+    .bind(&request.source_code)
     .fetch_optional(&state.pool)
     .await;
 
@@ -4007,16 +4010,16 @@ mod tests {
     #[test]
     fn exercise_course_links_target_the_exact_step() {
         assert_eq!(
-            exercise_course_href("01_strings_and_chars/4_shout", None),
-            "/exercise/01_strings_and_chars#01_strings_and_chars__4_shout"
+            exercise_course_href("01_strings_str_and_chars/4_shout", None),
+            "/exercise/01_strings_str_and_chars#01_strings_str_and_chars__4_shout"
         );
         assert_eq!(
             exercise_course_href("legacy_chapter", None),
             "/exercise/legacy_chapter#legacy_chapter"
         );
         assert_eq!(
-            exercise_course_href("01_strings_and_chars/4_shout", Some("01JABC")),
-            "/exercise/01JABC/01_strings_and_chars#01_strings_and_chars__4_shout"
+            exercise_course_href("01_strings_str_and_chars/4_shout", Some("01JABC")),
+            "/exercise/01JABC/01_strings_str_and_chars#01_strings_str_and_chars__4_shout"
         );
     }
 

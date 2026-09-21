@@ -13,8 +13,8 @@
 //! ```
 //!
 //! Cargo's example resolution then sees one binary per chapter
-//! (`cargo test --example 11_option`) but a single `cargo test` filter like
-//! `_2_transform::` runs just that step's tests.
+//! (`cargo test --example 11_option_when_a_value_might_be_missing`), while
+//! the `cargo test` filter `_2_transform::` runs just that step's tests.
 //!
 //! Single-step (legacy) chapters \u2014 directories that contain only a
 //! hand-written `main.rs` and no sibling `.rs` files \u2014 are left completely

@@ -338,7 +338,7 @@ pub struct RegistrationResponse {
 pub struct SubmissionRequest {
     /// The participant's ULID token for identification
     pub ulid: String,
-    /// Exercise key (e.g., `01_strings_and_chars/2_welcome`)
+    /// Exercise key (e.g., `01_strings_str_and_chars/2_welcome`)
     pub exercise_name: String,
     /// The complete source code submitted by the participant
     pub source_code: String,
@@ -356,7 +356,7 @@ pub struct SubmissionRequest {
 /// they've completed it and achieved perfection.
 #[derive(Serialize, Deserialize)]
 pub struct ExerciseStatus {
-    /// The exercise key (e.g., `01_strings_and_chars/2_welcome`)
+    /// The exercise key (e.g., `01_strings_str_and_chars/2_welcome`)
     pub name: String,
     /// Whether the participant has submitted a passing solution
     pub completed: bool,

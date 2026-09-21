@@ -30,7 +30,7 @@ import urllib.request
 
 
 ROOT = Path(__file__).resolve().parent.parent
-EXERCISE = "00_integers/3_add_health"
+EXERCISE = "00_numbers_in_rust/3_add_health"
 NAME = "Workspace Smoke Learner"
 SOURCE = """pub fn add_health(current: u8, gain: u8) -> u8 {
     current.saturating_add(gain)
@@ -95,7 +95,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 def exercise_workflows(learner, db_path, env, get):
-    chapter = learner / "examples" / "00_integers"
+    chapter = learner / "examples" / "00_numbers_in_rust"
     chapter.mkdir(parents=True)
     (learner / "src").mkdir()
     (learner / "Cargo.toml").write_text(
@@ -115,7 +115,7 @@ fn main() {
     )
     # Also expose the exercise to default `cargo clippy` (not just --examples).
     (learner / "src" / "main.rs").write_text(
-        '#[path = "../examples/00_integers/3_add_health.rs"]\n' + main_body,
+        '#[path = "../examples/00_numbers_in_rust/3_add_health.rs"]\n' + main_body,
         encoding="utf-8",
     )
     shutil.copyfile(ROOT / "rust-toolchain.toml", learner / "rust-toolchain.toml")
@@ -147,7 +147,7 @@ fn main() {
 
         def status():
             progress = json.loads(get(f"/api/status/{token}", "application/json"))["exercises"]
-            check(any(e["name"] == "00_integers" for e in progress),
+            check(any(e["name"] == "00_numbers_in_rust" for e in progress),
                   "Status is missing root examples catalog")
             output = cli("status")
             for exercise in progress:
@@ -188,13 +188,13 @@ fn main() {
         for path, marker in [
             ("/", "/static/css/base.css"),
             (f"/dashboard/{token}", NAME),
-            ("/exercise/integers", f'data-exercise-key="{EXERCISE}"'),
-            (f"/exercise/{token}/integers", "Batch submission smoke check."),
+            ("/exercise/numbers_in_rust", f'data-exercise-key="{EXERCISE}"'),
+            (f"/exercise/{token}/numbers_in_rust", "Batch submission smoke check."),
             ("/admin?token=workspace-smoke-admin", NAME),
         ]:
             page = html.unescape(get(path, "text/html").decode("utf-8"))
             check(marker in page, f"{path}: missing rendered content {marker!r}")
-            if path == "/exercise/integers":
+            if path == "/exercise/numbers_in_rust":
                 check('class="solution-source"' in page and "current.saturating_add(gain)" in page,
                       "Reference solutions were not loaded from root solutions/")
         for asset, content_type in [

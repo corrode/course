@@ -50,7 +50,7 @@ enum CourseCommands {
     /// Submit an exercise solution
     Submit {
         /// Path to the exercise file (e.g.,
-        /// `examples/01_strings_and_chars/2_welcome.rs`)
+        /// `examples/01_strings_str_and_chars/2_welcome.rs`)
         file: Option<String>,
         /// Run fmt and clippy for a pedantic submission to earn a star
         #[arg(long)]
@@ -577,7 +577,7 @@ async fn register_with_server(name: &Name) -> Result<String> {
                      • The course server is not running\n\
                      • You're working offline\n\n\
                      💡 For offline practice, use manual testing instead:\n\
-                     cargo test --example 00_integers",
+                     cargo test --example 00_numbers_in_rust",
                     get_server_url()
                 )
             } else {

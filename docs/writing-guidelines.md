@@ -84,6 +84,20 @@ condescension should make the prose lighter, not denser.
 Refer to chapters by **name** ("the borrowing chapter", "the `Result` chapter"),
 not by number, so renumbering doesn't rot the prose.
 
+Chapter directory slugs follow the visible title in human-readable snake case,
+not a literal transcription of Rust syntax. Omit generic parameters such as
+`<T>` and `<T, E>`, keep `str` from `&str`, and spell `?` as `question_mark`.
+For example, "Option<T>: When a Value Might Be Missing" maps to
+`11_option_when_a_value_might_be_missing`, and "The ? Operator" maps to
+`13_the_question_mark_operator`. Keep the numeric prefixes stable when aligning
+names with titles, and mirror directory renames under `solutions/`.
+
+Preserve saved learner progress with a database migration when renaming a
+chapter. Match whole chapter stems, not prefixes: optional chapters such as
+`06_word_count_challenge` and `22_csv_parser_challenges` keep their names and
+bonus status. Update active links and CLI examples, but leave historical
+migration references intact.
+
 ## 6. Pacing Floor
 
 Don't shrink a core chapter below ~2 hands-on exercises. It should feel like

@@ -1,7 +1,7 @@
 # The Learner's Mental Journey
 
 > **Status: historical audit.** This document captures the course before the
-> current `00_integers` through `25_appendix` structure. Keep it as rationale
+> current `00_numbers_in_rust` through `25_appendix` structure. Keep it as rationale
 > and a cumulative changelog, but do not treat its chapter numbering or
 > implementation details as current. See `docs/architecture.md` for the live
 > repository map.

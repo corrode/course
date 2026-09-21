@@ -322,11 +322,12 @@ pub struct Exercise {
     /// hiding a bonus chapter leaves no gap in the sequence. Bonus chapters get
     /// `0`, which templates render as "Bonus" instead of a number.
     pub number: u8,
-    /// Slug without the numeric prefix, e.g. `integers` for `00_integers`.
+    /// Slug without the numeric prefix, e.g. `numbers_in_rust` for
+    /// `00_numbers_in_rust`.
     pub slug: String,
-    /// Directory name including the prefix, e.g. `00_integers`. Doubles as the
-    /// chapter half of `submissions.exercise_name` and the URL segment under
-    /// `/exercise/`.
+    /// Directory name including the prefix, e.g. `00_numbers_in_rust`.
+    /// Doubles as the chapter half of `submissions.exercise_name` and the URL
+    /// segment under `/exercise/`.
     pub file_stem: String,
     /// Chapter title, taken from the first note's H1, then the first code
     /// step's `//!` H1, and finally `file_stem`.
@@ -582,7 +583,7 @@ fn parse_chapter(dir: &Path, solutions_root: Option<&Path>) -> Result<Exercise> 
 
     let (prefix, slug) = split_numeric_prefix(&file_stem)
         .ok_or_else(|| anyhow!("directory does not start with NN_: {file_stem}"))?;
-    // Display number is 1-based: directory `00_integers` is "Chapter 1". See
+    // Display number is 1-based: directory `00_numbers_in_rust` is "Chapter 1". See
     // the doc comment on `Exercise::number`.
     let number = prefix + 1;
 
@@ -1056,7 +1057,7 @@ fn strip_inner_doc(source: &str) -> String {
     joined
 }
 
-/// Split `01_strings_and_chars` into `(1, "strings_and_chars")`.
+/// Split `01_strings_str_and_chars` into `(1, "strings_str_and_chars")`.
 fn split_numeric_prefix(stem: &str) -> Option<(u8, String)> {
     let (num, rest) = stem.split_once('_')?;
     let n: u8 = num.parse().ok()?;
@@ -1309,8 +1310,8 @@ mod tests {
     #[test]
     fn chapter_resource_lists_render_as_callouts() {
         for md in [
-            include_str!("../../../examples/00_integers/4_damage_with_bonus.md"),
-            include_str!("../../../examples/01_strings_and_chars/1_intro.md"),
+            include_str!("../../../examples/00_numbers_in_rust/4_damage_with_bonus.md"),
+            include_str!("../../../examples/01_strings_str_and_chars/1_intro.md"),
             include_str!("../../../examples/07_enums_and_pattern_matching/2_status_code.md"),
             include_str!("../../../examples/10_tuples_and_destructuring/4_get_first_name.md"),
             include_str!("../../../examples/14_structs_and_methods/2_new.md"),
@@ -1332,13 +1333,13 @@ mod tests {
         .expect("examples dir should exist when running tests");
         for (slug, title, step_slug, step_title) in [
             (
-                "strings_and_chars",
+                "strings_str_and_chars",
                 "Strings, &str, and Chars",
                 "shout",
                 "Borrow In, Own Out",
             ),
             (
-                "option",
+                "option_when_a_value_might_be_missing",
                 "Option<T>: When a Value Might Be Missing",
                 "first_char",
                 "Producing an `Option<char>`",
@@ -1350,7 +1351,7 @@ mod tests {
                 "Factorial with a `for` Loop",
             ),
             (
-                "csv_parser",
+                "state_machines_and_stateful_parsing",
                 "State Machines and Stateful Parsing",
                 "quoted_line",
                 "Quotes, Embedded Commas, and Escapes",
@@ -1398,12 +1399,12 @@ mod tests {
         assert!(!exercises.is_empty(), "expected at least one exercise");
         let strings = exercises
             .iter()
-            .find(|e| e.slug == "strings_and_chars")
-            .expect("expected 01_strings_and_chars to be present");
+            .find(|e| e.slug == "strings_str_and_chars")
+            .expect("expected 01_strings_str_and_chars to be present");
         // Directory prefix is 01, displayed number is 2 (1-based, see
         // `Exercise::number` doc).
         assert_eq!(strings.number, 2);
-        assert_eq!(strings.file_stem, "01_strings_and_chars");
+        assert_eq!(strings.file_stem, "01_strings_str_and_chars");
         let primary = strings
             .primary_step()
             .expect("chapter should have at least one code step");
@@ -1432,6 +1433,74 @@ mod tests {
                 || primary.starter_code.starts_with("use "),
             "starter code should begin with code, not blank lines: {:?}",
             &primary.starter_code[..40.min(primary.starter_code.len())]
+        );
+    }
+
+    #[test]
+    fn chapter_renames_preserve_catalog_integrity() {
+        use std::collections::HashSet;
+
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
+        let stems: HashSet<_> = exercises.iter().map(|e| e.file_stem.as_str()).collect();
+        let slugs: HashSet<_> = exercises.iter().map(|e| e.slug.as_str()).collect();
+        assert_eq!(stems.len(), exercises.len(), "duplicate chapter stems");
+        assert_eq!(slugs.len(), exercises.len(), "duplicate chapter slugs");
+
+        for new in [
+            "00_numbers_in_rust",
+            "01_strings_str_and_chars",
+            "06_exercise_break_word_count",
+            "11_option_when_a_value_might_be_missing",
+            "12_result_when_an_operation_might_fail",
+            "13_the_question_mark_operator",
+            "21_parsing_structured_text_and_generics",
+            "22_state_machines_and_stateful_parsing",
+        ] {
+            let chapter = exercises
+                .iter()
+                .find(|e| e.file_stem == new)
+                .unwrap_or_else(|| panic!("missing chapter: {new}"));
+            let steps = chapter.code_steps();
+            assert!(
+                !steps.is_empty(),
+                "renamed chapter has no code steps: {new}"
+            );
+            for step in steps {
+                let solution = step
+                    .solution_code
+                    .as_deref()
+                    .unwrap_or_else(|| panic!("missing solution: {new}/{}", step.key()));
+                assert!(
+                    !solution.trim().is_empty(),
+                    "empty solution: {new}/{}",
+                    step.key()
+                );
+                assert!(
+                    !solution.contains("//!"),
+                    "solution retains inner docs: {new}/{}",
+                    step.key()
+                );
+            }
+        }
+
+        let optional: Vec<_> = exercises
+            .iter()
+            .filter(|e| e.is_bonus())
+            .map(|e| (e.file_stem.as_str(), e.number))
+            .collect();
+        assert_eq!(
+            optional,
+            [
+                ("06_word_count_challenge", 0),
+                ("19_password_validator", 0),
+                ("22_csv_parser_challenges", 0),
+                ("23_smart_pointers", 0),
+            ],
+            "optional chapters must keep their stems and remain unnumbered"
         );
     }
 
@@ -1477,7 +1546,7 @@ mod tests {
         )))
         .expect("examples dir should exist when running tests");
         let mut checked = 0;
-        for slug in ["integers", "traits"] {
+        for slug in ["numbers_in_rust", "traits"] {
             let chapter = exercises.iter().find(|e| e.slug == slug).unwrap();
             for code in chapter.code_steps() {
                 let solution = code
@@ -1541,7 +1610,7 @@ mod tests {
 
     #[test]
     fn discovers_chapter_notes() {
-        // The first chapter (`00_integers`) ships with an introductory note
+        // The first chapter (`00_numbers_in_rust`) ships with an introductory note
         // (`1_intro.md`). Verify the parser surfaces it.
         let exercises = scan_dir(Path::new(concat!(
             env!("CARGO_MANIFEST_DIR"),
@@ -1550,12 +1619,12 @@ mod tests {
         .expect("examples dir should exist when running tests");
         let chapter = exercises
             .iter()
-            .find(|e| e.slug == "integers")
-            .expect("expected 00_integers to be present");
+            .find(|e| e.slug == "numbers_in_rust")
+            .expect("expected 00_numbers_in_rust to be present");
         let notes = chapter.notes();
         assert!(
             !notes.is_empty(),
-            "expected at least one note in 00_integers"
+            "expected at least one note in 00_numbers_in_rust"
         );
         let first = notes[0];
         assert!(first.order >= 1);
@@ -1568,7 +1637,7 @@ mod tests {
 
     #[test]
     fn multi_step_chapter_exposes_each_step() {
-        // 11_option is a representative multi-step chapter.
+        // The Option chapter is a representative multi-step chapter.
         let exercises = scan_dir(Path::new(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/../../examples"
@@ -1576,8 +1645,8 @@ mod tests {
         .expect("examples dir should exist when running tests");
         let chapter = exercises
             .iter()
-            .find(|e| e.slug == "option")
-            .expect("expected 11_option to be present");
+            .find(|e| e.slug == "option_when_a_value_might_be_missing")
+            .expect("expected 11_option_when_a_value_might_be_missing to be present");
         let code_steps = chapter.code_steps();
         assert!(
             code_steps.len() >= 2,
@@ -1589,7 +1658,7 @@ mod tests {
             "chapter with sibling .rs files should report multi-step"
         );
         // Step keys must be `<n>_<slug>` so the DB key becomes
-        // `11_option/<n>_<slug>`.
+        // `11_option_when_a_value_might_be_missing/<n>_<slug>`.
         let first = code_steps[0];
         assert_eq!(first.order, 2, "first step should be ordered 2_*");
         assert!(first.key().starts_with("2_"));
@@ -1669,12 +1738,12 @@ mod tests {
     #[test]
     fn split_numeric_prefix_works() {
         assert_eq!(
-            split_numeric_prefix("01_strings_and_chars"),
-            Some((1, "strings_and_chars".to_string()))
+            split_numeric_prefix("01_strings_str_and_chars"),
+            Some((1, "strings_str_and_chars".to_string()))
         );
         assert_eq!(
-            split_numeric_prefix("18_question_mark_operator"),
-            Some((18, "question_mark_operator".to_string()))
+            split_numeric_prefix("13_the_question_mark_operator"),
+            Some((13, "the_question_mark_operator".to_string()))
         );
         assert_eq!(split_numeric_prefix("no_prefix"), None);
     }
@@ -1727,8 +1796,8 @@ mod tests {
         .expect("examples dir should exist when running tests");
         let chapter = exercises
             .iter()
-            .find(|e| e.slug == "integers")
-            .expect("expected 00_integers to be present");
+            .find(|e| e.slug == "numbers_in_rust")
+            .expect("expected 00_numbers_in_rust to be present");
         // Every code step in this chapter has a `## <slug>` section in
         // hints.md, so each step should now carry its own rendered HTML.
         for code in chapter.code_steps() {
@@ -1749,7 +1818,7 @@ mod tests {
 
     #[test]
     fn renamed_chapters_distribute_hints_per_step() {
-        // 17_iterators and 22_csv_parser use hints H2 headings keyed by the
+        // Iterators and State Machines use hints H2 headings keyed by the
         // file slug (e.g. `` ## `quoted_line`, the State Machine ``). Every
         // code step should receive its slice.
         let exercises = scan_dir(Path::new(concat!(
@@ -1757,7 +1826,7 @@ mod tests {
             "/../../examples"
         )))
         .expect("examples dir should exist when running tests");
-        for slug in ["iterators", "csv_parser"] {
+        for slug in ["iterators", "state_machines_and_stateful_parsing"] {
             let chapter = exercises
                 .iter()
                 .find(|e| e.slug == slug)

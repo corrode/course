@@ -36,10 +36,10 @@ The workflow is roughly:
 ```bash
 git clone https://github.com/corrode/course.git
 cd course
-# Edit examples/00_integers/3_add_health.rs, then test the whole chapter:
-cargo test --example 00_integers
+# Edit examples/00_numbers_in_rust/3_add_health.rs, then test the whole chapter:
+cargo test --example 00_numbers_in_rust
 # Or run just that step's tests:
-cargo test --example 00_integers _3_add_health::
+cargo test --example 00_numbers_in_rust _3_add_health::
 ```
 
 ## CLI
@@ -49,7 +49,7 @@ Install the CLI from the repository root (with Rust and Cargo installed):
 ```bash
 cargo install --path crates/cli --bin cargo-course
 cargo course init
-cargo course submit examples/00_integers/3_add_health.rs
+cargo course submit examples/00_numbers_in_rust/3_add_health.rs
 cargo course status
 cargo course open
 ```
@@ -93,7 +93,7 @@ The workspace contains the CLI (`crates/cli`), shared API types
 (`crates/course-types`), and the server (`crates/server`). The dependency-free
 root package owns the exercise targets. All four are default members, but use
 the explicit `--bin server` command rather than bare
-`cargo run`. Exercise commands such as `cargo test --example 00_integers` still
+`cargo run`. Exercise commands such as `cargo test --example 00_numbers_in_rust` still
 work from the root. `make build`, `make check`, `make test`, and `make clippy`
 cover the workspace infrastructure; `make examples` checks the teaching code
 separately, including chapters that intentionally do not compile.
