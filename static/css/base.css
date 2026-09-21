@@ -231,6 +231,25 @@ samp,
     border-radius: 12px;
     overflow: hidden;
 }
+.run-spinner {
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    display: inline-block;
+    animation: run-spin 0.7s linear infinite;
+}
+@keyframes run-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .run-spinner {
+        animation-duration: 2s;
+    }
+}
 /* Leave room for the sticky top bar when a run scrolls to its output. */
 [data-role="output-panel"] {
     scroll-margin-top: 4rem;

@@ -27,7 +27,7 @@
     todo!()
 }
 </textarea><div data-role="editor-mount"></div></div>
-  <span data-role="run-spinner" style="display:none">Running…</span>
+  <span data-role="run-spinner" class="run-spinner" style="display:none" aria-hidden="true"></span>
   <p data-role="run-status"></p>
   <div data-role="output-panel" style="display:none">
     <ul data-role="test-list"></ul>
@@ -47,6 +47,10 @@ const role = (name) => section.querySelector(`[data-role="${name}"]`);
 const pending = [];
 const green = { success: true, test_results: [{ name: "example", passed: true }], stdout: "test example ... ok", stderr: "compiler warning" };
 const oldFetch = window.fetch;
+const panel = role("output-panel");
+const originalScroll = panel.scrollIntoView;
+const scrollPreference = "corrode:editor:scroll-output";
+const originalScrollPreference = localStorage.getItem(scrollPreference);
 window.fetch = (url, options) => new Promise((resolve) => pending.push({ url, options, resolve: (data) => resolve({ ok: true, json: async () => data }) }));
 let view, cm;
 const browserErrors = [];
@@ -164,12 +168,38 @@ try {
     }
   }
   assert(role("output-stderr").querySelector(".output-error") && role("output-details").open, "Failed runs expose highlighted diagnostics in the expanded log");
+  const scrolls = [];
+  panel.scrollIntoView = function (options) {
+    scrolls.push({ options, visible: getComputedStyle(this).display !== "none", text: role("output-stderr").textContent });
+    originalScroll.call(this, options);
+  };
+  localStorage.removeItem(scrollPreference);
+  role("run-btn").click();
+  assert(scrolls.length === 0, "Starting a run does not scroll before the response");
+  assert(getComputedStyle(role("run-spinner")).display !== "none" && getComputedStyle(role("run-spinner")).animationName === "run-spin", "The shared running spinner is visible and animated while awaiting the response");
+  pending.shift().resolve({ success: false, stderr: "new diagnostics", test_results: [] });
+  await tick();
+  assert(scrolls.length === 1 && scrolls[0].visible && scrolls[0].text === "new diagnostics", "Receiving the response renders output then scrolls to it");
+  assert(scrolls[0].options.behavior === (matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"), "Output scrolling respects the motion preference");
+  assert(getComputedStyle(role("run-spinner")).display === "none", "The running spinner stops when the response arrives");
+  localStorage.setItem(scrollPreference, "0");
+  role("run-btn").click();
+  assert(scrolls.length === 1 && role("run-spinner").style.display !== "none", "Disabling output scrolling keeps the running indicator");
+  pending.shift().resolve({ success: false, stderr: "opt-out diagnostics", test_results: [] });
+  await tick();
+  assert(scrolls.length === 1, "Disabled scrolling stays disabled after results arrive");
+
   assert(browserErrors.length === 0, `No browser errors: ${browserErrors.join("; ")}`);
   checks.dataset.result = "passed";
   checks.textContent = `${messages.length} browser checks passed\n` + messages.map((message) => `✓ ${message}`).join("\n");
 } catch (error) {
   checks.dataset.result = "failed";
   checks.textContent = messages.join("\n") + "\nFAILED: " + error.stack;
-} finally { window.fetch = oldFetch; }
+} finally {
+  window.fetch = oldFetch;
+  panel.scrollIntoView = originalScroll;
+  if (originalScrollPreference === null) localStorage.removeItem(scrollPreference);
+  else localStorage.setItem(scrollPreference, originalScrollPreference);
+}
 </script>
 </html>

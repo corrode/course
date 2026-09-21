@@ -907,27 +907,6 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         }
     }
 
-    /* Inline spinner shown while a Run is in flight. */
-    .run-spinner {
-        width: 0.9rem;
-        height: 0.9rem;
-        border: 2px solid var(--color-border);
-        border-top-color: var(--color-primary);
-        border-radius: 50%;
-        display: inline-block;
-        animation: run-spin 0.7s linear infinite;
-    }
-    @keyframes run-spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-    @media (prefers-reduced-motion: reduce) {
-        .run-spinner {
-            animation-duration: 2s;
-        }
-    }
-
     /* GitHub-style alerts (`> [!NOTE]`, `> [!TIP]`, etc). */
     .exercise-prose blockquote[class^="markdown-alert-"] {
         margin: 1.5rem 0;
