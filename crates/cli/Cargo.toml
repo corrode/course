@@ -1,0 +1,16 @@
+[package]
+name = "cargo-course"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+course-types.workspace = true
+anyhow.workspace = true
+clap = { version = "4.6", features = ["derive"] }
+open = "5.4.4"
+reqwest.workspace = true
+tokio = { workspace = true, features = ["sync"] }
+
+[lints]
+workspace = true

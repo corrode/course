@@ -320,27 +320,11 @@ name = "cargo-course"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "askama",
- "axum",
- "chrono",
  "clap",
- "dotenvy",
- "env_logger",
- "log",
+ "course-types",
  "open",
- "pulldown-cmark",
- "rand",
  "reqwest",
- "serde",
- "serde_json",
- "sha2 0.11.0",
- "sqlx",
- "syn 3.0.6",
  "tokio",
- "toml",
- "tower-http 0.7.1",
- "ulid",
- "url",
 ]
 
 [[package]]
@@ -385,10 +369,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327"
 dependencies = [
  "iana-time-zone",
- "js-sys",
  "num-traits",
  "serde",
- "wasm-bindgen",
  "windows-link",
 ]
 
@@ -484,6 +466,45 @@ name = "core-foundation-sys"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
+
+[[package]]
+name = "course-exercises"
+version = "0.1.0"
+
+[[package]]
+name = "course-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "askama",
+ "axum",
+ "chrono",
+ "course-types",
+ "dotenvy",
+ "env_logger",
+ "log",
+ "pulldown-cmark",
+ "rand",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "sqlx",
+ "syn 3.0.6",
+ "tokio",
+ "toml",
+ "tower-http 0.7.1",
+ "ulid",
+ "url",
+]
+
+[[package]]
+name = "course-types"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+]
 
 [[package]]
 name = "cpufeatures"
@@ -713,12 +734,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fnv"
-version = "1.0.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
-
-[[package]]
 name = "foldhash"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -854,25 +869,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 
 [[package]]
-name = "h2"
-version = "0.4.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef8e5e5a340588f4452631496976cf8636d4a7ecf600239fdc27615d2530bc16"
-dependencies = [
- "atomic-waker",
- "bytes",
- "fnv",
- "futures-core",
- "futures-sink",
- "http",
- "indexmap",
- "slab",
- "tokio",
- "tokio-util",
- "tracing",
-]
-
-[[package]]
 name = "hashbrown"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -998,7 +994,6 @@ dependencies = [
  "bytes",
  "futures-channel",
  "futures-core",
- "h2",
  "http",
  "http-body",
  "httparse",
@@ -1703,7 +1698,6 @@ dependencies = [
  "base64 0.23.1",
  "bytes",
  "futures-core",
- "h2",
  "http",
  "http-body",
  "http-body-util",
@@ -2403,7 +2397,6 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-sink",
- "libc",
  "pin-project-lite",
  "tokio",
 ]

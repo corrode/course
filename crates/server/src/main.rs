@@ -1,5 +1,5 @@
-use cargo_course::exercises::{self, Exercise, RenderItem, RenderKind, Step};
-use cargo_course::types::{
+use course_server::exercises::{self, Exercise, RenderItem, RenderKind, Step};
+use course_types::{
     ExerciseStatus, Name, ProgressResponse, RegistrationRequest, RegistrationResponse,
     SubmissionRequest, TeamToken,
 };
@@ -1329,7 +1329,7 @@ async fn tour_page_with_ulid(
 }
 
 fn render_tour(state: &AppState, ulid: Option<String>) -> axum::response::Html<String> {
-    const STARTER: &str = include_str!("../../static/tour_starter.rs");
+    const STARTER: &str = include_str!("../../../static/tour_starter.rs");
     // Derive the first real chapter the same way the dashboard does, so the
     // closing CTA keeps pointing at the right place even if chapters are
     // renamed or reordered.
@@ -3522,7 +3522,7 @@ mod tests {
             .connect("sqlite::memory:")
             .await
             .unwrap();
-        sqlx::migrate!().run(&pool).await.unwrap();
+        sqlx::migrate!("../../migrations").run(&pool).await.unwrap();
         sqlx::query("INSERT INTO participants (id, name) VALUES ('participant', 'Test')")
             .execute(&pool)
             .await
@@ -3594,12 +3594,16 @@ mod tests {
             .connect("sqlite::memory:")
             .await
             .unwrap();
-        sqlx::migrate!().run(&pool).await.unwrap();
+        sqlx::migrate!("../../migrations").run(&pool).await.unwrap();
         sqlx::query("INSERT INTO participants (id, name) VALUES ('participant', 'Test')")
             .execute(&pool)
             .await
             .unwrap();
-        let mut catalog = exercises::scan_dir(std::path::Path::new("examples")).unwrap();
+        let mut catalog = exercises::scan_dir(std::path::Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .unwrap();
         // Extra optional chapters catch a picker or progress rule tied to
         // today's catalog.
         let prototype = catalog.iter().find(|e| e.is_bonus()).unwrap().clone();
@@ -4144,7 +4148,7 @@ mod tests {
             .connect("sqlite::memory:")
             .await
             .unwrap();
-        sqlx::migrate!().run(&pool).await.unwrap();
+        sqlx::migrate!("../../migrations").run(&pool).await.unwrap();
         for (id, name, team) in [
             ("member-a", "Alice", Some("workshop")),
             ("member'b", "Bob", Some("workshop")),

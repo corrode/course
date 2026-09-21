@@ -1266,7 +1266,11 @@ mod tests {
 
     #[test]
     fn password_project_steps_keep_context_hints_and_solutions_together() {
-        let exercises = scan_dir(Path::new("examples")).unwrap();
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .unwrap();
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "password_validator")
@@ -1305,12 +1309,12 @@ mod tests {
     #[test]
     fn chapter_resource_lists_render_as_callouts() {
         for md in [
-            include_str!("../examples/00_integers/4_damage_with_bonus.md"),
-            include_str!("../examples/01_strings_and_chars/1_intro.md"),
-            include_str!("../examples/07_enums_and_pattern_matching/2_status_code.md"),
-            include_str!("../examples/10_tuples_and_destructuring/4_get_first_name.md"),
-            include_str!("../examples/14_structs_and_methods/2_new.md"),
-            include_str!("../examples/20_modules_and_visibility/1_intro.md"),
+            include_str!("../../../examples/00_integers/4_damage_with_bonus.md"),
+            include_str!("../../../examples/01_strings_and_chars/1_intro.md"),
+            include_str!("../../../examples/07_enums_and_pattern_matching/2_status_code.md"),
+            include_str!("../../../examples/10_tuples_and_destructuring/4_get_first_name.md"),
+            include_str!("../../../examples/14_structs_and_methods/2_new.md"),
+            include_str!("../../../examples/20_modules_and_visibility/1_intro.md"),
         ] {
             let html = render_markdown(md);
             assert!(html.contains(
@@ -1321,8 +1325,11 @@ mod tests {
 
     #[test]
     fn chapter_titles_preserve_source_casing_and_code_names() {
-        let exercises =
-            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
         for (slug, title, step_slug, step_title) in [
             (
                 "strings_and_chars",
@@ -1383,8 +1390,11 @@ mod tests {
 
     #[test]
     fn scans_real_examples_dir() {
-        let exercises =
-            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
         assert!(!exercises.is_empty(), "expected at least one exercise");
         let strings = exercises
             .iter()
@@ -1427,8 +1437,11 @@ mod tests {
 
     #[test]
     fn bonus_chapters_are_unnumbered_and_excluded_from_the_sequence() {
-        let exercises =
-            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
 
         // The two bonus chapters carry `bonus = true` in `.chapter.toml`.
         for slug in ["smart_pointers", "password_validator"] {
@@ -1458,8 +1471,11 @@ mod tests {
     fn attaches_reference_solutions_from_sibling_tree() {
         // Both unpadded and zero-padded source filenames must find their
         // matching files in the sibling solutions tree.
-        let exercises =
-            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
         let mut checked = 0;
         for slug in ["integers", "traits"] {
             let chapter = exercises.iter().find(|e| e.slug == slug).unwrap();
@@ -1527,8 +1543,11 @@ mod tests {
     fn discovers_chapter_notes() {
         // The first chapter (`00_integers`) ships with an introductory note
         // (`1_intro.md`). Verify the parser surfaces it.
-        let exercises =
-            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "integers")
@@ -1550,8 +1569,11 @@ mod tests {
     #[test]
     fn multi_step_chapter_exposes_each_step() {
         // 11_option is a representative multi-step chapter.
-        let exercises =
-            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "option")
@@ -1575,8 +1597,11 @@ mod tests {
 
     #[test]
     fn rust_fundamentals_quiz_has_a_quiz_step() {
-        let exercises =
-            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "rust_fundamentals_quiz")
@@ -1695,8 +1720,11 @@ mod tests {
 
     #[test]
     fn integers_chapter_distributes_hints_per_step() {
-        let exercises =
-            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
         let chapter = exercises
             .iter()
             .find(|e| e.slug == "integers")
@@ -1724,8 +1752,11 @@ mod tests {
         // 17_iterators and 22_csv_parser use hints H2 headings keyed by the
         // file slug (e.g. `` ## `quoted_line`, the State Machine ``). Every
         // code step should receive its slice.
-        let exercises =
-            scan_dir(Path::new("examples")).expect("examples dir should exist when running tests");
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
         for slug in ["iterators", "csv_parser"] {
             let chapter = exercises
                 .iter()

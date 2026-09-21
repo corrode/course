@@ -176,10 +176,10 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         <a href="/signup">Sign up</a> to save your progress.
     </div>
     {% endif %} {% when Some with (_u) %} {% endmatch %} {% for item in items %}
-    {% match item.kind %} {% when cargo_course::exercises::RenderKind::Prose
+    {% match item.kind %} {% when course_server::exercises::RenderKind::Prose
     with { html } %}
     <div class="chapter-prose exercise-prose">{{ html|safe }}</div>
-    {% when cargo_course::exercises::RenderKind::Code with { dom_id,
+    {% when course_server::exercises::RenderKind::Code with { dom_id,
     exercise_key, eyebrow, title, show_title, starter_code, submitted_code,
     submitted_passed, attempted, completed, perfected, github_dev_url, hints_html, solution_code }
     %}
@@ -446,7 +446,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         </div>
     </details>
     {% when None %} {% endmatch %} {% when
-    cargo_course::exercises::RenderKind::Quiz with { html } %} {{ html|safe }}
+    course_server::exercises::RenderKind::Quiz with { html } %} {{ html|safe }}
     {% endmatch %} {% endfor %} {% match exercise.hints %} {% when Some with (h)
     %}
     <details class="hints-disclosure" id="hints-disclosure">
@@ -641,7 +641,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     // gated server-side in the template.
     //
     // Adding a new knob:
-    //   1. add a field on ChapterDirectives in src/exercises.rs
+    //   1. add a field on ChapterDirectives in crates/server/src/exercises.rs
     //     (mark optional fields `#[serde(skip_serializing_if = ...)]`
     //     so the rendered JSON stays compact)
     //   2. handle it inside applyChapterDirectives below if it's a
