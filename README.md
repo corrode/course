@@ -36,10 +36,10 @@ The workflow is roughly:
 ```bash
 git clone https://github.com/corrode/course.git
 cd course
-# Edit examples/00_integers/3_add_health.rs, then test the whole chapter:
-cargo test --example 00_integers
+# Edit examples/00_numbers_in_rust/3_add_health.rs, then test the whole chapter:
+cargo test --example 00_numbers_in_rust
 # Or run just that step's tests:
-cargo test --example 00_integers _3_add_health::
+cargo test --example 00_numbers_in_rust _3_add_health::
 ```
 
 ## About corrode

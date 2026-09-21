@@ -12,7 +12,7 @@ path = "src/bin/cli.rs"
 name = "server"
 path = "src/bin/server.rs"
 
-[package.metadata.exercises.13_question_mark_operator]
+[package.metadata.exercises.13_the_question_mark_operator]
 difficulty = "beginner"
 tags = ["question-mark", "result", "error-handling"]
 

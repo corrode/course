@@ -74,13 +74,18 @@ same locally.
 
 ### Per-Chapter Convention
 
-Each chapter is a directory `NN_<slug>/`. The leading `NN_` is the chapter
-number (zero-padded), the slug is concept-first (`11_option`, `17_iterators`).
+Each chapter is a directory `NN_<slug>/`. The leading `NN_` is the stable,
+zero-padded ordering prefix. The slug follows the visible title in readable
+snake case, such as `11_option_when_a_value_might_be_missing`. Generic syntax
+like `<T>` is omitted, `&str` becomes `str`, and `?` becomes `question_mark`.
+Renaming a title does not change its ordering prefix.
 The directory name is the *canonical key*. It's what the database stores as the
 chapter half of `submissions.exercise_name` and what the CLI prints. Renaming a
 chapter requires a SQL migration that rewrites `submissions.exercise_name` (see
 `migrations/004_*.sql` and `migrations/005_*.sql` for the chained rename pattern
-that survives any prior state).
+that survives any prior state). Match whole stems so optional challenge
+chapters are not renamed with their required siblings. Old URLs and browser
+draft keys are not aliased after a rename.
 
 Most chapters are multi-step: they contain one or more `<n>_<slug>.rs` exercise
 files alongside numbered Markdown notes. Each code step renders as its own
@@ -101,8 +106,8 @@ fn main() {}
 The `#[path]` attributes let the on-disk filenames stay human-friendly (digits
 first) while the module names are valid Rust identifiers (`_<n>_<slug>`).
 Database keys for code steps are stored as `<chapter>/<step>` (for example,
-`11_option/2_transform`). Numeric prefixes may be zero-padded for alphabetical
-file listings, as in `16_traits/03_describable.rs`. Step keys remain unpadded
+`11_option_when_a_value_might_be_missing/2_transform`). Numeric prefixes may be
+zero-padded for file listings, as in `16_traits/03_describable.rs`. Step keys remain unpadded
 (`16_traits/3_describable`), so padding does not change saved progress or draft
 keys. `CodeStep::filename` preserves the actual filename for solution loading
 and editor links. Legacy single-file chapters remain supported; notes-only and
@@ -179,7 +184,7 @@ Recently enforced and worth preserving:
 
 `docs/learner_journey.md` records the difficulty audit for an earlier chapter
 order. It remains useful as design history, but its chapter numbers are not the
-current `00_integers` through `25_appendix` map.
+current `00_numbers_in_rust` through `25_appendix` map.
 
 ## Server (`src/bin/server.rs`, ~3440 Lines)
 
@@ -227,8 +232,8 @@ JSON API routes:
 - `POST /api/format`: proxy formatting to play.rust-lang.org
 
 Exercise lookup accepts either the full directory slug or its slug without the
-numeric prefix. For example, `/exercise/strings_and_chars` and
-`/exercise/01_strings_and_chars` resolve to the same chapter.
+numeric prefix. For example, `/exercise/strings_str_and_chars` and
+`/exercise/01_strings_str_and_chars` resolve to the same chapter.
 
 ### Run/Format Proxy
 
@@ -278,8 +283,9 @@ For every chapter dir under `examples/` that contains sibling `<n>_<slug>.rs`
 files, `build.rs` (re)generates a thin `main.rs` that aggregates them as
 `mod _<n>_<slug>;` declarations with `#[path]` attributes pointing at the
 original filenames. This lets Cargo treat each code chapter as a single example
-binary, so `cargo test --example 11_option` runs every step's tests while still
-allowing learners to read and edit one self-contained file at a time.
+binary, so `cargo test --example 11_option_when_a_value_might_be_missing` runs
+every step's tests while still allowing learners to read and edit one
+self-contained file at a time.
 
 Generated `main.rs` files **are committed to the repo** so a learner cloning the
 repo gets a buildable tree without ever running `build.rs` themselves (e.g. when
@@ -307,7 +313,7 @@ Three tables.
 | -------------- | --------- | ---------------------------------------------------- |
 | id             | TEXT PK   | ULID                                                 |
 | participant_id | TEXT FK   | → `participants.id`                                  |
-| exercise_name  | TEXT      | `<chapter>/<step>` such as `11_option/2_transform`   |
+| exercise_name  | TEXT      | `<chapter>/<step>` such as `11_option_when_a_value_might_be_missing/2_transform` |
 | source_code    | TEXT      | full file contents                                   |
 | tests_passed   | BOOLEAN   |                                                      |
 | clippy_passed  | BOOLEAN   | only true on `--pedantic` runs                       |
