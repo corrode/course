@@ -1,6 +1,6 @@
 # The `?` Operator
 
-"Handle all errors" is great advice! ...unless you keep repeating this match:
+"Handle all errors" is great advice! ...unless you end up with boilerplate like this:
 
 ```rust
 fn is_even(text: &str) -> Result<bool, std::num::ParseIntError> {
