@@ -398,8 +398,8 @@ struct AdminTemplate {
 
 /// Paginated admin view of one participant's complete submission history.
 #[derive(Template)]
-#[template(path = "participant_submissions.html")]
-struct AdminParticipantSubmissionsTemplate {
+#[template(path = "submissions.html")]
+struct SubmissionsTemplate {
     participant_name: String,
     submissions: Vec<SubmissionSummary>,
     total_submissions: i64,
@@ -2082,7 +2082,7 @@ async fn admin_participant_submissions_page(
         },
     );
 
-    let template = AdminParticipantSubmissionsTemplate {
+    let template = SubmissionsTemplate {
         participant_name: participant.name,
         submissions,
         total_submissions,
