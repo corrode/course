@@ -321,7 +321,23 @@ async function createMount(section, opts) {
         actionStatus.classList.remove("celebrate");
       }
     },
-    render,
+    render(data) {
+      render(data);
+      let scrollOutput = true;
+      try {
+        scrollOutput = localStorage.getItem("corrode:editor:scroll-output") !== "0";
+      } catch (_) {}
+      if (scrollOutput) {
+        const reducedMotion = window.matchMedia?.(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        panel?.scrollIntoView?.({
+          behavior: reducedMotion ? "instant" : "smooth",
+          block: "start",
+          inline: "nearest",
+        });
+      }
+    },
     onRunSuccess: (data) => opts.onRunSuccess?.({ section, data }),
     onSubmit({ result, payload }) {
       updateProgress(document, result);
