@@ -5,19 +5,20 @@ iterator yields `&&str`. You'll return owned `String`s so the caller can keep
 the results independently of the input. That lets us focus on the iterator chain
 without adding lifetime annotations.
 
-[`str::to_string`](https://doc.rust-lang.org/std/primitive.str.html#method.to_string)
-converts each surviving `&&str` into an owned `String` through auto-deref. Chain
-it after your `filter` with a `map`, then `collect` into a `Vec`.
+Combine what you've used so far to return only paths ending in `.rs`, in their
+original order. An empty input or no matching paths should give an empty vector.
+This time, choose how the adapters fit together yourself.
 
 ## Useful from the Standard Library
 
 - [`Iterator::filter`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.filter)
-  passes `&&&str` to the predicate here: a reference to the iterator's `&&str`
-  item. Method-call auto-deref lets you call `.ends_with(".rs")` directly.
+  borrows each item for its predicate. When the iterator yields `&&str`, the
+  predicate receives `&&&str`. String method calls auto-deref through these
+  layers.
 - [`Iterator::map`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.map)
-  applies your conversion closure to each surviving `&&str`.
+  can change the item type by applying a closure to each item.
 - [`str::to_string`](https://doc.rust-lang.org/std/primitive.str.html#method.to_string)
   converts a borrowed string slice into an owned `String`. Auto-deref reaches
   through the extra reference for you.
 - [`str::ends_with`](https://doc.rust-lang.org/std/primitive.str.html#method.ends_with)
-  is the suffix check used by the predicate.
+  checks whether a string ends with a given suffix.

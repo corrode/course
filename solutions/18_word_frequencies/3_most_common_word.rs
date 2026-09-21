@@ -12,13 +12,6 @@ fn count_words(text: &str) -> HashMap<String, usize> {
 
 /// Finds the most common word in the text. Returns the word and its count, or
 /// None if text is empty.
-///
-/// Tip: this is the function where the borrow checker pushes back. To return
-/// `(String, usize)` you need to own the key, but `iter()` on a `HashMap` only
-/// hands out borrows. The trick is
-/// [`into_iter`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.into_iter):
-/// it consumes the map and yields `(K, V)` pairs by value, so combining it with
-/// `max_by_key` gives you back an owned `(String, usize)`.
 fn most_common_word(text: &str) -> Option<(String, usize)> {
     count_words(text)
         .into_iter()

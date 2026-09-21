@@ -9,7 +9,8 @@
 
 ## `damage_with_bonus`
 
-1. The maths is `base + base * (bonus_percent / 100.0)`.
+1. The percentage describes the extra damage, not the final damage. What
+   fraction of the base does it add?
 2. `base` is `u32` and `bonus_percent` is `f64`, so you can't multiply them
    directly. Cast `base` with `as f64` first.
 3. To go back to `u32` for the return value, use a plain `as u32` cast. That
@@ -18,7 +19,7 @@
 
 ## `parse_positive_integer`
 
-1. `&str` has a `.parse()` method that can produce many number types. You'll
-   need a type annotation so it knows which one.
-2. `.parse::<u32>()` returns a `Result<u32, _>`. The exercise asks for `0` on
-   failure, so reach for `.unwrap_or(0)`.
+1. `parse` needs a target type. You can specify it with `::<u32>`, or let the
+   function's return type guide inference once the parsed value is returned.
+2. Parsing and handling failure are separate steps. Which method from the
+   introduction lets you choose what happens when parsing fails?

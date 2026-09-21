@@ -1,7 +1,7 @@
 # Summing with an Iterator
 
-A running total is a good first place to see what an iterator consumer does.
-Rust's iterators are lazy, so they don't do any work until you ask for a result.
+A short warmup: calculate the total sales with an iterator consumer. The later
+exercises will combine consumers with adapters that change or select items.
 
 You could add the values with a `for` loop and an accumulator. Here, `sum` asks
 the iterator for each value and collapses the sequence into one total.
@@ -12,6 +12,6 @@ the iterator for each value and collapses the sequence into one total.
   produces an iterator of shared references over the slice.
 - [`Iterator::sum`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.sum)
   reduces a numeric iterator to a single total. The function's `i32` return type
-  supplies its output type when you return `sales.iter().sum()` directly. In
-  other contexts, you may need an annotation (`let total: i32 = ...`) or the
-  turbofish (`.sum::<i32>()`).
+  supplies its output type when you return the result directly. In other
+  contexts, you may need an annotation (`let total: i32 = ...`) or the turbofish
+  (`.sum::<i32>()`).

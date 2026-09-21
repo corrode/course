@@ -21,7 +21,6 @@ literals for this exercise.
 
 - [`str::strip_suffix`](https://doc.rust-lang.org/std/primitive.str.html#method.strip_suffix)
   removes a trailing pattern if present and returns `Option<&str>`.
-  `input.strip_suffix('%').unwrap_or(input)` peels the `%` when there is one.
 - [`str::parse`](https://doc.rust-lang.org/std/primitive.str.html#method.parse)
   tries to parse the text and returns a `Result`. The turbofish
   (`parse::<u8>()`) tells it which numeric type to produce. `u8` already rejects
@@ -30,5 +29,3 @@ literals for this exercise.
 - [`Result::map_err`](https://doc.rust-lang.org/std/result/enum.Result.html#method.map_err)
   transforms the error value without touching `Ok`. You can use it to turn the
   parser's error into your own static message.
-- A bounds check `if n > 100 { return Err("...") }` finishes the job; the `u8`
-  type already takes care of `n < 0`.

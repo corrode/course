@@ -23,14 +23,13 @@ Here's how iterators work in practice:
    `.any(...)`, or a `for` loop.
 
 ```rust
-let names = vec!["alice", "ADMIN", "bob"];
+let words = vec!["hello", "café", "rust"];
 
-let active: Vec<String> = names
-    .iter()                              // &&str
-    .filter(|n| n.starts_with('a'))      // keep some
-    .map(|n| n.to_lowercase())           // transform
-    .collect();                          // back to Vec<String>
-// active == ["alice"]
+let lengths: Vec<usize> = words
+    .iter()
+    .map(|word| word.chars().count())
+    .collect();
+assert_eq!(lengths, vec![5, 4, 4]);
 ```
 
 The three "iter" methods differ in what they yield:
@@ -40,8 +39,9 @@ The three "iter" methods differ in what they yield:
 - `.into_iter()` yields `T` (consumes the collection). Use when you don't need
   the original anymore.
 
-Some adapters change the item type. After `.map(|n| n.to_lowercase())`, the
-items are `String`s, not `&&str`s. The compiler infers types through the chain.
+Some adapters change the item type. Here, `iter` yields `&&str`, but `map`
+produces character counts of type `usize`. The compiler infers types through
+the chain.
 You can write the chain first, then add a type annotation on the binding if the
 compiler needs one.
 

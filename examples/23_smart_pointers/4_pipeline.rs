@@ -85,54 +85,41 @@ fn single_command_uppercase() {
 }
 
 #[test]
-fn order_matters() {
-    let append_then_uppercase: Vec<Box<dyn Command>> = vec![
-        Box::new(Append {
-            suffix: "x".to_string(),
-        }),
-        Box::new(Uppercase),
-    ];
-    let uppercase_then_append: Vec<Box<dyn Command>> = vec![
-        Box::new(Uppercase),
-        Box::new(Append {
-            suffix: "x".to_string(),
-        }),
-    ];
-    assert_eq!(apply_pipeline(&append_then_uppercase, "hi"), "HIX");
-    assert_eq!(apply_pipeline(&uppercase_then_append, "hi"), "HIx");
+fn single_command_reverse_unicode() {
+    let pipeline: Vec<Box<dyn Command>> = vec![Box::new(Reverse)];
+    assert_eq!(apply_pipeline(&pipeline, "aé🦀"), "🦀éa");
+}
+
+// This command exists only in tests, outside the supplied command set.
+#[cfg(test)]
+struct Bracket;
+
+#[cfg(test)]
+impl Command for Bracket {
+    fn run(&self, input: &str) -> String {
+        format!("[{input}]")
+    }
 }
 
 #[test]
-fn mixed_pipeline_with_append() {
-    let pipeline: Vec<Box<dyn Command>> = vec![
-        Box::new(Append {
-            suffix: "!".to_string(),
-        }),
-        Box::new(Uppercase),
-        Box::new(Reverse),
-    ];
-    assert_eq!(apply_pipeline(&pipeline, "hi"), "!IH");
+fn order_matters() {
+    let bracket_then_reverse: Vec<Box<dyn Command>> = vec![Box::new(Bracket), Box::new(Reverse)];
+    let reverse_then_bracket: Vec<Box<dyn Command>> = vec![Box::new(Reverse), Box::new(Bracket)];
+    assert_eq!(apply_pipeline(&bracket_then_reverse, "hi"), "]ih[");
+    assert_eq!(apply_pipeline(&reverse_then_bracket, "hi"), "[ih]");
+}
+
+#[test]
+fn mixed_pipeline_with_custom_command() {
+    let pipeline: Vec<Box<dyn Command>> =
+        vec![Box::new(Bracket), Box::new(Uppercase), Box::new(Reverse)];
+    assert_eq!(apply_pipeline(&pipeline, "hi"), "]IH[");
 }
 
 #[test]
 fn borrowed_pipeline_supports_custom_commands_and_reuse() {
-    // This implementation exists only in the test, outside the supplied command
-    // set.
-    struct Bracket;
-
-    impl Command for Bracket {
-        fn run(&self, input: &str) -> String {
-            format!("[{input}]")
-        }
-    }
-
-    let pipeline: Vec<Box<dyn Command>> = vec![
-        Box::new(Bracket),
-        Box::new(Append {
-            suffix: "x".to_string(),
-        }),
-    ];
-    assert_eq!(apply_pipeline(&pipeline, "hi"), "[hi]x");
-    assert_eq!(apply_pipeline(&pipeline, "bye"), "[bye]x");
-    assert_eq!(apply_pipeline(&pipeline, "hi"), "[hi]x");
+    let pipeline: Vec<Box<dyn Command>> = vec![Box::new(Bracket)];
+    assert_eq!(apply_pipeline(&pipeline, "hi"), "[hi]");
+    assert_eq!(apply_pipeline(&pipeline, "bye"), "[bye]");
+    assert_eq!(apply_pipeline(&pipeline, "hi"), "[hi]");
 }

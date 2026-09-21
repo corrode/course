@@ -2,37 +2,33 @@
 
 ## `sum`
 
-1. The whole function body is one chained call. Start with `sales.iter()`.
-2. There is a single-call consumer that adds up a numeric iterator.
-3. `sales.iter().sum()`. When you return this expression directly, the
-   function's `i32` return type tells `sum` which type to produce.
+An array isn't an iterator yet. Once you have an iterator, which consumer
+produces a number rather than a collection? The function's return type can
+supply the numeric type.
 
 ## `map`
 
-1. `into_iter()` (consume the input vec) → `map(...)` → `collect()`.
-2. The closure receives an owned `String`. Call `.to_lowercase()` on it.
+Each input should produce exactly one output. With `into_iter`, your closure
+receives an owned `String`. The transformation returns another `String`; you
+don't need a mutable reference to the original.
 
 ## `filter`
 
-1. `into_iter()` → `filter(...)` → `collect()`.
-2. **Gotcha:** `filter`'s closure takes a *reference* to each item. Since the
-   iterator yields `&str`, the closure parameter is `&&str`. Method calls
-   auto-deref, so `|s| s.starts_with('a')` works without an explicit
-   dereference.
+The predicate decides whether to keep an item; it doesn't return the item
+itself. With an iterator of `&str`, that predicate receives `&&str`. String
+method calls auto-deref through the extra reference.
 
 ## `filter_to_string`
 
-1. Same as the previous one, but the closure now sees `&&&str`. Method-call
-   auto-deref also works for `.ends_with(".rs")`.
-2. The function returns `Vec<String>`, not `Vec<&str>`. Add a `.map(...)` step
-   that converts each `&&str` into an owned `String`.
+There are two separate jobs: deciding which paths belong in the result and
+making the result independent of the input. Filtering alone doesn't change the
+item type. Where in your pipeline do borrowed strings become owned ones?
 
 ## `fallible_sum`
 
-1. What type does parsing each token produce? Keep those `Result` values as the
-   iterator's items.
-2. `map` can apply parsing to each token. The return type tells `sum` to produce
-   `Result<i32, ParseIntError>`.
+What type does parsing each token produce? Compare that with the items a
+fallible `sum` can consume. If you unwrap each parse result first, what happens
+to the error you were supposed to return?
 
 ## `lazy_consumption`
 

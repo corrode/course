@@ -1,8 +1,6 @@
 /// Returns `n!` (n factorial). By convention, `factorial(0) == 1`.
 ///
-/// Build it up with a `mut` accumulator and a `for` loop over the inclusive
-/// range `1..=n`. For `n == 0` the loop body never runs, so the initial value
-/// carries through unchanged.
+/// Use a `for` loop.
 fn factorial(n: u32) -> u32 {
     todo!()
 }

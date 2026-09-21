@@ -22,8 +22,8 @@
 
 ## digit_count
 
-1. Special-case `n == 0` returning `1`. Otherwise, divide by 10 in a `while`
-   loop and count the iterations.
-2. Shadow the parameter with `let mut n = n;` so you can mutate it without
-   changing the signature. Loop while `n > 0`, dividing by `10` and bumping a
-   counter.
+1. What happens to the decimal digits when you divide an integer by 10? Trace
+   it with `100` and decide what each iteration should count.
+2. You can make a mutable working copy with `let mut remaining = n;` without
+   changing the signature. What should happen for a single-digit input,
+   including zero?

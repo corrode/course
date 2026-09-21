@@ -74,11 +74,12 @@ Parsing a string can fail because the input might not be a number at all, so
 `parse` hands back a `Result`.
 
 ```rust
-let n: u32 = "123".parse().unwrap_or(0);
+let parsed = "123".parse::<u32>();
 ```
 
-We'll talk about `Result` later. For now, it gives you a value that represents
-either success or failure, so you can't ignore a parsing problem by accident.
+The `::<u32>` tells `parse` which number type you want. The result still
+represents either success or failure, rather than a bare `u32`.
 
-Knowing that you can call `.unwrap_or(fallback_value_if_the_parsing_failed)` on
-a `Result` is enough for this exercise.
+We'll talk about `Result` later. For now, `.unwrap_or(fallback)` extracts a
+successful value or supplies the fallback if parsing failed. Choose that
+fallback to match the behavior your caller needs.

@@ -2,10 +2,10 @@
 
 ## sum_to
 
-1. The body is an `if` with a base case (`n == 0`) and a recursive case that
-   calls `sum_to(n - 1)`.
-2. The recursive case returns `n + sum_to(n - 1)`. No `mut`, no `let`, no
-   `return`.
+1. Which input already has an answer without making another call? Handle it
+   before computing a smaller input, so unsigned subtraction cannot underflow.
+2. Suppose the smaller call has returned its sum. Which term is still missing?
+   Both branches of an `if` expression must produce the same type.
 
 ## cap_at
 
