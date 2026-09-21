@@ -186,7 +186,7 @@ TOC.
 Optional chapters remain excluded from required numbering, progress counts, and
 the default next-chapter CTA. This applies to any number of optional chapters,
 not a fixed list. The current bonus chapters are `06_word_count_challenge`,
-`19_password_validator`, `22_csv_parser_challenges`, and `23_smart_pointers`.
+`19_password_validator`, `23_even_more_csv_parsing`, and `23_smart_pointers`.
 
 In chapter prose, link to a sibling with a bare directory slug, for example
 `[Build a password validator](19_password_validator)`. Browser URL resolution

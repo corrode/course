@@ -17,6 +17,8 @@ Joe, 30, Artist, Painter, Writer
 
 Oh no...
 
+## The Problem with CSV
+
 Contrary to popular belief, CSV is a mischievous pain in the neck. It lures you
 into thinking it's just a list of comma-separated fields, but the moment you
 reach for `split(',')`, it will rear its ugly head. For example, a row `"a,b",c`
@@ -32,7 +34,7 @@ From [csv-spec.org](https://csv-spec.org/):
 > closest thing there is to a specification is RFC 4180.
 
 This should tell you everything you need to know about CSV.
-And yet, we will attempt to tame this beast and write a parser that can handle most of the common cases.
+And yet! We will attempt to tame this beast and write a parser that can handle most of the common cases.
 
 ## Taming CSV
 

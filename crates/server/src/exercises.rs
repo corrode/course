@@ -1453,12 +1453,15 @@ mod tests {
         for new in [
             "00_numbers_in_rust",
             "01_strings_str_and_chars",
+            "05_borrowing_and_ownership",
             "06_exercise_break_word_count",
             "11_option_when_a_value_might_be_missing",
             "12_result_when_an_operation_might_fail",
             "13_the_question_mark_operator",
+            "15_a_primer_on_lifetimes",
             "21_parsing_structured_text_and_generics",
             "22_state_machines_and_stateful_parsing",
+            "23_even_more_csv_parsing",
         ] {
             let chapter = exercises
                 .iter()
@@ -1497,11 +1500,16 @@ mod tests {
             [
                 ("06_word_count_challenge", 0),
                 ("19_password_validator", 0),
-                ("22_csv_parser_challenges", 0),
+                ("23_even_more_csv_parsing", 0),
                 ("23_smart_pointers", 0),
             ],
-            "optional chapters must keep their stems and remain unnumbered"
+            "optional chapters must remain unnumbered and in course order"
         );
+        let parser_index = exercises
+            .iter()
+            .position(|e| e.slug == "state_machines_and_stateful_parsing")
+            .unwrap();
+        assert_eq!(exercises[parser_index + 1].slug, "even_more_csv_parsing");
     }
 
     #[test]

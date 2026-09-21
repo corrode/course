@@ -1,4 +1,4 @@
-# Memory and Ownership
+# A Primer on Lifetimes
 
 You've already used ownership in several forms. You moved `String`s, borrowed
 slices, passed `&mut` references into functions, and handed values to `Vec`,

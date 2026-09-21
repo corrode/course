@@ -94,7 +94,7 @@ names with titles, and mirror directory renames under `solutions/`.
 
 Preserve saved learner progress with a database migration when renaming a
 chapter. Match whole chapter stems, not prefixes: optional chapters such as
-`06_word_count_challenge` and `22_csv_parser_challenges` keep their names and
+`06_word_count_challenge` and `23_even_more_csv_parsing` keep their names and
 bonus status. Update active links and CLI examples, but leave historical
 migration references intact.
 

@@ -3701,7 +3701,7 @@ mod tests {
         for stem in [
             "06_word_count_challenge",
             "19_password_validator",
-            "22_csv_parser_challenges",
+            "23_even_more_csv_parsing",
             "23_smart_pointers",
         ] {
             assert!(
