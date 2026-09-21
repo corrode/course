@@ -1,8 +1,10 @@
 # Functions
 
-In Rust, it's mandatory to declare parameter and return types.
-A function's final expression is its return value and does not need a `return`
-keyword.
+If you’ve ever gone through customs, you know the importance of declaring what you’re bringing in.
+Rust takes that idea a step further: you declare both **what goes in and what comes out** of a function: its parameters and return type.
+
+A function body is a block expression, which means the last expression in its body is its return value.
+That means you can skip the `return` keyword and just leave off the semicolon on the last expression, which looks pretty nice.
 
 ## Anatomy
 
@@ -11,7 +13,6 @@ fn add(a: i32, b: i32) -> i32 {
     a + b
 }
 ```
-
 Reading left to right: `fn` says "this is a function", `add` is its name, the
 parentheses list the parameters with their types, and `-> i32` declares the
 return type. Every parameter type and the return type are spelled out
