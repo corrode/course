@@ -13,7 +13,7 @@ fn count_words(text: &str) -> HashMap<String, usize> {
 /// Finds the most common word in the text. Returns the word and its count, or
 /// None if text is empty.
 fn most_common_word(text: &str) -> Option<(String, usize)> {
-    todo!()
+    todo!("Return the most common word and its count, or None when there are no words")
 }
 
 #[test]

@@ -3,7 +3,7 @@
 /// Watch out: `text.len()` returns the number of bytes, not characters. See:
 /// <https://doc.rust-lang.org/std/primitive.str.html#method.chars>
 fn count_chars(text: &str) -> usize {
-    todo!()
+    todo!("Count Unicode scalar values in text, not bytes")
 }
 
 #[test]

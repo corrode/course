@@ -7,7 +7,7 @@ use std::collections::HashMap;
 /// there. Supply a fallback for the missing case to get a value out (`Option`
 /// is covered in its own chapter).
 fn get_config_value(config: &HashMap<String, String>, key: &str) -> String {
-    todo!()
+    todo!("Return the configuration value as an owned String, or \"default\" if missing")
 }
 
 #[test]

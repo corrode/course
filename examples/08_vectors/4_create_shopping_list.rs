@@ -2,7 +2,7 @@
 ///
 /// Each input is a borrowed `&str`; the returned `Vec<String>` owns its text.
 fn create_shopping_list(items: &[&str]) -> Vec<String> {
-    todo!()
+    todo!("Build an owned shopping list from the borrowed items")
 }
 
 #[test]

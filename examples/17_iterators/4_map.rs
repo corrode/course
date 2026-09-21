@@ -4,7 +4,7 @@
 /// iterator pipeline. See:
 /// <https://doc.rust-lang.org/std/string/struct.String.html#method.to_lowercase>
 fn normalize_emails(emails: Vec<String>) -> Vec<String> {
-    todo!()
+    todo!("Normalize each email to lowercase in input order using an iterator pipeline")
 }
 
 #[test]

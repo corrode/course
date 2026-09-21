@@ -1,7 +1,7 @@
 /// Parses a simple CSV line without quotes. Splits on commas and trims
 /// whitespace.
 fn parse_simple_csv_line(line: &str) -> Vec<String> {
-    todo!()
+    todo!("Return trimmed fields from a comma-separated line without quotes")
 }
 
 #[test]

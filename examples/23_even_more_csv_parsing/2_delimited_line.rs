@@ -1,12 +1,11 @@
 /// Parse one line using the supplied delimiter and CSV-style quoting. The
 /// delimiter is not a quote, CR, or LF; input has balanced quotes.
 fn parse_delimited_line(line: &str, delimiter: char) -> Vec<String> {
-    todo!()
+    todo!("Parse fields using the supplied delimiter and CSV-style quoting")
 }
 
-/// Keep the original comma-separated API without duplicating the parsing loop.
 fn parse_csv_line(line: &str) -> Vec<String> {
-    todo!()
+    todo!("Keep the original comma-separated API without duplicating the parsing loop")
 }
 
 #[test]

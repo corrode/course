@@ -25,10 +25,10 @@ impl Describable for Movie {
     }
 }
 
-/// Describe a mixed shelf in order, separated by newlines. Empty input returns
-/// "".
 fn print_mixed_descriptions(items: &[&dyn Describable]) -> String {
-    todo!()
+    todo!(
+        "Describe the mixed shelf in order, separated by newlines; return an empty string for empty input"
+    )
 }
 
 #[test]

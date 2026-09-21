@@ -9,7 +9,7 @@
 /// The error type is `&'static str`, so you can return a fixed error message
 /// without defining a new type.
 fn safe_divide(dividend: f64, divisor: f64) -> Result<f64, &'static str> {
-    todo!()
+    todo!("Divide the numbers, returning an error for a zero divisor")
 }
 
 #[test]

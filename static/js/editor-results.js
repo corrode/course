@@ -12,8 +12,15 @@ function failureSnippets(raw) {
 
 function friendlySnippet(text) {
   if (!text) return "";
-  if (/not yet implemented/i.test(text))
-    return "This function still has `todo!()` in it. Replace it with your implementation, then run again.";
+  const todo = text.match(
+    /(?:^|\n)not yet implemented(?::[ \t]*([^\r\n]*))?(?:\r?\n|$)/i,
+  );
+  if (todo) {
+    const instruction = todo[1]?.trim();
+    return instruction
+      ? `${instruction}\nReplace todo! with your implementation, then run again.`
+      : "This function still has `todo!()` in it. Replace it with your implementation, then run again.";
+  }
   return text
     .replace(/^(thread .* panicked at.*\n)+/, "")
     .split("\n")

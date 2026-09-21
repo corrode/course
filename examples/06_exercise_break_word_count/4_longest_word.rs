@@ -1,7 +1,7 @@
 /// Returns the length (in characters) of the longest word in `text`. Words are
 /// whitespace-separated. Returns 0 when the text has no words.
 fn longest_word(text: &str) -> usize {
-    todo!()
+    todo!("Return the longest word's Unicode scalar count, or 0 if none")
 }
 
 #[test]

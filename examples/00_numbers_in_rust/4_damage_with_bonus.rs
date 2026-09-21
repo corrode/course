@@ -6,7 +6,7 @@
 /// Fractional HP is dropped (truncated toward zero), which is what most games
 /// do; half-HP doesn't exist.
 fn damage_with_bonus(base: u32, bonus_percent: f64) -> u32 {
-    todo!()
+    todo!("Apply the percentage bonus and truncate fractional damage")
 }
 
 #[test]

@@ -2,7 +2,7 @@
 ///
 /// The boxes are dropped when the function returns, freeing their allocations.
 fn boxed_sum(a: Box<i32>, b: Box<i32>) -> i32 {
-    todo!()
+    todo!("Return the sum of the two owned boxed integers")
 }
 
 #[test]

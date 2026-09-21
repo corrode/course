@@ -23,7 +23,7 @@ struct PasswordReport {
 impl PasswordReport {
     /// Checks the stored strength label; does not recompute it from the score.
     fn is_strong(&self) -> bool {
-        todo!()
+        todo!("Check whether the report's stored strength label is Strong")
     }
 }
 

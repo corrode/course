@@ -1,7 +1,7 @@
 /// Adds `gain` health to `current`, capping at `u8::MAX` (255) instead of
 /// overflowing.
 fn add_health(current: u8, gain: u8) -> u8 {
-    todo!()
+    todo!("Add gain to current health, capping at u8::MAX")
 }
 
 #[test]

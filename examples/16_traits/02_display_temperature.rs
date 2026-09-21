@@ -11,7 +11,7 @@ struct Temperature {
 ///   - `Temperature { celsius: 100.0 }` → `"100.0°C"`
 impl fmt::Display for Temperature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+        todo!("Format the temperature with one decimal place followed by °C")
     }
 }
 

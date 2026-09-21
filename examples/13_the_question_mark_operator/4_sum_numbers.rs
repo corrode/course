@@ -5,7 +5,7 @@
 /// file I/O), so a single error type is enough and there's no need for
 /// `Box<dyn Error>`.
 fn sum_numbers(text: &str) -> Result<i32, std::num::ParseIntError> {
-    todo!()
+    todo!("Sum whitespace-separated integers, propagating the first parse error with ?")
 }
 
 #[test]

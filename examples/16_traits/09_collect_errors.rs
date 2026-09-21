@@ -30,9 +30,8 @@ impl Validator for MustContain {
     }
 }
 
-/// Run every rule. Return failure messages in rule order, or an empty vector.
 fn collect_errors(validators: &[&dyn Validator], input: &str) -> Vec<String> {
-    todo!()
+    todo!("Run every rule and return failure messages in rule order, or an empty vector")
 }
 
 #[cfg(test)]

@@ -14,7 +14,7 @@
 /// the branches matters; the tests include cases where more than one condition
 /// is true.
 fn ferris_mood(hunger: u32, naps: u32) -> &'static str {
-    todo!()
+    todo!("Return Ferris's mood using the hunger and nap rules above")
 }
 
 #[test]

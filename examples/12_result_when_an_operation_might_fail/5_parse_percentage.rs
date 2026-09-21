@@ -6,7 +6,7 @@
 /// `Err("percentage must be between 0 and 100")`. Only one trailing `%` is
 /// allowed.
 fn parse_percentage(input: &str) -> Result<u8, &'static str> {
-    todo!()
+    todo!("Parse the percentage and enforce the documented range and error rules")
 }
 
 #[test]

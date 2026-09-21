@@ -59,7 +59,7 @@ impl PasswordValidator {
     /// order: length >= 8, uppercase, lowercase, digit, special (`!@#$%^&*`).
     /// Never store the input in the report.
     fn validate(password: &str) -> PasswordReport {
-        todo!()
+        todo!("Return a password report using the specified scoring and feedback rules")
     }
 }
 

@@ -1,7 +1,7 @@
 /// Reads a file and counts lines. Note how `?` works with a different error
 /// type.
 fn count_file_lines(filename: &str) -> Result<usize, std::io::Error> {
-    todo!()
+    todo!("Read the file and count its lines, propagating I/O errors with ?")
 }
 
 #[test]

@@ -7,7 +7,7 @@
 /// adding lifetime annotations. To go from `&&str` to `String`, use
 /// [`str::to_string`].
 fn find_rust_files(files: &[&str]) -> Vec<String> {
-    todo!()
+    todo!("Use an iterator pipeline to return .rs paths as owned Strings in input order")
 }
 
 #[test]

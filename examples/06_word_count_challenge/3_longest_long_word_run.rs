@@ -3,7 +3,7 @@
 /// remains part of each word. A word with three or fewer scalar values breaks
 /// the run; whitespace alone does not. Returns 0 when no words qualify.
 fn longest_long_word_run(text: &str) -> usize {
-    todo!()
+    todo!("Return the longest run of words with over three Unicode scalars")
 }
 
 #[test]

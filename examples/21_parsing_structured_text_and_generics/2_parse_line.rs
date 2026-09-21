@@ -11,7 +11,7 @@ pub enum ParseError {
 /// `Err(ParseError)`. A missing `=` or an empty key or value after trimming is
 /// an error.
 fn parse_env_line(line: &str) -> Result<(String, String), ParseError> {
-    todo!()
+    todo!("Parse a KEY=value line with trimmed key and value, or return a ParseError")
 }
 
 #[test]

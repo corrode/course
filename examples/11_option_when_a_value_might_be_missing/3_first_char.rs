@@ -1,6 +1,5 @@
-/// Returns the first character of `text`, or `None` if the string is empty.
 fn first_char(text: &str) -> Option<char> {
-    todo!()
+    todo!("Return the first Unicode character of text, or None if empty")
 }
 
 #[test]

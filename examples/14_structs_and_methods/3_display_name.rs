@@ -16,9 +16,8 @@ impl User {
         }
     }
 
-    /// Returns the user's display name for the UI. Format: "{name} ({email})"
     fn display_name(&self) -> String {
-        todo!()
+        todo!("Return the user's display name as \"{{name}} ({{email}})\"")
     }
 }
 

@@ -172,6 +172,18 @@ don't make using help feel like failing.
 
 ## 11. Code Comments in Examples
 
+Put short instructions for missing code in `todo!("Describe the task here")`
+rather than a comment next to a bare `todo!()`. The message marks the place to
+edit and appears when the unfinished code runs. Describe the required behavior,
+not the implementation. Keep longer contracts, API references, and conceptual
+explanations outside the macro; don't repeat the same instruction in both
+places. Prediction placeholders should ask a question without giving its answer.
+
+`todo!` takes a format string. Escape literal braces as `{{` and `}}` when a
+message describes an output pattern rather than interpolating a variable.
+In `const fn`, keep the instruction above a bare `todo!()`: the message-taking
+form is not const-compatible on the current toolchain.
+
 Comments in example code should teach, not label. Prefer a full sentence (or
 two) on its own line above the line it explains, rather than a terse trailing
 comment. Use a blank line to separate the setup from the line you're actually

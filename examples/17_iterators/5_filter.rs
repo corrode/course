@@ -5,7 +5,7 @@
 /// not the element itself. See:
 /// <https://doc.rust-lang.org/std/primitive.str.html#method.starts_with>
 fn select_usernames_starting_with_a(usernames: Vec<&str>) -> Vec<&str> {
-    todo!()
+    todo!("Use an iterator to keep usernames starting with lowercase a in input order")
 }
 
 #[test]

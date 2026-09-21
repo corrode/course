@@ -1,8 +1,6 @@
 /// Returns `n!` (n factorial). By convention, `factorial(0) == 1`.
-///
-/// Use a `for` loop.
 fn factorial(n: u32) -> u32 {
-    todo!()
+    todo!("Return n factorial using a for loop")
 }
 
 #[test]

@@ -8,15 +8,12 @@ enum Expr {
 }
 
 impl Expr {
-    /// Own both child expressions in an Add node, preserving their order and
-    /// shape.
     fn add(left: Self, right: Self) -> Self {
-        todo!()
+        todo!("Own both child expressions in an Add node, preserving their order and shape")
     }
 
-    /// Compute the tree's numeric value without consuming or changing it.
     fn eval(&self) -> i32 {
-        todo!()
+        todo!("Compute the tree's numeric value without consuming or changing it")
     }
 }
 

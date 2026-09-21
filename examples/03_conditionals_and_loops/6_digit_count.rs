@@ -1,8 +1,6 @@
 /// Returns the number of decimal digits in `n`. `digit_count(0)` is `1`.
-///
-/// Use a `while` loop.
 fn digit_count(n: u32) -> u32 {
-    todo!()
+    todo!("Count the decimal digits in n using a while loop")
 }
 
 #[test]

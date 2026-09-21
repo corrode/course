@@ -3,7 +3,7 @@ use std::collections::HashMap;
 /// Validates required environment variables are present. Returns Ok(()) if all
 /// required keys exist, Err with missing key otherwise.
 fn validate_required_vars(env: &HashMap<String, String>, required: &[&str]) -> Result<(), String> {
-    todo!()
+    todo!("Return Ok(()) if all required keys exist, or Err with the first missing key")
 }
 
 #[test]

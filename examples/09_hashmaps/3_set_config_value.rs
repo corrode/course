@@ -5,7 +5,7 @@ use std::collections::HashMap;
 /// One method on `HashMap` covers both cases; it doesn't care whether the key
 /// was already there.
 fn set_config_value(config: &mut HashMap<String, String>, key: &str, value: &str) {
-    todo!()
+    todo!("Insert or update the configuration key-value pair")
 }
 
 #[test]

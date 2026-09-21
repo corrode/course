@@ -32,17 +32,15 @@ impl Command for Append {
     }
 }
 
-/// Return exactly two owned commands: Uppercase, then Append with the supplied
-/// suffix.
 fn make_pipeline(suffix: String) -> Vec<Box<dyn Command>> {
-    todo!()
+    todo!("Return exactly two owned commands: Uppercase, then Append with the supplied suffix")
 }
 
 /// Pass input through every command in slice order and return the final output.
 /// An empty pipeline returns the input unchanged. Borrow the pipeline so it can
 /// be reused, and support any Command implementation.
 fn apply_pipeline(commands: &[Box<dyn Command>], input: &str) -> String {
-    todo!()
+    todo!("Pass input through every command in slice order and return the final output")
 }
 
 #[test]

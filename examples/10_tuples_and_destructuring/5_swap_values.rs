@@ -1,6 +1,5 @@
-/// Swaps two values using tuple destructuring.
 fn swap_values(pair: (i32, i32)) -> (i32, i32) {
-    todo!()
+    todo!("Swap the two values using tuple destructuring")
 }
 
 #[test]

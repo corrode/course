@@ -7,9 +7,8 @@ struct User {
 }
 
 impl User {
-    /// Creates a new user account. New users start unverified with 0 logins.
     fn new(email: String, name: String) -> Self {
-        todo!()
+        todo!("Create a user with the supplied email and name, unverified and with 0 logins")
     }
 }
 

@@ -1,6 +1,5 @@
-/// Build and return the welcome message for `name`.
 fn format_welcome_message(name: &str) -> String {
-    todo!("replace this line with your code")
+    todo!("Return 'Welcome, ' followed by the name and '!'")
 }
 
 // BTW: tests always live right next to the code they exercise. Don't worry

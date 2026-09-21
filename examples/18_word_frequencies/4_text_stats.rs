@@ -20,7 +20,7 @@ fn count_words(text: &str) -> HashMap<String, usize> {
 /// don't have to remember what each tuple position means. Here we'll keep the
 /// tuple and focus on the iterator chain in the body.
 fn text_stats(text: &str) -> (usize, usize, f64) {
-    todo!()
+    todo!("Return total words, unique words, and average lowercase word length")
 }
 
 #[test]

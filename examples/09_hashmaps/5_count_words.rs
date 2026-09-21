@@ -6,7 +6,7 @@ use std::collections::HashMap;
 /// Use the `entry` API to work with new and repeated words through the same
 /// lookup. Its mutable reference lets you update the count inside the map.
 fn count_words(words: &[&str]) -> HashMap<String, usize> {
-    todo!()
+    todo!("Count each word using the HashMap entry API")
 }
 
 #[test]

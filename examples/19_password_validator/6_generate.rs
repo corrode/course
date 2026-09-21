@@ -9,7 +9,7 @@ impl PasswordGenerator {
     /// each. No randomness or clock is needed; this is not a secure password
     /// generator.
     fn generate_example_password(length: usize) -> Result<String, &'static str> {
-        todo!()
+        todo!("Generate example test data of the requested length, or reject lengths below four")
     }
 }
 

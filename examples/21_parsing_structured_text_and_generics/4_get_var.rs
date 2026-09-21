@@ -6,7 +6,7 @@ fn get_env_var<T>(env: &HashMap<String, String>, key: &str) -> Option<T>
 where
     T: std::str::FromStr,
 {
-    todo!()
+    todo!("Return the value as the requested type, or None for a missing or invalid value")
 }
 
 #[test]

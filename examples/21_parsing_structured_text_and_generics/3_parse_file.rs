@@ -12,7 +12,7 @@ pub enum ParseError {
 /// and yields `("KEY", "value")`). Returns `Ok((key, value))` or
 /// `Err(ParseError)`.
 fn parse_env_line(line: &str) -> Result<(String, String), ParseError> {
-    todo!()
+    todo!("Parse a KEY=value line with trimmed key and value, or return a ParseError")
 }
 
 /// Parses a complete .env file content. Ignores empty lines and lines starting
@@ -21,7 +21,7 @@ fn parse_env_line(line: &str) -> Result<(String, String), ParseError> {
 /// debug than silently dropping lines. Returns `HashMap` of all valid key-value
 /// pairs.
 fn parse_env_file(content: &str) -> Result<HashMap<String, String>, ParseError> {
-    todo!()
+    todo!("Parse .env entries, skipping blanks and comments and returning the first error")
 }
 
 #[test]

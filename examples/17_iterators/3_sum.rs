@@ -6,7 +6,7 @@
 /// <https://doc.rust-lang.org/std/iter/trait.Iterator.html>
 fn calculate_total_revenue() -> i32 {
     let sales = [1200, 850, 2300, 950, 1800, 3200, 1100, 2800];
-    todo!()
+    todo!("Calculate total sales revenue using an iterator")
 }
 
 #[test]

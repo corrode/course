@@ -1,7 +1,7 @@
 /// Returns the total number of words in `text`. Words are pieces separated by
 /// whitespace, so `"hello world"` has two words.
 fn word_count(text: &str) -> usize {
-    todo!()
+    todo!("Count the whitespace-separated words in text")
 }
 
 #[test]

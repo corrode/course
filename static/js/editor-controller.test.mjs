@@ -196,6 +196,46 @@ test("failure snippets and full logs both receive highlighting", () => {
   assert.ok(roles["output-stderr"].children.some((span) => span.className === "tok-number"));
 });
 
+for (const instruction of [
+  "",
+  "Add ' - owned by Rust!' to the end and return",
+  'Return the display name as "{name} ({email})"',
+  "Return <script>alert(1)</script> as literal text",
+]) {
+  test(`todo failure preserves the task or uses the generic fallback: ${instruction || "bare todo"}`, () => {
+    const { roles } = fixture();
+    const render = createResultRenderer({
+      panel: roles["output-panel"],
+      list: roles["test-list"],
+      output: roles["output-stderr"],
+      testResults: true,
+    });
+    const raw = [
+      "---- example stdout ----",
+      "thread 'example' panicked at src/main.rs:2:5:",
+      `not yet implemented${instruction ? `: ${instruction}` : ""}`,
+      "note: run with RUST_BACKTRACE=1 to display a backtrace",
+      "",
+      "failures:",
+      "    example",
+    ].join("\n");
+    render({
+      success: false,
+      stdout: raw,
+      test_results: [{ name: "example", passed: false }],
+    });
+    const snippet = roles["test-list"].children[0].children[1];
+    assert.equal(
+      snippet.textContent,
+      instruction
+        ? `${instruction}\nReplace todo! with your implementation, then run again.`
+        : "This function still has `todo!()` in it. Replace it with your implementation, then run again.",
+    );
+    assert.equal(roles["output-stderr"].textContent, raw);
+    assert.ok(snippet.children.every((span) => span.children.length === 0));
+  });
+}
+
 test("diagnostics remain visible with a stale notice until fresh results replace them", () => {
   const { roles } = fixture();
   const panel = roles["output-panel"];

@@ -1,7 +1,7 @@
 /// Returns a user's name and age as a tuple. For example, return "Alice"
 /// and 25. Useful for functions that need to return multiple values.
 fn get_user_info() -> (String, u32) {
-    todo!()
+    todo!("Return the user name \"Alice\" and age 25 as a tuple")
 }
 
 #[test]

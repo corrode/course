@@ -7,7 +7,7 @@
 /// makes this explicit; for now, just notice the function compiles even though
 /// no lifetimes appear in the signature.
 fn validate_email(email: &str) -> Result<&str, &'static str> {
-    todo!()
+    todo!("Return the borrowed email if it contains @, or an error otherwise")
 }
 
 #[test]

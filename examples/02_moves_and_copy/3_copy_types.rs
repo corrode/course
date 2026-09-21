@@ -4,7 +4,7 @@
 /// it's passed in. The original stays usable after the call (see the test),
 /// which is exactly what does *not* happen with a `String`.
 fn double(n: i32) -> i32 {
-    todo!()
+    todo!("Return twice n")
 }
 
 #[test]

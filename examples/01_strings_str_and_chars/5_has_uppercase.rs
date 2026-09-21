@@ -8,7 +8,7 @@
 /// See:
 /// <https://doc.rust-lang.org/std/primitive.char.html#method.is_ascii_uppercase>
 fn has_uppercase(text: &str) -> bool {
-    todo!()
+    todo!("Return whether text contains an ASCII uppercase letter")
 }
 
 #[test]

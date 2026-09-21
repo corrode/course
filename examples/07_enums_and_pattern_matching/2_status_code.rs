@@ -15,7 +15,7 @@ enum HttpStatus {
 fn status_code(status: HttpStatus) -> u16 {
     // Match each status to its code: Ok: 200, NotFound: 404, Unauthorized: 401
     // InternalServerError: 500, BadRequest: 400
-    todo!()
+    todo!("Match the status to its HTTP code")
 }
 
 #[test]

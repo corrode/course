@@ -1,7 +1,7 @@
-/// Sums whitespace-separated integers with an iterator pipeline and fallible
-/// `sum`.
 fn sum_numbers(text: &str) -> Result<i32, std::num::ParseIntError> {
-    todo!()
+    todo!(
+        "Sum whitespace-separated integers using an iterator pipeline and fallible sum, without a loop or ?"
+    )
 }
 
 #[test]

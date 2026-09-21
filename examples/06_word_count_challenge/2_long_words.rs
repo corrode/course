@@ -1,7 +1,7 @@
 /// Counts whitespace-separated words containing more than three Unicode scalar
 /// values.
 fn count_long_words(text: &str) -> usize {
-    todo!()
+    todo!("Count words with more than three Unicode scalar values")
 }
 
 #[test]

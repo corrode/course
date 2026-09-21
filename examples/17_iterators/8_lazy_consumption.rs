@@ -9,7 +9,7 @@ fn experiment_without_consumption() {
         println!("pipeline constructed");
     }
     println!("closure calls: {calls}");
-    let expected_calls: usize = todo!("write your prediction");
+    let expected_calls: usize = todo!("Predict the closure calls without consuming the pipeline");
     assert_eq!(calls, expected_calls);
 }
 
@@ -35,10 +35,10 @@ fn experiment_partial_consumption() {
     };
     println!("visited: {visited:?}");
 
-    let expected_first: Option<i32> = todo!("write your prediction");
-    let expected_batch: Vec<i32> = todo!("write your prediction");
-    let expected_next: Option<i32> = todo!("write your prediction");
-    let expected_visited: Vec<i32> = todo!("write your prediction");
+    let expected_first: Option<i32> = todo!("What does the first next() return?");
+    let expected_batch: Vec<i32> = todo!("Predict the batch collected after the first next()");
+    let expected_next: Option<i32> = todo!("Predict next() after collecting the batch");
+    let expected_visited: Vec<i32> = todo!("Predict the visited inputs in order");
     assert_eq!(first, expected_first);
     assert_eq!(batch, expected_batch);
     assert_eq!(next, expected_next);

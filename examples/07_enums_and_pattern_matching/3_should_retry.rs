@@ -15,8 +15,7 @@ enum HttpStatus {
 ///
 /// Only retry on server errors, not client errors.
 fn should_retry(status: HttpStatus) -> bool {
-    // Only InternalServerError should trigger a retry
-    todo!()
+    todo!("Return true only for InternalServerError")
 }
 
 #[test]

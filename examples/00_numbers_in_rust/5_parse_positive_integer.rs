@@ -1,7 +1,7 @@
 /// Parses a string into a positive integer. Returns the number if valid, 0 if
 /// invalid.
 fn parse_positive_integer(input: &str) -> u32 {
-    todo!()
+    todo!("Parse input as a u32, returning 0 if invalid")
 }
 
 #[test]

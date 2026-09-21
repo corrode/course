@@ -4,7 +4,7 @@
 /// Use `continue` to skip the odd numbers if you like; it's not required, just
 /// easier to read.
 fn count_evens(numbers: &[i32]) -> u32 {
-    todo!()
+    todo!("Count the even numbers in the slice")
 }
 
 #[test]

@@ -1,6 +1,5 @@
-/// Returns the length if `Some`, 0 if `None`.
 fn optional_string_length(maybe_string: Option<&str>) -> usize {
-    todo!()
+    todo!("Return the string length in bytes for Some, or 0 for None")
 }
 
 #[test]

@@ -1,7 +1,7 @@
 /// Returns the number of characters in `text`. Counts every `char` the string
 /// contains, whitespace included.
 fn char_count(text: &str) -> usize {
-    todo!()
+    todo!("Count Unicode scalar values in text, including whitespace")
 }
 
 #[test]

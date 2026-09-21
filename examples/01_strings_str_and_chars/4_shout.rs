@@ -4,7 +4,7 @@
 /// that everywhere in real Rust code. See:
 /// <https://doc.rust-lang.org/std/primitive.str.html#method.to_uppercase>
 fn shout(text: &str) -> String {
-    todo!()
+    todo!("Return an owned, uppercased version of text")
 }
 
 #[test]

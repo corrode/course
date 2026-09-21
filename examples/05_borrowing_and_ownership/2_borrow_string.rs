@@ -1,8 +1,7 @@
 /// Borrows a string reference without taking ownership. The original string
 /// remains valid after this function returns.
 fn borrow_string(s: &str) -> usize {
-    // Return the length of the string
-    todo!()
+    todo!("Return the length of the borrowed string")
 }
 
 #[test]

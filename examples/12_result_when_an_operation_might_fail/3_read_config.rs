@@ -5,7 +5,7 @@
 /// mix `Ok(String::from("..."))` and `Err("...")` in the same function: the
 /// success and error types are independent.
 fn read_config_file(filename: &str) -> Result<String, &'static str> {
-    todo!()
+    todo!("Simulate reading configuration content, returning an error for an empty filename")
 }
 
 #[test]

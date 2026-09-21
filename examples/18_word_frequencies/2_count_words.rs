@@ -3,7 +3,7 @@ use std::collections::HashMap;
 /// Counts how many times each word appears in the text. Words are
 /// whitespace-separated; counts use lowercase keys.
 fn count_words(text: &str) -> HashMap<String, usize> {
-    todo!()
+    todo!("Count whitespace-separated words using lowercase keys")
 }
 
 #[test]

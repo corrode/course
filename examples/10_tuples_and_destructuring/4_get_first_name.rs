@@ -10,7 +10,7 @@
 /// Hint: Use [tuple
 /// destructuring](https://doc.rust-lang.org/rust-by-example/flow_control/match/destructuring/destructure_tuple.html)
 fn get_first_name(full_name: (String, String)) -> String {
-    todo!()
+    todo!("Use tuple destructuring to return the owned first name")
 }
 
 #[test]

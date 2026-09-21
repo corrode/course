@@ -1,21 +1,21 @@
 /// Checks for an ASCII uppercase letter without trimming or normalizing.
 fn has_uppercase(password: &str) -> bool {
-    todo!()
+    todo!("Check whether the password contains an ASCII uppercase letter")
 }
 
 /// Checks for an ASCII lowercase letter without trimming or normalizing.
 fn has_lowercase(password: &str) -> bool {
-    todo!()
+    todo!("Check whether the password contains an ASCII lowercase letter")
 }
 
 /// Checks for an ASCII digit without trimming or normalizing.
 fn has_digit(password: &str) -> bool {
-    todo!()
+    todo!("Check whether the password contains an ASCII digit")
 }
 
 /// Checks for one of exactly `!@#$%^&*`.
 fn has_special(password: &str) -> bool {
-    todo!()
+    todo!("Check whether the password contains one of !@#$%^&*")
 }
 
 #[cfg(test)]

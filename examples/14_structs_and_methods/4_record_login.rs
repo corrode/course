@@ -23,7 +23,7 @@ impl User {
     /// without checking it first. We keep verification simple here; a real
     /// system would decide separately when an account counts as verified.
     fn record_login(&mut self) {
-        todo!()
+        todo!("Record a login by incrementing login_count and setting is_verified to true")
     }
 }
 
