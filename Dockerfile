@@ -22,30 +22,35 @@ ENV GIT_BRANCH=${GIT_BRANCH} \
     GIT_HASH=${GIT_HASH}
 
 # Cache dependencies separately from source. Copy just the manifests
-# first, build a dummy main so cargo downloads + compiles deps, then
-# overwrite with the real source.
+# first, build dummy workspace sources so cargo compiles the server's deps,
+# then overwrite with the real source. Failures must fail the image build.
 COPY Cargo.toml Cargo.lock ./
-RUN mkdir -p src/bin examples \
- && echo "fn main() {}" > src/bin/server.rs \
- && echo "fn main() {}" > src/bin/cli.rs \
- && echo "" > src/lib.rs \
- && echo "" > build.rs \
- && cargo build --locked --release --bin server || true \
- && rm -rf src
+COPY crates/cli/Cargo.toml ./crates/cli/Cargo.toml
+COPY crates/course-types/Cargo.toml ./crates/course-types/Cargo.toml
+COPY crates/server/Cargo.toml ./crates/server/Cargo.toml
+RUN mkdir -p examples crates/cli/src crates/course-types/src crates/server/src \
+ && echo "fn main() {}" > examples/workspace_stub.rs \
+ && echo "fn main() {}" > crates/cli/src/main.rs \
+ && echo "fn main() {}" > build.rs \
+ && echo "" > crates/course-types/src/lib.rs \
+ && echo "fn main() {}" > crates/server/src/main.rs \
+ && echo "" > crates/server/src/lib.rs \
+ && echo "fn main() {}" > crates/server/build.rs \
+ && cargo build --locked --release --bin server \
+ && rm examples/workspace_stub.rs
 
 # Real source.
 COPY build.rs ./
-COPY src ./src
+COPY crates ./crates
 COPY examples ./examples
 COPY solutions ./solutions
 COPY templates ./templates
 COPY migrations ./migrations
 COPY static ./static
 
-# Bust cargo's incremental cache for our own crate so the real source
-# actually gets compiled (the dummy-main step above leaves stale
-# fingerprints otherwise).
-RUN touch src/bin/server.rs \
+# Remove dummy workspace artifacts, keeping compiled third-party dependencies.
+# This also reruns the server build script with the git metadata above.
+RUN cargo clean --release -p course-exercises -p cargo-course -p course-types -p course-server \
  && cargo build --locked --release --bin server
 
 FROM debian:trixie-slim AS runtime

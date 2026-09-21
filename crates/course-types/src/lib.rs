@@ -1,6 +1,6 @@
 //! Shared types for the corrode course system.
 //!
-//! This module provides the core data types used for communication between the
+//! This crate provides the core data types used for communication between the
 //! corrode course CLI tool and server. These types handle participant
 //! registration, exercise submission, and progress tracking.
 //!
@@ -30,7 +30,7 @@ use std::str::FromStr;
 /// # Examples
 ///
 /// ```
-/// use cargo_course::types::TeamToken;
+/// use course_types::TeamToken;
 ///
 /// let token = TeamToken::try_from("veo-x9k2").unwrap();
 /// assert_eq!(token.as_str(), "veo-x9k2");
@@ -109,7 +109,7 @@ impl TeamToken {
     /// # Examples
     ///
     /// ```
-    /// use cargo_course::types::TeamToken;
+    /// use course_types::TeamToken;
     ///
     /// assert_eq!(TeamToken::parse_form_input("").unwrap(), None);
     /// assert_eq!(TeamToken::parse_form_input("   ").unwrap(), None);
@@ -185,7 +185,7 @@ impl AsRef<str> for TeamToken {
 /// # Examples
 ///
 /// ```
-/// use cargo_course::types::Name;
+/// use course_types::Name;
 ///
 /// let name = Name::try_from("Alice".to_string()).unwrap();
 /// assert_eq!(name.as_str(), "Alice");
@@ -260,7 +260,7 @@ impl fmt::Display for Name {
 /// # Examples
 ///
 /// ```
-/// use cargo_course::types::Token;
+/// use course_types::Token;
 /// use std::str::FromStr;
 ///
 /// // Tokens are typically created from server responses

@@ -1,60 +1,39 @@
-[package]
-name = "cargo-course"
+[workspace]
+members = ["crates/*"]
+default-members = [".", "crates/*"]
+resolver = "3"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
-default-run = "server"
 
-[[bin]]
-name = "cargo-course"
-path = "src/bin/cli.rs"
-
-[[bin]]
-name = "server"
-path = "src/bin/server.rs"
+# Keep exercise targets at the root for `cargo test --example <chapter>`.
+[package]
+name = "course-exercises"
+version.workspace = true
+edition.workspace = true
+publish = false
 
 [package.metadata.exercises.13_the_question_mark_operator]
 difficulty = "beginner"
 tags = ["question-mark", "result", "error-handling"]
 
-[dependencies]
-# Shared dependencies
+
+[workspace.dependencies]
+course-types = { path = "crates/course-types" }
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
 anyhow = "1.0"
-ulid = "3.0"
-tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "net", "sync"] }
-
-# CLI dependencies
-clap = { version = "4.6", features = ["derive"] }
-reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "http2"] }
-
-# Server dependencies
-axum = { version = "0.8.9", features = ["macros"] }
-tower-http = { version = "0.7", features = ["fs", "cors"] }
-sqlx = { version = "0.9", features = [
-    "runtime-tokio",
-    "sqlite",
-    "chrono",
-    "migrate",
-] }
-askama = { version = "0.16" }
-dotenvy = "0.15"
-chrono = { version = "0.4", features = ["serde"] }
-open = "5.4.4"
-env_logger = "0.11"
-toml = "1.1"
-log = "0.4"
-sha2 = "0.11"
-syn = { version = "3", features = ["full", "extra-traits"] }
-pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
-rand = "0.10"
-url = "2.5"
+tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "net"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls"] }
 
 [profile.dev]
 # Faster dev builds: keep enough debug info for backtraces, drop the rest.
 debug = "line-tables-only"
 
-[lints.clippy]
+[lints]
+workspace = true
+
+[workspace.lints.clippy]
 # Lint groups need a lower priority than individual lint overrides so the
 # `allow` entries below actually win against the group-level `warn`.
 all = { level = "warn", priority = -1 }
@@ -65,9 +44,7 @@ cargo = { level = "warn", priority = -1 }
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
-# This crate is internal (course infrastructure) and isn't published to
-# crates.io, so the `cargo_common_metadata` lint about missing
-# description/license/repository/keywords/categories doesn't apply.
+# These crates are internal course infrastructure, not published to crates.io.
 cargo_common_metadata = "allow"
 # The dependency graph contains unavoidable duplicate transitive versions
 # (for example getrandom, hashbrown, and webpki-roots). Audit with

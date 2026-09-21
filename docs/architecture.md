@@ -6,7 +6,7 @@ top-level directory, new binary, schema change, renamed module, etc.).
 
 ## What This Repository Is
 
-Two things in one crate:
+Two things in one workspace:
 
 1. **A course**: `examples/NN_<slug>/` chapters that learners read, edit, and
    run. This is what most edits target.
@@ -15,14 +15,32 @@ Two things in one crate:
    self-study, required for instructor-led workshops. Privacy-conscious learning
    events are stored separately in `course_events`; see `docs/analytics.md`.
 
-The Cargo package is `cargo-course` (Rust edition 2024). It exposes a library
-plus two binaries (`server`, `cargo-course` aka the CLI).
+The Rust edition 2024 workspace has four packages, all listed in
+`workspace.default-members`:
+
+- `course-exercises` at the root owns the exercise examples and their aggregator
+  build script. It has no dependencies, library, or application binaries.
+- `cargo-course` in `crates/cli` owns the CLI binary (`src/main.rs`).
+- `course-types` in `crates/course-types` owns the shared API types and depends
+  only on `serde` and `anyhow`.
+- `course-server` in `crates/server` owns the `server` binary, the `exercises`
+  library module, and the git-metadata build script.
+
+Both the CLI and server depend on `course-types`; the CLI does not depend on
+`course-server`. Install it with `cargo install --path crates/cli --bin cargo-course`.
+Run the server from the repository root with `cargo run --bin server`, not
+bare `cargo run`. Shared content and runtime assets stay at the root.
+
+Infrastructure build/check/test/Clippy commands use `--workspace` and target
+libraries and binaries, with doc tests run separately. Examples remain attached
+to the root package and are checked by `scripts/check-examples.sh`, since some
+chapters intentionally do not compile.
 
 ## Top-Level Layout
 
 ```
 course/
-├── Cargo.toml             # single crate, two binaries
+├── Cargo.toml             # workspace + dependency-free course-exercises package
 ├── rust-toolchain.toml    # stable Rust, rustfmt, and Clippy
 ├── .github/dependabot.yml # weekly dependency updates
 ├── README.md              # learner-facing README
@@ -41,14 +59,22 @@ course/
 │       └── 5_hints.md     # optional; slug `hints` is special (see below)
 ├── migrations/            # SQLx migrations, applied in order at startup
 ├── docs/analytics.md      # Event schema, privacy boundaries, report queries
-├── src/
-│   ├── lib.rs             # re-exports `exercises` and `types`
-│   ├── types.rs           # API request/response + newtype wrappers
-│   ├── exercises.rs       # startup-time scan/parse of `examples/`,
-│   │                      #   plus `Step` / `RenderItem` / `RenderKind`
-│   └── bin/
-│       ├── server.rs      # Axum web server (default `cargo run`)
-│       └── cli.rs         # `cargo course …` subcommands
+├── crates/
+│   ├── cli/
+│   │   ├── Cargo.toml     # cargo-course package
+│   │   └── src/main.rs    # `cargo course …` subcommands
+│   ├── course-types/
+│   │   ├── Cargo.toml     # course-types package
+│   │   └── src/lib.rs     # API request/response + newtype wrappers
+│   └── server/
+│       ├── Cargo.toml     # course-server package; binary named server
+│       ├── askama.toml    # template directory: ../../templates
+│       ├── build.rs       # git metadata for the server
+│       └── src/
+│           ├── main.rs    # Axum web server (`cargo run --bin server`)
+│           ├── lib.rs     # exports exercises
+│           └── exercises.rs # scan/parse examples; Step/RenderItem/RenderKind
+├── solutions/             # sample solutions matching examples/
 ├── templates/             # Askama templates rendered by the server
 ├── static/                # served at `/static/*` (assets, local fonts, JS bundles)
 ├── package.json           # pinned frontend deps + reproducible esbuild command
@@ -186,7 +212,7 @@ Recently enforced and worth preserving:
 order. It remains useful as design history, but its chapter numbers are not the
 current `00_numbers_in_rust` through `25_appendix` map.
 
-## Server (`src/bin/server.rs`, ~3440 Lines)
+## Server (`crates/server/src/main.rs`)
 
 Axum 0.8, Askama 0.16, and SQLx 0.8 (SQLite). Core `AppState` data includes:
 
@@ -244,13 +270,15 @@ header and surface the actual assertion (capped at 6 lines), and
 `not yet implemented` panics from `todo!()` are rewritten to a friendlier
 message before being shown to learners.
 
-## CLI (`src/bin/cli.rs`, ~690 Lines)
+## CLI (`crates/cli/src/main.rs`, ~690 Lines)
 
 Invoked as `cargo course …` (cargo's `cargo-<name>` shim):
 
 - `init [--token T]`: register and save the token to a local file.
 - `submit [FILE] [--pedantic] [--all]`: run `cargo test --example`, optionally
-  `cargo fmt --check` and `cargo clippy -- -Dwarnings`, POST to `/api/submit`.
+  `cargo fmt --check` and `cargo clippy --example <chapter> -- -D warnings`,
+  POST to `/api/submit`. Clippy targets only the learner's chapter, avoiding a
+  server build; `run_cargo_fmt` is unchanged.
 - `status`: `GET /api/status/{token}`, print a small table.
 - `open`: open the dashboard in the browser.
 - `token`: print the saved token.
@@ -258,14 +286,14 @@ Invoked as `cargo course …` (cargo's `cargo-<name>` shim):
 Server URL comes from `CORRODE_SERVER_URL` (default
 `https://course.corrode.dev`).
 
-## Library (`src/lib.rs`)
+## Libraries
 
-Two modules:
-
-- `types`: `Name` and `Token` newtypes (validated at construction), plus the API
-  DTOs (`RegistrationRequest`, `SubmissionRequest`, `ProgressResponse`, etc.).
+- `course_types` (`crates/course-types/src/lib.rs`, formerly `src/types.rs`):
+  `Name` and `Token` newtypes (validated at construction), plus the API DTOs
+  (`RegistrationRequest`, `SubmissionRequest`, `ProgressResponse`, etc.).
   Shared between server and CLI.
-- `exercises`: startup-time scan of `examples/`:
+- `course_server::exercises` (`crates/server/src/exercises.rs`, exported by
+  `crates/server/src/lib.rs`): startup-time scan of `examples/`:
   - `scan_dir(&Path) -> Vec<Exercise>` walks `NN_<slug>/` directories, detects
     code, prose, and quiz content, parses each code file, scans sibling `.md`
     notes, pulls the optional `hints` note into its own slot, and produces an
@@ -275,12 +303,14 @@ Two modules:
     Askama's fully-qualified path syntax.
   - `render_markdown`: pulldown-cmark with the html feature enabled.
   - Tests at the bottom verify scanning against the real `examples/` directory
-    for both single-step and multi-step shapes.
+    for both single-step and multi-step shapes. Tests resolve repository assets
+    from `CARGO_MANIFEST_DIR` joined with `../..`, rather than relying on Cargo's
+    per-package test working directory.
 
-## Build Script (`build.rs`)
+## Build Scripts
 
-For every chapter dir under `examples/` that contains sibling `<n>_<slug>.rs`
-files, `build.rs` (re)generates a thin `main.rs` that aggregates them as
+The root `build.rs` only generates example aggregators. For every chapter dir
+under `examples/` that contains sibling `<n>_<slug>.rs` files, it (re)generates a thin `main.rs` that aggregates them as
 `mod _<n>_<slug>;` declarations with `#[path]` attributes pointing at the
 original filenames. This lets Cargo treat each code chapter as a single example
 binary, so `cargo test --example 11_option_when_a_value_might_be_missing` runs
@@ -294,6 +324,15 @@ changes, to avoid busting `mtime` and triggering needless rebuilds. Chapters
 with a hand-written `main.rs` and no sibling step files are left completely
 alone.
 
+`crates/server/build.rs` emits the server's compile-time `GIT_BRANCH` and
+`GIT_HASH` metadata. Docker passes these as build arguments because `.git` is
+excluded from the build context. The dependency-cache stage uses dummy sources
+for all three packages and valid dummy build scripts; failures stop the build.
+Before compiling real sources, it cleans only the workspace packages' release
+artifacts so the dummy server and build-script output cannot be reused.
+Runtime files stay under `/app` alongside the server binary, with persistent
+data in `/app/data`.
+
 ## Database (SQLite, via `sqlx`)
 
 Three tables.
@@ -303,7 +342,7 @@ Three tables.
 | column     | type       | notes                                      |
 | ---------- | ---------- | ------------------------------------------ |
 | id         | TEXT PK    | ULID                                       |
-| name       | TEXT       | validated by `types::Name`                 |
+| name       | TEXT       | validated by `course_types::Name`                 |
 | created_at | TIMESTAMP  | defaults to `CURRENT_TIMESTAMP`            |
 | team_token | TEXT       | nullable workshop/cohort grouping label    |
 
@@ -335,7 +374,9 @@ every step has a perfected submission.
 
 ### Migrations
 
-Applied in order at startup by `sqlx::migrate::Migrator`:
+Applied in order at startup by `sqlx::migrate::Migrator`. Migrations remain in
+root `migrations/`; server test macros use `sqlx::migrate!("../../migrations")`
+to resolve them relative to `crates/server/Cargo.toml`:
 
 1. `001_initial.sql`: initial participant and submission schema.
 2. `002_allow_multiple_submissions.sql`: drop the submission uniqueness
@@ -357,6 +398,10 @@ Applied in order at startup by `sqlx::migrate::Migrator`:
 When renaming a chapter, always add a new migration; don't edit existing ones.
 
 ## Templates (`templates/`)
+
+Askama's `config` feature enables `crates/server/askama.toml`, whose `[general]`
+section sets `dirs = ["../../templates"]`. Templates remain at the repository
+root and are compiled into the server; they do not need a runtime copy.
 
 Askama 0.16 renders the top-level pages:
 
@@ -421,8 +466,8 @@ Served by `tower-http` `ServeDir` at `/static/*`. Notable:
 
 - **Touch one layer at a time.** Exercise code and prose live in numbered `.rs`
   and `.md` files under `examples/<chapter>/`. Server logic lives in
-  `src/bin/server.rs`. Don't mix UI/HTML changes with exercise prose in the same
-  edit unless they're genuinely coupled.
+  `crates/server/src/main.rs`. Don't mix UI/HTML changes with exercise prose in
+  the same edit unless they're genuinely coupled.
 - **Test naming:** `test_<function_under_test>[_<scenario>]`. See the
   `## Test naming` section in `learner_journey.md`.
 - **No bold / italics / em-dashes in exercise comments.** See the per-pass

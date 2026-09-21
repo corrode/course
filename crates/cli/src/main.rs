@@ -1,4 +1,4 @@
-use cargo_course::types::{
+use course_types::{
     Name, ProgressResponse, RegistrationRequest, RegistrationResponse, SubmissionRequest, Token,
 };
 
@@ -162,7 +162,7 @@ async fn handle_submit(file: Option<&str>, pedantic: bool, all: bool) -> Result<
         run_cargo_test(&target.chapter, target.test_filter.as_deref())?;
 
     let (fmt_passed, clippy_passed) = if pedantic {
-        (run_cargo_fmt()?, run_cargo_clippy()?)
+        (run_cargo_fmt()?, run_cargo_clippy(&target.chapter)?)
     } else {
         (false, false)
     };
@@ -297,7 +297,7 @@ async fn process_single_exercise(
     };
 
     let (fmt_passed, clippy_passed) = if pedantic {
-        if let (Ok(fmt), Ok(clippy)) = (run_cargo_fmt(), run_cargo_clippy()) {
+        if let (Ok(fmt), Ok(clippy)) = (run_cargo_fmt(), run_cargo_clippy(&target.chapter)) {
             (fmt, clippy)
         } else {
             println!("❌ Error running pedantic checks");
@@ -552,10 +552,10 @@ fn run_cargo_fmt() -> Result<bool> {
     Ok(output.status.success())
 }
 
-/// Run cargo clippy with warnings as errors and return success status.
-fn run_cargo_clippy() -> Result<bool> {
+/// Lint the submitted chapter without building unrelated workspace packages.
+fn run_cargo_clippy(chapter: &str) -> Result<bool> {
     let output = Command::new("cargo")
-        .args(["clippy", "--", "-D", "warnings"])
+        .args(["clippy", "--example", chapter, "--", "-D", "warnings"])
         .output()?;
 
     Ok(output.status.success())
