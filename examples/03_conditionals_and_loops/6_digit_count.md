@@ -1,10 +1,8 @@
 # Counting Digits with `while`
 
-How many digits does a number have? `0` has one digit; everything else is
-"divide by 10 and count how many times you can do it before hitting zero".
-That's a natural `while` loop: keep going as long as the number is non-zero,
-dividing it down each step.
+Return the number of decimal digits in `n`, using a `while` loop. `0` has one
+digit, `9` has one, and `10` has two.
 
-Compare this with the `for` loop you wrote for `factorial`. With `factorial`,
-you knew up front how many times to loop. Here, you keep dividing until the
-number reaches zero. That's exactly what `while` is for.
+Unlike the range in `factorial`, a `while` condition is checked again after
+each iteration. Your loop needs to make progress toward a stopping point.
+Integer division drops the remainder: `47 / 10` is `4`.

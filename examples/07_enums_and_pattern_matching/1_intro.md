@@ -13,12 +13,14 @@ An `enum` is a type whose value is one of a fixed set of variants. Think of it
 as a "this or that or that" type.
 
 ```rust
-enum HttpStatus {
-    Ok,
-    NotFound,
-    InternalServerError,
+enum Edit {
+    Append(String),
+    Clear,
 }
 ```
+
+A variant can carry data: `Edit::Append(String::from("!"))` owns the text to
+append, while `Edit::Clear` needs no extra information.
 
 You typically inspect an enum value with `match`. This is what I like about
 `match`: the compiler checks that you've handled every variant. When you add a
@@ -26,24 +28,26 @@ new variant later, it points you to each `match` that no longer covers every
 case.
 
 ```rust
-fn code(status: HttpStatus) -> u16 {
-    match status {
-        HttpStatus::Ok => 200,
-        HttpStatus::NotFound => 404,
-        HttpStatus::InternalServerError => 500,
+fn apply_edit(text: &mut String, edit: Edit) {
+    match edit {
+        Edit::Append(suffix) => text.push_str(&suffix),
+        Edit::Clear => text.clear(),
     }
 }
 ```
 
-Each arm of a `match` is `pattern => expression`. Multiple patterns can share an
-arm with `|`, and the catch-all is `_`:
+Each arm of a `match` is `pattern => expression`. The `suffix` pattern binds
+the string carried by `Append`. Here the arms modify text; a `match` can also
+produce a value. Multiple patterns can share an arm with `|`, and the
+catch-all is `_`:
 
 ```rust
-match code {
-    200 | 201 | 204 => "success",
-    404 => "missing",
-    _ => "something else",
-}
+let attempts = 2;
+let advice = match attempts {
+    0 => "not tried yet",
+    1 | 2 => "try again",
+    _ => "check the connection",
+};
 ```
 
 ## `#[derive(...)]`: Free Implementations

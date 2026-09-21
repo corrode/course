@@ -10,36 +10,35 @@
 
 ### Expr::add
 
-1. The arguments are owned `Expr` values, but the `Add` fields require
-   `Box<Expr>`.
-2. Use `Box::new` on each argument and put the resulting boxes in `Self::Add`,
-   preserving their order.
+Compare the argument types with the fields of `Add`. Which operation turns an
+owned expression into the field type? You already own both children, so cloning
+or evaluating them isn't needed.
 
 ### Expr::eval
 
-1. Match on `self` with arms for `Self::Num`, `Self::Add`, and `Self::Mul`.
-2. Because `self` is borrowed, the pattern bindings borrow the fields too.
-   Dereference the integer in the `Num` arm to return its value.
-3. Evaluate both children recursively and combine their results with the
-   appropriate operator. Method calls auto-deref through `&Box<Expr>`, so
-   `left.eval()` works without `(*left).eval()`.
+What is the smallest tree you can evaluate without visiting another node? For
+an operation node, think about what information you need from its children.
+
+Matching on borrowed `self` borrows the fields too. If a branch returns a
+reference when you need an integer, check the binding's type. Method calls can
+auto-deref through a borrowed box; you don't need to move its contents out.
 
 ## pipeline
 
 ### make_pipeline
 
-1. Wrap each concrete command in `Box::new`. Construct `Append` by moving
-   `suffix` into its field.
-2. Return a `vec!` with the uppercase command first and the append command
-   second. The return type tells Rust to convert both boxes to
-   `Box<dyn Command>`. If you use a local vector, annotate it as
-   `Vec<Box<dyn Command>>` so it does not infer a single concrete command type.
+A box can take ownership of a command created inside the factory. Which
+command needs to own the supplied string?
+
+If Rust infers a vector containing only one concrete command type, try an
+explicit `Vec<Box<dyn Command>>` annotation. That gives the different boxes a
+common destination type.
 
 ### apply_pipeline
 
-1. Start with an owned string, `let mut current = input.to_string();`.
-2. A `for` loop over `commands` borrows each box. Replace `current` with
-   `command.run(&current)` on each iteration. Method calls auto-deref through
-   the reference and the box.
-3. Return `current` after the loop. An empty pipeline leaves that starting
-   string unchanged.
+Check the types at each stage: `run` borrows its input and returns an owned
+string. Which string should the next command receive? A loop is fine; consider
+the empty pipeline when choosing your starting value.
+
+Call through the `Command` interface rather than checking concrete types. Method
+calls work through the borrowed boxes, so the caller can keep its pipeline.

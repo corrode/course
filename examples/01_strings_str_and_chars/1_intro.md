@@ -39,12 +39,14 @@ with it.
 You'll see this pattern again and again:
 
 ```rust
-fn shout(text: &str) -> String {
-    text.to_uppercase()
+fn underscore_spaces(text: &str) -> String {
+    text.replace(' ', "_")
 }
 
-let s = String::from("hello");
-let louder = shout(&s); // &String coerces to &str
+let s = String::from("meeting notes");
+
+// &String coerces to &str. The original s is unchanged.
+let filename = underscore_spaces(&s);
 ```
 
 - `&str` ("string slice", pronounced *stir*) is a borrowed view into text that
@@ -56,9 +58,8 @@ let louder = shout(&s); // &String coerces to &str
 There's one common gotcha: If you call `.len()` on a string, it returns the
 number of *bytes*, not the number of characters in that string. Rust uses UTF-8
 for strings, which means a single visible character can take more than one byte.
-If you need to count `char` values rather than bytes, use `s.chars().count()`
-instead. A visible character can contain multiple `char` values, such as a
-letter followed by a combining accent.
+A visible character can also contain multiple `char` values, such as a letter
+followed by a combining accent.
 
 `.chars()` lets you walk through the `char` values in a string, one at a time.
 The returned value is an *iterator* over those characters. `Iterator` provides
@@ -71,14 +72,15 @@ A convenient way to assemble a new `String` is the `format!` macro. It works
 like `println!`, except instead of printing, it returns the formatted text:
 
 ```rust
-let name = "Alice";
-let greeting: String = format!("Hello, {name}!");
+let item = "notebooks";
+let quantity = 12;
+let label: String = format!("{item}: {quantity} in stock");
 ```
 
-In the format string, `{name}` is a **captured identifier**. Rust pulls the
-variable from the surrounding scope. You can also pass the argument explicitly:
-`format!("Hello, {}!", name)`. The exclamation mark (`!`) means `format!` is a
-macro rather than a regular function call.
+In the format string, `{item}` and `{quantity}` are captured identifiers. Rust
+pulls the variables from the surrounding scope. You can also pass arguments
+explicitly: `format!("{}: {} in stock", item, quantity)`. The exclamation mark
+(`!`) means `format!` is a macro rather than a regular function call.
 
 ## Consuming an Iterator
 

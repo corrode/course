@@ -1,8 +1,8 @@
 # Transforming with `map`
 
-Now you need to transform every element instead of collapsing the sequence. Read
-this pipeline from left to right: take ownership of the vector's items,
-transform each one, then collect the results into a new vector.
+Normalize every email address to lowercase, preserving the input order. Unlike
+summing, this keeps one output for each input. Write an iterator pipeline that
+returns the new vector.
 
 `map` is lazy: it just describes the transformation. Nothing runs until
 `collect` (or another consumer) asks for the results.

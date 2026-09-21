@@ -1,18 +1,14 @@
 # The `?` Operator
 
-"Handle all errors" is great advice! ...unless you end up with boilerplate like this: 
+"Handle all errors" is great advice! ...unless you end up with boilerplate like this:
 
 ```rust
-fn parse_two(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> {
-    let x = match a.parse::<i32>() {
+fn is_even(text: &str) -> Result<bool, std::num::ParseIntError> {
+    let number = match text.parse::<i32>() {
         Ok(n) => n,
         Err(e) => return Err(e),
     };
-    let y = match b.parse::<i32>() {
-        Ok(n) => n,
-        Err(e) => return Err(e),
-    };
-    Ok(x + y)
+    Ok(number % 2 == 0)
 }
 ```
 
@@ -21,10 +17,9 @@ expression to get the value from `Ok` and continue. If the result is `Err`, the
 function returns the error immediately.
 
 ```rust
-fn parse_two(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> {
-    let x = a.parse::<i32>()?;
-    let y = b.parse::<i32>()?;
-    Ok(x + y)
+fn is_even(text: &str) -> Result<bool, std::num::ParseIntError> {
+    let number = text.parse::<i32>()?;
+    Ok(number % 2 == 0)
 }
 ```
 

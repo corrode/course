@@ -1,13 +1,14 @@
 # A Module for Our Parser
 
-We've spent enough time worrying about commas. Let's give our users a function
-that parses a whole file, so they don't have to worry about individual lines.
+This step deliberately reuses the whole-file parser from the state-machine
+chapter. The new work is experimenting with its module boundary, not inventing
+another parsing loop.
 
 I've put a working `parse_line` inside `mod csv { ... }` below. You can use it
-as is, even if you skipped the previous exercise. Your job is to implement
-`parse_file`: parse the first line as headers and the remaining lines as rows,
-then return both. Call `parse_line` for each line, including the headers.
-No need to write that parser again!
+as is, even if you skipped the delimiter exercise. Fill in `parse_file` by
+reusing your earlier file parser and adjusting the helper name to `parse_line`.
+If you haven't written that step, parse the first line as headers and the rest
+as rows, then return both. Use the supplied line parser for headers and rows.
 
 Keep the same quoting rules as before. We still assume valid input and don't
 support newlines inside quoted fields. A few details to watch out for:
@@ -19,20 +20,19 @@ support newlines inside quoted fields. A few details to watch out for:
 I suggest using `str::lines()` to walk through the input. It handles both Unix
 and Windows line endings.
 
-Notice that `parse_file` has `pub` in front of it, but `parse_line` doesn't.
-That's deliberate: callers use `csv::parse_file`, while `parse_line` stays
-private. This gives us room to change how we parse lines later without breaking
-anyone else's code.
+## Try the Module Boundary
 
-Once the tests pass, let's see what Rust lets us get away with:
+The tests live outside `mod csv`. Once they pass, try these changes one at a
+time. Before each run, predict which call the compiler will accept or reject.
 
-1. Remove `pub` from `parse_file`. Will the tests still compile? Try it, read
-   the error, then put `pub` back.
-2. Call `csv::parse_line("a,b")` from a test. Why can `parse_file` call it,
-   but the test can't? Remove the call when you're done.
+1. Remove `pub` from `parse_file`. Run the tests, inspect the error, then put
+   `pub` back.
+2. Call `csv::parse_line("a,b")` from a test. Compare that call with the one
+   inside `parse_file`, then remove the added call.
 
-The tests live outside `mod csv`, so they follow the same rules as any other
-caller. Being in the same file doesn't give them access to private functions.
+Which parts of the parser do callers need to see? Keeping the line helper
+private lets you change it without changing the public API. Being in the same
+file doesn't give the outer tests access to private items inside `csv`.
 
 ## What About a Separate File?
 

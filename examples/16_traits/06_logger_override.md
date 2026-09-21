@@ -18,6 +18,18 @@ method. Warnings should still use the default body, producing lines such as
 `"auth: [WARN] slow"`. You only have to override the behavior you want to
 change.
 
+## Predict Which Methods Run
+
+Before running the tests, trace `Logger::warn(&logger, "slow")` and
+`Logger::error(&logger, "nope")` for a `TaggedLogger` with your override.
+Which calls enter a default body, and which enter your implementation? When a
+default body calls `self.log`, whose `log` runs?
+
+Does spelling the call as `Logger::error` force the trait's default body, or
+still use the override? Check your predictions against the tests and method
+bodies. The small edit matters because callers use the trait interface in both
+cases.
+
 ## Useful from the Standard Library
 
 - [`format!`](https://doc.rust-lang.org/std/macro.format.html) builds a `String`

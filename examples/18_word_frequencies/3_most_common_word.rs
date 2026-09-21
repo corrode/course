@@ -12,14 +12,7 @@ fn count_words(text: &str) -> HashMap<String, usize> {
 
 /// Finds the most common word in the text. Returns the word and its count, or
 /// None if text is empty.
-///
-/// To return `(String, usize)`, you need to own the key, but `iter()` on a
-/// `HashMap` only lends you references. Use
-/// [`into_iter`](https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.into_iter)
-/// to consume the map and yield `(K, V)` pairs by value. Combine it with
-/// `max_by_key` to get an owned `(String, usize)`.
 fn most_common_word(text: &str) -> Option<(String, usize)> {
-    // Use count_words() then find the max by count
     todo!()
 }
 

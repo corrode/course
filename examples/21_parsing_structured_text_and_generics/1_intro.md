@@ -45,23 +45,20 @@ parameters. `T::Err` is the error type chosen by that implementation of
 `FromStr`. Your lookup exercise will combine this conversion with `HashMap::get`
 and decide how to represent a missing key or a failed conversion.
 
-## Trim and Skip
+## Whitespace without Allocation
 
-Real config files have empty lines, comments, and trailing whitespace. A small
-loop handles all three cases:
+`trim` returns a borrowed slice rather than changing or copying the original
+string:
 
 ```rust
-for line in content.lines() {
-    let line = line.trim();
-    if line.is_empty() || line.starts_with('#') {
-        continue;
-    }
-    // ...parse the line
-}
+let name = String::from("  Ada  ");
+let trimmed = name.trim();
+assert_eq!(trimmed, "Ada");
+assert_eq!(name, "  Ada  ");
 ```
 
-`continue` skips the rest of the current loop iteration and jumps to the next
-one. Its sibling, `break`, exits the loop entirely.
+You can pass that slice to another function without allocating a new `String`.
+The file parser will need to distinguish ignorable lines from malformed entries.
 
 ## When Errors Mix: `Box<dyn Error>`
 

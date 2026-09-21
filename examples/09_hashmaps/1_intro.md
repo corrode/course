@@ -24,26 +24,22 @@ The `.get(key)` call returns `Option<&V>`, not `V`. A missing key becomes `None`
 instead of a null value, so you handle the absence with `.unwrap_or(...)` or
 pattern matching.
 
-A common pattern is "increment a counter for this key, default to 0":
+Use `entry` when a default should fill a gap without replacing an existing
+value:
 
 ```rust
-let mut counts: HashMap<String, u32> = HashMap::new();
-for word in ["a", "b", "a"] {
-    *counts.entry(word.to_string()).or_insert(0) += 1;
-}
+config.entry("theme".to_string()).or_insert("light".to_string());
 ```
 
-`entry().or_insert()` looks up the key and inserts a default if it is missing.
-Either way, you get a mutable reference to the value. I find it easier to read
-the counter expression from the inside out: find the entry, supply a starting
-count, then increment it.
+Unlike `insert`, this leaves an existing theme unchanged. `or_insert` returns a
+mutable reference to the value, whether it was already there or just inserted.
+You can use that reference to change the stored value without another lookup.
 
 ## A Note on `*` (Dereference)
 
-The `*` in front of `counts.entry(...).or_insert(0)` is the *dereference
-operator*. `or_insert(0)` hands back a `&mut u32` (a pointer to the value inside
-the map) and `*` reaches through that pointer so we can actually update the
-`u32` it points at:
+The *dereference operator*, `*`, lets you change a value through a mutable
+reference. This works with references returned by `or_insert`, just as it does
+with a reference to a local number:
 
 ```rust
 let mut n = 41;

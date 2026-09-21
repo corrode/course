@@ -5,32 +5,30 @@ or takes ownership of it. You group related fields in a `struct` and attach
 methods with an `impl` block.
 
 ```rust
-struct User {
-    email: String,
-    name: String,
-    is_verified: bool,
+struct Playlist {
+    tracks: Vec<String>,
 }
 
-impl User {
-    /// Associated function: no `self`. Called as `User::new(...)`.
-    fn new(email: String, name: String) -> Self {
-        User {
-            email,
-            name,
-            is_verified: false,
-        }
+impl Playlist {
+    /// No receiver is needed to create an empty playlist.
+    fn new() -> Self {
+        Self { tracks: Vec::new() }
     }
 
-    /// Method: takes `&self`, called as `user.display_name()`.
-    fn display_name(&self) -> String {
-        format!("{} ({})", self.name, self.email)
+    /// A shared borrow is enough to inspect the playlist.
+    fn len(&self) -> usize {
+        self.tracks.len()
     }
 
-    /// Mutating method: takes `&mut self`.
-    fn verify(&mut self) {
-        self.is_verified = true;
+    /// Adding a track changes the playlist, so it needs a mutable borrow.
+    fn add(&mut self, track: String) {
+        self.tracks.push(track);
     }
 }
+
+let mut playlist = Playlist::new();
+playlist.add("Blue in Green".to_string());
+assert_eq!(playlist.len(), 1);
 ```
 
 The form of `self` tells you what access the method receives:
@@ -43,11 +41,11 @@ The form of `self` tells you what access the method receives:
   when the method returns a transformed value and the original shouldn't be
   reused.
 
-Field access uses dot notation (`user.name`). Inside `impl` you write
+Field access uses dot notation (`playlist.tracks`). Inside `impl` you write
 `self.field` for the same thing.
 
-`Self` (capital S) is shorthand for "the type I'm `impl`ing". `User` and `Self`
-are interchangeable inside `impl User`.
+`Self` (capital S) is shorthand for "the type I'm `impl`ing". `Playlist` and
+`Self` are interchangeable inside `impl Playlist`.
 
 ## A Note on Ranges: `0..5`
 

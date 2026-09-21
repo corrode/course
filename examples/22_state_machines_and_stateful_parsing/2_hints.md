@@ -7,19 +7,17 @@
 
 ## `quoted_line`: The State Machine
 
-1. A single `bool` (`in_quotes`) is enough state. Walk the input with
-   `line.chars().peekable()` so you can look one character ahead.
-2. Match on the tuple `(c, in_quotes)`. Handle these five cases:
-   - `('"', false)` → enter quoted mode.
-   - `('"', true)` and the next char is also `"` → push a literal `"`, consume
-     the second one with `chars.next()`.
-   - `('"', true)` → exit quoted mode.
-   - `(',', false)` → finish the current field, start a new one.
-   - anything else → push the character into the current field.
-3. After the loop, push the final field. Use `std::mem::take(&mut current)` to
-   move a completed field into the results without cloning.
-4. Trace `"a""b",c` on paper. Which quote changes state, and which quote is
-   data?
+Start with the distinction from the bracket example: does this character act as
+syntax in the current state? Keep the completed fields separate from the field
+you're still reading.
+
+For escapes, compare `"a",c` with `"a""b",c`. At the quote after `a`, what
+information tells you whether the field is ending? `peek` borrows the next item
+without consuming it. Check which characters your loop has consumed before its
+next iteration.
+
+If the last field is missing, trace an input without a trailing comma. What
+happens to the unfinished field when the iterator runs out?
 
 ## `parse_file`
 

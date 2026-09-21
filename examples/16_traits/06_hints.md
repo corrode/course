@@ -19,8 +19,8 @@ test's example text.
 The type parameter belongs to the function, and its bound names the behavior the
 body needs. Look back at the static-dispatch example, but use this exercise's
 trait and return an owned result. A slice parameter borrows its elements, so the
-bound need not require `Clone`. Collect the descriptions in a loop, then join
-them with a separator so there is no trailing newline.
+bound need not require `Clone`. Keep an empty description distinct from an
+empty slice: separators belong between elements, even when an element is empty.
 
 ## logger
 
@@ -30,10 +30,9 @@ copy of the message without adding a prefix.
 
 ## logger_override
 
-Add a method with the same signature as the trait's `error` method inside the
-existing implementation block. Build the critical message and pass it through
-`self.log`, so the tag is added in one place. There is no need to override
-`warn`.
+An override must match the trait's method signature. Tag formatting already
+belongs to `log`; keep that responsibility in one place. To trace the calls,
+look at which methods the implementation supplies and which it inherits.
 
 ## validation_rules
 

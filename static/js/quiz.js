@@ -117,6 +117,8 @@
     card.classList.remove("is-answered", "is-correct", "is-wrong");
     const status = card.querySelector("[data-quiz-status]");
     if (status) status.textContent = "";
+    const hint = card.querySelector("[data-quiz-hint]");
+    if (hint) hint.open = false;
     const answers = card.querySelectorAll("[data-quiz-answer]");
     answers.forEach((btn) => {
       btn.removeAttribute("aria-disabled");

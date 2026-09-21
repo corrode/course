@@ -376,7 +376,9 @@ What does the lifetime in this signature say?
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str
 ```
 """
-hint = "`'a` is the *shorter* of `x`'s and `y`'s lifetimes."
+hint = """
+The function may return either input. What must the caller know before using \
+the result after one input's owner has been dropped?"""
 
 [[questions.answers]]
 text = "Both inputs must outlive the function call."
@@ -605,7 +607,9 @@ module."""
 prompt = """
 Given `let mut x: &i32 = &42;`, which line binds `r` to an `i32` rather than a \
 reference?"""
-hint = "`*` is the dereference operator."
+hint = """
+Track the type after each operator. Does the whole expression produce an \
+integer, or borrow one again?"""
 
 [[questions.answers]]
 text = "`let r = &x;`"

@@ -21,13 +21,15 @@ for word in "hello  world\nrust".split_whitespace() {
 }
 ```
 
-## Finding the Largest Count
+## Choosing by a Key
 
-`max_by_key` lets you ask for the entry with the largest count:
+`max_by_key` compares items using a value you derive from each one. Here we
+choose a filename by its length rather than its alphabetical order:
 
 ```rust
-let top = counts.iter().max_by_key(|(_, count)| *count);
-// top: Option<(&String, &usize)>
+let files = ["a.rs", "settings.rs", "main.rs"];
+let longest = files.iter().max_by_key(|name| name.len());
+assert_eq!(longest, Some(&"settings.rs"));
 ```
 
 ## Computing an Average

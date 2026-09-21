@@ -104,6 +104,18 @@ Don't shrink a core chapter below ~2 hands-on exercises. It should feel like
 practice, not a reading. (Pure "why" chapters like the ownership consolidation
 and the appendix are exempt.)
 
+Keep the pace relaxed, with something new to try regularly. A short warmup can
+introduce syntax; a later exercise should let the reader combine it with
+something they already know. Keep requirements and edge cases explicit so
+progress comes from learning Rust, not guessing what the task wants.
+
+Worked examples should teach the tools without solving the next exercise.
+Check introductions, starter comments, and test fixtures too: could a reader
+paste nearby code, change a name or literal, and be done? If so, change the
+example's operation or leave a different decision for the exercise. A tiny
+compiler repair can still be useful when the reader has to predict, diagnose,
+or explain it. Don't add busywork just to make the answer longer.
+
 ## 7. Difficulty Honesty
 
 When a concept is genuinely hard (the borrow checker, the `?`/error-type story,
@@ -152,7 +164,11 @@ same warning at every step.
 
 Put implementation nudges in the chapter's hints file under `## <step_slug>` so
 the app reveals them beside the matching editor. A prompt should explain the
-required behavior without giving away the function body.
+required behavior without giving away the function body. API links and type
+explanations can stay in the prompt; a complete sequence of calls belongs in
+optional help. Start hints with a useful question or one next step rather than
+the whole algorithm. Keep full solutions available as a deliberate reveal, and
+don't make using help feel like failing.
 
 ## 11. Code Comments in Examples
 

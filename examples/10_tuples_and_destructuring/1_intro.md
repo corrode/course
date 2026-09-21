@@ -7,25 +7,27 @@ Rust has support for tuples, which are fixed-size groups of values. Unlike a
 `Vec`, the elements can be different types, and the size is part of the type.
 
 ```rust
-let user: (String, u32) = ("Alice".to_string(), 25);
-let pair = (1, 2);                 // type inferred as (i32, i32)
-let triple = ("ok", 200, true);    // (&str, i32, bool)
+let response: (u16, &str, bool) = (200, "ok", true);
+let pair = (1, 2); // type inferred as (i32, i32)
 ```
 
 You access fields by index with a dot:
 
 ```rust
-let name = user.0;
-let age = user.1;
+if response.2 {
+    println!("cached response: {}", response.0);
+}
 ```
 
-I prefer *destructuring* here so I can read `name` and `age` rather than
-remember what `.0` and `.1` mean. It pulls the parts out into named bindings in
+I prefer *destructuring* here so I can read `status` and `cached` rather than
+remember what `.0` and `.2` mean. It pulls the parts out into named bindings in
 one step.
 
 ```rust
-let (name, age) = user;
-let (a, b) = (1, 2);
+let (status, message, cached) = response;
+if cached {
+    println!("cached response: {status} {message}");
+}
 
 // Functions can return tuples for multiple values:
 fn min_max(values: &[i32]) -> (i32, i32) {
@@ -48,7 +50,7 @@ enough to follow the example:
 When you only care about some fields, use `_` to ignore the rest:
 
 ```rust
-let (first, _) = ("Alice", "Smith");
+let (_, _, cached) = response;
 ```
 
 Tuples are great for short-lived "two or three values that belong together"

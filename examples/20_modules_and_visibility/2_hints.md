@@ -9,11 +9,9 @@
 
 ## settings
 
-1. The first error is about the `Settings` *type* being private. `pub` it.
-   Compile again. The next error is about `Settings::new` being private. `pub`
-   it. Compile again. The next error is about `get_port` being private. You see
-   where this is going.
-2. `pub struct Settings` does not make the fields or methods public. Each item
-   gets its own `pub`.
-3. Leave `port` itself private. The test reaches it through `get_port`, which is
-   the point: the field stays private even though the struct is public.
+A type's visibility and the visibility of its fields and methods are separate.
+Follow one compiler error at a time, then compile again. Which declaration is
+named now?
+
+Look at how the test reads the port. Does it need access to the stored field,
+or only to a method? The caller's needs determine what you expose.
