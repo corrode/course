@@ -41,17 +41,23 @@ jobs:
       - name: Formatting (cargo fmt --check)
         run: cargo fmt --all --check
 
-      # Lint the library and binaries. The exercise examples are linted
-      # separately by scripts/check-examples.sh (some intentionally do
-      # not compile).
-      - name: Clippy (library + binaries)
-        run: cargo clippy --locked --lib --bins -- -D warnings
+      # Lint the workspace libraries and binaries. Exercise examples are
+      # linted separately by scripts/check-examples.sh (some intentionally
+      # do not compile).
+      - name: Clippy (workspace libraries + binaries)
+        run: cargo clippy --locked --workspace --lib --bins -- -D warnings
 
-      - name: Build binaries (cli + server)
-        run: cargo build --locked --bins
+      - name: Build workspace libraries and binaries
+        run: cargo build --locked --workspace --lib --bins
 
-      - name: Unit tests (library + binaries)
-        run: cargo test --locked --lib --bins
+      - name: Unit tests (workspace libraries + binaries)
+        run: cargo test --locked --workspace --lib --bins
+
+      - name: Doc tests (workspace libraries)
+        run: cargo test --locked --workspace --doc
+
+      - name: Workspace smoke check
+        run: python3 scripts/check-workspace.py
 
       # Verify every exercise chapter compiles and lints clean, except the
       # handful of deliberately-broken teaching chapters, which must still

@@ -2,18 +2,19 @@
 # The course is a regular Cargo project, so every target here is a
 # thin wrapper. `make help` shows the full list.
 
-.PHONY: help dev run build test fmt clippy check clean examples solutions js-check typos links ci fmt-check
+.PHONY: help dev run build test fmt clippy check clean examples solutions js-check typos links ci fmt-check workspace-check
 
 help:
 	@echo "make dev      - run the server with auto-reload (needs cargo-watch)"
 	@echo "make run      - run the server once"
-	@echo "make build    - cargo build"
-	@echo "make test     - cargo test (library + binaries)"
-	@echo "make check    - cargo check"
-	@echo "make fmt      - cargo fmt"
-	@echo "make clippy   - cargo clippy"
+	@echo "make build    - cargo build --workspace"
+	@echo "make test     - workspace library, binary, and doc tests"
+	@echo "make check    - cargo check --workspace"
+	@echo "make fmt      - cargo fmt --all"
+	@echo "make clippy   - workspace library + binary lints"
 	@echo "make examples - verify every exercise chapter (needs clippy)"
 	@echo "make solutions - verify every solution (needs rustc)"
+	@echo "make workspace-check - build + smoke-test CLI/server (needs python3, rustfmt, clippy)"
 	@echo "make js-check  - rebuild and verify current JavaScript bundles"
 	@echo "make typos     - spell check (needs typos-cli)"
 	@echo "make links     - link check (needs lychee)"
@@ -31,22 +32,26 @@ run:
 	cargo run --bin server
 
 build:
-	cargo build
+	cargo build --workspace --lib --bins
 
 # The exercise examples include deliberately-broken teaching files, so we
-# scope the default test/clippy targets to the library and binaries (CI
-# checks the examples separately via `make examples`).
+# scope infrastructure checks to workspace libraries and binaries, plus doc
+# tests. CI checks the examples separately via `make examples`.
 test:
-	cargo test --lib --bins
+	cargo test --workspace --lib --bins
+	cargo test --workspace --doc
 
 check:
-	cargo check
+	cargo check --workspace --lib --bins
 
 fmt:
-	cargo fmt
+	cargo fmt --all
 
 clippy:
-	cargo clippy --lib --bins -- -D warnings
+	cargo clippy --workspace --lib --bins -- -D warnings
+
+workspace-check: build
+	python3 scripts/check-workspace.py
 
 # Verify every exercise chapter is in its intended state (compiles + lints
 # clean, except the chapters that are meant to fail to compile).
@@ -80,7 +85,7 @@ links:
 
 # Everything from CI that is reproducible locally without publishing or
 # deploying.
-ci: fmt-check clippy build test examples solutions js-check typos links
+ci: fmt-check clippy build test workspace-check examples solutions js-check typos links
 
 fmt-check:
 	cargo fmt --all --check
