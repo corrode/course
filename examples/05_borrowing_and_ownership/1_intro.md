@@ -1,5 +1,7 @@
 # Borrowing and Ownership
 
+*I once heard a Rust joke I liked so much that I borrowed it for this chapter.*
+
 In the moves chapter, `take_ownership` took a `String` and returned it. That
 works, but passing ownership back and forth gets tedious fast when the function
 only needs to *read* the value.

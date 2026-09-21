@@ -7,6 +7,10 @@ build wraps to 44. Neither is what you want from a health bar.
 maximum instead of overflowing, so stacking buffs tops out at 255 rather than
 wrapping around.
 
+> [!TIP]
+> Vim user? Open Settings in the top bar and turn on **Vim Keybindings**
+> to use Vim in the exercise editors. Your choice is saved in this browser.
+
 ## Useful from the Standard Library
 
 - [`u8::saturating_add`](https://doc.rust-lang.org/std/primitive.u8.html#method.saturating_add)
