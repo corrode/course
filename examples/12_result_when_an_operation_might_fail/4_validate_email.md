@@ -2,7 +2,7 @@
 
 Now the `Ok` value is a borrow of the input. The `&str` in the return type
 implicitly borrows from `email`, so the compiler infers a lifetime linking input
-and output via lifetime elision. [A Primer on Lifetimes](/exercise/a_primer_on_lifetimes)
+and output via lifetime elision. [A Primer on Lifetimes](15_a_primer_on_lifetimes)
 explains why a returned reference must not outlive the value it borrows.
 
 ## Useful from the Standard Library

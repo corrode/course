@@ -1,6 +1,6 @@
 # Word Frequencies
 
-Back in the [word count chapter](/exercise/exercise_break_word_count) you built
+Back in the [word count chapter](06_exercise_break_word_count) you built
 `word_count`, `char_count`, and `longest_word` with simple `for` loops. Then you
 used iterators to collapse those loops into one-liners. Now we'll expand on that
 to write more complex text analysis tools.

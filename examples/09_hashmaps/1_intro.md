@@ -49,6 +49,6 @@ let r: &mut i32 = &mut n;
 
 Without the `*`, you'd be trying to add `1` to a reference, which the compiler
 won't let you do. You met references in the
-[borrowing chapter](/exercise/borrowing_and_ownership). Here, the practical rule
+[borrowing chapter](05_borrowing_and_ownership). Here, the practical rule
 is that when a function returns `&mut T`, you reach the `T` through `*`.
 

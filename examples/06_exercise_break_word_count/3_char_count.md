@@ -1,6 +1,6 @@
 # Counting Characters
 
-You counted characters in the [strings chapter](/exercise/strings_str_and_chars).
+You counted characters in the [strings chapter](01_strings_str_and_chars).
 The same catch applies here:
 `text.len()` returns bytes, not characters. Rust strings are UTF-8 internally,
 so a single visible character like `é` can take more than one byte.

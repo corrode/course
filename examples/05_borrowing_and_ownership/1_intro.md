@@ -2,7 +2,7 @@
 
 *I once heard a Rust joke I liked so much that I borrowed it for this chapter.*
 
-In the [moves chapter](/exercise/moves_and_copy), `take_ownership` took a `String`
+In the [moves chapter](02_moves_and_copy), `take_ownership` took a `String`
 and returned it. That works, but passing ownership back and forth gets tedious
 fast when the function only needs to *read* the value.
 

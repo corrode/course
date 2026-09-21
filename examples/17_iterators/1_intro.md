@@ -52,7 +52,7 @@ fill in the inner types.
 ## Coming Back to Word Count
 
 Remember the three little functions from the
-[word count chapter](/exercise/exercise_break_word_count)'s exercise break? Each
+[word count chapter](06_exercise_break_word_count)'s exercise break? Each
 one was a counter, a `for` loop, and a return. With iterators, the whole trio
 shrinks to:
 

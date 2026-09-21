@@ -1,7 +1,7 @@
 # A Module for Our Parser
 
 This step deliberately reuses the whole-file parser from the
-[state-machine chapter](/exercise/state_machines_and_stateful_parsing). The new
+[state-machine chapter](22_state_machines_and_stateful_parsing). The new
 work is experimenting with its module boundary, not inventing another parsing
 loop.
 

@@ -1,6 +1,6 @@
 # Revisit: Summing Parsed Numbers
 
-In the [`?` chapter](/exercise/the_question_mark_operator), you parsed each token
+In the [`?` chapter](13_the_question_mark_operator), you parsed each token
 inside a `for` loop. Write `sum_numbers` again, this time with an iterator pipeline
 and `sum`, without a loop or `?`. Keep the same behavior: whitespace separates
 integers, empty input returns `Ok(0)`, and the first parse error ends the sum.

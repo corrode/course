@@ -54,7 +54,7 @@ let greet = |name: &str| {
 };
 ```
 
-We'll use more closures in the [iterators chapter](/exercise/iterators). For
+We'll use more closures in the [iterators chapter](17_iterators). For
 this chapter, just read `|s| s == "on"` as "a small function that takes `s` and
 checks whether it's on."
 
