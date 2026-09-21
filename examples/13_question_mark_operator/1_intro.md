@@ -1,7 +1,6 @@
 # The `?` Operator
 
-Working with `Result` quickly becomes verbose if every call needs a
-match-then-return:
+"Handle all errors" is great advice! ...unless you end up with boilerplate like this: 
 
 ```rust
 fn parse_two(a: &str, b: &str) -> Result<i32, std::num::ParseIntError> {

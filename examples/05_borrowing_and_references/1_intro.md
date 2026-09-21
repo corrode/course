@@ -1,14 +1,12 @@
 # Borrowing and References
 
-In the moves chapter, `take_ownership` took a `String` and returned it. Pass a
-`String` to a function and the move rules say you've handed it over. Try to use
-it afterwards and the compiler points out the move. Returning it back out works
-but gets tedious fast, especially when the function only needed to *read* the
-value.
+In the moves chapter, `take_ownership` took a `String` and returned it. That
+works, but passing ownership back and forth gets tedious fast when the function
+only needs to *read* the value.
 
-Borrowing is the fix. A borrow lets a function use a value without taking
-ownership of it: `&value` for a shared, read-only borrow, and `&mut value` for
-an exclusive, writable one.
+Instead, a better approach is to let the function "borrow" the value. 
+A borrow lets a function use a value without taking ownership of it: `&value`
+for a shared, read-only borrow, and `&mut value` for an exclusive, writable one.
 
 ```rust
 fn length(s: &String) -> usize { s.len() }   // borrows, doesn't take

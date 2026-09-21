@@ -1,6 +1,10 @@
 # Vectors
 
-`Vec<T>` stores a sequence of values that can grow or shrink.
+A `[u8; 4]` has room for exactly four bytes; that's it.
+
+When the number of items can vary, use a `Vec<T>` instead. It stores a sequence
+of values that can grow or shrink, without asking you to predict the final
+length.
 
 ## Arrays First: Where Vectors Come From
 
