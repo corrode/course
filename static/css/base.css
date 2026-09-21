@@ -1690,28 +1690,21 @@ a.submission-card-who:focus-visible {
     border: 0;
 }
 .quiz-hint {
-    display: flex;
-    align-items: baseline;
-    gap: 0.55rem;
     margin: 0.85rem 0 0;
     font-size: 0.88rem;
     color: var(--color-text-muted);
 }
-.quiz-hint-tag {
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+.quiz-hint > summary {
+    cursor: pointer;
     color: var(--color-primary, #0969da);
-    padding: 0.1rem 0.45rem;
-    border: 1px solid
-        color-mix(
-            in srgb,
-            var(--color-primary, #0969da) 40%,
-            transparent
-        );
-    border-radius: 999px;
-    flex-shrink: 0;
+}
+.quiz-hint > summary:focus-visible {
+    outline: 2px solid var(--color-primary, #0969da);
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+.quiz-hint > p {
+    margin: 0.5rem 0 0;
 }
 .quiz-hint code {
     font-family:

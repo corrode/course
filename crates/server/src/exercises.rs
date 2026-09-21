@@ -41,7 +41,7 @@ pub struct Question {
     /// The question itself, in markdown (rendered server-side, so inline code,
     /// `**bold**`, and fenced code blocks all work).
     pub prompt: String,
-    /// Optional nudge shown above the answers.
+    /// Optional nudge, collapsed until the learner chooses to open it.
     #[serde(default)]
     pub hint: Option<String>,
     /// At least two answer choices. Their order is shuffled for each render.
@@ -102,9 +102,10 @@ impl Quiz {
             if let Some(hint) = &q.hint {
                 let _ = write!(
                     out,
-                    "<p class=\"quiz-hint\">\
-                       <span class=\"quiz-hint-tag\" aria-hidden=\"true\">Hint</span>\
-                       {body}</p>",
+                    "<details class=\"quiz-hint\" data-quiz-hint>\
+                       <summary>Show a hint</summary>\
+                       <p>{body}</p>\
+                     </details>",
                     body = render_inline_markdown(hint),
                 );
             }
@@ -1705,6 +1706,18 @@ mod tests {
         assert!(!html.contains("data-quiz-score"));
         assert!(html.contains("data-quiz-answered>0</strong>"));
         assert!(html.contains("data-quiz-footer hidden"));
+        let hint_count = quiz.questions.iter().filter(|q| q.hint.is_some()).count();
+        assert!(hint_count > 0);
+        assert_eq!(
+            html.matches("<details class=\"quiz-hint\" data-quiz-hint>")
+                .count(),
+            hint_count,
+            "hints should be opt-in disclosures without the open attribute"
+        );
+        assert_eq!(
+            html.matches("<summary>Show a hint</summary>").count(),
+            hint_count
+        );
         let answer_count: usize = quiz.questions.iter().map(|q| q.answers.len()).sum();
         assert_eq!(
             html.matches("data-quiz-answer-status").count(),
@@ -1820,6 +1833,42 @@ mod tests {
             assert!(
                 !leftover.html.contains("number_to_string"),
                 "per-step section should no longer appear in the leftover"
+            );
+        }
+    }
+
+    #[test]
+    fn project_hints_stay_with_the_matching_exercise() {
+        let exercises = scan_dir(Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../examples"
+        )))
+        .expect("examples dir should exist when running tests");
+        for (chapter_slug, step_slug) in [
+            ("word_frequencies", "most_common_word"),
+            ("parsing_structured_text_and_generics", "parse_file"),
+        ] {
+            let chapter = exercises
+                .iter()
+                .find(|e| e.slug == chapter_slug)
+                .expect("project chapter should exist");
+            assert!(
+                chapter
+                    .code_steps()
+                    .iter()
+                    .any(|code| code.slug == step_slug)
+            );
+            for code in chapter.code_steps() {
+                assert_eq!(
+                    code.hints_html.is_some(),
+                    code.slug == step_slug,
+                    "{chapter_slug}: hints should only attach to {step_slug}, not {}",
+                    code.slug
+                );
+            }
+            assert!(
+                chapter.hints.is_none(),
+                "no hints should leak into chapter prose"
             );
         }
     }

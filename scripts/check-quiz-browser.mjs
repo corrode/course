@@ -124,6 +124,19 @@ try {
   assert.equal(await js('progress()'), "0");
   assert.equal(await js('cards.every(card => explanations(card).every(exp => exp.hidden))'), true);
   assert.equal(await js('!!quiz.querySelector("[data-quiz-score], [data-quiz-score-wrap]")'), false);
+  // Hints are optional, keyboard-accessible, and do not answer the question.
+  assert.equal(await js('[...quiz.querySelectorAll("[data-quiz-hint]")].every(hint => !hint.open)'), true);
+  await js('window.hint = quiz.querySelector("[data-quiz-hint]"); hint.querySelector("summary").focus()');
+  await key("Enter", "Enter", 13);
+  assert.equal(await js('hint.open && progress() === "0" && !hint.closest("[data-quiz-card]").classList.contains("is-answered")'), true);
+  if (values.screenshot) {
+    await js('hint.closest("[data-quiz-card]").scrollIntoView({block: "start"})');
+    await screenshot(values.screenshot.replace(/\.png$/, "") + "-hint.png");
+  }
+  await key(" ", "Space", 32);
+  assert.equal(await js('hint.open'), false);
+  await key("Enter", "Enter", 13);
+  console.log("PASS: hints start closed and toggle with Enter/Space without changing progress");
   // Exercise native Tab navigation, then select an incorrect answer with Enter.
   await js('answers(cards[0])[0].focus()');
   await key("Tab", "Tab", 9);
@@ -167,6 +180,7 @@ try {
   await js('reset()');
   assert.equal(await js(`progress() === '0' && footer.hidden
     && document.activeElement === answers(cards[0])[0]
+    && [...quiz.querySelectorAll('[data-quiz-hint]')].every(hint => !hint.open)
     && cards.every(card => !card.classList.contains('is-answered')
       && explanations(card).every(exp => exp.hidden)
       && answers(card).every(btn => !btn.hasAttribute('aria-disabled')
@@ -186,6 +200,7 @@ try {
   await cdp("Page.reload");
   await until(() => js('document.readyState === "complete" && document.querySelector("[data-quiz-answered]")?.textContent === "0"'));
   assert.equal(await js('[...document.querySelectorAll("[data-quiz-explanation]")].every(exp => exp.hidden)'), true);
+  assert.equal(await js('[...document.querySelectorAll("[data-quiz-hint]")].every(hint => !hint.open)'), true);
   console.log("PASS: reload starts unanswered");
 } catch (error) {
   console.error(error);
