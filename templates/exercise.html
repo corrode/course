@@ -172,8 +172,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
 
     {% match ulid %} {% when None %} {% if !exercise.wants_signup_on_pass() %}
     <div class="register-banner accent-callout">
-        👋 Anyone can read and edit this exercise.
-        <a href="/signup">Sign up</a> to save your progress.
+        👋 <a href="/signup">Sign up</a> to save your progress.
     </div>
     {% endif %} {% when Some with (_u) %} {% endmatch %} {% for item in items %}
     {% match item.kind %} {% when course_server::exercises::RenderKind::Prose
