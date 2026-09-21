@@ -206,8 +206,11 @@ export function createWorkflow({
       if (current(op) && passing && !saved && (kind === "submit" || autoSubmit))
         await save(op, snapshot);
     } catch (error) {
-      if (current(op) && error.name !== "AbortError")
-        status(error.message || `${kind} failed.`, "fail");
+      if (current(op) && error.name !== "AbortError") {
+        const message = error.message || `${kind} failed.`;
+        if (op.kind === "run") render({ success: false, stderr: message });
+        status(message, "fail");
+      }
     } finally {
       if (operation === op) {
         operation = null;
