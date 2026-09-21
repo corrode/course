@@ -1,8 +1,7 @@
 # Conditionals and Loops
 
-Rust's `if` can return a value, and its condition has to be a `bool`. You've
-already seen `if` and `for` in passing. Here you'll also use `while`, `loop`,
-`break`, and `continue`.
+Rust has a few ways to control the flow of your program, which you already know
+from other languages.
 
 ## `if` / `else` / `else if`
 
@@ -18,20 +17,19 @@ if x > 0 {
 }
 ```
 
-Two Rust details matter here:
+A few details matter here:
 
-- The condition is a `bool`. No truthy strings, no zero-as-false, no parentheses
-  required around the condition.
-- The whole `if` is itself an *expression*. You can use it on the right-hand
-  side of a `let` binding:
+- The condition is a `bool` and you don't need to put parentheses around it.
+- There are no "truthy" values in Rust, such as 1 or "non-empty string". Only `true` is true.
+- The whole `if` is itself an *expression*, which means that it returns a value.
+  You can assign the result of an `if` to a variable:
 
   ```rust
   let label = if x >= 0 { "non-negative" } else { "negative" };
   ```
 
   Both branches have to produce the same type, and there's no trailing semicolon
-  on the value-producing expression in each branch (just like a function body,
-  see the functions chapter).
+  on the value-producing expression in each branch.
 
 ## `for` Loops
 

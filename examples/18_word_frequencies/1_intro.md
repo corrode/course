@@ -1,13 +1,13 @@
 # Word Frequencies
 
-Time to extend our running word-count example. Back in the word count chapter
-you built `word_count`, `char_count`, and `longest_word` with simple `for`
-loops. Then you used iterators to collapse those loops into one-liners. This
-time you'll count how often each word occurs, find the most common word, and
-compute text statistics.
+Back in the word count chapter you built `word_count`, `char_count`, and
+`longest_word` with simple `for` loops. Then you used iterators to collapse
+those loops into one-liners. Now we'll expand on that to write more complex text
+analysis tools.
 
-The implementation combines iterators, hash maps, and `Option`. `max_by_key` and
-`HashMap::into_iter` are the only new iterator tools needed here.
+Our implementation combines iterators, hash maps, and `Option`, as well as
+`max_by_key` and `HashMap::into_iter`, which are two new iterator tools we'll
+get to know in this chapter. 
 
 ## Splitting Text into Words
 

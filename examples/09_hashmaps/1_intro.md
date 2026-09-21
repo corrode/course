@@ -1,8 +1,8 @@
 # HashMaps
 
 A `HashMap<K, V>` stores key-value pairs and lets you look up a value by its key
-in (on average) constant time. Use it for caches, indexes, counters,
-configuration, and other cases where you need to find a value by key.
+in (on average) constant time. It's useful for caches, indexes, counters, and
+configuration.
 
 Unlike `Vec<T>`, `HashMap` is not in scope by default, so you have to import it
 first:

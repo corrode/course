@@ -1,6 +1,8 @@
 # Option<T>: When a Value Might Be Missing
 
-Rust has no `null`. Instead, when a value might be absent, the type makes that
+*Here's my favorite joke about `null`:*
+
+Anyway, Rust has no `null`. Instead, when a value might be absent, the type makes that
 explicit using `Option<T>`:
 
 ```rust

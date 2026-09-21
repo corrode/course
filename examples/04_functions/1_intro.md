@@ -1,9 +1,8 @@
 # Functions
 
-You've been inside a function since the first line you wrote. `fn main()` is
-one, and every `println!(...)` is a call (the `!` marks it as a macro). In Rust,
-you spell out parameter and return types. The less familiar part is that a block
-can produce a value, and a trailing semicolon changes what it returns.
+In Rust, it's mandatory to declare parameter and return types.
+A function's final expression is its return value and does not need a `return`
+keyword.
 
 ## Anatomy
 

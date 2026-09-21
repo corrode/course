@@ -1,7 +1,10 @@
 # Tuples and Destructuring
 
-A tuple is a fixed-size group of values. Unlike a `Vec`, the elements can be
-different types, and the size is part of the type.
+Sometimes a function needs to return two things. 
+Coming up with a type name for that is not always worth it. 
+
+Rust has support for tuples, which are fixed-size groups of values. Unlike a
+`Vec`, the elements can be different types, and the size is part of the type.
 
 ```rust
 let user: (String, u32) = ("Alice".to_string(), 25);

@@ -1,10 +1,17 @@
 # Iterators
 
-With iterators, you can work through a collection without managing an index or
-checking its bounds yourself. You build a pipeline of operations, but they're
-lazy: the work waits until you ask for a result. With optimizations enabled, the
-compiler can often turn chained iterator calls into a loop comparable to one you
-would write by hand.
+*What do managers and Rust iterators have in common? They can both look
+very productive while doing absolutely nothing.*
+
+Rust iterators are lazy: they don't do any work until you ask for a result.
+That's great, because it means you can chain together many operations without
+creating intermediate collections.
+
+You can filter, transform, and combine values in a single pipeline. And once you
+get the hang of it, you'll find that iterators are often more readable than a
+`for` loop. That's because you don't have to manage indexes or check bounds
+yourself; it's all part of Rust's ergonomic iterator machinery, one of my
+favorite parts of the language.
 
 Here's how iterators work in practice:
 
