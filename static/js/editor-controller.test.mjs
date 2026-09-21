@@ -77,7 +77,9 @@ class Element extends EventTarget {
   setRangeText(insert, from, to) {
     this.value = this.value.slice(0, from) + insert + this.value.slice(to);
   }
-  focus() {}
+  focus() {
+    this.ownerDocument.activeElement = this;
+  }
   querySelector() {
     return null;
   }
@@ -248,6 +250,241 @@ test("diagnostics remain visible with a stale notice until fresh results replace
   assert.equal(panel.children.length, 0);
 });
 
+const scrollPreference = "corrode:editor:scroll-output";
+const smoothScroll = { behavior: "smooth", block: "start", inline: "nearest" };
+
+function mockScrollStorage(t, storage = new Map()) {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    get: () => ({ getItem: (key) => storage.get(key) ?? null }),
+  });
+  t.after(() => {
+    if (original) Object.defineProperty(globalThis, "localStorage", original);
+    else delete globalThis.localStorage;
+  });
+  return storage;
+}
+
+function observeScroll(f) {
+  const calls = [];
+  f.roles["output-panel"].scrollIntoView = function (options) {
+    calls.push({
+      target: this,
+      options,
+      display: this.style.display,
+      output: f.roles["output-stderr"].textContent,
+      rows: f.roles["test-list"].textContent,
+      focused: f.document.activeElement,
+    });
+  };
+  return calls;
+}
+
+for (const [label, result, row] of [
+  ["success", { success: true, stdout: "hello", test_results: [{ name: "example", passed: true }] }, "Passed: example"],
+  ["compile failure", { success: false, stderr: "error[E0308]: mismatched types", test_results: [] }, ""],
+  ["test failure", { success: false, stderr: "assertion failed", test_results: [{ name: "example", passed: false }] }, "Failed: example"],
+]) {
+  test(`run scrolls smoothly only after displaying ${label}, without moving focus`, async (t) => {
+    t.mock.method(console, "warn", () => {});
+    mockScrollStorage(t);
+    let resolve;
+    t.mock.method(globalThis, "fetch", () => new Promise((done) => { resolve = done; }));
+    const f = fixture();
+    const calls = observeScroll(f);
+    const api = await mountInlineEditor(f.section);
+    t.after(() => api.destroy());
+    const input = f.roles["editor-fallback"];
+    input.focus();
+    f.roles["run-btn"].dispatchEvent(new Event("click"));
+    assert.equal(calls.length, 0);
+    assert.equal(f.roles["output-panel"].style.display, "none");
+    resolve({ ok: true, json: async () => result });
+    await tick();
+    assert.deepEqual(calls, [{
+      target: f.roles["output-panel"],
+      options: smoothScroll,
+      display: "block",
+      output: result.stdout || result.stderr,
+      rows: row,
+      focused: input,
+    }]);
+    assert.equal(f.document.activeElement, input);
+  });
+}
+
+for (const [label, preference, reducedMotion, expected] of [
+  ["opted out", "0", false, null],
+  ["reduced motion", null, true, { ...smoothScroll, behavior: "instant" }],
+  ["no motion preference", null, false, smoothScroll],
+  ["nonzero preference", "false", false, smoothScroll],
+]) {
+  test(`${label}: results render with the expected scroll policy`, async (t) => {
+    t.mock.method(console, "warn", () => {});
+    mockScrollStorage(t, new Map([[scrollPreference, preference]]));
+    t.mock.method(globalThis, "fetch", async () => ({
+      ok: true,
+      json: async () => ({ success: true, stdout: "rendered", test_results: [] }),
+    }));
+    const f = fixture();
+    const queries = [];
+    f.window.matchMedia = (query) => {
+      queries.push(query);
+      return { matches: reducedMotion };
+    };
+    const calls = observeScroll(f);
+    const api = await mountInlineEditor(f.section);
+    t.after(() => api.destroy());
+    f.roles["run-btn"].dispatchEvent(new Event("click"));
+    await tick();
+    assert.equal(f.roles["output-panel"].style.display, "block");
+    assert.equal(f.roles["output-stderr"].textContent, "rendered");
+    assert.deepEqual(calls.map((call) => call.options), expected ? [expected] : []);
+    if (expected) assert.deepEqual(queries, ["(prefers-reduced-motion: reduce)"]);
+  });
+}
+
+test("mounted editor reads scroll opt-out at render time on every run", async (t) => {
+  t.mock.method(console, "warn", () => {});
+  const storage = mockScrollStorage(t);
+  let resolve;
+  t.mock.method(globalThis, "fetch", () => new Promise((done) => { resolve = done; }));
+  const f = fixture();
+  const calls = observeScroll(f);
+  const api = await mountInlineEditor(f.section);
+  t.after(() => api.destroy());
+  for (const [preference, expectedCount] of [["0", 0], [null, 1], ["0", 1]]) {
+    f.roles["run-btn"].dispatchEvent(new Event("click"));
+    storage.set(scrollPreference, preference);
+    resolve({ ok: true, json: async () => ({ success: true, stdout: `run ${preference}`, test_results: [] }) });
+    await tick();
+    assert.equal(f.roles["output-stderr"].textContent, `run ${preference}`);
+    assert.equal(calls.length, expectedCount);
+  }
+});
+
+for (const blocked of ["access", "getItem"]) {
+  test(`blocked storage ${blocked} is nonfatal and defaults to smooth scrolling`, async (t) => {
+    t.mock.method(console, "warn", () => {});
+    mockScrollStorage(t);
+    const denied = () => { throw new Error("Storage blocked"); };
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get: blocked === "access" ? denied : () => ({ getItem: denied }),
+    });
+    t.mock.method(globalThis, "fetch", async () => ({
+      ok: true,
+      json: async () => ({ success: true, stdout: "rendered", test_results: [] }),
+    }));
+    const f = fixture();
+    const calls = observeScroll(f);
+    const api = await mountInlineEditor(f.section);
+    t.after(() => api.destroy());
+    f.roles["run-btn"].dispatchEvent(new Event("click"));
+    await tick();
+    assert.deepEqual(calls.map((call) => call.options), [smoothScroll]);
+    assert.equal(calls[0].output, "rendered");
+    assert.equal(f.roles["run-status"].textContent, "Compiled. No tests ran.");
+    assert.equal(f.roles["run-btn"].disabled, false);
+  });
+}
+
+test("Ctrl+Enter scrolls only its editor's output and preserves textarea focus", async (t) => {
+  t.mock.method(console, "warn", () => {});
+  mockScrollStorage(t);
+  const requests = [];
+  t.mock.method(globalThis, "fetch", async (url) => {
+    requests.push(url);
+    return { ok: true, json: async () => ({ success: true, stdout: "keyboard run", test_results: [] }) };
+  });
+  const first = fixture();
+  const second = fixture();
+  const firstCalls = observeScroll(first);
+  const secondCalls = observeScroll(second);
+  for (const f of [first, second]) {
+    const api = await mountInlineEditor(f.section);
+    t.after(() => api.destroy());
+  }
+  const input = second.roles["editor-fallback"];
+  input.focus();
+  const event = new Event("keydown", { cancelable: true });
+  Object.assign(event, { key: "Enter", ctrlKey: true });
+  input.dispatchEvent(event);
+  assert.equal(event.defaultPrevented, true);
+  await tick();
+  assert.deepEqual(requests, ["/api/run"]);
+  assert.equal(firstCalls.length, 0);
+  assert.equal(first.roles["output-panel"].style.display, "none");
+  assert.equal(secondCalls.length, 1);
+  assert.equal(secondCalls[0].target, second.roles["output-panel"]);
+  assert.deepEqual(secondCalls[0].options, smoothScroll);
+  assert.equal(secondCalls[0].output, "keyboard run");
+  assert.equal(secondCalls[0].focused, input);
+  assert.equal(second.document.activeElement, input);
+});
+
+test("format and reset do not scroll output", async (t) => {
+  t.mock.method(console, "warn", () => {});
+  mockScrollStorage(t);
+  const requests = [];
+  t.mock.method(globalThis, "fetch", async (url) => {
+    requests.push(url);
+    return { ok: true, json: async () => url === "/api/run"
+      ? { success: true, stdout: "previous output", test_results: [] }
+      : { success: true, code: "formatted" } };
+  });
+  const f = fixture();
+  const calls = observeScroll(f);
+  const api = await mountInlineEditor(f.section);
+  t.after(() => api.destroy());
+  f.roles["run-btn"].dispatchEvent(new Event("click"));
+  await tick();
+  assert.equal(calls.length, 1);
+  f.roles["format-btn"].dispatchEvent(new Event("click"));
+  await tick();
+  assert.equal(api.getValue(), "formatted");
+  assert.equal(f.roles["output-stderr"].textContent, "previous output");
+  assert.equal(calls.length, 1);
+  f.roles["reset-btn"].dispatchEvent(new Event("click"));
+  await tick();
+  assert.equal(api.getValue(), "starter");
+  assert.equal(f.roles["output-panel"].style.display, "none");
+  assert.equal(calls.length, 1);
+  assert.deepEqual(requests, ["/api/run", "/api/format"]);
+});
+
+for (const invalidation of ["edit", "reset", "destroy"]) {
+  test(`${invalidation} prevents late results from rendering or scrolling`, async (t) => {
+    t.mock.method(console, "warn", () => {});
+    mockScrollStorage(t);
+    let resolve;
+    let signal;
+    t.mock.method(globalThis, "fetch", (_, options) => {
+      signal = options.signal;
+      return new Promise((done) => { resolve = done; });
+    });
+    const f = fixture();
+    const calls = observeScroll(f);
+    const api = await mountInlineEditor(f.section);
+    t.after(() => api.destroy());
+    api.setValue("edited before run");
+    f.roles["run-btn"].dispatchEvent(new Event("click"));
+    if (invalidation === "destroy") api.destroy();
+    else if (invalidation === "reset") f.roles["reset-btn"].dispatchEvent(new Event("click"));
+    else {
+      f.roles["editor-fallback"].value = "new revision";
+      f.roles["editor-fallback"].dispatchEvent(new Event("input"));
+    }
+    assert.equal(signal.aborted, true);
+    resolve({ ok: true, json: async () => ({ success: true, stdout: "late output", test_results: [] }) });
+    await tick();
+    assert.equal(calls.length, 0);
+    assert.equal(f.roles["output-panel"].style.display, "none");
+    assert.equal(f.roles["output-stderr"].textContent, "");
+  });
+}
+
 test("fallback edits retain stale diagnostics; remount starts clear and removes old notices", async (t) => {
   t.mock.method(console, "warn", () => {});
   t.mock.method(globalThis, "fetch", async () => ({
@@ -414,6 +651,8 @@ test("destroy and remount isolate late request responses and callbacks", async (
   );
   let callbacks = 0;
   const f = fixture();
+  mockScrollStorage(t);
+  const calls = observeScroll(f);
   const opts = {
     onRunSuccess: () => {
       callbacks++;
@@ -432,6 +671,8 @@ test("destroy and remount isolate late request responses and callbacks", async (
   });
   await tick();
   assert.equal(callbacks, 0);
+  assert.equal(calls.length, 0);
+  assert.equal(f.roles["output-panel"].style.display, "none");
   assert.equal(f.roles["run-btn"].disabled, true);
   assert.match(f.roles["run-status"].textContent, /Running/);
   pending[1].resolve({
@@ -440,6 +681,8 @@ test("destroy and remount isolate late request responses and callbacks", async (
   });
   await tick();
   assert.equal(callbacks, 1);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].options, smoothScroll);
   assert.equal(f.roles["run-btn"].disabled, false);
 });
 

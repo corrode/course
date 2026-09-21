@@ -696,26 +696,14 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         }
 
         // Inline signup card on the welcome chapter (anonymous mode).
-        // The card is rendered hidden by the template; the first time
-        // any exercise on the page passes its tests we reveal it,
-        // scroll it into view, and focus the name field. Once visible
-        // it stays visible: subsequent passing runs are a no-op.
+        // Reveal the card on the first passing run without moving focus or
+        // overriding the shared editor's output scrolling.
         if (cfg.signup_on_pass === true) {
             const card = document.getElementById("inline-signup");
             if (card) {
                 passHooks.push(() => {
                     if (!card.hasAttribute("hidden")) return;
                     card.hidden = false;
-                    card.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center",
-                    });
-                    const input = card.querySelector("#inline-signup-name");
-                    if (input) {
-                        // Slight delay so the smooth-scroll doesn't
-                        // fight with the focus jump on Safari.
-                        setTimeout(() => input.focus(), 350);
-                    }
                 });
             }
         }

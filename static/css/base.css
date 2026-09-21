@@ -231,6 +231,10 @@ samp,
     border-radius: 12px;
     overflow: hidden;
 }
+/* Leave room for the sticky top bar when a run scrolls to its output. */
+[data-role="output-panel"] {
+    scroll-margin-top: 4rem;
+}
 .editor-shortcuts {
     display: block;
     margin-top: 0.35rem;

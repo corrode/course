@@ -110,6 +110,31 @@ None %}Join a team{% endmatch %}{% endblock %} {% block topbar_active_settings
 
             <div class="settings-row">
                 <div class="settings-row-text">
+                    <h3>Scroll to Output</h3>
+                    <p>
+                        Automatically scroll to output after running code.
+                        Turn this off to stay in the editor.
+                    </p>
+                </div>
+                <label
+                    class="settings-switch"
+                    for="settings-scroll-output-toggle"
+                >
+                    <input
+                        type="checkbox"
+                        id="settings-scroll-output-toggle"
+                        data-setting="scroll-output"
+                        checked
+                    />
+                    <span class="settings-switch-track" aria-hidden="true">
+                        <span class="settings-switch-thumb"></span>
+                    </span>
+                    <span class="settings-switch-label">On</span>
+                </label>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-row-text">
                     <h3>Editor Font Size</h3>
                     <p>
                         Affects every CodeMirror instance. Useful on small
@@ -473,6 +498,7 @@ cargo course init --token {{ u }}</code></pre>
         fontSize: "corrode:editor:font-size",
         ligatures: "corrode:editor:ligatures",
         activeLine: "corrode:editor:active-line",
+        scrollOutput: "corrode:editor:scroll-output",
     };
 
     function readBool(key) {
@@ -508,10 +534,9 @@ cargo course init --token {{ u }}</code></pre>
     })();
 
     // ---- Generic on/off editor toggle --------------------------------
-    // Used by settings whose only effect is flipping a CSS attribute on
-    // <html>; the matching rules in `static/css/base.css` re-style every code
-    // surface. `defaultOn` is the user-visible default (the checkbox is
-    // checked when the localStorage value is missing or not "0").
+    // CSS preferences can pass `htmlAttr` to re-style code surfaces via
+    // `static/css/base.css`; behavioral preferences only update storage.
+    // `defaultOn` applies when storage is unavailable or has no valid value.
     function wireEditorToggle({ id, storageKey, htmlAttr, defaultOn }) {
         const input = document.getElementById(id);
         if (!input) return;
@@ -521,10 +546,12 @@ cargo course init --token {{ u }}</code></pre>
         function reflect(on) {
             input.checked = on;
             label.textContent = on ? "On" : "Off";
-            if (on) {
-                delete document.documentElement.dataset[htmlAttr];
-            } else {
-                document.documentElement.dataset[htmlAttr] = "off";
+            if (htmlAttr) {
+                if (on) {
+                    delete document.documentElement.dataset[htmlAttr];
+                } else {
+                    document.documentElement.dataset[htmlAttr] = "off";
+                }
             }
         }
         let on = defaultOn;
@@ -552,6 +579,12 @@ cargo course init --token {{ u }}</code></pre>
         id: "settings-active-line-toggle",
         storageKey: SETTINGS_KEYS.activeLine,
         htmlAttr: "editorActiveLine",
+        defaultOn: true,
+    });
+
+    wireEditorToggle({
+        id: "settings-scroll-output-toggle",
+        storageKey: SETTINGS_KEYS.scrollOutput,
         defaultOn: true,
     });
 
