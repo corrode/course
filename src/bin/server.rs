@@ -310,7 +310,7 @@ struct UiExerciseStatus {
     submitted_passed: bool,
 }
 
-/// Template for participant dashboard.
+/// Course home page for anonymous visitors and participants.
 ///
 /// Rendered in two modes:
 /// - **Anonymous** (`/`): `participant_name` and `ulid` are `None`. All
@@ -319,8 +319,8 @@ struct UiExerciseStatus {
 /// - **Participant** (`/dashboard/{ulid}`): both fields are `Some`. Completion
 ///   marks reflect real submissions and links carry the ULID.
 #[derive(Template)]
-#[template(path = "dashboard.html")]
-struct DashboardTemplate {
+#[template(path = "index.html")]
+struct IndexTemplate {
     participant_name: Option<String>,
     ulid: Option<String>,
     /// One entry per chapter, in display order. Renders the bottom table of
@@ -1204,7 +1204,7 @@ fn chapter_rows(dots: &[ProgressDot]) -> usize {
 
 /// Anonymous dashboard at `/`.
 ///
-/// Renders the same `dashboard.html` template the participant view uses, but
+/// Renders the same `index.html` template the participant view uses, but
 /// with no ULID and no name. All chapters render with
 /// `completed = perfected = false`; the TOC links to `/exercise/{slug}` (the
 /// public exercise route). The CTA invites the visitor to start chapter 1
@@ -1245,7 +1245,7 @@ async fn anonymous_dashboard(
     let (_, progress_total) = exercise_progress_counts(&exercises);
 
     let dots = dots_from_exercises(&exercises);
-    let template = DashboardTemplate {
+    let template = IndexTemplate {
         participant_name: None,
         ulid: None,
         chapter_rows: chapter_rows(&dots),
@@ -1524,7 +1524,7 @@ async fn participant_dashboard(
 
     let team_token = participant.parsed_team_token();
     let dots = dots_from_exercises(&exercises);
-    let template = DashboardTemplate {
+    let template = IndexTemplate {
         participant_name: Some(participant.name),
         ulid: Some(ulid.clone()),
         chapter_rows: chapter_rows(&dots),

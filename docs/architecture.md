@@ -362,7 +362,7 @@ Askama 0.16 renders the top-level pages:
 
 - `base.html`: shared layout, top bar, footer, and common assets
 - `signup.html`: public and team-aware signup
-- `dashboard.html`: anonymous and participant course dashboards
+- `index.html`: course introduction, signup, and chapter list for anonymous visitors and participants
 - `exercise.html`: prose, code steps, hints, inline quizzes, and navigation
 - `playground.html`: standalone scratchpad
 - `tour.html`: guided course tour
@@ -384,7 +384,7 @@ Served by `tower-http` `ServeDir` at `/static/*`. Notable:
 
 
 - `static/js/inline-editor.js`: shared CodeMirror 6 mount used by
-  `templates/exercise.html`, `templates/dashboard.html`, and
+  `templates/exercise.html`, `templates/index.html`, and
   `templates/playground.html`. Owns Run/Format/Reset/Submit wiring, draft
   persistence, vim toggle (global across mounts), test result rendering, and the
   textarea fallback. Each call site supplies its own DOM (per the `data-role`
