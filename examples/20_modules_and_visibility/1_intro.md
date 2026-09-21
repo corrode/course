@@ -1,5 +1,9 @@
 # Modules and Visibility
 
+*A Rust module goes to a therapist.  
+“What brings you in?” the therapist asks.  
+“I don’t feel visible.”*
+
 Items in a Rust module are private by default, so outside code can't call your
 helpers just because it knows their names. Modules organize code into namespaces
 and let you choose which items to expose with `pub`:
