@@ -1823,10 +1823,12 @@ async fn load_step_progress(
     pool: &SqlitePool,
     ulid: &str,
 ) -> Result<std::collections::HashMap<String, UiExerciseStatus>> {
+    // SQLite timestamps have second precision; ULIDs break ties consistently
+    // with the submission history views.
     let rows: Vec<DbSubmission> = sqlx::query_as(
         "SELECT exercise_name, source_code, tests_passed, clippy_passed, fmt_passed \
          FROM submissions WHERE participant_id = ? \
-         ORDER BY exercise_name, submitted_at DESC",
+         ORDER BY exercise_name, submitted_at DESC, id DESC",
     )
     .bind(ulid)
     .fetch_all(pool)
@@ -3580,6 +3582,45 @@ mod tests {
                 .unwrap()
                 .is_empty()
         );
+    }
+
+    #[tokio::test]
+    async fn step_progress_breaks_timestamp_ties_by_submission_id() {
+        let state = optional_discovery_state().await;
+        let key = "00_numbers_in_rust/3_add_health";
+        // These ULIDs have different millisecond timestamps, but SQLite stores
+        // submitted_at at second precision. Insert the older submission first.
+        for (id, source, passed) in [
+            ("01ARZ3NDEKTSV4RRFFQ69G5FAV", "older source", true),
+            ("01ARZ3NDEMTSV4RRFFQ69G5FAV", "latest source", false),
+        ] {
+            sqlx::query(
+                "INSERT INTO submissions \
+                 (id, participant_id, exercise_name, source_code, tests_passed, \
+                  clippy_passed, fmt_passed, submitted_at) \
+                 VALUES (?, 'participant', ?, ?, ?, ?, ?, '2026-09-21 12:00:00')",
+            )
+            .bind(id)
+            .bind(key)
+            .bind(source)
+            .bind(passed)
+            .bind(passed)
+            .bind(passed)
+            .execute(&state.pool)
+            .await
+            .unwrap();
+        }
+
+        let progress = load_step_progress(&state.pool, "participant")
+            .await
+            .unwrap();
+        let status = &progress[key];
+        assert_eq!(status.submitted_code.as_deref(), Some("latest source"));
+        assert!(!status.submitted_passed);
+        assert!(status.completed && status.perfected);
+        let page = rendered_exercise(&state, "numbers_in_rust", Some("participant")).await;
+        assert!(page.contains("latest source"));
+        assert!(!page.contains("older source"));
     }
 
     async fn rendered_exercise(state: &AppState, slug: &str, participant: Option<&str>) -> String {

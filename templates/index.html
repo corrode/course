@@ -61,7 +61,7 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
         </button>
     </div>
     <script>
-        // Strip the query param so a reload doesn't re-show the toast.
+        // Remove the query string so reloading won't show this notice again.
         if (window.history && window.history.replaceState) {
             window.history.replaceState({}, "", window.location.pathname);
         }
@@ -81,8 +81,8 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
 
     {% match participant_name %} {% when Some with (name) %}
     <section class="book-intro" aria-label="About this course">
-        {# Authenticated view: pick the greeting + "where you left off" prose
-        based on how far the participant has gotten. #} {% if progress_total > 0
+        {# For signed-in participants, show a greeting and next steps based on
+        their course progress. #} {% if progress_total > 0
         && progress_done >= progress_total %}
         <p>
             Welcome back, <strong>{{ name }}</strong>. You finished all {{
@@ -136,44 +136,49 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
     {% when None %}
     <section class="book-intro" aria-label="About this course">
         <p>
-            Glad you're here! Let's learn some Rust today.
-            Each chapter has exercises, a code editor, and tests that turn green
-            when your code is right.
-            No setup needed.
+            The day has finally come.
+            You're ready to dive into this mysterious programming language
+            your peers can't stop talking about.
+        </p>
+        <p>
+            And somehow, your search for a place to start has brought you
+            to this little course. I'm
+            <a href="https://corrode.dev/services/" target="_blank" rel="noopener noreferrer">Matthias</a>
+            and I'll do my best to rise to the occasion and guide you through
+            the basics of Rust.
         </p>
         <p>
             Along the way we'll meet <strong>ownership and borrowing</strong>,
             <strong>pattern matching</strong>, <code>Option</code> and
             <code>Result</code>, <strong>iterators</strong>,
-            <strong>structs and methods</strong>, <strong>modules</strong>.
-            Skip ahead if a chapter feels familiar; come back when something
-            clicks.
+            <strong>structs and methods</strong>, and <strong>modules</strong>.
+            Skip ahead if a chapter feels familiar, or come crawling back when
+            the compiler breaks your spirit.
         </p>
         <p class="book-tour-link">
-            New to Rust? If you've never seen the syntax before, I recommend
-            taking a peek at <a href="/tour">A Quick Tour of Rust →</a>, which
-            introduces "the whole language" on a single page before we dive into
-            the course.
+            If you've never seen Rust's syntax before, I recommend
+            taking a quick peek at <a href="/tour">A Quick Tour of Rust →</a>, which
+            introduces "the whole language" on a single page before we dive in.
         </p>
     </section>
 
-    {# The dashboard editor uses the shared
-    `.exercise-section[data-step-id]` contract. The `dashboard-warmup` key is
-    also sent to `/api/run` and `/api/format` so server logs distinguish warm-up
-    traffic from chapter exercises. #}
+    {# The shared editor finds this warm-up through its `exercise-section`
+    class and `data-step-id` attribute. Requests to `/api/run` and `/api/format`
+    include the `dashboard-warmup` key so server logs can distinguish this
+    warm-up from chapter exercises. #}
     <section
         class="book-acquainted exercise-section"
         data-step-id="dashboard-warmup"
         data-exercise-key="dashboard-warmup"
-        aria-label="Let's get acquainted"
+        aria-labelledby="warmup-title"
     >
-        <div class="chapter-prose exercise-prose">
-            <h2>Let's Get Acquainted</h2>
+        <div class="book-warmup-intro">
+            <h2 id="warmup-title">Now Then! Let's Write Some Rust Code</h2>
             <p>
-                Here's your first piece of Rust. Hit <strong>Run</strong> below
+                Here's your very first piece of Rust. Hit <strong>Run</strong> below
                 to send it off to the compiler. If everything's wired
-                up, you'll see <code>Hello, Rust!</code> appear underneath.
-                Then we'll sign you up and start chapter 1.
+                up, you'll see the output underneath.
+                Welcome to the world of Rust!
             </p>
         </div>
 
@@ -269,14 +274,10 @@ fn main() {
             ></pre>
         </div>
 
-        {#
-          Inline signup card. Hidden until the warm-up's first successful
-          run. Once visible, the form posts the chosen name to
-          `/api/register` (JSON), gets a fresh ULID back, and sends the
-          learner into the quick tour (`/tour/{ulid}`) under that ULID.
-          The fallback `<a>` right below the form lets visitors who'd
-          rather skip the save file head to the tour as anonymous.
-        #}
+        {# Show this signup card after the first successful warm-up run.
+           Signing up creates a participant account and opens the quick tour
+           at `/tour/{ulid}`. The link below the form lets visitors continue
+           to the tour without an account. #}
         <div
             id="warmup-signup"
             class="book-acquainted-signup-card"
@@ -287,8 +288,7 @@ fn main() {
                 Nicely Done. What Should We Call You?
             </h3>
             <p class="book-acquainted-signup-sub">
-                Just a name. No email or password. Sign up to save your
-                progress and continue on any device.
+                This lets you save your progress and return later.
             </p>
             <form id="warmup-signup-form" class="book-acquainted-signup-form">
                 <input
@@ -354,11 +354,10 @@ fn main() {
 
     bindCourseAnalytics();
 
-    // Dashboard "Let's get acquainted" warm-up editor (anonymous viewers
-    // only). The CodeMirror mount, button wiring, and fallback path live
-    // in `static/js/inline-editor.js`. This block is just dashboard-page
-    // glue: confetti + reveal of the inline signup card on first pass,
-    // and the signup form's POST /api/register handler.
+    // Set up the warm-up for visitors who aren't signed in.
+    // `static/js/inline-editor.js` handles the editor and its buttons.
+    // This page adds confetti after successful runs, reveals the signup
+    // card after the first success, and handles registration.
     const section = document.querySelector(
         '.exercise-section[data-step-id="dashboard-warmup"]',
     );
@@ -376,14 +375,12 @@ fn main() {
                 behavior: "smooth",
                 block: "center",
             });
-            // Wait out the smooth scroll on Safari before grabbing focus.
+            // Delay focus so it doesn't interrupt Safari's smooth scrolling.
             setTimeout(() => signupName && signupName.focus(), 350);
         }
 
-        // Three-burst confetti, identical to the chapter editor's
-        // `PassHooks.confetti` so the celebration on the warm-up feels
-        // continuous with the rest of the course. The library is fetched
-        // only after the first successful run.
+        // Use the same confetti effect as chapter exercises. Load the module
+        // on demand so it isn't fetched until a run succeeds.
         async function celebrate() {
             try {
                 const { celebrateWithConfetti } = await import(
@@ -424,11 +421,9 @@ fn main() {
             console.error("inline-editor module failed to load:", err);
         });
 
-        // ---- Inline signup ---------------------------------------------
-        // POSTs the chosen name to /api/register (JSON), then sends the
-        // learner into the quick tour under the freshly minted ULID. The
-        // endpoint validates the name server-side via `Name::try_from`;
-        // we surface any 4xx as inline error text rather than alerting.
+        // Send the name to `/api/register` as JSON. On success, open the
+        // quick tour using the returned participant ID. Show registration
+        // errors beside the form so the visitor can correct them and retry.
         signupForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const name = (signupName.value || "").trim();
@@ -480,11 +475,11 @@ fn main() {
 </script>
 
 <style>
-    /* Page-specific styles only. Shared book styles live in
+    /* Styles specific to the homepage. Shared styles are in
        `static/css/base.css`. */
 
-    /* ---------- Theme toggle (floats in the top-right corner of the
-       dashboard since this page hides the shared topbar). ---------- */
+    /* Place the theme toggle at the top right because this page hides
+       the shared top bar. */
     .book-theme-toggle {
         display: flex;
         justify-content: flex-end;
@@ -513,10 +508,10 @@ fn main() {
         border-color: var(--color-border);
     }
 
-    /* ---------- Intro prose ---------- */
+    /* Course introduction */
     .book-intro {
         max-width: 38rem;
-        margin: 0 auto 4rem;
+        margin: 0 auto 3rem;
         font-size: 1.05rem;
         line-height: 1.7;
         color: var(--color-text);
@@ -562,16 +557,24 @@ fn main() {
     }
 
 
-    /* ---------- "Let's get acquainted" inline editor ----------
-       Anonymous viewers get a CodeMirror `println!` warm-up through the
-       shared editor contract. A successful Run reveals the signup card;
-       registration then continues into the quick tour. */
+    /* Warm-up editor for visitors who aren't signed in. */
     .book-acquainted {
         max-width: 38rem;
         margin: 0 auto 4rem;
     }
-    /* Keep the homepage editor header scoped so it can use the compact
-       book-column layout without affecting chapter editors. */
+    .book-warmup-intro {
+        margin-bottom: 1.5rem;
+    }
+    .book-warmup-intro h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1.5rem;
+        line-height: 1.3;
+    }
+    .book-warmup-intro p {
+        line-height: 1.7;
+    }
+    /* Keep these compact header styles limited to the warm-up editor
+       so chapter editors retain their existing layout. */
     .book-acquainted .exercise-section-head {
         display: flex;
         justify-content: space-between;
@@ -596,7 +599,7 @@ fn main() {
         flex-wrap: wrap;
     }
 
-    /* Inline signup card revealed on first successful Run. */
+    /* Signup card shown after the first successful warm-up run. */
     .book-acquainted-signup-card {
         margin-top: 2rem;
         padding: 1.5rem 1.5rem 1.25rem;
@@ -673,7 +676,7 @@ fn main() {
         text-decoration: underline;
     }
 
-    /* ---------- Call to action ---------- */
+    /* Start or resume the course */
     .book-cta {
         text-align: center;
         margin: 0 auto 4rem;
@@ -693,7 +696,7 @@ fn main() {
         font-style: italic;
     }
 
-    /* ---------- Unknown-token toast (top of dashboard) ---------- */
+    /* Dismissible notice for an unrecognized account link. */
     .unknown-token-toast {
         display: flex;
         align-items: center;
