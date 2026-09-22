@@ -9,6 +9,7 @@ changing your `match`. Will it compile? Predict the result, then try it and
 remove the extra variant. Would a `_` catch-all hide the missing mapping?
 
 > [!TIP]
+>
 > Does `=>` look like one symbol in the editor? If you like, you can turn off
   **Programming Ligatures**
 > in Settings to see each character separately. This only changes how code

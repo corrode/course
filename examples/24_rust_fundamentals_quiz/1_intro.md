@@ -13,5 +13,6 @@ move between answers and Enter or Space to choose one. After answering every
 question, you can reset the quiz and try again.
 
 > [!TIP]
+>
 > You won't get a grade, there's no time limit, and the course doesn't keep a
 > record of your answers.

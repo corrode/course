@@ -1,7 +1,7 @@
 # Iterators
 
-*What do managers and Rust iterators have in common? They can both look
-very productive while doing absolutely nothing.*
+*What do managers and Rust iterators have in common?  
+They can both look very productive while doing absolutely nothing.*
 
 Rust iterators are lazy: they don't do any work until you ask for a result.
 That's great, because it means you can chain together many operations without

@@ -1,4 +1,4 @@
-# The `?` Operator
+# The ? Operator
 
 "Handle all errors" is great advice! ...unless you end up with boilerplate like this:
 

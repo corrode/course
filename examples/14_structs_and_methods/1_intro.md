@@ -69,6 +69,7 @@ thing five times." Ranges are useful as iterators but also work as slice indices
 (`v[0..3]`).
 
 > [!TIP]
+>
 > From this chapter onward the files get longer, and the in-browser editor
 > starts feeling cramped. The **Open in Web Editor** button above each editor
 > opens this file on [github.dev](https://github.dev), a full browser-based VS

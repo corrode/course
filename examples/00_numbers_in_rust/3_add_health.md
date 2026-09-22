@@ -8,6 +8,7 @@ maximum instead of overflowing, so stacking buffs tops out at 255 rather than
 wrapping around.
 
 > [!TIP]
+>
 > Vim user? Open Settings in the top bar and turn on **Vim Keybindings**
 > to use Vim in the exercise editors. Your choice is saved in this browser.
 

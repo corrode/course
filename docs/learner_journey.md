@@ -477,7 +477,7 @@ a seed."
 
 ---
 
-## 13: The `?` Operator  ·  *Moderate*
+## 13: The ? Operator  ·  *Moderate*
 
 **State of mind.** Glad to be back in tutorial-mode after the open-ended
 chapter 12.

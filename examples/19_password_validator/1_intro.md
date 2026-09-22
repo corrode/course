@@ -19,12 +19,14 @@ Read the contract above each editor, try the tests, and open its hints if you
 get stuck.
 
 > [!WARNING]
+>
 > This is a programming exercise, not a password-security tool. The scores and
 > the label `Strong` describe our made-up rules; they do not measure how hard a
 > password is to guess. Use invented inputs only: **Run** sends the code,
 > including its test strings, to the Rust Playground.
 
 > [!TIP]
+>
 > The files get longer here because each editor includes its own support code
 > and tests. **Open in Web Editor** opens the file on
 > [github.dev](https://github.dev/corrode/course) if you'd like more room. For

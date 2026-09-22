@@ -100,6 +100,7 @@ version for the harder cases. Failing tests give you concrete examples to think
 against, instead of trying to imagine every edge case up front.
 
 > [!NOTE]
+>
 > This parser is practice for the state-machine loop, not a complete CSV
 > implementation. For production code, use the [`csv`
 > crate](https://docs.rs/csv), which handles cases we leave out, such as quoted

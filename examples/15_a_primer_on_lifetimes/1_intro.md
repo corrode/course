@@ -1,5 +1,8 @@
 # A Primer on Lifetimes
 
+*Did you know that they make a movie about Rust?  
+It's called "The Story of `'a` lifetime".*
+
 You've already used ownership in several forms. You moved `String`s, borrowed
 slices, passed `&mut` references into functions, and handed values to `Vec`,
 `HashMap`, `Option`, `Result`, and your own structs. Now we can connect those

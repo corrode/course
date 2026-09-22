@@ -1,4 +1,4 @@
-# Wrapping Up the `?` Operator
+# Wrapping Up the ? Operator
 
 You replaced repetitive `match` chains with `?`, propagated errors out of
 multi-step functions, and used `?` inside a loop.

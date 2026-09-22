@@ -1,5 +1,8 @@
 # HashMaps
 
+*Two hashmaps broke up.  
+They didn’t share the same values.*
+
 A `HashMap<K, V>` stores key-value pairs and lets you look up a value by its key
 in (on average) constant time. It's useful for caches, indexes, counters, and
 configuration.
