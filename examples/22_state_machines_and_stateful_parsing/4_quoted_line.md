@@ -4,11 +4,21 @@ A field can be wrapped in double quotes, in which case any commas *inside* the
 quotes are part of the field, not separators. And a literal `"` inside a quoted
 field is encoded as `""` (two quotes).
 
+Preserve whitespace rather than trimming fields.
+[RFC 4180, section 2](https://www.rfc-editor.org/rfc/rfc4180#section-2) says:
+
+> Spaces are considered part of a field and should not be ignored.
+
+Spaces are part of the data, whether the field is quoted or not: `a, b` becomes
+`["a", " b"]`, and `" a ",b` becomes `[" a ", "b"]`. Remove the surrounding
+quotes, but keep the spaces inside them.
+
 Implement the cases in the order shown by the tests:
 
   1. Plain `a,b,c` and simply quoted `"a","b","c"` (the basic test).
   2. Commas inside quoted fields: `"a,b",c`.
   3. Escaped quotes: `"a""b",c` -> [`a"b`, `c`].
+  4. Whitespace in unquoted and quoted fields.
 
 Escaped quotes are the tricky part: the same character can be syntax or data.
 It's worth getting one case working at a time. If a test fails, trace its input
