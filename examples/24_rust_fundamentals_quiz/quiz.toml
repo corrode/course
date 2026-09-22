@@ -368,44 +368,58 @@ Usually you reach for `match` instead, and `==` only works if the enum derives \
 
 [[questions]]
 prompt = """
-A named lifetime ties the returned borrow to the input borrows; it does not \
-keep their owners alive.
-What does the lifetime in this signature say?
+`longest` returns a reference to whichever input string is longer. Its signature is:
 
 ```rust
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str
 ```
+
+Will this code compile? Why or why not?
+
+```rust
+let first = String::from("a rainy afternoon");
+let result;
+{
+    let second = String::from("sun");
+    result = longest(&first, &second);
+}
+println!("{result}");
+```
 """
 hint = """
-The function may return either input. What must the caller know before using \
-the result after one input's owner has been dropped?"""
+Which string is dropped at the closing brace? The compiler checks the call \
+using the function's signature, not by comparing the lengths of these strings."""
 
 [[questions.answers]]
-text = "Both inputs must outlive the function call."
+text = "Yes. `first` is longer, and it is still alive when we print `result`."
 correct = false
 explanation = """
-That's true of every reference parameter; it's not what `'a` adds."""
+We can see that `first` is longer, but the compiler doesn't use that fact to \
+check the borrow. The signature allows the result to borrow from either input, \
+so both strings must still be alive when we use it."""
 
 [[questions.answers]]
-text = "The return value lives strictly *less* than the shorter input."
+text = "Yes. `'a` keeps `second` alive until we finish using `result`."
 correct = false
 explanation = """
-Not quite: the returned reference can be valid for that whole window, so the \
-bound is \"no longer than\" (it may be equal), not \"strictly less than\"."""
+Lifetime annotations don't keep values alive. `second` is still dropped at \
+the closing brace, before the `println!`."""
 
 [[questions.answers]]
-text = "The return value can't outlive the shorter of the two inputs."
+text = "No. `second` is dropped before we print a result that could borrow from it."
 correct = true
 explanation = """
-`'a` is the intersection of the two input lifetimes, so you can't use the \
-returned reference after either input is dropped."""
+The shared `'a` connects the returned reference to both inputs. We can use \
+the result only while both strings are still alive. Moving the `println!` \
+inside the block would make this compile."""
 
 [[questions.answers]]
-text = "The two inputs must have identical lifetimes."
+text = "No. Using `'a` twice means both strings must be created and dropped together."
 correct = false
 explanation = """
-They don't; the compiler can use the shorter lifetime for `'a` because a \
-longer-lived reference is valid for that shorter borrow too."""
+The strings can be created and dropped at different times. They just need to \
+remain alive while we use the returned reference. `first` can live longer \
+than `second`, as it does here."""
 
 [[questions]]
 prompt = """
