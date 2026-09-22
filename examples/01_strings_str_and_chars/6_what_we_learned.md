@@ -15,6 +15,6 @@ walked a string character by character.
   so on.
 - Case conversion (`to_uppercase`, `to_lowercase`) returns a new `String`. It
   doesn't change the original string.
-- `char::is_ascii_uppercase` checks for `A` through `Z`, as required by
-  `has_uppercase`. `char::is_uppercase` also recognizes uppercase letters
-  outside ASCII.
+- `char::is_uppercase` recognizes Unicode uppercase characters, including
+  letters outside ASCII. `char::is_ascii_uppercase` only checks for `A` through
+  `Z`, so it would miss uppercase letters such as `É` and `Ω`.
