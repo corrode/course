@@ -1,5 +1,8 @@
 # Functions
 
+*What do you call a callback that rarely gets called?  
+Barely functioning.*
+
 If you’ve ever gone through customs, you know the importance of declaring what you’re bringing in.
 Rust takes that idea a step further: you declare both **what goes in and what comes out** of a function: its parameters and return type.
 

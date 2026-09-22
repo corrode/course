@@ -1,5 +1,8 @@
 # Tuples and Destructuring
 
+*What do you call an incredibly attractive tuple?  
+Irresistuple.*
+
 Sometimes a function needs to return two things. 
 Coming up with a type name for that is not always worth it. 
 

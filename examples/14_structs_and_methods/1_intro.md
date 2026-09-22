@@ -1,5 +1,10 @@
 # Structs and Methods
 
+*A struct works as a waiter at a bar.  
+“Why do you look so sad?” asks a colleague.  
+“A tuple just treated me like an object.”  
+“Don’t worry. It has no class.”*
+
 In Rust, a method's signature tells you whether it borrows a value, changes it,
 or takes ownership of it. You group related fields in a `struct` and attach
 methods with an `impl` block.

@@ -1,5 +1,9 @@
 # Traits
 
+*A struct tries flirting at a bar.  
+“You’ve got no class, and your methods need work.”  
+“Maybe. But I’ve got some redeeming traits.”*
+
 A trait lets you give unrelated types a shared interface without putting them in
 a class hierarchy. You declare a named collection of method signatures, and each
 type can opt in by implementing it. If you've used Java or C# interfaces, C++

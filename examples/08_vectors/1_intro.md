@@ -1,5 +1,10 @@
 # Vectors
 
+*“See that vec of vecs over there?”  
+“Yeah. Can’t stand it.”  
+“Why?”  
+“It’s full of itself.”*
+
 A `[u8; 4]` has room for exactly four bytes; that's it.
 
 When the number of items can vary, use a `Vec<T>` instead. It stores a sequence
