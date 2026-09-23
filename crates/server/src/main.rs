@@ -4139,8 +4139,18 @@ mod tests {
                 if matches!(slug, "word_frequencies" | "appendix") {
                     let base =
                         url::Url::parse(&format!("https://course.example{prefix}{slug}")).unwrap();
-                    for target in ["19_password_validator", "23_smart_pointers"] {
-                        assert!(html.contains(&format!("href=\"{target}\"")));
+                    let prose_links: &[&str] = if slug == "word_frequencies" {
+                        &["19_password_validator", "23_smart_pointers"]
+                    } else {
+                        // The appendix recommends the password project; smart
+                        // pointers remains available through the chapter picker.
+                        &["19_password_validator"]
+                    };
+                    for &target in prose_links {
+                        assert!(
+                            html.contains(&format!("href=\"{target}\"")),
+                            "{slug} should link to {target}"
+                        );
                         let resolved = base.join(target).unwrap();
                         assert_eq!(resolved.path(), format!("{prefix}{target}"));
                         // The file-stem links also resolve through the real

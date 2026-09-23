@@ -6,8 +6,7 @@ Baseline and local validation are in [seo-audit.md](seo-audit.md).
 
 ## Before Deployment
 
-- [ ] Review the focused patch and resolve or explicitly track the pre-existing
-  appendix-link test failure. Do not disable the test to get a green pipeline.
+- [ ] Review the focused patch and confirm CI passes.
 - [ ] Run `make seo-check` and the repository's scoped checks. Do not substitute
   an all-target build that compiles deliberately broken teaching examples.
 - [ ] Confirm the deployment's `SITE_ORIGIN` is `https://course.corrode.dev`

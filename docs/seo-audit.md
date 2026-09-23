@@ -175,12 +175,11 @@ layout pass rather than hiding content. No cache-policy relaxation was used.
 - `make solutions` passed: 87 of 87 exercise steps solved and checked.
 - `make js-check` passed: 96 tests and byte-identical generated bundles.
 - `npm run test:browser` passed: 39 editor integration checks.
-- `make test` has one **pre-existing failure**:
-  `optional_discovery_preserves_routes_progress_and_default_flow` expects a
-  smart-pointers link missing from the appendix. Reproduced in an isolated
-  pristine archive of the baseline commit. Left untouched; all new SEO tests
-  pass. Doc tests were run separately and passed after make stopped at that
-  failure. This existing failure also blocks the full CI pipeline until resolved.
+- `make test` passed, including doc tests. The pre-existing appendix-link
+  assertion in `optional_discovery_preserves_routes_progress_and_default_flow`
+  was corrected to match the appendix's current recommendations, retaining
+  routing and progress coverage.
+- `make typos` passed after correcting a spelling error in the first lesson.
 
 Production deployment, crawler-specific CDN/WAF access, external social-card
 previews, Google indexing/canonical selection, and real-user performance remain
