@@ -1,18 +1,24 @@
 # State Machines and Stateful Parsing
 
+*“Knock, knock.”  
+“Who’s there?”  
+“Broken state machine.”  
+“Broken state machine who?”  
+“Knock, knock.”*
+
 CSV, or Comma-Separated Values, is a wonderfully simple file format:
 
 ```csv
-Frank, 42, Engineer
-Hannah, 24, Teacher
-Jake, 35, Doctor
+Frank,42,Engineer
+Hannah,24,Teacher
+Jake,35,Doctor
 ```
 
 Each line is a record and each comma separates fields: name, age, and occupation.
 Just split by commas and you are d... 
 
 ```csv
-Joe, 30, Artist, Painter, Writer
+Joe,30,Artist,Painter,Writer
 ```
 
 Oh no...

@@ -1,6 +1,6 @@
 # Wrapping Up the CSV Parser
 
-You started with `split` and `trim`, then kept track of quotes so commas inside
+You started with `split`, then kept track of quotes so commas inside
 a field stayed where they belonged. Once that worked, you reused the line parser
 to collect headers and rows.
 
@@ -17,7 +17,7 @@ to collect headers and rows.
 - `std::mem::take(&mut s)` gives you the current value and replaces it with
   `Default` in one move. You can move the accumulated string into your results
   without cloning it and then clearing the original.
-- The simple `split`/`trim` version is worth writing first. It passes the easy
+- The simple `split` version is worth writing first. It passes the easy
   tests and gives you a baseline; the state-machine upgrade then has concrete
   failing cases to react to.
 - Hand production CSV files to the [`csv` crate](https://docs.rs/csv), which

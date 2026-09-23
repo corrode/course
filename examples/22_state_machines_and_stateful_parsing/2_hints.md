@@ -3,7 +3,7 @@
 ## `simple_line`
 
 1. There's a method on `&str` that splits on a delimiter and gives you an
-   iterator. Combine it with `trim` and `collect`.
+   iterator. Convert each piece to an owned `String`, then collect the results.
 
 ## `quoted_line`: The State Machine
 
