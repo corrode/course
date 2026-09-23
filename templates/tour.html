@@ -1,14 +1,15 @@
-{% extends "base.html" %} {% block title %}A Quick Tour of Rust | corrode Rust
-Course{% endblock %} {% block content %}
+{% extends "base.html" %} {% block content %}
 <div
     class="container"
     data-course-chapter="tour"
     {% match ulid %}{% when Some with (u) %}data-participant-id="{{ u }}"{% when None %}{% endmatch %}
 >
+
     <div class="exercise-header">
         <div class="chapter-eyebrow">Preamble</div>
         <h1 class="exercise-title">A Quick Tour of Rust</h1>
     </div>
+
 
     <div class="chapter-prose exercise-prose">
         <p>
@@ -132,7 +133,17 @@ Course{% endblock %} {% block content %}
         </div>
     </section>
 
+    <p class="chapter-prose exercise-prose">
+        After running the example, try changing a value and predict the output.
+        For step-by-step practice, continue with
+        <a href="{{ crate::seo::lesson_key_path("00_numbers_in_rust") }}">numbers and variables</a>.
+        Later, revisit the example after learning
+        <a href="{{ crate::seo::lesson_key_path("07_enums_and_pattern_matching") }}">enums and pattern matching</a>.
+    </p>
     {% include "partials/next_chapter_cta.html" %}
+    {% if ulid.is_none() %}
+    <p class="course-return"><a href="/#curriculum">← Return to the Rust course curriculum</a></p>
+    {% endif %}
 </div>
 
 <script type="module">

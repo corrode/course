@@ -1,3 +1,68 @@
+.course-about {
+    background: var(--color-surface);
+    padding: 2.5rem 1.5rem;
+}
+.course-about-inner {
+    max-width: 47rem;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 6rem minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+.course-about-photo {
+    display: block;
+    width: 6rem;
+    height: auto;
+    border-radius: 50%;
+}
+.course-about-copy {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--color-text);
+}
+html[data-theme="dark"] .course-about-copy {
+    color: #fff;
+}
+.course-about-copy p {
+    margin: 0 0 1rem;
+}
+.course-about-copy p:last-child {
+    margin-bottom: 0;
+}
+.course-about-copy a {
+    color: var(--color-primary);
+    text-underline-offset: 0.15em;
+}
+.course-about-copy a:hover,
+.course-about-copy a:focus-visible {
+    color: var(--color-primary-muted);
+}
+@media (max-width: 600px) {
+    .course-about {
+        padding: 2rem 1rem;
+    }
+    .course-about-inner {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .course-about-photo {
+        width: 5rem;
+    }
+}
+/* Theme plain links in both states without overriding component link colors. */
+:where(a:any-link) {
+    color: var(--color-primary);
+    text-underline-offset: 0.15em;
+}
+.course-return {
+    max-width: 32rem;
+    margin: 1.5rem auto 0;
+    text-align: center;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
 /* ---------- Reusable check icon (SVG mask) ---------- */
 /* Source: /static/icons/check.svg. Inherits color from
    currentColor so it adapts to surrounding text color
@@ -1117,7 +1182,23 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
         font-size: 0.875rem;
     }
     .topbar {
-        padding: 0 0.75rem;
+        height: auto;
+        min-height: 3rem;
+        padding: 0.5rem 0.75rem;
+    }
+    .topbar-inner {
+        flex-wrap: wrap;
+    }
+    .chapter-picker {
+        flex: 1;
+        min-width: 0;
+    }
+    /* Keep the full chapter title above the navigation controls on phones. */
+    .chapter-picker ~ .topbar-spacer {
+        flex-basis: 100%;
+    }
+    .topbar .theme-toggle {
+        flex-shrink: 0;
     }
     .topbar-link span:not(.sr-only) {
         /* Drop the labels on phones, keep just the icons. */

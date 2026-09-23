@@ -2,7 +2,7 @@
 # The course is a regular Cargo project, so every target here is a
 # thin wrapper. `make help` shows the full list.
 
-.PHONY: help dev run build test fmt clippy check clean examples solutions js-check typos links ci fmt-check workspace-check
+.PHONY: help dev run build test fmt clippy check clean examples solutions js-check typos links ci fmt-check workspace-check seo-check
 
 help:
 	@echo "make dev      - run the server with auto-reload (needs cargo-watch)"
@@ -15,6 +15,7 @@ help:
 	@echo "make examples - verify every exercise chapter (needs clippy)"
 	@echo "make solutions - verify every solution (needs rustc)"
 	@echo "make workspace-check - build + smoke-test CLI/server (needs python3, rustfmt, clippy)"
+	@echo "make seo-check - response-level SEO tests and HTML/XML discovery checks"
 	@echo "make js-check  - rebuild and verify current JavaScript bundles"
 	@echo "make typos     - spell check (needs typos-cli)"
 	@echo "make links     - link check (needs lychee)"
@@ -52,6 +53,10 @@ clippy:
 
 workspace-check: build
 	python3 scripts/check-workspace.py
+
+seo-check: build
+	cargo test -p course-server --bin server seo
+	python3 scripts/check-workspace.py --seo-only
 
 # Verify every exercise chapter is in its intended state (compiles + lints
 # clean, except the chapters that are meant to fail to compile).

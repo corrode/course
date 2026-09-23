@@ -1,3 +1,9 @@
+mod lesson_seo;
+mod seo;
+#[cfg(test)]
+mod seo_tests;
+use seo::{PageMetadata, SiteOrigin};
+
 use course_server::exercises::{self, Exercise, RenderItem, RenderKind, Step};
 use course_types::{
     ExerciseStatus, Name, ProgressResponse, RegistrationRequest, RegistrationResponse,
@@ -85,6 +91,7 @@ fn git_hash() -> &'static str {
 /// Application state shared across all routes
 #[derive(Clone)]
 struct AppState {
+    site_origin: SiteOrigin,
     pool: SqlitePool,
     admin_token: String,
     exercises: Arc<Vec<Exercise>>,
@@ -173,6 +180,7 @@ struct DbSubmission {
 #[derive(Template)]
 #[template(path = "playground.html")]
 struct PlaygroundTemplate {
+    seo: PageMetadata,
     /// Initial source shown before the user has typed anything.
     starter: String,
 }
@@ -182,6 +190,7 @@ struct PlaygroundTemplate {
 #[derive(Template)]
 #[template(path = "tour.html")]
 struct TourTemplate {
+    seo: PageMetadata,
     /// The annotated tour source shown in the editor.
     starter: String,
     /// Participant context for `/tour/{ulid}`; `None` on the public route.
@@ -198,6 +207,7 @@ struct TourTemplate {
 #[derive(Template)]
 #[template(path = "cheatsheet.html")]
 struct CheatsheetTemplate {
+    seo: PageMetadata,
     html: String,
 }
 
@@ -205,6 +215,7 @@ struct CheatsheetTemplate {
 #[derive(Template)]
 #[template(path = "exercise.html")]
 struct ExerciseTemplate {
+    seo: PageMetadata,
     exercise: Exercise,
     /// `Some` when the page is rendered with participant context.
     ulid: Option<String>,
@@ -321,6 +332,8 @@ struct UiExerciseStatus {
 #[derive(Template)]
 #[template(path = "index.html")]
 struct IndexTemplate {
+    seo: PageMetadata,
+
     participant_name: Option<String>,
     ulid: Option<String>,
     /// One entry per chapter, in display order. Renders the bottom table of
@@ -373,6 +386,7 @@ fn optional_chapter_rows(dots: &[ProgressDot]) -> usize {
 #[derive(Template)]
 #[template(path = "signup.html")]
 struct SignupTemplate {
+    seo: PageMetadata,
     team_slug: Option<String>,
 }
 
@@ -380,6 +394,7 @@ struct SignupTemplate {
 #[derive(Template)]
 #[template(path = "admin.html")]
 struct AdminTemplate {
+    seo: PageMetadata,
     participant_teams: Vec<ParticipantTeam>,
     recent_submissions: Vec<SubmissionSummary>,
     stats: AdminStats,
@@ -400,6 +415,7 @@ struct AdminTemplate {
 #[derive(Template)]
 #[template(path = "submissions.html")]
 struct SubmissionsTemplate {
+    seo: PageMetadata,
     participant_name: String,
     submissions: Vec<SubmissionSummary>,
     total_submissions: i64,
@@ -573,7 +589,7 @@ fn exercise_course_href(exercise_name: &str, participant_id: Option<&str>) -> St
         |(chapter, step)| (chapter, format!("{chapter}__{step}")),
     );
     let path = participant_id.map_or_else(
-        || format!("/exercise/{chapter}"),
+        || seo::lesson_key_path(chapter),
         |id| format!("/exercise/{id}/{chapter}"),
     );
     format!("{path}#{anchor}")
@@ -693,6 +709,7 @@ async fn load_submission_history_page(
 #[derive(Template)]
 #[template(path = "team.html")]
 struct TeamPageTemplate {
+    seo: PageMetadata,
     /// Display label shown in the page heading. The team slug for a real team,
     /// or the literal string "Unassigned" for the no-team bucket.
     team_label: String,
@@ -760,6 +777,7 @@ const TEAM_SUBMISSIONS_LIMIT: i64 = 60;
 #[derive(Template)]
 #[template(path = "settings.html")]
 struct SettingsTemplate {
+    seo: PageMetadata,
     /// Participant name, when the page is rendered under `/settings/{ulid}` for
     /// a real account. `None` for anonymous visitors hitting `/settings`
     /// directly.
@@ -1011,6 +1029,11 @@ async fn main() -> Result<()> {
 
     // Load environment variables
     dotenv().ok();
+    let site_origin = SiteOrigin::parse(&match env::var("SITE_ORIGIN") {
+        Ok(value) => value,
+        Err(env::VarError::NotPresent) => seo::DEFAULT_ORIGIN.into(),
+        Err(error) => return Err(error.into()),
+    })?;
 
     info!("Starting corrode course server...");
 
@@ -1072,11 +1095,28 @@ async fn main() -> Result<()> {
     info!("Loaded {} exercises", exercises.len());
 
     let app_state = AppState {
+        site_origin,
         pool,
         admin_token: admin_token.clone(),
         exercises,
     };
 
+    let app = build_router(app_state);
+
+    let listener = tokio::net::TcpListener::bind(&format!("0.0.0.0:{port}")).await?;
+    info!("🚀 Server listening on 0.0.0.0:{port} (open http://localhost:{port} locally)");
+    info!("📊 Admin dashboard available at /admin");
+    info!("🗃️  Database: {database_url}");
+
+    axum::serve(listener, app).await?;
+    Ok(())
+}
+
+fn build_router(app_state: AppState) -> Router {
+    build_router_with_static(app_state, std::path::Path::new("static"))
+}
+
+fn build_router_with_static(app_state: AppState, static_dir: &std::path::Path) -> Router {
     // Build API routes
     let api_routes = Router::new()
         .route("/register", post(api_register))
@@ -1088,7 +1128,9 @@ async fn main() -> Result<()> {
         .with_state(app_state.clone());
 
     // Build main routes
-    let app = Router::new()
+    Router::new()
+        .route("/robots.txt", get(robots_txt))
+        .route("/sitemap.xml", get(sitemap_xml))
         .route("/", get(anonymous_dashboard))
         .route("/signup", get(signup_page))
         .route("/signup/{team_slug}", get(signup_page_with_team))
@@ -1131,16 +1173,117 @@ async fn main() -> Result<()> {
         // only applies to routes registered before it, so the static assets
         // nested below stay cacheable.
         .layer(axum::middleware::map_response(no_store))
-        .nest_service("/static", ServeDir::new("static"))
-        .with_state(app_state);
+        .nest_service("/static", ServeDir::new(static_dir))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.clone(),
+            seo_policy,
+        ))
+        .with_state(app_state)
+}
 
-    let listener = tokio::net::TcpListener::bind(&format!("0.0.0.0:{port}")).await?;
-    info!("🚀 Server listening on 0.0.0.0:{port} (open http://localhost:{port} locally)");
-    info!("📊 Admin dashboard available at /admin");
-    info!("🗃️  Database: {database_url}");
+async fn robots_txt(State(state): State<AppState>) -> impl IntoResponse {
+    (
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "text/plain; charset=utf-8",
+        )],
+        seo::robots(&state.site_origin),
+    )
+}
 
-    axum::serve(listener, app).await?;
-    Ok(())
+async fn sitemap_xml(State(state): State<AppState>) -> impl IntoResponse {
+    (
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "application/xml; charset=utf-8",
+        )],
+        seo::sitemap(&state.site_origin, &state.exercises),
+    )
+}
+
+/// Route identity, not whether participant lookup succeeded, controls indexing.
+/// This outer layer also covers extractor rejections, fallback 404s, and static errors.
+async fn seo_policy(
+    State(state): State<AppState>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Response {
+    let path = request.uri().path();
+    let read = matches!(
+        *request.method(),
+        axum::http::Method::GET | axum::http::Method::HEAD
+    );
+    let public_asset = read && path.starts_with("/static/");
+    let public = read
+        && seo::public_paths(&state.exercises)
+            .iter()
+            .any(|p| p == path);
+    let target = read
+        .then(|| canonical_redirect(path, &state.exercises))
+        .flatten();
+    let mut response = if let Some(mut target) = target {
+        if let Some(query) = request.uri().query() {
+            target.push('?');
+            target.push_str(query);
+        }
+        no_store(axum::response::Redirect::permanent(&target).into_response()).await
+    } else {
+        next.run(request).await
+    };
+    // Preserve asset discovery, including the shared social image. Asset errors
+    // still receive noindex; robots.txt does not prevent fetching either class.
+    if public_asset && response.status().is_success() {
+        return response;
+    }
+    let indexable = public && response.status().is_success();
+    response.headers_mut().insert(
+        "x-robots-tag",
+        axum::http::HeaderValue::from_static(if indexable {
+            "index, follow"
+        } else {
+            "noindex, nofollow"
+        }),
+    );
+    response
+}
+
+fn canonical_redirect(path: &str, catalog: &[Exercise]) -> Option<String> {
+    // A Location must remain a local absolute path, never //host or a browser-
+    // normalized backslash URL. Don't normalize encoded or malformed paths.
+    if !path.starts_with('/')
+        || path.starts_with("//")
+        || !path
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"/-_.".contains(&b))
+        || path.split('/').any(|s| s == "." || s == "..")
+    {
+        return None;
+    }
+    let trimmed = path.trim_end_matches('/');
+    if trimmed.is_empty() {
+        return None;
+    }
+    let parts: Vec<_> = trimmed.split('/').collect();
+    let mut target = trimmed.to_owned();
+    if matches!(parts.len(), 3 | 4) && parts[1] == "exercise" {
+        let slug = parts[parts.len() - 1];
+        // Exact keys win over aliases, matching the public URL inventory.
+        if !catalog.iter().any(|e| e.file_stem == slug)
+            && let Some(lesson) = catalog.iter().find(|e| e.slug == slug)
+        {
+            let public_path = seo::lesson_path(lesson);
+            target = if parts.len() == 3 {
+                public_path
+            } else {
+                format!(
+                    "/exercise/{}/{}",
+                    parts[2],
+                    public_path.trim_start_matches("/exercise/")
+                )
+            };
+        }
+    }
+    (target != path).then_some(target)
 }
 
 /// Stamp `Cache-Control: no-store` on every dynamic HTML/API response.
@@ -1246,6 +1389,8 @@ async fn anonymous_dashboard(
 
     let dots = dots_from_exercises(&exercises);
     let template = IndexTemplate {
+        seo: PageMetadata::public(&state.site_origin, "/", &state.exercises)
+            .expect("homepage metadata"),
         participant_name: None,
         ulid: None,
         chapter_rows: chapter_rows(&dots),
@@ -1294,7 +1439,10 @@ async fn signup_page_with_team(AxumPath(team_slug): AxumPath<String>) -> impl In
 }
 
 fn render_signup(team_slug: Option<String>) -> axum::response::Response {
-    let template = SignupTemplate { team_slug };
+    let template = SignupTemplate {
+        seo: PageMetadata::private(),
+        team_slug,
+    };
     template.render().map_or_else(
         |_| {
             (
@@ -1328,7 +1476,7 @@ async fn tour_page_with_ulid(
     render_tour(&state, Some(ulid))
 }
 
-fn render_tour(state: &AppState, ulid: Option<String>) -> axum::response::Html<String> {
+fn render_tour(state: &AppState, ulid: Option<String>) -> Response {
     const STARTER: &str = include_str!("../../../static/tour_starter.rs");
     // Derive the first real chapter the same way the dashboard does, so the
     // closing CTA keeps pointing at the right place even if chapters are
@@ -1351,23 +1499,33 @@ fn render_tour(state: &AppState, ulid: Option<String>) -> axum::response::Html<S
         href: None,
     });
     let template = TourTemplate {
+        seo: if ulid.is_none() {
+            PageMetadata::public(&state.site_origin, "/tour", &state.exercises)
+                .expect("tour metadata")
+        } else {
+            PageMetadata::private()
+        },
         starter: STARTER.to_string(),
         ulid,
         next_dot,
         next_locked: false,
     };
     match template.render() {
-        Ok(html) => Html(html),
+        Ok(html) => Html(html).into_response(),
         Err(e) => {
             error!("tour template render failed: {e}");
-            Html("Error rendering template".to_string())
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Error rendering template",
+            )
+                .into_response()
         }
     }
 }
 
 /// Standalone Rust scratchpad. Code is persisted client-side in `localStorage`;
 /// this handler only ships the starter snippet.
-async fn playground_page() -> impl IntoResponse {
+async fn playground_page(State(state): State<AppState>) -> impl IntoResponse {
     const STARTER: &str = r#"//! Playground scratchpad.
 //!
 //! Anything you type here is saved to your browser's local storage and
@@ -1381,27 +1539,39 @@ fn main() {
 }
 "#;
     let template = PlaygroundTemplate {
+        seo: PageMetadata::public(&state.site_origin, "/playground", &state.exercises)
+            .expect("public metadata"),
         starter: STARTER.to_string(),
     };
     match template.render() {
-        Ok(html) => Html(html),
+        Ok(html) => Html(html).into_response(),
         Err(e) => {
             error!("playground template render failed: {e}");
-            Html("Error rendering template".to_string())
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Error rendering template",
+            )
+                .into_response()
         }
     }
 }
 
 /// Renders `static/cheatsheet.md` as a standalone reference page.
-async fn cheatsheet_page() -> impl IntoResponse {
+async fn cheatsheet_page(State(state): State<AppState>) -> impl IntoResponse {
     let template = CheatsheetTemplate {
+        seo: PageMetadata::public(&state.site_origin, "/cheatsheet", &state.exercises)
+            .expect("public metadata"),
         html: load_cheatsheet_html(),
     };
     match template.render() {
-        Ok(html) => Html(html),
+        Ok(html) => Html(html).into_response(),
         Err(e) => {
             error!("cheatsheet template render failed: {e}");
-            Html("Error rendering template".to_string())
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Error rendering template",
+            )
+                .into_response()
         }
     }
 }
@@ -1525,6 +1695,7 @@ async fn participant_dashboard(
     let team_token = participant.parsed_team_token();
     let dots = dots_from_exercises(&exercises);
     let template = IndexTemplate {
+        seo: PageMetadata::private(),
         participant_name: Some(participant.name),
         ulid: Some(ulid.clone()),
         chapter_rows: chapter_rows(&dots),
@@ -1556,7 +1727,7 @@ async fn public_exercise_page(
     AxumPath(slug): AxumPath<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    render_exercise_page(&state, &slug, None).await
+    render_exercise_page(&state, &slug, None, true).await
 }
 
 /// Exercise page with participant context.
@@ -1575,7 +1746,7 @@ async fn participant_exercise_page(
         .is_some();
 
     let ulid = if exists { Some(ulid) } else { None };
-    render_exercise_page(&state, &slug, ulid).await
+    render_exercise_page(&state, &slug, ulid, false).await
 }
 
 /// Minimal HTML escape for arbitrary text we splice into a template.
@@ -1601,13 +1772,15 @@ async fn render_exercise_page(
     state: &AppState,
     slug: &str,
     ulid: Option<String>,
+    public: bool,
 ) -> axum::response::Response {
     // Look up by slug or by file_stem so both `/exercise/strings_and_chars` and
     // `/exercise/01_strings_and_chars` resolve.
     let Some(idx) = state
         .exercises
         .iter()
-        .position(|e| e.slug == slug || e.file_stem == slug)
+        .position(|e| e.file_stem == slug)
+        .or_else(|| state.exercises.iter().position(|e| e.slug == slug))
     else {
         return (StatusCode::NOT_FOUND, "Exercise not found").into_response();
     };
@@ -1791,6 +1964,16 @@ async fn render_exercise_page(
 
     let next_locked = ulid.is_some() && !current_status.completed;
     let template = ExerciseTemplate {
+        seo: if public {
+            PageMetadata::public(
+                &state.site_origin,
+                &seo::lesson_path(&exercise),
+                &state.exercises,
+            )
+            .unwrap_or_else(PageMetadata::private)
+        } else {
+            PageMetadata::private()
+        },
         exercise,
         ulid,
         current_status,
@@ -1999,6 +2182,7 @@ async fn admin_dashboard(
     );
 
     let template = AdminTemplate {
+        seo: PageMetadata::private(),
         participant_teams,
         recent_submissions,
         stats: admin_stats,
@@ -2085,6 +2269,7 @@ async fn admin_participant_submissions_page(
     );
 
     let template = SubmissionsTemplate {
+        seo: PageMetadata::private(),
         participant_name: participant.name,
         submissions,
         total_submissions,
@@ -2436,6 +2621,7 @@ async fn render_team_page(
     );
 
     let template = TeamPageTemplate {
+        seo: PageMetadata::private(),
         team_label,
         is_unassigned,
         is_admin,
@@ -2553,6 +2739,7 @@ async fn participant_team_page(
 /// Routed at `/settings`.
 async fn settings_page() -> impl IntoResponse {
     let template = SettingsTemplate {
+        seo: PageMetadata::private(),
         participant_name: None,
         ulid: None,
         team_token: None,
@@ -2604,6 +2791,7 @@ async fn participant_settings_page(
     };
 
     let template = SettingsTemplate {
+        seo: PageMetadata::private(),
         participant_name: Some(participant.name),
         ulid: Some(ulid),
         team_token: team_token_parsed.map(|t| t.as_str().to_string()),
@@ -3624,7 +3812,13 @@ mod tests {
     }
 
     async fn rendered_exercise(state: &AppState, slug: &str, participant: Option<&str>) -> String {
-        let response = render_exercise_page(state, slug, participant.map(str::to_owned)).await;
+        let response = render_exercise_page(
+            state,
+            slug,
+            participant.map(str::to_owned),
+            participant.is_none(),
+        )
+        .await;
         assert_eq!(response.status(), StatusCode::OK);
         let body = axum::body::to_bytes(response.into_body(), usize::MAX)
             .await
@@ -3663,6 +3857,7 @@ mod tests {
             catalog.insert(index, extra);
         }
         AppState {
+            site_origin: SiteOrigin::parse(seo::DEFAULT_ORIGIN).unwrap(),
             pool,
             admin_token: String::new(),
             exercises: Arc::new(catalog),
@@ -3944,8 +4139,18 @@ mod tests {
                 if matches!(slug, "word_frequencies" | "appendix") {
                     let base =
                         url::Url::parse(&format!("https://course.example{prefix}{slug}")).unwrap();
-                    for target in ["19_password_validator", "23_smart_pointers"] {
-                        assert!(html.contains(&format!("href=\"{target}\"")));
+                    let prose_links: &[&str] = if slug == "word_frequencies" {
+                        &["19_password_validator", "23_smart_pointers"]
+                    } else {
+                        // The appendix recommends the password project; smart
+                        // pointers remains available through the chapter picker.
+                        &["19_password_validator"]
+                    };
+                    for &target in prose_links {
+                        assert!(
+                            html.contains(&format!("href=\"{target}\"")),
+                            "{slug} should link to {target}"
+                        );
                         let resolved = base.join(target).unwrap();
                         assert_eq!(resolved.path(), format!("{prefix}{target}"));
                         // The file-stem links also resolve through the real
@@ -4046,6 +4251,61 @@ mod tests {
                 "expected None for {input:?}"
             );
         }
+    }
+
+    #[tokio::test]
+    async fn public_navigation_encodes_keys_without_changing_participant_links() {
+        let mut state = optional_discovery_state().await;
+        let first = "00_new topic?draft";
+        let second = "01_next topic#details";
+        for (lesson, key) in Arc::make_mut(&mut state.exercises)
+            .iter_mut()
+            .zip([first, second])
+        {
+            lesson.slug = key.into();
+            lesson.file_stem = key.into();
+        }
+        for participant in [None, Some("participant")] {
+            let href = |key: &str| {
+                participant.map_or_else(
+                    || seo::lesson_key_path(key),
+                    |id| format!("/exercise/{id}/{key}"),
+                )
+            };
+            let dashboard = rendered_dashboard(&state, participant).await;
+            // The existing curriculum remains the anonymous course entry point.
+            assert!(dashboard.contains(&format!("href=\"{}\"", href(first))));
+            assert!(dashboard.contains(&format!("href=\"{}\"", href(second))));
+            let exercise = rendered_exercise(&state, first, participant).await;
+            // The picker and next-chapter/continue-without-saving links agree.
+            assert!(
+                exercise
+                    .matches(&format!("href=\"{}\"", href(second)))
+                    .count()
+                    >= 2
+            );
+            let tour = render_tour(&state, participant.map(str::to_owned));
+            assert_eq!(tour.status(), StatusCode::OK);
+            let body = axum::body::to_bytes(tour.into_body(), usize::MAX)
+                .await
+                .unwrap();
+            let tour = String::from_utf8(body.to_vec()).unwrap();
+            assert!(tour.contains(&format!("href=\"{}\"", href(first))));
+            assert!(tour.contains("href=\"/exercise/00_numbers_in_rust\""));
+            assert!(tour.contains("href=\"/exercise/07_enums_and_pattern_matching\""));
+        }
+    }
+
+    #[test]
+    fn exercise_course_links_encode_only_the_public_chapter_path() {
+        assert_eq!(
+            exercise_course_href("99_new topic?draft/1_step", None),
+            "/exercise/99_new%20topic%3Fdraft#99_new topic?draft__1_step"
+        );
+        assert_eq!(
+            exercise_course_href("99_new topic?draft/1_step", Some("participant-id")),
+            "/exercise/participant-id/99_new topic?draft#99_new topic?draft__1_step"
+        );
     }
 
     #[test]
@@ -4208,6 +4468,7 @@ mod tests {
                 .unwrap();
         }
         AppState {
+            site_origin: SiteOrigin::parse(seo::DEFAULT_ORIGIN).unwrap(),
             pool,
             admin_token: String::new(),
             exercises: Arc::new(Vec::new()),
