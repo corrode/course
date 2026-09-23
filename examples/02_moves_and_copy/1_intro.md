@@ -4,7 +4,7 @@
 but I always found them. &mdash; Rodney Dangerfield*
 
 Most languages let you keep using a variable after you've assigned it somewhere
-else. Rust usually doesn't, and it stops you at compile time.
+else. Rust usually doesn't, and it stops you right there at compile time.
 
 ```rust
 let s = String::from("hello");

@@ -67,14 +67,14 @@ explanation = "Rust has no `var` keyword."
 
 [[questions]]
 prompt = "What is `Option<T>` for?"
-hint = "Think about what other languages reach for `null` to express."
+hint = "Think about what other languages use `null` for."
 
 [[questions.answers]]
-text = "Handling errors during execution."
+text = "Reporting why an operation failed."
 correct = false
 explanation = """
-That's `Result<T, E>`.
-`Option` only models absence, not failure."""
+That's what the error in `Result<T, E>` is for.
+`None` doesn't tell you why a value is absent."""
 
 [[questions.answers]]
 text = "Representing a value that may be absent."
@@ -229,8 +229,7 @@ hint = "It collapses a very common `match` pattern."
 text = "Checks whether the value is null."
 correct = false
 explanation = """
-Rust has no null.
-`?` only operates on `Result` (and `Option`)."""
+`?` handles `Ok` and `Err` here, not null."""
 
 [[questions.answers]]
 text = """
@@ -329,7 +328,7 @@ explanation = "There is no `new` keyword in Rust."
 text = "`let s = String(\"hello\");`"
 correct = false
 explanation = """
-Type names aren't callable like that.
+`String` isn't callable like that.
 Use `String::from(\"hello\")`."""
 
 [[questions.answers]]
@@ -363,7 +362,7 @@ explanation = "There is no `Enum` trait."
 text = "They can only be compared with `==`."
 correct = false
 explanation = """
-Usually you reach for `match` instead, and `==` only works if the enum derives \
+Usually you reach for `match` instead, and `==` only works if the enum implements \
 `PartialEq`."""
 
 [[questions]]
@@ -508,7 +507,7 @@ Here, `s` is neither moved nor explicitly dropped before the closing brace."""
 [[questions.answers]]
 text = "When the value is explicitly set to null."
 correct = false
-explanation = "Rust has no null."
+explanation = "A `String` can't be set to null."
 
 [[questions.answers]]
 text = "When the value goes out of scope."

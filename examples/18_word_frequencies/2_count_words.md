@@ -1,8 +1,8 @@
 # Counting Words
 
 Start by turning a string of text into a `HashMap<String, usize>` that records
-how many times each word appears. Words are separated by whitespace and the
-count should be case-insensitive: `"Hello"` and `"hello"` are the same word.
+how many times each word appears. Words are separated by whitespace and grouped
+by their lowercase spelling (`"Hello"` and `"hello"` count as the same word).
 
 Build the map by splitting on whitespace, lowercasing each piece, and bumping
 its counter. The `entry` API handles the lookup and default insertion together,

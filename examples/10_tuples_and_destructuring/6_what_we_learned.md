@@ -13,8 +13,9 @@ non-`Copy` element types.
 - Tuples are the lightest-weight way to return more than one value from a
   function. When the same tuple shows up in many places or grows past two or
   three fields, a `struct` can give the fields names.
-- Use `_` in a pattern to ignore a field: `let (first, _) = pair;`.
-- Move vs. copy still applies: a tuple of `String`s moves on destructure, a
-  tuple of integers copies. The element types decide.
+- Use `_` in a pattern to ignore a field: `let (first, _) = pair;` does not
+  move the second field.
+- Fields bound by value are moved or copied according to their types:
+  `String` fields move, while integer fields copy.
 - The unit type `()` is the empty tuple. It's what functions "without a return
   value" actually return.

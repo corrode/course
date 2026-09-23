@@ -84,8 +84,8 @@ collect fields and recognize escaped quotes.
 
 ## Useful tools for CSV parsing
 
-- `peekable()` lets you inspect the next character without consuming it. CSV
-  needs lookahead to distinguish an escaped quote from a closing quote.
+- `peekable()` lets you inspect the next character without consuming it. This
+  is a convenient way to distinguish an escaped quote from a closing quote.
 - `while let Some(c) = chars.next()` repeats until the iterator is exhausted.
   Unlike a `for` loop, it lets you call `chars.next()` inside the body to
   consume a second character when needed.

@@ -18,8 +18,9 @@ fn add(a: i32, b: i32) -> i32 {
 ```
 Reading left to right: `fn` says "this is a function", `add` is its name, the
 parentheses list the parameters with their types, and `-> i32` declares the
-return type. Every parameter type and the return type are spelled out
-explicitly. Rust never guesses these for you.
+return type. Parameter types must be explicit.
+**Rust does not infer the return type from the function body.**
+Omitting the return type means `()` -- a.k.a. the unit type.
 
 To call a function, write its name with the arguments in parentheses:
 

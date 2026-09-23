@@ -9,8 +9,9 @@ to collect headers and rows.
 - The same stateful parsing pattern appears in JSON, command lines, and terminal
   escape sequences. In each case, read one item, consult the current state, then
   update the state or emit a result.
-- A peekable iterator lets you inspect what comes next without consuming it, as
-  the `""` -> `"` escape rule requires.
+- A peekable iterator lets you inspect what comes next without consuming it.
+  We use it to recognize doubled quotes. Another approach is to track an
+  additional "after quote" state.
 - `match (token, state) { ... }` over a tuple expresses each state transition in
   one line. Match guards (`if cond`) handle the cases where the transition
   depends on the lookahead.

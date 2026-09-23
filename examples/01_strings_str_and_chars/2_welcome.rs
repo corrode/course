@@ -2,8 +2,8 @@ fn format_welcome_message(name: &str) -> String {
     todo!("Return 'Welcome, ' followed by the name and '!'")
 }
 
-// BTW: tests always live right next to the code they exercise. Don't worry
-// about the syntax yet.
+// In these exercises, tests live right next to the code they exercise.
+// Don't worry about the syntax yet.
 
 #[test]
 fn test_format_welcome_message() {

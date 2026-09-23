@@ -9,9 +9,10 @@ convert borrowed slices into owned strings.
 - An iterator pipeline starts with `.iter()`, `.iter_mut()`, `.into_iter()`, or
   a method such as `.chars()` or `.lines()`. Lazy adapters describe what should
   happen to each item. A consumer finishes the pipeline by asking for results.
-- `iter` yields `&T`, `iter_mut` yields `&mut T`, `into_iter` moves out of the
-  collection and yields `T`. Pick the one that matches what you intend to do
-  with each item.
+- `iter` yields `&T`, and `iter_mut` yields `&mut T`. On an owned `Vec<T>`,
+  `into_iter` consumes the vector and yields `T`. On borrowed collections, it
+  yields references instead: `&T` for `&Vec<T>` and `&mut T` for `&mut Vec<T>`.
+  Pick the one that matches what you intend to do with each item.
 - Adapters (`map`, `filter`, `take`, `skip`, ...) describe the pipeline but do
   nothing on their own. The actual work happens when a consumer (`collect`,
   `sum`, `count`, `for` loop) asks for results.

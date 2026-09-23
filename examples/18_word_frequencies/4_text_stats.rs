@@ -30,10 +30,11 @@ fn test_text_stats() {
     assert_eq!(total, 3);
     assert_eq!(unique, 3);
     assert!((avg_len - 4.66).abs() < 0.01); // Average length ≈ 4.66
-    // Side note: floats don't compare exactly (the value here is really 14/3 =
-    // 4.666...), so we check that we're close enough by taking the absolute
-    // difference and comparing to a tolerance. Direct `==` on `f64` is almost
-    // always the wrong thing.
+    // The expected 4.66 is only an approximation of 14/3 = 4.666..., so we
+    // compare the absolute difference to a tolerance.
+    //
+    // Floating-point values and arithmetic results can be rounded, but `==`
+    // compares stored values exactly; it does not allow for a small difference.
 }
 
 #[test]

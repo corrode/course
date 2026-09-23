@@ -36,8 +36,9 @@ The three "iter" methods differ in what they yield:
 
 - `.iter()` yields `&T` (immutable references). Use when reading.
 - `.iter_mut()` yields `&mut T`. Use when modifying in place.
-- `.into_iter()` yields `T` (consumes the collection). Use when you don't need
-  the original anymore.
+- `.into_iter()` on an owned `Vec<T>` consumes the vector and yields `T`.
+  On borrowed collections, it yields references instead: `&T` for `&Vec<T>`
+  and `&mut T` for `&mut Vec<T>`.
 
 Some adapters change the item type. Here, `iter` yields `&&str`, but `map`
 produces character counts of type `usize`. The compiler infers types through

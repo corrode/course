@@ -23,14 +23,19 @@ What makes Rust different is how strictly it treats them.
 
 Languages handle integer overflow differently: Java wraps, Python's integers
 grow to hold the result, and C wraps unsigned arithmetic but leaves signed
-overflow undefined. Rust panics on integer overflow in a debug build by default.
+overflow undefined. Rust rejects overflow it detects at compile time by default.
+At runtime, overflow panics in debug builds and wraps in release builds by
+default.
 
 ```rust
 let hp: u8 = 200;
 let bonus: u8 = 100;
 
-// Panics in debug mode because this would overflow
-let total = hp + bonus; 
+// Rust is clever enought to detect this overflow at compile time and rejects
+// it.
+// If overflow occurs at runtime, debug builds panic and release builds wrap by
+// default.
+let total = hp + bonus;
 ```
 
 Storing that sum in an unsigned 8-bit integer in C would give 44 instead of 300.
@@ -45,8 +50,6 @@ Rust's integer methods let you choose what happens when a result does not fit:
   it.
 
 If you want the health bar to stop at 255, use `saturating_add`.
-
-Release builds wrap by default for speed.
 
 I prefer to choose the overflow behavior explicitly rather than rely on the
 release default. These methods also give you the same behavior in debug and
