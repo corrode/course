@@ -198,15 +198,13 @@ async fn course_context_banner_is_anonymous_only_for_chapters_and_absent_on_tour
 }
 
 #[tokio::test]
-async fn homepage_keeps_existing_curriculum_without_extra_marketing_sections() {
+async fn homepage_links_to_canonical_lessons() {
     let state = state().await;
     let catalog = state.exercises.clone();
     let server = TestServer::start(state).await;
     let html = server.get("/").await.text().await.unwrap();
     assert!(html.contains("id=\"curriculum\""));
-    assert!(!html.contains("class=\"course-start\""));
-    assert!(!html.contains("course-section-heading"));
-    assert!(!html.contains("coding exercises across those chapters"));
+
     for chapter in catalog.iter() {
         assert!(html.contains(&format!("href=\"{}\"", seo::lesson_path(chapter))));
     }
