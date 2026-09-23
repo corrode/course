@@ -28,6 +28,10 @@ import time
 import urllib.error
 import urllib.request
 
+# Keep smoke checks from leaving generated files in the source tree.
+sys.dont_write_bytecode = True
+from seo_checks import verify as verify_seo
+
 
 ROOT = Path(__file__).resolve().parent.parent
 EXERCISE = "00_numbers_in_rust/3_add_health"
@@ -68,7 +72,9 @@ def stop(process):
 
 
 def run(args, cwd, env, stdin=""):
-    print("+ " + " ".join(map(str, args)), flush=True)
+    display_args = ["[redacted]" if index and args[index - 1] == "--token" else str(arg)
+                    for index, arg in enumerate(args)]
+    print("+ " + " ".join(display_args), flush=True)
     # A file avoids pipe deadlocks if a timed-out command leaves children alive.
     with tempfile.TemporaryFile(mode="w+b") as log:
         process = subprocess.Popen(
@@ -188,13 +194,13 @@ fn main() {
         for path, marker in [
             ("/", "/static/css/base.css"),
             (f"/dashboard/{token}", NAME),
-            ("/exercise/numbers_in_rust", f'data-exercise-key="{EXERCISE}"'),
-            (f"/exercise/{token}/numbers_in_rust", "Batch submission smoke check."),
+            ("/exercise/00_numbers_in_rust", f'data-exercise-key="{EXERCISE}"'),
+            (f"/exercise/{token}/00_numbers_in_rust", "Batch submission smoke check."),
             ("/admin?token=workspace-smoke-admin", NAME),
         ]:
             page = html.unescape(get(path, "text/html").decode("utf-8"))
             check(marker in page, f"{path}: missing rendered content {marker!r}")
-            if path == "/exercise/numbers_in_rust":
+            if path == "/exercise/00_numbers_in_rust":
                 check('class="solution-source"' in page and "current.saturating_add(gain)" in page,
                       "Reference solutions were not loaded from root solutions/")
         for asset, content_type in [
@@ -253,7 +259,8 @@ def main():
         base_url = f"http://127.0.0.1:{port}"
         db_path = temp / "course.db"
         env.update(CORRODE_SERVER_URL=base_url, DATABASE_URL=f"sqlite:{db_path}",
-                   CORRODE_ADMIN_TOKEN="workspace-smoke-admin", PORT=str(port), RUST_LOG="info")
+                   CORRODE_ADMIN_TOKEN="workspace-smoke-admin", PORT=str(port), RUST_LOG="info",
+                                      SITE_ORIGIN="https://course.corrode.dev")
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
 
         def get(path, content_type="text/plain"):
@@ -278,7 +285,9 @@ def main():
                         pass
                     check(time.monotonic() < deadline, "Server health did not become ready within 20s")
                     time.sleep(0.1)
-                exercise_workflows(temp / "learner", db_path, env, get)
+                verify_seo(get)
+                if "--seo-only" not in sys.argv:
+                    exercise_workflows(temp / "learner", db_path, env, get)
                 check(server.poll() is None, "Server exited during smoke checks")
             except BaseException:
                 log.flush()
@@ -288,7 +297,10 @@ def main():
                 raise
             finally:
                 stop(server)
-    print("PASS: dependency isolation, CLI workflows, migrations, and root web assets")
+    if "--seo-only" in sys.argv:
+        print("PASS: isolated server SEO smoke checks")
+    else:
+        print("PASS: dependency isolation, CLI workflows, migrations, root web assets, and SEO")
 
 
 if __name__ == "__main__":

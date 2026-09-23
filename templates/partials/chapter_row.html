@@ -14,7 +14,7 @@
     {% when Some with (u) %}
     href="/exercise/{{ u }}/{{ d.slug }}"
     {% when None %}
-    href="/exercise/{{ d.slug }}"
+    href="{{ crate::seo::lesson_key_path(d.slug.as_str()) }}"
     {% endmatch %}
     {% endmatch %}
     class="chapter-row{% if d.attempted %} attempted{% endif %}{% if d.completed %} completed{% endif %}{% if d.perfected %} perfected{% endif %}{% if d.is_quiz %} quiz{% endif %}"

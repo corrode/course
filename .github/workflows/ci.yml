@@ -56,7 +56,9 @@ jobs:
       - name: Doc tests (workspace libraries)
         run: cargo test --locked --workspace --doc
 
-      - name: Workspace smoke check
+      # Includes parsed initial HTML, JSON-LD, and sitemap XML checks against
+      # a local server and temporary database; no external crawl is required.
+      - name: Workspace and SEO smoke check
         run: python3 scripts/check-workspace.py
 
       # Verify every exercise chapter compiles and lints clean, except the

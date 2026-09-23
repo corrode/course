@@ -23,7 +23,7 @@ with (n) %}
         {%
         when
         None
-        %}href="/exercise/{{ n.slug }}"
+        %}href="{{ crate::seo::lesson_key_path(n.slug.as_str()) }}"
         {%
         endmatch
         %}

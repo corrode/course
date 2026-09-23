@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block title %}Settings · corrode Rust Course{%
-endblock %} {% block topbar_settings_href %}{% match ulid %}{% when Some with
+{% extends "base.html" %} {% block topbar_settings_href %}{% match ulid %}{% when Some with
 (u) %}/settings/{{ u }}{% when None %}/settings{% endmatch %}{% endblock %} {%
 block topbar_team_href %}{% match ulid %}{% when Some with (u) %}/dashboard/{{ u
 }}/team{% when None %}/signup{% endmatch %}{% endblock %} {% block

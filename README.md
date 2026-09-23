@@ -2,6 +2,9 @@
 
 ![Screenshot of the course page](static/assets/screenshot.jpg)
 
+[Take the free, interactive Rust course for beginners](https://course.corrode.dev/).
+Practice in your browser, with no installation or signup needed to start.
+
 A hands-on Rust course for working developers. You write small programs, the
 compiler gives you feedback, and after a couple of dozen exercises you start to
 get the hang of it.

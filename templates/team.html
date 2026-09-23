@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block title %}{{ team_label }} · Team · corrode
-Rust Course{% endblock %} {% block topbar_settings_href %}{% match viewer_ulid
+{% extends "base.html" %} {% block topbar_settings_href %}{% match viewer_ulid
 %}{% when Some with (u) %}/settings/{{ u }}{% when None %}/settings{% endmatch
 %}{% endblock %} {% block topbar_team_href %}{% match viewer_ulid %}{% when Some
 with (u) %}/dashboard/{{ u }}/team{% when None %}/signup{% endmatch %}{%

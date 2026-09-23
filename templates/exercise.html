@@ -95,7 +95,7 @@ with (u) %}
                     when
                     None
                     %}
-                    href="/exercise/{{ d.slug }}"
+                    href="{{ crate::seo::lesson_key_path(d.slug.as_str()) }}"
                     {%
                     endmatch
                     %}{%
@@ -141,6 +141,7 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
     data-course-chapter="{{ exercise.file_stem }}"
     {% match ulid %}{% when Some with (u) %}data-participant-id="{{ u }}"{% when None %}{% endmatch %}
 >
+
     <div class="exercise-header">
         <div class="chapter-eyebrow">
             {% if exercise.is_bonus() %}Bonus chapter{% else %}Chapter {{
@@ -170,11 +171,8 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         {% when None %} {% endmatch %}
     </div>
 
-    {% match ulid %} {% when None %} {% if !exercise.wants_signup_on_pass() %}
-    <div class="register-banner accent-callout">
-        👋 <a href="/signup">Sign up</a> to save your progress.
-    </div>
-    {% endif %} {% when Some with (_u) %} {% endmatch %} {% for item in items %}
+    {% include "partials/course_banner.html" %}
+    {% for item in items %}
     {% match item.kind %} {% when course_server::exercises::RenderKind::Prose
     with { html } %}
     <div class="chapter-prose exercise-prose">{{ html|safe }}</div>
@@ -609,12 +607,15 @@ when None %}Join a team{% endmatch %}{% endblock %} {% block content %}
         </form>
         <p class="inline-signup-skip">
             Just browsing?
-            <a href="/exercise/{{ n.slug }}">Continue without saving</a>.
+            <a href="{{ crate::seo::lesson_key_path(n.slug.as_str()) }}">Continue without saving</a>.
         </p>
     </section>
     {% when None %} {% endmatch %} {% else %} {% include
     "partials/next_chapter_cta.html" %} {% endif %} {% if exercise.shows_toc()
     %} {% include "partials/chapter_list.html" %} {% endif %}
+    {% if ulid.is_none() %}
+    <p class="course-return"><a href="/#curriculum">← Return to the Rust course curriculum</a></p>
+    {% endif %}
 </div>
 
 <script type="module">

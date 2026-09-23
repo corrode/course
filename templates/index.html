@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block title %}A Beginner's Guide to Rust |
-corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
+{% extends "base.html" %} {% block topbar %}{% endblock %} {% block content %}
 <div
     class="container book-dashboard"
     data-course-chapter="dashboard"
@@ -96,7 +95,7 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
             next_chapter_number }}, {% match ulid %} {% when Some with (u) %}<a
                 href="/exercise/{{ u }}/{{ next_slug }}"
                 ><em>{{ next_chapter_title }}</em></a
-            >{% when None %}<a href="/exercise/{{ next_slug }}"
+            >{% when None %}<a href="{{ crate::seo::lesson_key_path(next_slug.as_str()) }}"
                 ><em>{{ next_chapter_title }}</em></a
             >{% endmatch %}, when you're ready.
         </p>
@@ -106,7 +105,7 @@ corrode{% endblock %} {% block topbar %}{% endblock %} {% block content %}
             {{ next_chapter_number }}, {% match ulid %} {% when Some
             with (u) %}<a href="/exercise/{{ u }}/{{ next_slug }}"
                 ><em>{{ next_chapter_title }}</em></a
-            >{% when None %}<a href="/exercise/{{ next_slug }}"
+            >{% when None %}<a href="{{ crate::seo::lesson_key_path(next_slug.as_str()) }}"
                 ><em>{{ next_chapter_title }}</em></a
             >{% endmatch %}, is a good place to begin.
         </p>
@@ -325,8 +324,9 @@ fn main() {
     </section>
     {% endmatch %}
 
-    {% include "partials/chapter_list.html" %}
-
+    <div id="curriculum">
+        {% include "partials/chapter_list.html" %}
+    </div>
 
     {% if !next_slug.is_empty() %} {% match participant_name %} {% when Some
     with (_n) %}
@@ -336,7 +336,7 @@ fn main() {
             {{ next_label }} →
         </a>
         {% when None %}
-        <a class="btn book-cta-btn" href="/exercise/{{ next_slug }}">
+        <a class="btn book-cta-btn" href="{{ crate::seo::lesson_key_path(next_slug.as_str()) }}">
             {{ next_label }} →
         </a>
         {% endmatch %}
@@ -344,6 +344,10 @@ fn main() {
     </section>
     {% when None %} {% endmatch %} {% endif %}
 </div>
+
+{% if participant_name.is_none() %}
+{% include "partials/course_about.html" %}
+{% endif %}
 
 <script type="module">
     import {

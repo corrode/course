@@ -1,0 +1,7 @@
+{% if ulid.is_none() %}
+<aside class="register-banner accent-callout" aria-label="About this course">
+    👋 This is part of
+    <a href="/">{{ crate::seo::COURSE_NAME }}</a>, a friendly, interactive Rust course for working developers.
+    <a href="/signup">Sign up to save your progress</a>.
+</aside>
+{% endif %}
