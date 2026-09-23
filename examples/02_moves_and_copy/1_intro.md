@@ -1,5 +1,8 @@
 # Moves and Copy
 
+*When I was a kid my parents moved a lot,
+but I always found them. &mdash; Rodney Dangerfield*
+
 Most languages let you keep using a variable after you've assigned it somewhere
 else. Rust usually doesn't, and it stops you at compile time.
 
