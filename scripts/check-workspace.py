@@ -260,7 +260,7 @@ def main():
         db_path = temp / "course.db"
         env.update(CORRODE_SERVER_URL=base_url, DATABASE_URL=f"sqlite:{db_path}",
                    CORRODE_ADMIN_TOKEN="workspace-smoke-admin", PORT=str(port), RUST_LOG="info",
-                                      SITE_ORIGIN="https://course.corrode.dev")
+                   SITE_ORIGIN="https://course.corrode.dev")
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
 
         def get(path, content_type="text/plain"):

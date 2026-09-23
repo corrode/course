@@ -54,7 +54,6 @@ class Page(HTMLParser):
             text = "".join(self.buffer)
             if tag == "title":
                 self.titles.append(text)
-
             else:
                 self.schemas.append(json.loads(text))
             self.capture = None

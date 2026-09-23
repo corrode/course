@@ -30,8 +30,8 @@ Endler as its Person author. Lessons emit BreadcrumbList data.
 - Other responses receive `noindex, nofollow`: signup, dashboards, participant
   lessons/tours, settings, teams, admin, fragments, API responses, health checks,
   redirects, errors, and unmatched paths. Successful static assets retain their
-    existing crawl and cache behavior without an indexing header. Application HTML has
-  a matching robots meta tag, generic workspace metadata, and no canonical,
+  existing crawl and cache behavior without an indexing header. Application HTML
+  has a matching robots meta tag, generic workspace metadata, and no canonical,
   social tags, or structured data. Failed participant lookup does not change the
   requested route's classification.
 - GET/HEAD lesson aliases redirect permanently (308) directly to their existing
