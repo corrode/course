@@ -4,7 +4,7 @@
 but I always found them. &mdash; Rodney Dangerfield*
 
 Most languages let you keep using a variable after you've assigned it somewhere
-else. Rust usually doesn't, and it stops you right there at compile time.
+else. For types such as `String`, Rust rejects this with a compile error.
 
 ```rust
 let s = String::from("hello");
@@ -12,11 +12,10 @@ let t = s;          // ownership moves from s to t
 println!("{s}");    // ERROR: borrow of moved value: `s`
 ```
 
-Assigning `s` to `t` *moves* the string. There's now one owner, `t`, and `s` no
-longer names a value you can use. Reach for `s` again and the compiler points to
-the exact move that made it unavailable. With manual memory management, keeping
-two pointers to the same buffer can cause a use-after-free if one frees the
-buffer while the other still uses it.
+Assigning `s` to `t` *moves* the string. There's now one owner, `t`, and you can
+no longer use `s`. With manual memory management, keeping two pointers to the
+same buffer can cause a use-after-free if one frees the buffer while the other
+still uses it.
 
 Why move instead of copy? A `String` owns a buffer on the heap. Copying it on
 every assignment would mean duplicating that buffer over and over, silently.

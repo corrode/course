@@ -3,8 +3,8 @@
 When a function parameter has an owned type like `String` (no `&` in front),
 calling the function *moves* the argument in. The caller's binding is no longer
 usable afterwards. The value now belongs to the called function. It will be
-dropped when that function finishes unless the function hands ownership back,
-which is exactly what the return value does here.
+dropped when that function finishes unless the function returns it to the caller,
+as it does here.
 
 Read the signature as `String` in, `String` out. The function can choose to
 mutate the value it owns, but the parameter binding still needs `mut` before you

@@ -13,7 +13,7 @@ fn has_digit(password: &str) -> bool {
     password.chars().any(|c| c.is_ascii_digit())
 }
 
-/// Checks for one of exactly `!@#$%^&*`.
+/// Checks for at least one character from the set `!@#$%^&*`.
 fn has_special(password: &str) -> bool {
     password.chars().any(|c| "!@#$%^&*".contains(c))
 }

@@ -12,8 +12,8 @@ variant.
   that fits. Every arm is `pattern => expression`, and the whole `match` is
   itself an expression that produces a value.
 - `match` is exhaustive: leave a variant unhandled and the compiler refuses to
-  build. Add a new variant later and every `match` that needs updating tells you
-  exactly where.
+  build. Add a new variant later and the compiler reports any `match` that no
+  longer covers all variants.
 - `|` lets multiple patterns share an arm (`200 | 201 | 204 => ...`), and `_` is
   the catch-all when you want to ignore the rest.
 - Derive `Debug` when you want `{:?}` printing and `PartialEq` when you want

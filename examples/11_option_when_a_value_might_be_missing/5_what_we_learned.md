@@ -1,8 +1,8 @@
 # Wrapping Up `Option`
 
 You consumed `Option`s with fallbacks and combinators, produced new ones from
-string and slice operations, and chained `find` and `map` to turn a search into
-the exact return type the signature asked for.
+string and slice operations, and chained `find` and `map` to search for a value
+and transform it when found.
 
 ## What We Learned
 

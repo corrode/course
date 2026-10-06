@@ -31,8 +31,7 @@ default.
 let hp: u8 = 200;
 let bonus: u8 = 100;
 
-// Rust is clever enough to detect this overflow at compile time and rejects
-// it.
+// The compiler detects this overflow and rejects the addition.
 // If overflow occurs at runtime, debug builds panic and release builds wrap by
 // default.
 let total = hp + bonus;

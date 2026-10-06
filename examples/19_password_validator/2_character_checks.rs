@@ -13,7 +13,7 @@ fn has_digit(password: &str) -> bool {
     todo!("Check whether the password contains an ASCII digit")
 }
 
-/// Checks for one of exactly `!@#$%^&*`.
+/// Checks for at least one character from the set `!@#$%^&*`.
 fn has_special(password: &str) -> bool {
     todo!("Check whether the password contains one of !@#$%^&*")
 }
