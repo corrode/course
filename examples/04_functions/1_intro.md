@@ -6,8 +6,10 @@ Barely functioning.*
 If you’ve ever gone through customs, you know the importance of declaring what you’re bringing in.
 Rust takes that idea a step further: you declare both **what goes in and what comes out** of a function: its parameters and return type.
 
-A function body is a block expression, which means the last expression in its body is its return value.
-That means you can skip the `return` keyword and just leave off the semicolon on the last expression, which looks pretty nice.
+A function body is a block expression. Its final expression provides the return
+value when it has no trailing semicolon. That means you can skip the `return`
+keyword and just leave off the semicolon on the last expression, which looks
+pretty nice.
 
 ## Anatomy
 

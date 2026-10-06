@@ -5,27 +5,27 @@ course that respects the reader's time and existing experience. These rules
 exist to keep 20+ chapters consistent as we restructure; apply them to every
 chapter you touch.
 
-## 1. Lead with the Surprise (Top Principle)
+## 1. Lead with the Surprise
 
-For every topic, open with the angle that **differs from other languages**, the
-**bug Rust prevents** at compile/runtime that would have shipped elsewhere, or
-the way it **hands power back to the programmer**. Never spend the reader's
-attention explaining what they already know; spend it on what makes Rust feel
-different and worth it.
+Open each topic with something that makes the reader curious: a Rust-specific
+difference, a bug it prevents, or a useful choice it gives the programmer.
+Enthusiasm, opinions, and playful comparisons are welcome. Keep the technical
+claims accurate without turning the course into a reference manual.
 
-Per-chapter prompt: *"What's the empowering / bug-preventing Rust angle here?"*
+Per-chapter prompt: *"What's interesting here, and why would I want to use it?"*
 
-- `Option` → no null, no NullPointerException
-- `Result` → errors you can't forget to handle
-- ownership → memory safety without a garbage collector
-- enums → make illegal states unrepresentable
-- iterators → no off-by-one, no manual bounds checks
-- integers → overflow caught instead of silently wrapping
+- `Option` represents a value that may be absent.
+- `Result` represents success or failure in the return type.
+- Ownership determines when values are moved and dropped.
+- Enum variants can carry different data.
+- Iterators process items without manually indexing a collection.
+- Integer overflow behavior depends on the operation and build settings.
 
-Where it fits, go **problem-first**: show the bug that would compile-and-crash
-in many other languages (kept language-neutral, *"in most languages this throws
-at runtime"*), then show Rust's fix. (A per-language interactive comparison is a
-future idea, not something to author by hand now.)
+Where it fits, start with a concrete problem, then show how Rust handles it.
+Name the relevant limits: a compile error, a runtime panic, and an explicit
+error return are different outcomes. Don't imply that a feature prevents every
+bug of a given kind. A per-language interactive comparison is a future idea,
+not something to author by hand now.
 
 Make the bug concrete. Don't just say a number overflows; walk through a
 specific scenario and keep the numbers consistent between the prose and the
@@ -43,20 +43,25 @@ programming) will hit.
 
 ## 3. Voice
 
-Peer-to-peer, warm, dry wit allowed. Write like a competent colleague pairing
-with you, not a teacher addressing a class.
+Peer-to-peer, warm, opinionated, and playful. Write like a competent colleague
+pairing with you, not a teacher addressing a class.
 
-**Banned tics** (cut on sight):
+Preserve the author's humor, analogies, encouragement, and enthusiasm in both
+headlines and body prose. "Enough syntax for a moment!" and "Dad is right,
+enums are the best" are examples to keep, not AI tics to remove. Don't replace
+a distinctive passage with a bland factual summary just because it is exuberant.
+
+Watch for generic filler rather than banning enthusiasm:
 
 - emoji-laden self-deprecation (e.g. "😬👉👈")
 - "how exciting", "your first exercise"
 - "the lightbulb moment", "the elephant in the room"
 - "you might not have noticed, but…"
-- any sentence that narrates the reader's emotional state *for* them
+- repetitive reassurance that adds nothing to the explanation
 
-Dry epigraph jokes (like the integers chapter's "it's pointless") are fine.
-That's wit, not condescension. Joke with the reader, never at them, and never
-about how they're supposed to feel.
+Humor belongs throughout the course, not just in epigraphs. Jokes, personal
+opinions, and invitations to try things can make a lesson memorable. Joke with
+the reader, not at their expense.
 
 Write warm and human, the way you'd explain something to the person at the next
 desk. A few specifics that keep it that way:
@@ -66,8 +71,10 @@ desk. A few specifics that keep it that way:
   sentence, reads like clipped notes rather than writing. Prefer full sentences.
 - Keep it simple, not compressed. A slightly longer plain sentence beats a
   terse, abbreviated one. Vary the length so it has a natural rhythm.
-- Prefer plain phrasing over a cute metaphor when the metaphor makes the reader
-  work. "Most languages won't tell you" beats "most languages just shrug."
+- Remove formulaic emphasis and repetitive AI phrasing such as "names the
+  exact" or "stops you right there at compile time." Evaluate each occurrence
+  in context. This is not a ban on lively language, compiler personification,
+  or the author's opinions. When in doubt, preserve the original voice.
 - Bold sparingly. One short thesis sentence at the top of a section can be bold,
   the single claim you want the reader to remember ("Rust never mixes numeric
   types for you."). Never bold-lead the items of a bulleted list, and don't
@@ -141,10 +148,11 @@ match function names stay unchanged, such as `## factorial` or
 ``## `quoted_line`: The State Machine``. This policy does not apply to body
 text, button labels, or code blocks.
 
-For the guarantees Rust gives you, a parallel "No _Bad Thing_" phrasing reads
-well and reinforces the lead-with-surprise angle: "No Silent Overflows", "No
-Implicit Conversions". Let the heading itself carry the surprise instead of a
-flat label like "Overflow".
+Mix descriptive headings with occasional playful or motivational ones.
+"Taming CSV" and "Choose Your Separator" are welcome; not every heading needs
+to read like a reference manual. Playful explanations are welcome too.
+Avoid headlines that imply a false technical guarantee: "No Silent Overflows"
+is misleading when release builds can wrap.
 
 ## 9. Source Formatting: 80 Columns
 
@@ -171,6 +179,10 @@ the whole algorithm. Keep full solutions available as a deliberate reveal, and
 don't make using help feel like failing.
 
 ## 11. Code Comments in Examples
+
+Do not use bold formatting in code comments, including doc-comments and
+comments inside Markdown code blocks. Write the explanation in plain text;
+backticks for code identifiers are fine.
 
 Put short instructions for missing code in `todo!("Describe the task here")`
 rather than a comment next to a bare `todo!()`. The message marks the place to

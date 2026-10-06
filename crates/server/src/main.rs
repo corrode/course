@@ -324,10 +324,10 @@ struct UiExerciseStatus {
 /// Course home page for anonymous visitors and participants.
 ///
 /// Rendered in two modes:
-/// - **Anonymous** (`/`): `participant_name` and `ulid` are `None`. All
+/// - Anonymous (`/`): `participant_name` and `ulid` are `None`. All
 ///   chapters render with `completed = perfected = false`. Links from the TOC
 ///   point at `/exercise/{slug}` (no participant prefix).
-/// - **Participant** (`/dashboard/{ulid}`): both fields are `Some`. Completion
+/// - Participant (`/dashboard/{ulid}`): both fields are `Some`. Completion
 ///   marks reflect real submissions and links carry the ULID.
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -700,10 +700,10 @@ async fn load_submission_history_page(
 ///
 /// Two viewer modes share this template:
 ///
-/// - **Admin** (`is_admin = true`): `admin_token` is `Some` so links back to
+/// - Admin (`is_admin = true`): `admin_token` is `Some` so links back to
 ///   `/admin` carry the token, member rows show ULIDs and a "View dashboard"
 ///   link, and the "Unassigned" bucket is reachable.
-/// - **Participant** (`is_admin = false`): no admin chrome, the member matching
+/// - Participant (`is_admin = false`): no admin chrome, the member matching
 ///   `viewer_ulid` is highlighted as `is_self`, and `back_href` returns the
 ///   user to their own dashboard.
 #[derive(Template)]
@@ -1428,7 +1428,7 @@ async fn signup_page() -> impl IntoResponse {
 /// without the user typing anything.
 async fn signup_page_with_team(AxumPath(team_slug): AxumPath<String>) -> impl IntoResponse {
     // Defensive trim. Empty slugs degrade to the public form rather than
-    // rendering a banner that says "Signing up with **(blank)**".
+    // rendering a banner that says "Signing up with (blank)".
     let trimmed = team_slug.trim();
     let team = if trimmed.is_empty() {
         None

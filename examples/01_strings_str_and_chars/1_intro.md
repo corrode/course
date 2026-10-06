@@ -31,10 +31,9 @@ you can borrow a value without owning it. The useful mental model is "one owner,
 many borrows."
 
 This split lets you pass text around without copying it or losing track of who
-owns it. A function that just *reads* text takes `&str` and Rust avoids any
-unnecessary copies or allocations. A function that *produces* new text returns
-`String` and returns ownership to the caller, who can then decide what to do
-with it.
+owns it. Taking `&str` lets a function read text without copying it or
+allocating a new buffer. A function that *produces* new text returns `String`
+and returns ownership to the caller, who can then decide what to do with it.
 
 You'll see this pattern again and again:
 

@@ -15,7 +15,7 @@ Jake,35,Doctor
 ```
 
 Each line is a record and each comma separates fields: name, age, and occupation.
-Just split by commas and you are d... 
+Just split by commas and you are d...
 
 ```csv
 Joe,30,Artist,Painter,Writer
@@ -40,7 +40,8 @@ From [csv-spec.org](https://csv-spec.org/):
 > closest thing there is to a specification is RFC 4180.
 
 This should tell you everything you need to know about CSV.
-And yet! We will attempt to tame this beast and write a parser that can handle most of the common cases.
+And yet! We will attempt to tame this beast and write a parser for a subset of
+CSV, including quoted fields and escaped quotes.
 
 ## Taming CSV
 
@@ -50,7 +51,7 @@ quoted field?" A comma inside quotes is data; a comma outside quotes is a
 separator.
 
 This "for each character, update some state, occasionally emit a result" pattern
-is called a *state machine*. It comes up in any non-trivial parsing task: JSON,
+is called a *state machine*. It comes up in various parsing tasks: JSON,
 command-line arguments, terminal escape sequences, markup languages, the legacy
 data format used by your favorite spreadsheet program.
 

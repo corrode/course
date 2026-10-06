@@ -12,7 +12,7 @@ The [official book](https://doc.rust-lang.org/book/) is excellent, and you shoul
 is [Rust by Example](https://doc.rust-lang.org/rust-by-example/), and plenty of
 others.
 
-Nonetheless, there is some ceremony involved in getting started with any of the other resources.
+Some resources require setup before you can run the examples.
 You might have to set up a project, install the Rust toolchain, or figure out how to run tests.
 What was missing, for me, was a URL I could just open in a browser and write code immediately.
 And you'd get instant feedback on how you're doing.

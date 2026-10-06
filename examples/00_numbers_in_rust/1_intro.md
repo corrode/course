@@ -4,7 +4,8 @@
 The float replied, “At least I have a point.”*
 
 In Rust, numbers don't always get along.
-Numeric types are kept distinct, and Rust won't let you mix them without an explicit conversion.
+Numeric types are kept distinct, and Rust won't let you mix them without an
+explicit conversion.
 The types themselves are familiar:
 
 ```rust
@@ -19,7 +20,7 @@ let price: f64 = 19.99;       // floating point (f32 is the smaller one)
 These are the numeric types you'll encounter most often.
 What makes Rust different is how strictly it treats them.
 
-## No Silent Overflows
+## Integer Overflow
 
 Languages handle integer overflow differently: Java wraps, Python's integers
 grow to hold the result, and C wraps unsigned arithmetic but leaves signed
@@ -65,8 +66,7 @@ a cast that may lose information, `.into()` handles infallible conversions, and
 let count: u32 = 42;
 let price: f64 = 19.99;
 
-// No implicit conversions! 
-// We have to spell out the cast here. 
+// Convert count to f64 before multiplying.
 let total = price * count as f64; 
 ```
 

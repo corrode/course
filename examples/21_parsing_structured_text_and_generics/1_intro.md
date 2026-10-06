@@ -65,9 +65,9 @@ The file parser will need to distinguish ignorable lines from malformed entries.
 The parser uses one error type, the custom `ParseError` enum, so `?` propagates
 it cleanly. Real programs often mix error types: read the file from disk and you
 get a `std::io::Error`; parse its contents and you get your own `ParseError`. A
-function using `?` insists on one error type, so you need something both can
-turn into. This is a fiddly part of `?`: when it won't compile, check the error
-types as well as the success types.
+function using `?` needs a return error type that both can convert into. This
+is a fiddly part of `?`: when it won't compile, check the error types as well as
+the success types.
 
 `Box<T>` puts a value on the heap and owns it. `Box<dyn std::error::Error>` can
 hold different error types through a shared interface. An owned error

@@ -3,9 +3,9 @@
 ///
 /// The rules, in plain English:
 ///
-/// - If Ferris is **very** hungry (8 or more), he's `"Hangry"`, no matter how
+/// - If Ferris is very hungry (8 or more), he's `"Hangry"`, no matter how
 ///   many naps he's had.
-/// - Otherwise, if he's also a bit hungry (5 or more) **and** has had no naps,
+/// - Otherwise, if he's also a bit hungry (5 or more) and has had no naps,
 ///   he's `"Grumpy"`.
 /// - Otherwise, if he's had three or more naps, he's `"Sleepy"`.
 /// - Otherwise, he's `"Content"`.

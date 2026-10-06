@@ -8,10 +8,10 @@
 //!
 //! Two formats are supported:
 //!
-//! * **Single-step (legacy):** only a `main.rs` and (optionally) one or more
+//! * Single-step (legacy): only a `main.rs` and (optionally) one or more
 //!   `<n>_<slug>.md` notes. The chapter is treated as a single code step whose
 //!   source is `main.rs`; notes render before its editor.
-//! * **Multi-step:** sibling `<n>_<slug>.rs` files alongside (or instead of)
+//! * Multi-step: sibling `<n>_<slug>.rs` files alongside (or instead of)
 //!   `main.rs`. Each `.rs` file becomes a `CodeStep`, ordered with the notes by
 //!   its leading number. A generated `main.rs` (built by `build.rs`) aggregates
 //!   the step files as `mod _N_slug;` so `cargo test --example <chapter>` still
@@ -38,8 +38,8 @@ pub struct Quiz {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Question {
-    /// The question itself, in markdown (rendered server-side, so inline code,
-    /// `**bold**`, and fenced code blocks all work).
+    /// The question itself, in Markdown. Server-side rendering supports inline
+    /// code, bold text, and fenced code blocks.
     pub prompt: String,
     /// Optional nudge, collapsed until the learner chooses to open it.
     #[serde(default)]
@@ -319,7 +319,7 @@ pub struct ChapterDirectives {
 pub struct Exercise {
     /// 1-based, human-facing chapter number used in headings, the TOC, and the
     /// chapter picker. Assigned in [`scan_dir`] as a running ordinal over the
-    /// non-bonus chapters in disk order, so the first chapter is **1** and
+    /// non-bonus chapters in disk order, so the first chapter is 1 and
     /// hiding a bonus chapter leaves no gap in the sequence. Bonus chapters get
     /// `0`, which templates render as "Bonus" instead of a number.
     pub number: u8,
