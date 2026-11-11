@@ -246,7 +246,16 @@ Admin routes:
 - `POST /admin/participants/{ulid}/team-token`
 - `GET /admin/team-members`
 - `GET /admin/team/{slug}`
+- `POST /admin/team/{slug}/rename?token=…`: rename all members' team labels
 - `GET /admin/team-unassigned`
+
+The dashboard and admin team pages offer a rename form for populated teams.
+Renaming validates the new slug and checks for a conflicting team inside a
+SQLite `BEGIN IMMEDIATE` transaction before updating participants. It preserves
+member IDs and submissions and redirects to the new team page. Existing teams
+cannot be merged through this action. Team names remain case-sensitive, and
+blank names cannot be used to unassign a whole team. There is no signup-link
+alias: an old link still registers participants under the old label.
 
 JSON API routes:
 

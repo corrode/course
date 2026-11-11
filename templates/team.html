@@ -27,6 +27,16 @@ block topbar_active_team %}is-active{% endblock %} {% block content %}
         </p>
     </header>
 
+    {% if is_admin && !is_unassigned && !members.is_empty() %}
+    {% match admin_token %}
+    {% when Some with (token) %}
+    {% let rename_slug = team_label.as_str() %}
+    {% let rename_admin_token = token.as_str() %}
+    {% include "partials/team_rename.html" %}
+    {% when None %}
+    {% endmatch %}
+    {% endif %}
+
     <section class="admin-section" aria-label="Roster">
         <div class="section-head">
             <span class="section-eyebrow">Participants</span>
@@ -181,6 +191,9 @@ block topbar_active_team %}is-active{% endblock %} {% block content %}
 </div>
 
 <script type="module" src="/static/dist/readonly-rust-editor.js"></script>
+{% if is_admin %}
+<script type="module" src="/static/js/admin-teams.js"></script>
+{% endif %}
 
 <style>
     /* Page-specific team-page chrome only. Shared book, admin, section,

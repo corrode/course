@@ -1161,6 +1161,7 @@ fn build_router_with_static(app_state: AppState, static_dir: &std::path::Path) -
         )
         .route("/admin/team-members", get(admin_team_members))
         .route("/admin/team/{slug}", get(admin_team_page))
+        .route("/admin/team/{slug}/rename", post(admin_rename_team))
         .route("/admin/team-unassigned", get(admin_team_unassigned_page))
         .route("/dashboard/{ulid}/team", get(participant_team_page))
         .nest("/api", api_routes)
@@ -2380,7 +2381,7 @@ async fn admin_team_members(
     )
 }
 
-/// Form data for `POST /admin/participants/{ulid}/team-token`.
+/// Form data for participant team assignment and bulk team renaming.
 #[derive(Deserialize)]
 struct TeamTokenForm {
     team_token: String,
@@ -2437,6 +2438,81 @@ async fn admin_set_team_token(
         }
         Err(err) => {
             error!("Failed to update participant team token: {err}");
+            (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
+        }
+    }
+}
+
+/// Rename every member's team token without merging existing teams.
+async fn admin_rename_team(
+    AxumPath(slug): AxumPath<String>,
+    Query(query): Query<AdminQuery>,
+    State(state): State<AppState>,
+    axum::Form(form): axum::Form<TeamTokenForm>,
+) -> Response {
+    if query.token != state.admin_token {
+        return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
+    }
+    let Ok(old_token) = TeamToken::try_from(slug.as_str()) else {
+        return (StatusCode::BAD_REQUEST, "Invalid team slug").into_response();
+    };
+    let new_token = match TeamToken::try_from(form.team_token.as_str()) {
+        Ok(token) => token,
+        Err(err) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                format!("Invalid team_token: {err}"),
+            )
+                .into_response();
+        }
+    };
+
+    let result = async {
+        // Acquire the write lock before either check so another writer cannot
+        // populate the destination between the collision check and the update.
+        let mut transaction = state.pool.begin_with("BEGIN IMMEDIATE").await?;
+        let source_exists: bool =
+            sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM participants WHERE team_token = ?)")
+                .bind(old_token.as_str())
+                .fetch_one(&mut *transaction)
+                .await?;
+        if !source_exists {
+            return Ok(StatusCode::NOT_FOUND);
+        }
+        if old_token != new_token {
+            let destination_exists: bool = sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM participants WHERE team_token = ?)",
+            )
+            .bind(new_token.as_str())
+            .fetch_one(&mut *transaction)
+            .await?;
+            if destination_exists {
+                return Ok(StatusCode::CONFLICT);
+            }
+            sqlx::query("UPDATE participants SET team_token = ? WHERE team_token = ?")
+                .bind(new_token.as_str())
+                .bind(old_token.as_str())
+                .execute(&mut *transaction)
+                .await?;
+        }
+        transaction.commit().await?;
+        Ok::<_, sqlx::Error>(StatusCode::SEE_OTHER)
+    }
+    .await;
+
+    match result {
+        Ok(StatusCode::NOT_FOUND) => (StatusCode::NOT_FOUND, "Team not found").into_response(),
+        Ok(StatusCode::CONFLICT) => {
+            (StatusCode::CONFLICT, "Destination team already exists").into_response()
+        }
+        Ok(_) => axum::response::Redirect::to(&format!(
+            "/admin/team/{}?token={}",
+            new_token.as_str(),
+            encode_query_value(&query.token)
+        ))
+        .into_response(),
+        Err(err) => {
+            error!("Failed to rename team: {err}");
             (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
         }
     }
@@ -4499,6 +4575,366 @@ mod tests {
         .execute(&state.pool)
         .await
         .unwrap();
+    }
+
+    mod team_rename {
+        use super::*;
+
+        struct Server {
+            base: String,
+            client: reqwest::Client,
+            task: tokio::task::JoinHandle<()>,
+        }
+
+        impl Drop for Server {
+            fn drop(&mut self) {
+                self.task.abort();
+            }
+        }
+
+        impl Server {
+            async fn start(state: AppState) -> Self {
+                let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+                let base = format!("http://{}", listener.local_addr().unwrap());
+                let task = tokio::spawn(async move {
+                    axum::serve(listener, build_router(state)).await.unwrap();
+                });
+                Self {
+                    base,
+                    client: reqwest::Client::builder()
+                        .no_proxy()
+                        .redirect(reqwest::redirect::Policy::none())
+                        .timeout(std::time::Duration::from_secs(10))
+                        .build()
+                        .unwrap(),
+                    task,
+                }
+            }
+
+            async fn rename(
+                &self,
+                slug: &str,
+                token: Option<&str>,
+                new_token: Option<&str>,
+            ) -> reqwest::Response {
+                let mut url = format!(
+                    "{}/admin/team/{}/rename",
+                    self.base,
+                    encode_query_value(slug)
+                );
+                if let Some(token) = token {
+                    write!(url, "?token={}", encode_query_value(token)).unwrap();
+                }
+                let body = new_token.map_or_else(String::new, |value| {
+                    url::form_urlencoded::Serializer::new(String::new())
+                        .append_pair("team_token", value)
+                        .finish()
+                });
+                self.client
+                    .post(url)
+                    .header("content-type", "application/x-www-form-urlencoded")
+                    .body(body)
+                    .send()
+                    .await
+                    .unwrap()
+            }
+        }
+
+        async fn state() -> AppState {
+            let mut state = team_query_state().await;
+            state.admin_token = "rename-admin".to_string();
+            state
+        }
+
+        async fn participants(
+            state: &AppState,
+        ) -> Vec<(String, String, Option<String>, Option<String>)> {
+            sqlx::query_as("SELECT id, name, team_token, created_at FROM participants ORDER BY id")
+                .fetch_all(&state.pool)
+                .await
+                .unwrap()
+        }
+
+        #[derive(Debug, PartialEq, sqlx::FromRow)]
+        struct SubmissionSnapshot {
+            id: String,
+            participant_id: String,
+            exercise_name: String,
+            source_code: String,
+            tests_passed: bool,
+            clippy_passed: Option<bool>,
+            fmt_passed: Option<bool>,
+            submitted_at: Option<String>,
+            content_hash: Option<String>,
+        }
+
+        async fn submissions(state: &AppState) -> Vec<SubmissionSnapshot> {
+            sqlx::query_as("SELECT * FROM submissions ORDER BY id")
+                .fetch_all(&state.pool)
+                .await
+                .unwrap()
+        }
+
+        async fn assert_error(response: reqwest::Response, status: StatusCode, message: &str) {
+            assert_eq!(response.status(), status);
+            assert!(
+                response.headers()["content-type"]
+                    .to_str()
+                    .unwrap()
+                    .starts_with("text/plain")
+            );
+            assert!(response.headers().get("location").is_none());
+            let body = response.text().await.unwrap();
+            assert!(body.contains(message), "{body}");
+        }
+
+        #[tokio::test]
+        async fn renames_all_members_preserving_participants_submissions_and_progress() {
+            let state = state().await;
+            for (id, participant, passed, timestamp) in [
+                ("pass", "member-a", true, "2026-09-18 12:00:00"),
+                ("fail", "member-a", false, "2026-09-19 12:00:00"),
+                ("bob", "member'b", true, "2026-09-20 12:00:00"),
+                ("other", "outsider", true, "2026-09-21 12:00:00"),
+                ("solo", "unassigned", false, "2026-09-22 12:00:00"),
+            ] {
+                team_query_submission(&state, id, participant, "chapter/step", passed, timestamp)
+                    .await;
+            }
+            sqlx::query("UPDATE submissions SET content_hash = 'preserved-hash' WHERE id = 'pass'")
+                .execute(&state.pool)
+                .await
+                .unwrap();
+            let mut expected_participants = participants(&state).await;
+            for participant in &mut expected_participants {
+                if participant.2.as_deref() == Some("workshop") {
+                    participant.2 = Some("Ecosmic".to_string());
+                }
+            }
+            let before_submissions = submissions(&state).await;
+            let mut before_progress = Vec::new();
+            for id in ["member-a", "member'b", "outsider", "unassigned"] {
+                before_progress.push((id, load_step_progress(&state.pool, id).await.unwrap()));
+            }
+            assert!(before_progress[0].1["chapter/step"].completed);
+            assert!(!before_progress[0].1["chapter/step"].submitted_passed);
+
+            let server = Server::start(state.clone()).await;
+            let response = server
+                .rename("workshop", Some(&state.admin_token), Some("  Ecosmic  "))
+                .await;
+            assert_eq!(response.status(), StatusCode::SEE_OTHER);
+            assert_eq!(
+                response.headers()["location"],
+                "/admin/team/Ecosmic?token=rename-admin"
+            );
+            assert_eq!(participants(&state).await, expected_participants);
+            assert_eq!(submissions(&state).await, before_submissions);
+            for (id, before) in before_progress {
+                let after = load_step_progress(&state.pool, id).await.unwrap();
+                assert_eq!(after.len(), before.len());
+                for (step, before) in before {
+                    let after = &after[&step];
+                    assert_eq!(after.attempted, before.attempted);
+                    assert_eq!(after.completed, before.completed);
+                    assert_eq!(after.perfected, before.perfected);
+                    assert_eq!(after.submitted_code, before.submitted_code);
+                    assert_eq!(after.submitted_passed, before.submitted_passed);
+                }
+            }
+            let old = TeamToken::try_from("workshop").unwrap();
+            assert!(
+                load_team_member_summaries(&state, Some(&old))
+                    .await
+                    .unwrap()
+                    .is_empty()
+            );
+            let new = TeamToken::try_from("Ecosmic").unwrap();
+            assert_eq!(
+                load_team_member_summaries(&state, Some(&new))
+                    .await
+                    .unwrap()
+                    .len(),
+                2
+            );
+        }
+
+        #[tokio::test]
+        async fn rejects_occupied_destinations_including_case_only_without_mutation() {
+            let state = state().await;
+            sqlx::query("INSERT INTO participants (id, name, team_token) VALUES ('case', 'Case', 'Workshop')")
+                .execute(&state.pool).await.unwrap();
+            let before = participants(&state).await;
+            let server = Server::start(state.clone()).await;
+            for destination in ["other-team", "Workshop"] {
+                let response = server
+                    .rename("workshop", Some(&state.admin_token), Some(destination))
+                    .await;
+                assert_error(
+                    response,
+                    StatusCode::CONFLICT,
+                    "Destination team already exists",
+                )
+                .await;
+                assert_eq!(participants(&state).await, before);
+            }
+        }
+
+        #[tokio::test]
+        async fn existing_same_name_is_a_no_op() {
+            let state = state().await;
+            let before = participants(&state).await;
+            let server = Server::start(state.clone()).await;
+            let response = server
+                .rename("workshop", Some(&state.admin_token), Some("workshop"))
+                .await;
+            assert_eq!(response.status(), StatusCode::SEE_OTHER);
+            assert_eq!(
+                response.headers()["location"],
+                "/admin/team/workshop?token=rename-admin"
+            );
+            assert_eq!(participants(&state).await, before);
+        }
+
+        #[tokio::test]
+        async fn case_only_rename_preserves_case_sensitive_identity() {
+            let state = state().await;
+            sqlx::query("INSERT INTO participants (id, name, team_token) VALUES ('case', 'Case', 'WORKSHOP')")
+                .execute(&state.pool).await.unwrap();
+            let mut expected = participants(&state).await;
+            for participant in &mut expected {
+                if participant.2.as_deref() == Some("workshop") {
+                    participant.2 = Some("Workshop".to_string());
+                }
+            }
+            let server = Server::start(state.clone()).await;
+            let response = server
+                .rename("workshop", Some(&state.admin_token), Some("Workshop"))
+                .await;
+            assert_eq!(response.status(), StatusCode::SEE_OTHER);
+            assert_eq!(
+                response.headers()["location"],
+                "/admin/team/Workshop?token=rename-admin"
+            );
+            assert_eq!(participants(&state).await, expected);
+        }
+
+        #[tokio::test]
+        async fn missing_source_is_not_found_even_for_no_op_or_occupied_destination() {
+            let state = state().await;
+            let before = participants(&state).await;
+            let server = Server::start(state.clone()).await;
+            for (source, destination) in [
+                ("missing", "new-team"),
+                ("missing", "missing"),
+                ("missing", "other-team"),
+                ("Workshop", "new-team"),
+            ] {
+                let response = server
+                    .rename(source, Some(&state.admin_token), Some(destination))
+                    .await;
+                assert_error(response, StatusCode::NOT_FOUND, "Team not found").await;
+                assert_eq!(participants(&state).await, before);
+            }
+        }
+
+        #[tokio::test]
+        async fn rejects_blank_invalid_and_missing_names_without_mutation() {
+            let state = state().await;
+            let before = participants(&state).await;
+            let server = Server::start(state.clone()).await;
+            let too_long = "x".repeat(65);
+            for destination in [
+                "", " \t\n ", "team one", "team/one", "<script>", "équipe", &too_long,
+            ] {
+                let response = server
+                    .rename("workshop", Some(&state.admin_token), Some(destination))
+                    .await;
+                assert_error(response, StatusCode::BAD_REQUEST, "Invalid team_token:").await;
+            }
+            for source in [" ", "team/one", "<script>", "équipe", &too_long] {
+                let response = server
+                    .rename(source, Some(&state.admin_token), Some("new-team"))
+                    .await;
+                assert_error(response, StatusCode::BAD_REQUEST, "Invalid team slug").await;
+            }
+            let response = server
+                .rename("workshop", Some(&state.admin_token), None)
+                .await;
+            assert_error(response, StatusCode::UNPROCESSABLE_ENTITY, "team_token").await;
+            assert_eq!(participants(&state).await, before);
+        }
+
+        #[tokio::test]
+        async fn rejects_wrong_and_missing_admin_tokens_without_mutation() {
+            let state = state().await;
+            let before = participants(&state).await;
+            let server = Server::start(state.clone()).await;
+            for token in ["wrong", ""] {
+                let response = server
+                    .rename("workshop", Some(token), Some("new-team"))
+                    .await;
+                assert_error(response, StatusCode::FORBIDDEN, "Invalid admin token").await;
+            }
+            let response = server.rename("workshop", None, Some("new-team")).await;
+            assert_error(response, StatusCode::BAD_REQUEST, "token").await;
+            assert_eq!(participants(&state).await, before);
+        }
+
+        #[tokio::test]
+        async fn redirect_query_round_trips_special_character_admin_token() {
+            let mut state = state().await;
+            state.admin_token = "secret +&=?#%/é".to_string();
+            let server = Server::start(state.clone()).await;
+            let response = server
+                .rename("workshop", Some(&state.admin_token), Some("Ecosmic"))
+                .await;
+            assert_eq!(response.status(), StatusCode::SEE_OTHER);
+            let location = response.headers()["location"].to_str().unwrap();
+            assert_eq!(
+                location,
+                "/admin/team/Ecosmic?token=secret+%2B%26%3D%3F%23%25%2F%C3%A9"
+            );
+            let destination = url::Url::parse(&server.base)
+                .unwrap()
+                .join(location)
+                .unwrap();
+            assert_eq!(destination.path(), "/admin/team/Ecosmic");
+            assert!(destination.fragment().is_none());
+            assert_eq!(
+                destination.query_pairs().collect::<Vec<_>>(),
+                vec![("token".into(), state.admin_token.as_str().into())]
+            );
+            let page = server.client.get(destination).send().await.unwrap();
+            assert_eq!(page.status(), StatusCode::OK);
+        }
+
+        #[tokio::test]
+        async fn database_failure_rolls_back_all_members() {
+            let state = state().await;
+            let before = participants(&state).await;
+            // FAIL leaves earlier row updates in place until the transaction rolls back.
+            sqlx::query(
+                "CREATE TRIGGER fail_second_rename BEFORE UPDATE OF team_token ON participants \
+                         WHEN NEW.team_token = 'new-team' AND \
+                         EXISTS(SELECT 1 FROM participants WHERE team_token = 'new-team') \
+                         BEGIN SELECT RAISE(FAIL, 'injected rename failure'); END",
+            )
+            .execute(&state.pool)
+            .await
+            .unwrap();
+            let server = Server::start(state.clone()).await;
+            let response = server
+                .rename("workshop", Some(&state.admin_token), Some("new-team"))
+                .await;
+            assert_error(
+                response,
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Database error",
+            )
+            .await;
+            assert_eq!(participants(&state).await, before);
+        }
     }
 
     #[tokio::test]
