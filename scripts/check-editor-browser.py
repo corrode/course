@@ -40,6 +40,8 @@ const send = (method, params = {}) => new Promise((resolve, reject) => {
 try {
   await send('Emulation.setDeviceMetricsOverride', {width: +width, height: +height, deviceScaleFactor: 1, mobile: false});
   await send('Emulation.setEmulatedMedia', {features: [{name: 'prefers-reduced-motion', value: motion}]});
+  // Headless targets can otherwise retain an active element in an unfocused document.
+  await send('Emulation.setFocusEmulationEnabled', {enabled: true});
   await send('Page.navigate', {url});
   const deadline = Date.now() + 30000;
   let result;
