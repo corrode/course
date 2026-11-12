@@ -3,6 +3,7 @@
 import argparse
 import functools
 import json
+import os
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import shutil
@@ -62,16 +63,41 @@ class QuietHandler(SimpleHTTPRequestHandler):
         pass
 
 
+class BrowserStartupError(RuntimeError):
+    pass
+
+
+def find_chrome(override=None):
+    explicit = override or os.environ.get("CHROME_BIN")
+    if explicit:
+        return shutil.which(explicit) or explicit
+    for name in ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser"):
+        if executable := shutil.which(name):
+            return executable
+    return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+
 def browser_check(chrome, url, size, screenshot, motion):
     with tempfile.TemporaryDirectory(prefix="course-editor-browser-") as profile:
         command = [chrome, "--headless=new", "--disable-gpu", "--no-first-run", "--disable-background-networking", "--remote-debugging-port=0", f"--user-data-dir={profile}", "about:blank"]
-        with subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) as browser:
+        # A file avoids filling a pipe while Chrome runs; retain stderr for
+        # launch failures (notably distro wrappers that exit before starting).
+        with tempfile.TemporaryFile(mode="w+t") as stderr:
+            try:
+                browser = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=stderr)
+            except OSError as error:
+                raise BrowserStartupError(f"Could not start Chrome: {error}") from error
             try:
                 port_file = Path(profile) / "DevToolsActivePort"
                 deadline = time.monotonic() + 10
                 while not port_file.exists():
-                    if browser.poll() is not None or time.monotonic() >= deadline:
-                        raise RuntimeError("Chrome did not open its debugging port within 10 seconds")
+                    exit_code = browser.poll()
+                    if exit_code is not None or time.monotonic() >= deadline:
+                        reason = (f"Chrome exited before opening its debugging port (exit code {exit_code})"
+                                  if exit_code is not None else
+                                  "Chrome did not open its debugging port within 10 seconds (process still running)")
+                        stderr.seek(0)
+                        raise BrowserStartupError(f"{reason}\nChrome stderr:\n{stderr.read().strip() or '(empty)'}")
                     time.sleep(0.05)
                 port = port_file.read_text().splitlines()[0]
                 with urlopen(f"http://127.0.0.1:{port}/json/list", timeout=5) as response:
@@ -91,13 +117,26 @@ def browser_check(chrome, url, size, screenshot, motion):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--chrome", default=shutil.which("chromium") or shutil.which("google-chrome") or "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+    parser.add_argument("--chrome", help="Chrome executable (overrides CHROME_BIN and automatic discovery)")
     parser.add_argument("--screenshot", type=Path, help="Screenshot of the workflow fixture")
     parser.add_argument("--screenshot-dir", type=Path, help="Capture production layout fixtures")
     parser.add_argument("--suite", choices=["all", "workflow", "layout"], default="all")
     parser.add_argument("--template", choices=["exercise", "playground", "tour", "index"], help="Limit layout checks to one template")
     parser.add_argument("--motion", choices=["reduce", "no-preference"], default="reduce")
     args = parser.parse_args()
+    chrome = find_chrome(args.chrome)
+    print(f"Chrome executable: {chrome}", flush=True)
+    try:
+        version = subprocess.run([chrome, "--version"], capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        print(f"Could not query Chrome version: {error}")
+        return 1
+    print(f"Chrome version: {version.stdout.strip() or '(no stdout)'}", flush=True)
+    if version.stderr.strip():
+        print(f"Chrome version stderr:\n{version.stderr.strip()}")
+    if version.returncode:
+        print(f"Chrome version check failed (exit code {version.returncode}); no browser cases started")
+        return 1
     root = Path(__file__).resolve().parent.parent
     server = ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(QuietHandler, directory=str(root)))
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -119,7 +158,10 @@ def main():
                 screenshot.parent.mkdir(parents=True, exist_ok=True)
             url = f"http://127.0.0.1:{server.server_port}/scripts/editor-browser.html{query}"
             try:
-                result = browser_check(args.chrome, url, (width, height), screenshot, args.motion)
+                result = browser_check(chrome, url, (width, height), screenshot, args.motion)
+            except BrowserStartupError as error:
+                print(f"{name}: {error}\nStopping: Chrome cannot start; remaining browser cases skipped")
+                return 1
             except (RuntimeError, subprocess.TimeoutExpired) as error:
                 print(f"{name}: {error}")
                 failed = True
