@@ -10,4 +10,6 @@ fn test_parse_positive_integer() {
     assert_eq!(parse_positive_integer("0"), 0);
     assert_eq!(parse_positive_integer("invalid"), 0);
     assert_eq!(parse_positive_integer("-5"), 0);
+    assert_eq!(parse_positive_integer("4294967295"), u32::MAX);
+    assert_eq!(parse_positive_integer("4294967296"), 0);
 }

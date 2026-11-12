@@ -10,7 +10,8 @@ a missing value is an error you need to explain. Here, I'll keep error handling
 out of the exercise: return `0` if the string isn't a valid number.
 
 `u32` can't be negative, so `"-5".parse::<u32>()` fails and you should return
-`0` for it too.
+`0` for it too. Numbers above `u32::MAX` (4,294,967,295) fail as well: return
+`0` for `"4294967296"`, not the maximum.
 
 ## Useful from the Standard Library
 
