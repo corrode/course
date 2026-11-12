@@ -7,6 +7,7 @@ import os
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import tempfile
 import threading
@@ -84,7 +85,7 @@ def browser_check(chrome, url, size, screenshot, motion):
         # launch failures (notably distro wrappers that exit before starting).
         with tempfile.TemporaryFile(mode="w+t") as stderr:
             try:
-                browser = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=stderr)
+                browser = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=stderr, start_new_session=True)
             except OSError as error:
                 raise BrowserStartupError(f"Could not start Chrome: {error}") from error
             try:
@@ -100,19 +101,41 @@ def browser_check(chrome, url, size, screenshot, motion):
                         raise BrowserStartupError(f"{reason}\nChrome stderr:\n{stderr.read().strip() or '(empty)'}")
                     time.sleep(0.05)
                 port = port_file.read_text().splitlines()[0]
-                with urlopen(f"http://127.0.0.1:{port}/json/list", timeout=5) as response:
-                    target = next(page for page in json.load(response) if page["type"] == "page")
+                while True:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        stderr.seek(0)
+                        raise BrowserStartupError(
+                            f"Chrome opened its debugging port but no page target became ready within 10 seconds "
+                            f"(exit code {browser.poll()})\nChrome stderr:\n{stderr.read().strip() or '(empty)'}"
+                        )
+                    with urlopen(f"http://127.0.0.1:{port}/json/list", timeout=min(5, remaining)) as response:
+                        target = next((page for page in json.load(response)
+                                       if page["type"] == "page" and page.get("webSocketDebuggerUrl")), None)
+                    if target is not None:
+                        break
+                    time.sleep(min(0.05, remaining))
                 result = subprocess.run(["node", "--input-type=module", "-e", CDP_DRIVER, target["webSocketDebuggerUrl"], url, str(size[0]), str(size[1]), str(screenshot.resolve()) if screenshot else "", motion], capture_output=True, text=True, timeout=45)
                 if result.returncode:
                     raise RuntimeError(result.stderr)
                 return json.loads(result.stdout)
             finally:
-                browser.terminate()
+                # Chrome helpers may outlive the launcher and keep writing to
+                # the profile. Stop the whole isolated group before deleting it.
+                try:
+                    os.killpg(browser.pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
                 try:
                     browser.wait(timeout=5)
                 except subprocess.TimeoutExpired:
-                    browser.kill()
-                    browser.wait()
+                    pass
+                finally:
+                    try:
+                        os.killpg(browser.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                    browser.wait(timeout=5)
 
 
 def main():

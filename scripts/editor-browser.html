@@ -337,7 +337,14 @@ if (params.has("layout")) {
       topbar.style.height = "";
       await tick();
     }
+    const focusState = () => ({
+      documentFocused: document.hasFocus(), editorFocused: view.hasFocus,
+      activeElement: document.activeElement?.tagName + "." + document.activeElement?.className,
+      editorIsActive: document.activeElement === view.contentDOM,
+      selection: view.state.selection.toJSON(),
+    });
     view.focus();
+    const beforeRun = focusState();
     const selection = view.state.selection.toJSON();
     view.contentDOM.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter", keyCode: 13, metaKey: /Mac/.test(navigator.platform), ctrlKey: !/Mac/.test(navigator.platform), bubbles: true, cancelable: true}));
     await tick();
@@ -345,7 +352,7 @@ if (params.has("layout")) {
     assert(pending.length === 1 && scrolls.length === 0 && panel.style.display === "none", "Keyboard Run does not reveal output before results arrive");
     await finish(failure);
     resultsVisible("Compile failure");
-    assert(view.hasFocus && JSON.stringify(view.state.selection.toJSON()) === JSON.stringify(selection), "Keyboard Run preserves focus and selection, without source navigation");
+    assert(view.hasFocus && JSON.stringify(view.state.selection.toJSON()) === JSON.stringify(selection), `Keyboard Run preserves focus and selection, without source navigation: ${JSON.stringify({before: beforeRun, after: focusState()})}`);
     assert(scrolls[0].behavior === (matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"), "Native scrolling respects reduced motion");
 
     const nextRun = next.querySelector('[data-role="run-btn"]');
