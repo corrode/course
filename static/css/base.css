@@ -685,6 +685,47 @@ html[data-theme="dark"] select.admin-input {
     align-items: center;
 }
 
+.team-rename {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface);
+    font-size: 0.9rem;
+}
+.team-rename > summary {
+    cursor: pointer;
+}
+.team-rename form {
+    margin-top: 0.85rem;
+}
+.team-rename label {
+    display: block;
+    margin-bottom: 0.4rem;
+}
+.team-rename-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+.team-rename-controls .admin-input {
+    flex: 1 1 14rem;
+    min-width: 0;
+    max-width: 24rem;
+}
+.team-rename-help,
+.team-rename-error {
+    margin: 0.65rem 0 0;
+    overflow-wrap: anywhere;
+}
+.team-rename-help {
+    color: var(--color-text-muted);
+}
+.team-rename-error {
+    color: var(--color-error);
+}
+
 /* ---------- Tiny / danger button variants ---------- */
 .btn.admin-btn-tiny {
     height: 1.85rem;

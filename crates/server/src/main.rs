@@ -1,3 +1,6 @@
+mod browser_account;
+#[cfg(test)]
+mod browser_account_tests;
 mod lesson_seo;
 mod seo;
 #[cfg(test)]
@@ -181,6 +184,7 @@ struct DbSubmission {
 #[template(path = "playground.html")]
 struct PlaygroundTemplate {
     seo: PageMetadata,
+    ulid: Option<String>,
     /// Initial source shown before the user has typed anything.
     starter: String,
 }
@@ -208,6 +212,7 @@ struct TourTemplate {
 #[template(path = "cheatsheet.html")]
 struct CheatsheetTemplate {
     seo: PageMetadata,
+    ulid: Option<String>,
     html: String,
 }
 
@@ -284,10 +289,10 @@ impl ProgressDot {
 
 /// Synthetic chapter-list entry for the editable "A Quick Tour of Rust"
 /// preamble. It isn't a real exercise (no code steps, no tests, no progress),
-/// so it carries an explicit `/tour` href and `has_exercises = false` to stay
+/// so it carries an explicit tour href and `has_exercises = false` to stay
 /// out of the progress totals while still showing as the first row of the table
 /// of contents.
-fn tour_dot() -> ProgressDot {
+fn tour_dot(ulid: Option<&str>) -> ProgressDot {
     ProgressDot {
         slug: "tour".to_string(),
         number: 0,
@@ -299,7 +304,7 @@ fn tour_dot() -> ProgressDot {
         is_quiz: false,
         has_exercises: false,
         is_bonus: false,
-        href: Some("/tour".to_string()),
+        href: Some(ulid.map_or_else(|| "/tour".to_string(), |id| format!("/tour/{id}"))),
     }
 }
 
@@ -701,10 +706,10 @@ async fn load_submission_history_page(
 /// Two viewer modes share this template:
 ///
 /// - Admin (`is_admin = true`): `admin_token` is `Some` so links back to
-///   `/admin` carry the token, member rows show ULIDs and a "View dashboard"
+///   `/admin` carry the token, member rows show ULIDs and an "Open account"
 ///   link, and the "Unassigned" bucket is reachable.
 /// - Participant (`is_admin = false`): no admin chrome, the member matching
-///   `viewer_ulid` is highlighted as `is_self`, and `back_href` returns the
+///   `ulid` is highlighted as `is_self`, and `back_href` returns the
 ///   user to their own dashboard.
 #[derive(Template)]
 #[template(path = "team.html")]
@@ -725,10 +730,8 @@ struct TeamPageTemplate {
     /// participant mode. Threaded into the inline "move to team" form action so
     /// the form posts back with the admin token still attached.
     admin_token: Option<String>,
-    /// ULID of the participant viewing the page, when this is the participant
-    /// view. Used to deep-link the topbar Settings icon straight at
-    /// `/settings/{ulid}`.
-    viewer_ulid: Option<String>,
+    /// The viewer's account, not another team member's. Used by shared navigation.
+    ulid: Option<String>,
     /// Roster: one row per member of this team, ordered by most recent activity
     /// first.
     members: Vec<TeamMemberView>,
@@ -1132,6 +1135,8 @@ fn build_router_with_static(app_state: AppState, static_dir: &std::path::Path) -
         .route("/robots.txt", get(robots_txt))
         .route("/sitemap.xml", get(sitemap_xml))
         .route("/", get(anonymous_dashboard))
+        .route("/dashboard", get(anonymous_dashboard))
+        .route("/logout", post(browser_account::logout))
         .route("/signup", get(signup_page))
         .route("/signup/{team_slug}", get(signup_page_with_team))
         .route("/register", post(web_register))
@@ -1139,11 +1144,13 @@ fn build_router_with_static(app_state: AppState, static_dir: &std::path::Path) -
         .route("/exercise/{slug}", get(public_exercise_page))
         .route("/exercise/{ulid}/{slug}", get(participant_exercise_page))
         .route("/playground", get(playground_page))
+        .route("/playground/{ulid}", get(playground_page_with_ulid))
         .route("/tour", get(tour_page))
         .route("/tour/{ulid}", get(tour_page_with_ulid))
         .route("/settings", get(settings_page))
         .route("/settings/{ulid}", get(participant_settings_page))
         .route("/cheatsheet", get(cheatsheet_page))
+        .route("/cheatsheet/{ulid}", get(cheatsheet_page_with_ulid))
         .route("/cheatsheet/fragment", get(cheatsheet_fragment))
         .route("/health", get(health_check))
         .route("/admin", get(admin_dashboard))
@@ -1161,11 +1168,16 @@ fn build_router_with_static(app_state: AppState, static_dir: &std::path::Path) -
         )
         .route("/admin/team-members", get(admin_team_members))
         .route("/admin/team/{slug}", get(admin_team_page))
+        .route("/admin/team/{slug}/rename", post(admin_rename_team))
         .route("/admin/team-unassigned", get(admin_team_unassigned_page))
         .route("/dashboard/{ulid}/team", get(participant_team_page))
         .nest("/api", api_routes)
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.clone(),
+            browser_account::remember,
+        ))
         // Every route above renders per-participant state (progress checkmarks,
-        // submitted code) keyed only by the ulid in the URL. Without an
+        // submitted code) selected by a personal URL or browser cookie. Without an
         // explicit policy these HTML pages are freely cacheable, so a browser
         // or intermediary can serve a stale copy of someone's own page (e.g. a
         // mobile browser showing an old `0 of 5` after the work was done on
@@ -1230,6 +1242,10 @@ async fn seo_policy(
     } else {
         next.run(request).await
     };
+    response.headers_mut().insert(
+        axum::http::header::REFERRER_POLICY,
+        axum::http::HeaderValue::from_static("strict-origin"),
+    );
     // Preserve asset discovery, including the shared social image. Asset errors
     // still receive noindex; robots.txt does not prevent fetching either class.
     if public_asset && response.status().is_success() {
@@ -1289,7 +1305,7 @@ fn canonical_redirect(path: &str, catalog: &[Exercise]) -> Option<String> {
 /// Stamp `Cache-Control: no-store` on every dynamic HTML/API response.
 ///
 /// These pages embed per-participant state (progress, submitted code) keyed
-/// only by the ulid in the URL, so they must never be reused from a browser,
+/// by a personal URL or browser cookie, so they must never be reused from a browser,
 /// bfcache, or intermediary cache. Without this, a device that visited a page
 /// once can keep showing stale progress.
 async fn no_store(mut response: Response) -> Response {
@@ -1318,8 +1334,8 @@ async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
 /// the dot construction in `render_exercise_page` so both pages feed the same
 /// `partials/chapter_list.html` partial. `current` is always `false` on the
 /// homepage.
-fn dots_from_exercises(exercises: &[ExerciseProgress]) -> Vec<ProgressDot> {
-    std::iter::once(tour_dot())
+fn dots_from_exercises(exercises: &[ExerciseProgress], ulid: Option<&str>) -> Vec<ProgressDot> {
+    std::iter::once(tour_dot(ulid))
         .chain(exercises.iter().map(|e| ProgressDot {
             slug: e.name.clone(),
             number: e.number,
@@ -1387,7 +1403,7 @@ async fn anonymous_dashboard(
     );
     let (_, progress_total) = exercise_progress_counts(&exercises);
 
-    let dots = dots_from_exercises(&exercises);
+    let dots = dots_from_exercises(&exercises, None);
     let template = IndexTemplate {
         seo: PageMetadata::public(&state.site_origin, "/", &state.exercises)
             .expect("homepage metadata"),
@@ -1526,6 +1542,17 @@ fn render_tour(state: &AppState, ulid: Option<String>) -> Response {
 /// Standalone Rust scratchpad. Code is persisted client-side in `localStorage`;
 /// this handler only ships the starter snippet.
 async fn playground_page(State(state): State<AppState>) -> impl IntoResponse {
+    render_playground(&state, None)
+}
+
+async fn playground_page_with_ulid(
+    AxumPath(ulid): AxumPath<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    render_playground(&state, Some(ulid))
+}
+
+fn render_playground(state: &AppState, ulid: Option<String>) -> Response {
     const STARTER: &str = r#"//! Playground scratchpad.
 //!
 //! Anything you type here is saved to your browser's local storage and
@@ -1539,8 +1566,13 @@ fn main() {
 }
 "#;
     let template = PlaygroundTemplate {
-        seo: PageMetadata::public(&state.site_origin, "/playground", &state.exercises)
-            .expect("public metadata"),
+        seo: if ulid.is_none() {
+            PageMetadata::public(&state.site_origin, "/playground", &state.exercises)
+                .expect("public metadata")
+        } else {
+            PageMetadata::private()
+        },
+        ulid,
         starter: STARTER.to_string(),
     };
     match template.render() {
@@ -1558,9 +1590,25 @@ fn main() {
 
 /// Renders `static/cheatsheet.md` as a standalone reference page.
 async fn cheatsheet_page(State(state): State<AppState>) -> impl IntoResponse {
+    render_cheatsheet(&state, None)
+}
+
+async fn cheatsheet_page_with_ulid(
+    AxumPath(ulid): AxumPath<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    render_cheatsheet(&state, Some(ulid))
+}
+
+fn render_cheatsheet(state: &AppState, ulid: Option<String>) -> Response {
     let template = CheatsheetTemplate {
-        seo: PageMetadata::public(&state.site_origin, "/cheatsheet", &state.exercises)
-            .expect("public metadata"),
+        seo: if ulid.is_none() {
+            PageMetadata::public(&state.site_origin, "/cheatsheet", &state.exercises)
+                .expect("public metadata")
+        } else {
+            PageMetadata::private()
+        },
+        ulid,
         html: load_cheatsheet_html(),
     };
     match template.render() {
@@ -1626,28 +1674,27 @@ async fn web_register(
     Ok(axum::response::Redirect::to(&target))
 }
 
+async fn load_participant(state: &AppState, id: &str) -> Result<DbParticipant, Box<Response>> {
+    sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await
+        .map_err(|error| {
+            Box::new(match error {
+                sqlx::Error::RowNotFound => browser_account::invalid_login(),
+                error => browser_account::unavailable(&error),
+            })
+        })
+}
+
 /// Participant dashboard handler
 async fn participant_dashboard(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    // Get participant info
-    let participant_result =
-        sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
-            .bind(&ulid)
-            .fetch_one(&state.pool)
-            .await;
-
-    let participant: DbParticipant = match participant_result {
-        Ok(p) => p,
-        Err(_) => {
-            // Unknown ULID. Old behavior was a hard 404, which is unfriendly
-            // because the dashboard URL is the bookmark and people will mistype
-            // it (or follow a stale link from before we migrated databases).
-            // Send them home with a soft toast instead so they have somewhere
-            // to go.
-            return axum::response::Redirect::to("/?reason=unknown-token").into_response();
-        }
+    let participant = match load_participant(&state, &ulid).await {
+        Ok(participant) => participant,
+        Err(response) => return *response,
     };
 
     // Get exercise progress
@@ -1693,7 +1740,7 @@ async fn participant_dashboard(
     let (progress_done, progress_total) = exercise_progress_counts(&exercises);
 
     let team_token = participant.parsed_team_token();
-    let dots = dots_from_exercises(&exercises);
+    let dots = dots_from_exercises(&exercises, Some(&ulid));
     let template = IndexTemplate {
         seo: PageMetadata::private(),
         participant_name: Some(participant.name),
@@ -1735,18 +1782,11 @@ async fn participant_exercise_page(
     AxumPath((ulid, slug)): AxumPath<(String, String)>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    // Verify the participant exists; if not, fall back to the public page so
-    // the URL still resolves to something useful.
-    let exists = sqlx::query("SELECT 1 FROM participants WHERE id = ?")
-        .bind(&ulid)
-        .fetch_optional(&state.pool)
-        .await
-        .ok()
-        .flatten()
-        .is_some();
-
-    let ulid = if exists { Some(ulid) } else { None };
-    render_exercise_page(&state, &slug, ulid, false).await
+    match browser_account::participant_exists(&state, &ulid).await {
+        Ok(true) => render_exercise_page(&state, &slug, Some(ulid), false).await,
+        Ok(false) => browser_account::invalid_login(),
+        Err(error) => browser_account::unavailable(&error),
+    }
 }
 
 /// Minimal HTML escape for arbitrary text we splice into a template.
@@ -1832,7 +1872,7 @@ async fn render_exercise_page(
         .cloned()
         .unwrap_or_default();
 
-    let dots: Vec<ProgressDot> = std::iter::once(tour_dot())
+    let dots: Vec<ProgressDot> = std::iter::once(tour_dot(ulid.as_deref()))
         .chain(state.exercises.iter().enumerate().map(|(i, e)| {
             let s = chapter_progress
                 .get(&e.file_stem)
@@ -1875,6 +1915,16 @@ async fn render_exercise_page(
                     )
                 } else {
                     note.html.clone()
+                };
+                // Prose is cached without an account at startup. Contextualize
+                // its cheatsheet links here, without changing escaped code samples.
+                let html = if let Some(id) = &ulid {
+                    html.replace(
+                        "<a href=\"/cheatsheet\"",
+                        &format!("<a href=\"/cheatsheet/{}\"", html_escape(id)),
+                    )
+                } else {
+                    html
                 };
                 seen_first_note = true;
                 prev_was_note = true;
@@ -2380,7 +2430,7 @@ async fn admin_team_members(
     )
 }
 
-/// Form data for `POST /admin/participants/{ulid}/team-token`.
+/// Form data for participant team assignment and bulk team renaming.
 #[derive(Deserialize)]
 struct TeamTokenForm {
     team_token: String,
@@ -2437,6 +2487,81 @@ async fn admin_set_team_token(
         }
         Err(err) => {
             error!("Failed to update participant team token: {err}");
+            (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
+        }
+    }
+}
+
+/// Rename every member's team token without merging existing teams.
+async fn admin_rename_team(
+    AxumPath(slug): AxumPath<String>,
+    Query(query): Query<AdminQuery>,
+    State(state): State<AppState>,
+    axum::Form(form): axum::Form<TeamTokenForm>,
+) -> Response {
+    if query.token != state.admin_token {
+        return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
+    }
+    let Ok(old_token) = TeamToken::try_from(slug.as_str()) else {
+        return (StatusCode::BAD_REQUEST, "Invalid team slug").into_response();
+    };
+    let new_token = match TeamToken::try_from(form.team_token.as_str()) {
+        Ok(token) => token,
+        Err(err) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                format!("Invalid team_token: {err}"),
+            )
+                .into_response();
+        }
+    };
+
+    let result = async {
+        // Acquire the write lock before either check so another writer cannot
+        // populate the destination between the collision check and the update.
+        let mut transaction = state.pool.begin_with("BEGIN IMMEDIATE").await?;
+        let source_exists: bool =
+            sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM participants WHERE team_token = ?)")
+                .bind(old_token.as_str())
+                .fetch_one(&mut *transaction)
+                .await?;
+        if !source_exists {
+            return Ok(StatusCode::NOT_FOUND);
+        }
+        if old_token != new_token {
+            let destination_exists: bool = sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM participants WHERE team_token = ?)",
+            )
+            .bind(new_token.as_str())
+            .fetch_one(&mut *transaction)
+            .await?;
+            if destination_exists {
+                return Ok(StatusCode::CONFLICT);
+            }
+            sqlx::query("UPDATE participants SET team_token = ? WHERE team_token = ?")
+                .bind(new_token.as_str())
+                .bind(old_token.as_str())
+                .execute(&mut *transaction)
+                .await?;
+        }
+        transaction.commit().await?;
+        Ok::<_, sqlx::Error>(StatusCode::SEE_OTHER)
+    }
+    .await;
+
+    match result {
+        Ok(StatusCode::NOT_FOUND) => (StatusCode::NOT_FOUND, "Team not found").into_response(),
+        Ok(StatusCode::CONFLICT) => {
+            (StatusCode::CONFLICT, "Destination team already exists").into_response()
+        }
+        Ok(_) => axum::response::Redirect::to(&format!(
+            "/admin/team/{}?token={}",
+            new_token.as_str(),
+            encode_query_value(&query.token)
+        ))
+        .into_response(),
+        Err(err) => {
+            error!("Failed to rename team: {err}");
             (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
         }
     }
@@ -2626,7 +2751,7 @@ async fn render_team_page(
         is_unassigned,
         is_admin,
         admin_token,
-        viewer_ulid: viewer_ulid.map(str::to_string),
+        ulid: viewer_ulid.map(str::to_string),
         members,
         submissions,
         submissions_truncated,
@@ -2698,24 +2823,16 @@ async fn admin_team_unassigned_page(
 
 /// Participant: read-only view of their own team's submissions.
 ///
-/// Returns 404 if the ULID is unknown; redirects to the dashboard with a
-/// one-shot toast if the participant has no `team_token` (no team means there's
-/// nothing meaningful to show on this page).
+/// Returns 404 if the ULID is unknown; redirects to the personal dashboard if
+/// the participant has no team.
 async fn participant_team_page(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let participant: DbParticipant =
-        match sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
-            .bind(&ulid)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(p) => p,
-            Err(_) => {
-                return axum::response::Redirect::to("/?reason=unknown-token").into_response();
-            }
-        };
+    let participant = match load_participant(&state, &ulid).await {
+        Ok(participant) => participant,
+        Err(response) => return *response,
+    };
 
     let Some(token) = participant.parsed_team_token() else {
         // No team to show; bounce back to the personal dashboard.
@@ -2763,23 +2880,15 @@ async fn settings_page() -> impl IntoResponse {
 
 /// Settings page for a known participant: editor preferences plus their team
 /// snapshot (roster + recent submissions). Routed at `/settings/{ulid}`.
-/// Unknown ULIDs redirect to the anonymous dashboard with the standard one-shot
-/// toast.
+/// Unknown ULIDs show an invalid-link page without selecting another account.
 async fn participant_settings_page(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let participant: DbParticipant =
-        match sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
-            .bind(&ulid)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(p) => p,
-            Err(_) => {
-                return axum::response::Redirect::to("/?reason=unknown-token").into_response();
-            }
-        };
+    let participant = match load_participant(&state, &ulid).await {
+        Ok(participant) => participant,
+        Err(response) => return *response,
+    };
 
     let team_token_parsed = participant.parsed_team_token();
     let (members, submissions, submissions_truncated, exercises) = match team_token_parsed {
@@ -4094,7 +4203,9 @@ mod tests {
                     state.exercises.len() + 1
                 );
                 assert_eq!(picker.matches("aria-selected=\"true\"").count(), 1);
-                assert!(picker.contains("href=\"/tour\""));
+                let tour =
+                    participant.map_or_else(|| "/tour".to_string(), |id| format!("/tour/{id}"));
+                assert!(picker.contains(&format!("href=\"{tour}\"")));
                 for chapter in state.exercises.iter() {
                     let href = format!("href=\"{prefix}{}\"", chapter.slug);
                     let item = picker
@@ -4291,8 +4402,11 @@ mod tests {
                 .unwrap();
             let tour = String::from_utf8(body.to_vec()).unwrap();
             assert!(tour.contains(&format!("href=\"{}\"", href(first))));
-            assert!(tour.contains("href=\"/exercise/00_numbers_in_rust\""));
-            assert!(tour.contains("href=\"/exercise/07_enums_and_pattern_matching\""));
+            assert!(tour.contains(&format!("href=\"{}\"", href("00_numbers_in_rust"))));
+            assert!(tour.contains(&format!(
+                "href=\"{}\"",
+                href("07_enums_and_pattern_matching")
+            )));
         }
     }
 
@@ -4499,6 +4613,366 @@ mod tests {
         .execute(&state.pool)
         .await
         .unwrap();
+    }
+
+    mod team_rename {
+        use super::*;
+
+        struct Server {
+            base: String,
+            client: reqwest::Client,
+            task: tokio::task::JoinHandle<()>,
+        }
+
+        impl Drop for Server {
+            fn drop(&mut self) {
+                self.task.abort();
+            }
+        }
+
+        impl Server {
+            async fn start(state: AppState) -> Self {
+                let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+                let base = format!("http://{}", listener.local_addr().unwrap());
+                let task = tokio::spawn(async move {
+                    axum::serve(listener, build_router(state)).await.unwrap();
+                });
+                Self {
+                    base,
+                    client: reqwest::Client::builder()
+                        .no_proxy()
+                        .redirect(reqwest::redirect::Policy::none())
+                        .timeout(std::time::Duration::from_secs(10))
+                        .build()
+                        .unwrap(),
+                    task,
+                }
+            }
+
+            async fn rename(
+                &self,
+                slug: &str,
+                token: Option<&str>,
+                new_token: Option<&str>,
+            ) -> reqwest::Response {
+                let mut url = format!(
+                    "{}/admin/team/{}/rename",
+                    self.base,
+                    encode_query_value(slug)
+                );
+                if let Some(token) = token {
+                    write!(url, "?token={}", encode_query_value(token)).unwrap();
+                }
+                let body = new_token.map_or_else(String::new, |value| {
+                    url::form_urlencoded::Serializer::new(String::new())
+                        .append_pair("team_token", value)
+                        .finish()
+                });
+                self.client
+                    .post(url)
+                    .header("content-type", "application/x-www-form-urlencoded")
+                    .body(body)
+                    .send()
+                    .await
+                    .unwrap()
+            }
+        }
+
+        async fn state() -> AppState {
+            let mut state = team_query_state().await;
+            state.admin_token = "rename-admin".to_string();
+            state
+        }
+
+        async fn participants(
+            state: &AppState,
+        ) -> Vec<(String, String, Option<String>, Option<String>)> {
+            sqlx::query_as("SELECT id, name, team_token, created_at FROM participants ORDER BY id")
+                .fetch_all(&state.pool)
+                .await
+                .unwrap()
+        }
+
+        #[derive(Debug, PartialEq, sqlx::FromRow)]
+        struct SubmissionSnapshot {
+            id: String,
+            participant_id: String,
+            exercise_name: String,
+            source_code: String,
+            tests_passed: bool,
+            clippy_passed: Option<bool>,
+            fmt_passed: Option<bool>,
+            submitted_at: Option<String>,
+            content_hash: Option<String>,
+        }
+
+        async fn submissions(state: &AppState) -> Vec<SubmissionSnapshot> {
+            sqlx::query_as("SELECT * FROM submissions ORDER BY id")
+                .fetch_all(&state.pool)
+                .await
+                .unwrap()
+        }
+
+        async fn assert_error(response: reqwest::Response, status: StatusCode, message: &str) {
+            assert_eq!(response.status(), status);
+            assert!(
+                response.headers()["content-type"]
+                    .to_str()
+                    .unwrap()
+                    .starts_with("text/plain")
+            );
+            assert!(response.headers().get("location").is_none());
+            let body = response.text().await.unwrap();
+            assert!(body.contains(message), "{body}");
+        }
+
+        #[tokio::test]
+        async fn renames_all_members_preserving_participants_submissions_and_progress() {
+            let state = state().await;
+            for (id, participant, passed, timestamp) in [
+                ("pass", "member-a", true, "2026-09-18 12:00:00"),
+                ("fail", "member-a", false, "2026-09-19 12:00:00"),
+                ("bob", "member'b", true, "2026-09-20 12:00:00"),
+                ("other", "outsider", true, "2026-09-21 12:00:00"),
+                ("solo", "unassigned", false, "2026-09-22 12:00:00"),
+            ] {
+                team_query_submission(&state, id, participant, "chapter/step", passed, timestamp)
+                    .await;
+            }
+            sqlx::query("UPDATE submissions SET content_hash = 'preserved-hash' WHERE id = 'pass'")
+                .execute(&state.pool)
+                .await
+                .unwrap();
+            let mut expected_participants = participants(&state).await;
+            for participant in &mut expected_participants {
+                if participant.2.as_deref() == Some("workshop") {
+                    participant.2 = Some("Ecosmic".to_string());
+                }
+            }
+            let before_submissions = submissions(&state).await;
+            let mut before_progress = Vec::new();
+            for id in ["member-a", "member'b", "outsider", "unassigned"] {
+                before_progress.push((id, load_step_progress(&state.pool, id).await.unwrap()));
+            }
+            assert!(before_progress[0].1["chapter/step"].completed);
+            assert!(!before_progress[0].1["chapter/step"].submitted_passed);
+
+            let server = Server::start(state.clone()).await;
+            let response = server
+                .rename("workshop", Some(&state.admin_token), Some("  Ecosmic  "))
+                .await;
+            assert_eq!(response.status(), StatusCode::SEE_OTHER);
+            assert_eq!(
+                response.headers()["location"],
+                "/admin/team/Ecosmic?token=rename-admin"
+            );
+            assert_eq!(participants(&state).await, expected_participants);
+            assert_eq!(submissions(&state).await, before_submissions);
+            for (id, before) in before_progress {
+                let after = load_step_progress(&state.pool, id).await.unwrap();
+                assert_eq!(after.len(), before.len());
+                for (step, before) in before {
+                    let after = &after[&step];
+                    assert_eq!(after.attempted, before.attempted);
+                    assert_eq!(after.completed, before.completed);
+                    assert_eq!(after.perfected, before.perfected);
+                    assert_eq!(after.submitted_code, before.submitted_code);
+                    assert_eq!(after.submitted_passed, before.submitted_passed);
+                }
+            }
+            let old = TeamToken::try_from("workshop").unwrap();
+            assert!(
+                load_team_member_summaries(&state, Some(&old))
+                    .await
+                    .unwrap()
+                    .is_empty()
+            );
+            let new = TeamToken::try_from("Ecosmic").unwrap();
+            assert_eq!(
+                load_team_member_summaries(&state, Some(&new))
+                    .await
+                    .unwrap()
+                    .len(),
+                2
+            );
+        }
+
+        #[tokio::test]
+        async fn rejects_occupied_destinations_including_case_only_without_mutation() {
+            let state = state().await;
+            sqlx::query("INSERT INTO participants (id, name, team_token) VALUES ('case', 'Case', 'Workshop')")
+                .execute(&state.pool).await.unwrap();
+            let before = participants(&state).await;
+            let server = Server::start(state.clone()).await;
+            for destination in ["other-team", "Workshop"] {
+                let response = server
+                    .rename("workshop", Some(&state.admin_token), Some(destination))
+                    .await;
+                assert_error(
+                    response,
+                    StatusCode::CONFLICT,
+                    "Destination team already exists",
+                )
+                .await;
+                assert_eq!(participants(&state).await, before);
+            }
+        }
+
+        #[tokio::test]
+        async fn existing_same_name_is_a_no_op() {
+            let state = state().await;
+            let before = participants(&state).await;
+            let server = Server::start(state.clone()).await;
+            let response = server
+                .rename("workshop", Some(&state.admin_token), Some("workshop"))
+                .await;
+            assert_eq!(response.status(), StatusCode::SEE_OTHER);
+            assert_eq!(
+                response.headers()["location"],
+                "/admin/team/workshop?token=rename-admin"
+            );
+            assert_eq!(participants(&state).await, before);
+        }
+
+        #[tokio::test]
+        async fn case_only_rename_preserves_case_sensitive_identity() {
+            let state = state().await;
+            sqlx::query("INSERT INTO participants (id, name, team_token) VALUES ('case', 'Case', 'WORKSHOP')")
+                .execute(&state.pool).await.unwrap();
+            let mut expected = participants(&state).await;
+            for participant in &mut expected {
+                if participant.2.as_deref() == Some("workshop") {
+                    participant.2 = Some("Workshop".to_string());
+                }
+            }
+            let server = Server::start(state.clone()).await;
+            let response = server
+                .rename("workshop", Some(&state.admin_token), Some("Workshop"))
+                .await;
+            assert_eq!(response.status(), StatusCode::SEE_OTHER);
+            assert_eq!(
+                response.headers()["location"],
+                "/admin/team/Workshop?token=rename-admin"
+            );
+            assert_eq!(participants(&state).await, expected);
+        }
+
+        #[tokio::test]
+        async fn missing_source_is_not_found_even_for_no_op_or_occupied_destination() {
+            let state = state().await;
+            let before = participants(&state).await;
+            let server = Server::start(state.clone()).await;
+            for (source, destination) in [
+                ("missing", "new-team"),
+                ("missing", "missing"),
+                ("missing", "other-team"),
+                ("Workshop", "new-team"),
+            ] {
+                let response = server
+                    .rename(source, Some(&state.admin_token), Some(destination))
+                    .await;
+                assert_error(response, StatusCode::NOT_FOUND, "Team not found").await;
+                assert_eq!(participants(&state).await, before);
+            }
+        }
+
+        #[tokio::test]
+        async fn rejects_blank_invalid_and_missing_names_without_mutation() {
+            let state = state().await;
+            let before = participants(&state).await;
+            let server = Server::start(state.clone()).await;
+            let too_long = "x".repeat(65);
+            for destination in [
+                "", " \t\n ", "team one", "team/one", "<script>", "équipe", &too_long,
+            ] {
+                let response = server
+                    .rename("workshop", Some(&state.admin_token), Some(destination))
+                    .await;
+                assert_error(response, StatusCode::BAD_REQUEST, "Invalid team_token:").await;
+            }
+            for source in [" ", "team/one", "<script>", "équipe", &too_long] {
+                let response = server
+                    .rename(source, Some(&state.admin_token), Some("new-team"))
+                    .await;
+                assert_error(response, StatusCode::BAD_REQUEST, "Invalid team slug").await;
+            }
+            let response = server
+                .rename("workshop", Some(&state.admin_token), None)
+                .await;
+            assert_error(response, StatusCode::UNPROCESSABLE_ENTITY, "team_token").await;
+            assert_eq!(participants(&state).await, before);
+        }
+
+        #[tokio::test]
+        async fn rejects_wrong_and_missing_admin_tokens_without_mutation() {
+            let state = state().await;
+            let before = participants(&state).await;
+            let server = Server::start(state.clone()).await;
+            for token in ["wrong", ""] {
+                let response = server
+                    .rename("workshop", Some(token), Some("new-team"))
+                    .await;
+                assert_error(response, StatusCode::FORBIDDEN, "Invalid admin token").await;
+            }
+            let response = server.rename("workshop", None, Some("new-team")).await;
+            assert_error(response, StatusCode::BAD_REQUEST, "token").await;
+            assert_eq!(participants(&state).await, before);
+        }
+
+        #[tokio::test]
+        async fn redirect_query_round_trips_special_character_admin_token() {
+            let mut state = state().await;
+            state.admin_token = "secret +&=?#%/é".to_string();
+            let server = Server::start(state.clone()).await;
+            let response = server
+                .rename("workshop", Some(&state.admin_token), Some("Ecosmic"))
+                .await;
+            assert_eq!(response.status(), StatusCode::SEE_OTHER);
+            let location = response.headers()["location"].to_str().unwrap();
+            assert_eq!(
+                location,
+                "/admin/team/Ecosmic?token=secret+%2B%26%3D%3F%23%25%2F%C3%A9"
+            );
+            let destination = url::Url::parse(&server.base)
+                .unwrap()
+                .join(location)
+                .unwrap();
+            assert_eq!(destination.path(), "/admin/team/Ecosmic");
+            assert!(destination.fragment().is_none());
+            assert_eq!(
+                destination.query_pairs().collect::<Vec<_>>(),
+                vec![("token".into(), state.admin_token.as_str().into())]
+            );
+            let page = server.client.get(destination).send().await.unwrap();
+            assert_eq!(page.status(), StatusCode::OK);
+        }
+
+        #[tokio::test]
+        async fn database_failure_rolls_back_all_members() {
+            let state = state().await;
+            let before = participants(&state).await;
+            // FAIL leaves earlier row updates in place until the transaction rolls back.
+            sqlx::query(
+                "CREATE TRIGGER fail_second_rename BEFORE UPDATE OF team_token ON participants \
+                         WHEN NEW.team_token = 'new-team' AND \
+                         EXISTS(SELECT 1 FROM participants WHERE team_token = 'new-team') \
+                         BEGIN SELECT RAISE(FAIL, 'injected rename failure'); END",
+            )
+            .execute(&state.pool)
+            .await
+            .unwrap();
+            let server = Server::start(state.clone()).await;
+            let response = server
+                .rename("workshop", Some(&state.admin_token), Some("new-team"))
+                .await;
+            assert_error(
+                response,
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Database error",
+            )
+            .await;
+            assert_eq!(participants(&state).await, before);
+        }
     }
 
     #[tokio::test]
