@@ -130,7 +130,7 @@
                         placeholder="Filter by name…"
                         aria-label="Filter members in this team by name"
                         autocomplete="off"
-                        hx-get="/admin/team-members?token={{ admin_token }}&team={{ team.slug() }}"
+                        hx-get="/admin/team-members?token={{ crate::encode_query_value(admin_token) }}&team={{ team.slug() }}"
                         hx-include="#tm-sort-{{ team.key() }},#tm-dir-{{ team.key() }}"
                         hx-target="#team-members-{{ team.key() }}"
                         hx-swap="outerHTML"
@@ -140,13 +140,13 @@
                     {% match team.team_token %} {% when Some with (slug) %}
                     <a
                         class="team-section-link"
-                        href="/admin/team/{{ slug }}?token={{ admin_token }}"
+                        href="/admin/team/{{ slug }}?token={{ crate::encode_query_value(admin_token) }}"
                         >Open team page →</a
                     >
                     {% when None %}
                     <a
                         class="team-section-link"
-                        href="/admin/team-unassigned?token={{ admin_token }}"
+                        href="/admin/team-unassigned?token={{ crate::encode_query_value(admin_token) }}"
                         >Open unassigned page →</a
                     >
                     {% endmatch %}

@@ -189,6 +189,215 @@ fn assert_redirect(server: &TestServer, response: &HttpResponse, status: StatusC
     );
 }
 
+mod admin_token_queries {
+    use super::*;
+    use std::collections::HashMap;
+
+    const TOKENS: [&str; 7] = [
+        "plain-admin",
+        "secret&value",
+        "secret+value",
+        "secret?value",
+        "secret#value",
+        "secret%26value",
+        "secret +&=?#%/é",
+    ];
+
+    async fn admin_state(token: &str) -> AppState {
+        let mut state = state().await;
+        state.admin_token = token.to_owned();
+        sqlx::query("INSERT INTO participants (id, name) VALUES ('unassigned', 'Unassigned')")
+            .execute(&state.pool)
+            .await
+            .unwrap();
+        state
+    }
+
+    async fn page(server: &TestServer, path: &str, token: &str) -> String {
+        let response = server
+            .get(&format!("{path}?token={}", encode_query_value(token)), None)
+            .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        response.text().await.unwrap()
+    }
+
+    fn attribute_urls(html: &str, attribute: &str, prefix: &str) -> Vec<String> {
+        html.split(&format!("{attribute}=\""))
+            .skip(1)
+            .map(|rest| rest.split_once('"').unwrap().0)
+            .filter(|value| value.starts_with(prefix))
+            // Decode HTML attribute escaping, not URL percent encoding.
+            .map(|value| value.replace("&#38;", "&").replace("&amp;", "&"))
+            .collect()
+    }
+
+    fn assert_token(server: &TestServer, path: &str, token: &str) -> url::Url {
+        let base = url::Url::parse(&server.base).unwrap();
+        let url = base.join(path).unwrap();
+        assert_eq!(url.origin(), base.origin());
+        assert!(url.fragment().is_none());
+        let tokens: Vec<_> = url
+            .query_pairs()
+            .filter(|(key, _)| key == "token")
+            .map(|(_, value)| value.into_owned())
+            .collect();
+        assert_eq!(tokens, [token]);
+        url
+    }
+
+    #[tokio::test]
+    async fn rendered_team_links_preserve_admin_tokens() {
+        for token in TOKENS {
+            let server = TestServer::start(admin_state(token).await).await;
+            let html = page(&server, "/admin", token).await;
+            let links = attribute_urls(&html, "href", "/admin/team");
+            assert_eq!(links.len(), 2);
+            for link in links {
+                let url = assert_token(&server, &link, token);
+                assert!(matches!(
+                    url.path(),
+                    "/admin/team/test-team" | "/admin/team-unassigned"
+                ));
+                assert_eq!(url.query_pairs().count(), 1);
+                let response = server.get(&link, None).await;
+                assert_eq!(response.status(), StatusCode::OK);
+                let team_html = response.text().await.unwrap();
+                let back_links = attribute_urls(&team_html, "href", "/admin?");
+                assert_eq!(back_links.len(), 1);
+                let url = assert_token(&server, &back_links[0], token);
+                assert_eq!(url.path(), "/admin");
+                assert_eq!(url.query_pairs().count(), 1);
+                let response = server.get(&back_links[0], None).await;
+                assert_eq!(response.status(), StatusCode::OK);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn rendered_htmx_filter_and_sort_links_preserve_admin_tokens() {
+        for token in TOKENS {
+            let server = TestServer::start(admin_state(token).await).await;
+            let html = page(&server, "/admin", token).await;
+            let links = attribute_urls(&html, "hx-get", "/admin/team-members?");
+            assert_eq!(links.len(), 8, "filter and three sorts for each bucket");
+            for link in links {
+                let mut url = assert_token(&server, &link, token);
+                let params: HashMap<_, _> = url.query_pairs().into_owned().collect();
+                assert!(matches!(params["team"].as_str(), "test-team" | ""));
+                if let Some(sort) = params.get("sort") {
+                    assert!(matches!(sort.as_str(), "name" | "progress" | "activity"));
+                    assert_eq!(params["dir"], if sort == "name" { "desc" } else { "asc" });
+                    assert_eq!(url.query_pairs().count(), 4);
+                } else {
+                    assert_eq!(url.query_pairs().count(), 2);
+                    // The filter input includes the live hidden sort state.
+                    url.query_pairs_mut()
+                        .append_pair("sort", "name")
+                        .append_pair("dir", "asc");
+                }
+                let filter = if params["team"].is_empty() {
+                    "Unassigned"
+                } else {
+                    "Account A"
+                };
+                url.query_pairs_mut().append_pair("filter", filter);
+                let response = send(server.client.get(url).header("HX-Request", "true")).await;
+                assert_eq!(response.status(), StatusCode::OK);
+                let fragment = response.text().await.unwrap();
+                let sorts = attribute_urls(&fragment, "hx-get", "/admin/team-members?");
+                assert_eq!(sorts.len(), 3);
+                for sort in sorts {
+                    let url = assert_token(&server, &sort, token);
+                    assert_eq!(url.query_pairs().count(), 4);
+                    let response = send(server.client.get(url).header("HX-Request", "true")).await;
+                    assert_eq!(response.status(), StatusCode::OK);
+                }
+                let actions = attribute_urls(&fragment, "action", "/admin/participants/");
+                assert_eq!(
+                    actions.len(),
+                    1,
+                    "filter must retain only the matching member"
+                );
+                let url = assert_token(&server, &actions[0], token);
+                let expected_id = if params["team"].is_empty() {
+                    "unassigned"
+                } else {
+                    "account-a"
+                };
+                assert_eq!(
+                    url.path(),
+                    format!("/admin/participants/{expected_id}/team-token")
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn rendered_move_forms_preserve_admin_tokens_and_update_membership() {
+        for token in TOKENS {
+            let state = admin_state(token).await;
+            let server = TestServer::start(state.clone()).await;
+            // Render before moving anyone so both named and unassigned rosters are populated.
+            let pages = [
+                (
+                    page(&server, "/admin", token).await,
+                    "account-a",
+                    "from-admin",
+                ),
+                (
+                    page(&server, "/admin/team/test-team", token).await,
+                    "account-a",
+                    "from-team",
+                ),
+                (
+                    page(&server, "/admin/team-unassigned", token).await,
+                    "unassigned",
+                    "from-unassigned",
+                ),
+            ];
+            for (html, id, destination) in pages {
+                let actions = attribute_urls(
+                    &html,
+                    "action",
+                    &format!("/admin/participants/{id}/team-token?"),
+                );
+                assert_eq!(actions.len(), 1);
+                let url = assert_token(&server, &actions[0], token);
+                assert_eq!(url.query_pairs().count(), 1);
+                let response = send(
+                    server
+                        .client
+                        .post(url)
+                        .header("content-type", "application/x-www-form-urlencoded")
+                        .body(format!("team_token={destination}")),
+                )
+                .await;
+                assert_eq!(response.status(), StatusCode::SEE_OTHER);
+                let location = local_location(&server, &response);
+                let url = assert_token(&server, &location, token);
+                assert_eq!(url.path(), "/admin");
+                assert_eq!(url.query_pairs().count(), 1);
+                let response = server.get(&location, None).await;
+                assert_eq!(response.status(), StatusCode::OK);
+                let dashboard = response.text().await.unwrap();
+                let team_links =
+                    attribute_urls(&dashboard, "href", &format!("/admin/team/{destination}?"));
+                assert_eq!(team_links.len(), 1);
+                assert_token(&server, &team_links[0], token);
+                let response = server.get(&team_links[0], None).await;
+                assert_eq!(response.status(), StatusCode::OK);
+                let actual: String =
+                    sqlx::query_scalar("SELECT team_token FROM participants WHERE id = ?")
+                        .bind(id)
+                        .fetch_one(&state.pool)
+                        .await
+                        .unwrap();
+                assert_eq!(actual, destination);
+            }
+        }
+    }
+}
+
 #[tokio::test]
 async fn remembered_navigation_redirects_locally_and_preserves_raw_queries() {
     let state = state().await;

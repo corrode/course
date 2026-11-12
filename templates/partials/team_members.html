@@ -30,7 +30,7 @@
                     <button
                         type="button"
                         class="admin-sort{% if sort == "name" %} is-active{% endif %}"
-                        hx-get="/admin/team-members?token={{ admin_token }}&team={{ team.slug() }}&sort=name&dir={% if sort == "name" && dir == "asc" %}desc{% else %}asc{% endif %}"
+                        hx-get="/admin/team-members?token={{ crate::encode_query_value(admin_token) }}&team={{ team.slug() }}&sort=name&dir={% if sort == "name" && dir == "asc" %}desc{% else %}asc{% endif %}"
                     >
                         Name
                         <span class="admin-sort-arrow" aria-hidden="true">{% if sort == "name" %}{% if dir == "asc" %}↑{% else %}↓{% endif %}{% endif %}</span>
@@ -42,7 +42,7 @@
                     <button
                         type="button"
                         class="admin-sort{% if sort == "progress" %} is-active{% endif %}"
-                        hx-get="/admin/team-members?token={{ admin_token }}&team={{ team.slug() }}&sort=progress&dir={% if sort == "progress" && dir == "asc" %}desc{% else %}asc{% endif %}"
+                        hx-get="/admin/team-members?token={{ crate::encode_query_value(admin_token) }}&team={{ team.slug() }}&sort=progress&dir={% if sort == "progress" && dir == "asc" %}desc{% else %}asc{% endif %}"
                     >
                         Progress
                         <span class="admin-sort-arrow" aria-hidden="true">{% if sort == "progress" %}{% if dir == "asc" %}↑{% else %}↓{% endif %}{% endif %}</span>
@@ -54,7 +54,7 @@
                     <button
                         type="button"
                         class="admin-sort{% if sort == "activity" %} is-active{% endif %}"
-                        hx-get="/admin/team-members?token={{ admin_token }}&team={{ team.slug() }}&sort=activity&dir={% if sort == "activity" && dir == "asc" %}desc{% else %}asc{% endif %}"
+                        hx-get="/admin/team-members?token={{ crate::encode_query_value(admin_token) }}&team={{ team.slug() }}&sort=activity&dir={% if sort == "activity" && dir == "asc" %}desc{% else %}asc{% endif %}"
                     >
                         Last activity
                         <span class="admin-sort-arrow" aria-hidden="true">{% if sort == "activity" %}{% if dir == "asc" %}↑{% else %}↓{% endif %}{% endif %}</span>
@@ -95,7 +95,7 @@
                 <td>
                     <form
                         method="post"
-                        action="/admin/participants/{{ participant.id }}/team-token?token={{ admin_token }}"
+                        action="/admin/participants/{{ participant.id }}/team-token?token={{ crate::encode_query_value(admin_token) }}"
                         class="admin-inline-form"
                     >
                         <input

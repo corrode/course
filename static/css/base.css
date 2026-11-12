@@ -558,6 +558,14 @@ html[data-editor-active-line="off"] .cm-activeLineGutter {
     text-decoration: underline;
 }
 
+.team-roster-scroll {
+    overflow-x: auto;
+}
+.team-roster-scroll:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
 .admin-table {
     width: 100%;
     border-collapse: collapse;
