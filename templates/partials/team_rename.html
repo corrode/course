@@ -1,0 +1,32 @@
+<details class="team-rename">
+    <summary>Rename team</summary>
+    <form
+        method="post"
+        action="/admin/team/{{ rename_slug }}/rename?token={{ crate::encode_query_value(rename_admin_token) }}"
+        data-team-rename
+        aria-label="Rename team {{ rename_slug }}"
+    >
+        <label for="rename-team-{{ rename_slug }}">New team name</label>
+        <div class="team-rename-controls">
+            <input
+                type="text"
+                id="rename-team-{{ rename_slug }}"
+                name="team_token"
+                value="{{ rename_slug }}"
+                maxlength="64"
+                pattern="[A-Za-z0-9_\-]+"
+                title="Letters, digits, underscore or hyphen."
+                autocomplete="off"
+                aria-describedby="rename-team-help-{{ rename_slug }}"
+                class="admin-input admin-input-mono"
+                required
+            />
+            <button type="submit" class="btn btn-secondary">Rename team</button>
+        </div>
+        <p id="rename-team-help-{{ rename_slug }}" class="team-rename-help">
+            All members keep their progress and submissions. Share the new signup
+            link afterward; old signup links will still use the old name.
+        </p>
+        <p class="team-rename-error" data-rename-error role="alert" hidden></p>
+    </form>
+</details>

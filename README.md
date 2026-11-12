@@ -80,16 +80,18 @@ saved token; use `init --token <TOKEN>` to replace it when switching servers.
 
 ## Running the Server Locally
 
-From the repository root, set `CORRODE_ADMIN_TOKEN` in your environment or
-`.env`, then run:
+From the repository root, set `CORRODE_ADMIN_TOKEN` and
+`SITE_ORIGIN=http://localhost:3000` in your environment or `.env`, then run:
 
 ```bash
 cargo run --bin server
 ```
 
 Open `http://localhost:3000`. `PORT` overrides the port, and `DATABASE_URL`
-overrides the default local SQLite database. Keep the working directory at the
-repository root so the server can find `examples/`, `solutions/`, `migrations/`,
+overrides the default local SQLite database. Set `SITE_ORIGIN` to the actual
+browser origin, including the port: it controls cookie security and same-origin
+sign-out checks as well as page metadata. Production should use HTTPS.
+Keep the working directory at the repository root so the server can find `examples/`, `solutions/`, `migrations/`,
 and `static/`.
 
 The workspace contains the CLI (`crates/cli`), shared API types

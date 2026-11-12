@@ -95,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Run typos
-        uses: crate-ci/typos@v1.50.2
+        uses: crate-ci/typos@v1.51.1
 
   link-check:
     name: Link check (lychee)
@@ -173,7 +173,7 @@ jobs:
     steps:
       - name: Trigger Coolify deployment
         run: |
-          curl --request GET \
+          curl --request POST \
             "https://admin.corrode.dev/api/v1/deploy?uuid=m96wwge88xkdbol0xew33te9&force=false" \
             --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
             --fail \
