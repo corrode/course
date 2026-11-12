@@ -113,13 +113,13 @@
         <header class="topbar" role="banner">
             <div class="topbar-inner">
                 {% block topbar_left %}
-                <a href="/" class="topbar-home">Course</a>
+                <a href="{% block topbar_home_href %}/{% endblock %}" class="topbar-home">Course</a>
                 {% endblock %}
                 <div class="topbar-spacer"></div>
                 {% block topbar_progress %}{% endblock %}
                 <a
                     class="topbar-link {% block topbar_active_playground %}{% endblock %}"
-                    href="/playground"
+                    href="{% block topbar_playground_href %}/playground{% endblock %}"
                     title="Open the Rust scratchpad"
                 >
                     <svg
@@ -137,7 +137,7 @@
                 </a>
                 <a
                     class="topbar-link {% block topbar_active_cheatsheet %}{% endblock %}"
-                    href="/cheatsheet"
+                    href="{% block topbar_cheatsheet_href %}/cheatsheet{% endblock %}"
                     data-cheatsheet-toggle
                     title="Quick reference of Rust syntax (press ?)"
                     aria-haspopup="dialog"
@@ -264,7 +264,7 @@
         <footer class="site-footer">
             <div class="site-footer-inner">
                 <div class="site-footer-brand">
-                    <a href="/" aria-label="corrode home">
+                    <a href="{% block footer_home_href %}/{% endblock %}" aria-label="corrode home">
                         <img
                             src="/static/assets/corrode-logo.svg"
                             alt="corrode"
@@ -296,8 +296,8 @@
                 <div class="site-footer-col">
                     <h3>Course</h3>
                     <ul>
-                        <li><a href="/cheatsheet">Cheatsheet</a></li>
-                        <li><a href="/playground">Playground</a></li>
+                        <li><a href="{% block footer_cheatsheet_href %}/cheatsheet{% endblock %}" data-cheatsheet-page>Cheatsheet</a></li>
+                        <li><a href="{% block footer_playground_href %}/playground{% endblock %}">Playground</a></li>
                         <li>
                             <a
                                 href="https://github.com/corrode/course"
@@ -449,13 +449,6 @@
                 var loading = false;
                 var lastFocus = null;
 
-                function escapeHtml(s) {
-                    return s
-                        .replace(/&/g, "&amp;")
-                        .replace(/</g, "&lt;")
-                        .replace(/>/g, "&gt;");
-                }
-
                 async function highlight() {
                     try {
                         var highlighter = await import(
@@ -488,10 +481,17 @@
                         loaded = true;
                         highlight();
                     } catch (e) {
-                        body.innerHTML =
-                            '<p class="cheatsheet-loading">Could not load cheatsheet (' +
-                            escapeHtml(String(e)) +
-                            '). Try the <a href="/cheatsheet">full page</a>.</p>';
+                        var message = document.createElement("p");
+                        message.className = "cheatsheet-loading";
+                        message.textContent =
+                            "Could not load cheatsheet (" + String(e) + "). Try the ";
+                        var link = document.createElement("a");
+                        link.href = document.querySelector(
+                            "[data-cheatsheet-page]",
+                        ).href;
+                        link.textContent = "full page";
+                        message.append(link, ".");
+                        body.replaceChildren(message);
                     } finally {
                         loading = false;
                     }

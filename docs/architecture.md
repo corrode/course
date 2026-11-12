@@ -233,11 +233,17 @@ Learner-facing HTML routes:
 - `GET /dashboard/{ulid}/team`: participant team view
 - `GET /exercise/{slug}` and `GET /exercise/{ulid}/{slug}`: public and
   participant exercise views
-- `GET /playground`: standalone scratchpad
+- `GET /playground` and `GET /playground/{ulid}`: public and participant scratchpads
 - `GET /tour` and `GET /tour/{ulid}`: public and participant tours
 - `GET /settings` and `GET /settings/{ulid}`: public and participant settings
-- `GET /cheatsheet` and `GET /cheatsheet/fragment`: full and fragment views
+- `GET /cheatsheet` and `GET /cheatsheet/{ulid}`: public and participant reference pages
+- `GET /cheatsheet/fragment`: shared content for the reference modal
 - `GET /health`: database-backed health check
+
+Participant pages share `templates/participant_base.html` to keep the learner's
+ULID in navigation and footer links. The tour, playground, and cheatsheet retain
+this context when returning to exercises; they do not count toward completion.
+Their participant routes use private metadata, while public routes remain anonymous.
 
 Admin routes:
 

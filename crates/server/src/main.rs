@@ -181,6 +181,7 @@ struct DbSubmission {
 #[template(path = "playground.html")]
 struct PlaygroundTemplate {
     seo: PageMetadata,
+    ulid: Option<String>,
     /// Initial source shown before the user has typed anything.
     starter: String,
 }
@@ -208,6 +209,7 @@ struct TourTemplate {
 #[template(path = "cheatsheet.html")]
 struct CheatsheetTemplate {
     seo: PageMetadata,
+    ulid: Option<String>,
     html: String,
 }
 
@@ -284,10 +286,10 @@ impl ProgressDot {
 
 /// Synthetic chapter-list entry for the editable "A Quick Tour of Rust"
 /// preamble. It isn't a real exercise (no code steps, no tests, no progress),
-/// so it carries an explicit `/tour` href and `has_exercises = false` to stay
+/// so it carries an explicit tour href and `has_exercises = false` to stay
 /// out of the progress totals while still showing as the first row of the table
 /// of contents.
-fn tour_dot() -> ProgressDot {
+fn tour_dot(ulid: Option<&str>) -> ProgressDot {
     ProgressDot {
         slug: "tour".to_string(),
         number: 0,
@@ -299,7 +301,7 @@ fn tour_dot() -> ProgressDot {
         is_quiz: false,
         has_exercises: false,
         is_bonus: false,
-        href: Some("/tour".to_string()),
+        href: Some(ulid.map_or_else(|| "/tour".to_string(), |id| format!("/tour/{id}"))),
     }
 }
 
@@ -704,7 +706,7 @@ async fn load_submission_history_page(
 ///   `/admin` carry the token, member rows show ULIDs and a "View dashboard"
 ///   link, and the "Unassigned" bucket is reachable.
 /// - Participant (`is_admin = false`): no admin chrome, the member matching
-///   `viewer_ulid` is highlighted as `is_self`, and `back_href` returns the
+///   `ulid` is highlighted as `is_self`, and `back_href` returns the
 ///   user to their own dashboard.
 #[derive(Template)]
 #[template(path = "team.html")]
@@ -725,10 +727,8 @@ struct TeamPageTemplate {
     /// participant mode. Threaded into the inline "move to team" form action so
     /// the form posts back with the admin token still attached.
     admin_token: Option<String>,
-    /// ULID of the participant viewing the page, when this is the participant
-    /// view. Used to deep-link the topbar Settings icon straight at
-    /// `/settings/{ulid}`.
-    viewer_ulid: Option<String>,
+    /// The viewer's account, not another team member's. Used by shared navigation.
+    ulid: Option<String>,
     /// Roster: one row per member of this team, ordered by most recent activity
     /// first.
     members: Vec<TeamMemberView>,
@@ -1139,11 +1139,13 @@ fn build_router_with_static(app_state: AppState, static_dir: &std::path::Path) -
         .route("/exercise/{slug}", get(public_exercise_page))
         .route("/exercise/{ulid}/{slug}", get(participant_exercise_page))
         .route("/playground", get(playground_page))
+        .route("/playground/{ulid}", get(playground_page_with_ulid))
         .route("/tour", get(tour_page))
         .route("/tour/{ulid}", get(tour_page_with_ulid))
         .route("/settings", get(settings_page))
         .route("/settings/{ulid}", get(participant_settings_page))
         .route("/cheatsheet", get(cheatsheet_page))
+        .route("/cheatsheet/{ulid}", get(cheatsheet_page_with_ulid))
         .route("/cheatsheet/fragment", get(cheatsheet_fragment))
         .route("/health", get(health_check))
         .route("/admin", get(admin_dashboard))
@@ -1319,8 +1321,8 @@ async fn health_check(State(state): State<AppState>) -> impl IntoResponse {
 /// the dot construction in `render_exercise_page` so both pages feed the same
 /// `partials/chapter_list.html` partial. `current` is always `false` on the
 /// homepage.
-fn dots_from_exercises(exercises: &[ExerciseProgress]) -> Vec<ProgressDot> {
-    std::iter::once(tour_dot())
+fn dots_from_exercises(exercises: &[ExerciseProgress], ulid: Option<&str>) -> Vec<ProgressDot> {
+    std::iter::once(tour_dot(ulid))
         .chain(exercises.iter().map(|e| ProgressDot {
             slug: e.name.clone(),
             number: e.number,
@@ -1388,7 +1390,7 @@ async fn anonymous_dashboard(
     );
     let (_, progress_total) = exercise_progress_counts(&exercises);
 
-    let dots = dots_from_exercises(&exercises);
+    let dots = dots_from_exercises(&exercises, None);
     let template = IndexTemplate {
         seo: PageMetadata::public(&state.site_origin, "/", &state.exercises)
             .expect("homepage metadata"),
@@ -1527,6 +1529,17 @@ fn render_tour(state: &AppState, ulid: Option<String>) -> Response {
 /// Standalone Rust scratchpad. Code is persisted client-side in `localStorage`;
 /// this handler only ships the starter snippet.
 async fn playground_page(State(state): State<AppState>) -> impl IntoResponse {
+    render_playground(&state, None)
+}
+
+async fn playground_page_with_ulid(
+    AxumPath(ulid): AxumPath<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    render_playground(&state, Some(ulid))
+}
+
+fn render_playground(state: &AppState, ulid: Option<String>) -> Response {
     const STARTER: &str = r#"//! Playground scratchpad.
 //!
 //! Anything you type here is saved to your browser's local storage and
@@ -1540,8 +1553,13 @@ fn main() {
 }
 "#;
     let template = PlaygroundTemplate {
-        seo: PageMetadata::public(&state.site_origin, "/playground", &state.exercises)
-            .expect("public metadata"),
+        seo: if ulid.is_none() {
+            PageMetadata::public(&state.site_origin, "/playground", &state.exercises)
+                .expect("public metadata")
+        } else {
+            PageMetadata::private()
+        },
+        ulid,
         starter: STARTER.to_string(),
     };
     match template.render() {
@@ -1559,9 +1577,25 @@ fn main() {
 
 /// Renders `static/cheatsheet.md` as a standalone reference page.
 async fn cheatsheet_page(State(state): State<AppState>) -> impl IntoResponse {
+    render_cheatsheet(&state, None)
+}
+
+async fn cheatsheet_page_with_ulid(
+    AxumPath(ulid): AxumPath<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    render_cheatsheet(&state, Some(ulid))
+}
+
+fn render_cheatsheet(state: &AppState, ulid: Option<String>) -> Response {
     let template = CheatsheetTemplate {
-        seo: PageMetadata::public(&state.site_origin, "/cheatsheet", &state.exercises)
-            .expect("public metadata"),
+        seo: if ulid.is_none() {
+            PageMetadata::public(&state.site_origin, "/cheatsheet", &state.exercises)
+                .expect("public metadata")
+        } else {
+            PageMetadata::private()
+        },
+        ulid,
         html: load_cheatsheet_html(),
     };
     match template.render() {
@@ -1694,7 +1728,7 @@ async fn participant_dashboard(
     let (progress_done, progress_total) = exercise_progress_counts(&exercises);
 
     let team_token = participant.parsed_team_token();
-    let dots = dots_from_exercises(&exercises);
+    let dots = dots_from_exercises(&exercises, Some(&ulid));
     let template = IndexTemplate {
         seo: PageMetadata::private(),
         participant_name: Some(participant.name),
@@ -1833,7 +1867,7 @@ async fn render_exercise_page(
         .cloned()
         .unwrap_or_default();
 
-    let dots: Vec<ProgressDot> = std::iter::once(tour_dot())
+    let dots: Vec<ProgressDot> = std::iter::once(tour_dot(ulid.as_deref()))
         .chain(state.exercises.iter().enumerate().map(|(i, e)| {
             let s = chapter_progress
                 .get(&e.file_stem)
@@ -1876,6 +1910,16 @@ async fn render_exercise_page(
                     )
                 } else {
                     note.html.clone()
+                };
+                // Prose is cached without an account at startup. Contextualize
+                // its cheatsheet links here, without changing escaped code samples.
+                let html = if let Some(id) = &ulid {
+                    html.replace(
+                        "<a href=\"/cheatsheet\"",
+                        &format!("<a href=\"/cheatsheet/{}\"", html_escape(id)),
+                    )
+                } else {
+                    html
                 };
                 seen_first_note = true;
                 prev_was_note = true;
@@ -2702,7 +2746,7 @@ async fn render_team_page(
         is_unassigned,
         is_admin,
         admin_token,
-        viewer_ulid: viewer_ulid.map(str::to_string),
+        ulid: viewer_ulid.map(str::to_string),
         members,
         submissions,
         submissions_truncated,
@@ -4170,7 +4214,9 @@ mod tests {
                     state.exercises.len() + 1
                 );
                 assert_eq!(picker.matches("aria-selected=\"true\"").count(), 1);
-                assert!(picker.contains("href=\"/tour\""));
+                let tour =
+                    participant.map_or_else(|| "/tour".to_string(), |id| format!("/tour/{id}"));
+                assert!(picker.contains(&format!("href=\"{tour}\"")));
                 for chapter in state.exercises.iter() {
                     let href = format!("href=\"{prefix}{}\"", chapter.slug);
                     let item = picker
@@ -4367,8 +4413,11 @@ mod tests {
                 .unwrap();
             let tour = String::from_utf8(body.to_vec()).unwrap();
             assert!(tour.contains(&format!("href=\"{}\"", href(first))));
-            assert!(tour.contains("href=\"/exercise/00_numbers_in_rust\""));
-            assert!(tour.contains("href=\"/exercise/07_enums_and_pattern_matching\""));
+            assert!(tour.contains(&format!("href=\"{}\"", href("00_numbers_in_rust"))));
+            assert!(tour.contains(&format!(
+                "href=\"{}\"",
+                href("07_enums_and_pattern_matching")
+            )));
         }
     }
 

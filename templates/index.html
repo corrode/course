@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block topbar %}{% endblock %} {% block content %}
+{% extends "participant_base.html" %} {% block topbar %}{% endblock %} {% block content %}
 <div
     class="container book-dashboard"
     data-course-chapter="dashboard"
@@ -117,7 +117,7 @@
         </p>
         <p class="book-tour-link">
             Want the big picture again?
-            <a href="/tour">A Quick Tour of Rust →</a> shows the whole language
+            <a href="{% match ulid %}{% when Some with (u) %}/tour/{{ u }}{% when None %}/tour{% endmatch %}">A Quick Tour of Rust →</a> shows the whole language
             on a single page.
         </p>
         {% match team_token %} {% when Some with (token) %} {% match ulid %} {%
