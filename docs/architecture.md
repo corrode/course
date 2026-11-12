@@ -226,9 +226,10 @@ Axum 0.8, Askama 0.16, and SQLx 0.8 (SQLite). Core `AppState` data includes:
 
 Learner-facing HTML routes:
 
-- `GET /`: anonymous dashboard
+- `GET /` and `GET /dashboard`: dashboard entry points; use the remembered account when available
 - `GET /signup` and `GET /signup/{team_slug}`: public and team signup
 - `POST /register`: web registration
+- `POST /logout`: forget this browser's remembered account; requires a same-origin form submission
 - `GET /dashboard/{ulid}`: participant dashboard
 - `GET /dashboard/{ulid}/team`: participant team view
 - `GET /exercise/{slug}` and `GET /exercise/{ulid}/{slug}`: public and
@@ -243,7 +244,9 @@ Learner-facing HTML routes:
 Participant pages share `templates/participant_base.html` to keep the learner's
 ULID in navigation and footer links. The tour, playground, and cheatsheet retain
 this context when returning to exercises; they do not count toward completion.
-Their participant routes use private metadata, while public routes remain anonymous.
+Their participant routes use private metadata. Without a remembered account, public
+routes remain anonymous.
+
 
 Admin routes:
 
@@ -275,6 +278,36 @@ JSON API routes:
 Exercise lookup accepts either the full directory slug or its slug without the
 numeric prefix. For example, `/exercise/strings_str_and_chars` and
 `/exercise/01_strings_str_and_chars` resolve to the same chapter.
+
+### Remembered browser accounts
+
+`browser_account.rs` remembers a valid personal link in a host-only
+`corrode_participant` cookie: `HttpOnly`, `SameSite=Lax`, `Path=/`, and a 180-day
+lifetime renewed on successful personal-page navigation. `Secure` follows the
+configured `SITE_ORIGIN`; use HTTPS in production and the actual HTTP origin for
+local development.
+
+An explicit ID takes precedence over the cookie. A learner URL without an ID
+redirects temporarily to its personal counterpart, keeping query parameters and
+the shareable ID in the address bar. The server checks that the participant still
+exists. Invalid personal links return 404 without selecting another account;
+stale cookies are expired, and database failures return 503 rather than silently
+opening an anonymous page. These responses are not cached. `strict-origin`
+referrer policy keeps the personal path out of referrer headers while retaining
+the origin needed for native sign-out forms.
+
+The cookie stores the existing bearer ID, not a separate revocable session.
+Opening a personal link on another device signs that browser in, and opening a
+different account's link switches accounts. This also applies to the admin UI's
+“Open account” links. Sign-out removes only this browser's cookie: saved progress,
+local editor drafts, other devices, and existing personal links are unchanged.
+An old tab or bookmark can sign in again.
+
+API and CLI requests keep their explicit participant IDs; the cookie does not
+change submission ownership. Registration remembers the new account when the
+browser follows the resulting personal link. Admin routes, signup, static assets,
+and the cheatsheet fragment do not select or remember accounts. HEAD, prefetch,
+and identifiable subresource requests do not write the cookie.
 
 ### Run/Format Proxy
 

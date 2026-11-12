@@ -459,7 +459,12 @@ async fn application_pages_never_publish_personal_metadata_including_invalid_par
     paths.push(format!("/exercise/missing/{lesson}"));
     for path in paths {
         let response = server.get(&path).await;
-        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        let expected = if path.split('/').any(|segment| segment == "missing") {
+            StatusCode::NOT_FOUND
+        } else {
+            StatusCode::OK
+        };
+        assert_eq!(response.status(), expected, "{path}");
         assert_no_store(&response);
         assert_eq!(
             response.headers()["x-robots-tag"],

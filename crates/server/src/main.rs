@@ -1,3 +1,6 @@
+mod browser_account;
+#[cfg(test)]
+mod browser_account_tests;
 mod lesson_seo;
 mod seo;
 #[cfg(test)]
@@ -703,7 +706,7 @@ async fn load_submission_history_page(
 /// Two viewer modes share this template:
 ///
 /// - Admin (`is_admin = true`): `admin_token` is `Some` so links back to
-///   `/admin` carry the token, member rows show ULIDs and a "View dashboard"
+///   `/admin` carry the token, member rows show ULIDs and an "Open account"
 ///   link, and the "Unassigned" bucket is reachable.
 /// - Participant (`is_admin = false`): no admin chrome, the member matching
 ///   `ulid` is highlighted as `is_self`, and `back_href` returns the
@@ -1132,6 +1135,8 @@ fn build_router_with_static(app_state: AppState, static_dir: &std::path::Path) -
         .route("/robots.txt", get(robots_txt))
         .route("/sitemap.xml", get(sitemap_xml))
         .route("/", get(anonymous_dashboard))
+        .route("/dashboard", get(anonymous_dashboard))
+        .route("/logout", post(browser_account::logout))
         .route("/signup", get(signup_page))
         .route("/signup/{team_slug}", get(signup_page_with_team))
         .route("/register", post(web_register))
@@ -1167,8 +1172,12 @@ fn build_router_with_static(app_state: AppState, static_dir: &std::path::Path) -
         .route("/admin/team-unassigned", get(admin_team_unassigned_page))
         .route("/dashboard/{ulid}/team", get(participant_team_page))
         .nest("/api", api_routes)
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.clone(),
+            browser_account::remember,
+        ))
         // Every route above renders per-participant state (progress checkmarks,
-        // submitted code) keyed only by the ulid in the URL. Without an
+        // submitted code) selected by a personal URL or browser cookie. Without an
         // explicit policy these HTML pages are freely cacheable, so a browser
         // or intermediary can serve a stale copy of someone's own page (e.g. a
         // mobile browser showing an old `0 of 5` after the work was done on
@@ -1233,6 +1242,10 @@ async fn seo_policy(
     } else {
         next.run(request).await
     };
+    response.headers_mut().insert(
+        axum::http::header::REFERRER_POLICY,
+        axum::http::HeaderValue::from_static("strict-origin"),
+    );
     // Preserve asset discovery, including the shared social image. Asset errors
     // still receive noindex; robots.txt does not prevent fetching either class.
     if public_asset && response.status().is_success() {
@@ -1292,7 +1305,7 @@ fn canonical_redirect(path: &str, catalog: &[Exercise]) -> Option<String> {
 /// Stamp `Cache-Control: no-store` on every dynamic HTML/API response.
 ///
 /// These pages embed per-participant state (progress, submitted code) keyed
-/// only by the ulid in the URL, so they must never be reused from a browser,
+/// by a personal URL or browser cookie, so they must never be reused from a browser,
 /// bfcache, or intermediary cache. Without this, a device that visited a page
 /// once can keep showing stale progress.
 async fn no_store(mut response: Response) -> Response {
@@ -1661,28 +1674,27 @@ async fn web_register(
     Ok(axum::response::Redirect::to(&target))
 }
 
+async fn load_participant(state: &AppState, id: &str) -> Result<DbParticipant, Box<Response>> {
+    sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await
+        .map_err(|error| {
+            Box::new(match error {
+                sqlx::Error::RowNotFound => browser_account::invalid_login(),
+                error => browser_account::unavailable(&error),
+            })
+        })
+}
+
 /// Participant dashboard handler
 async fn participant_dashboard(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    // Get participant info
-    let participant_result =
-        sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
-            .bind(&ulid)
-            .fetch_one(&state.pool)
-            .await;
-
-    let participant: DbParticipant = match participant_result {
-        Ok(p) => p,
-        Err(_) => {
-            // Unknown ULID. Old behavior was a hard 404, which is unfriendly
-            // because the dashboard URL is the bookmark and people will mistype
-            // it (or follow a stale link from before we migrated databases).
-            // Send them home with a soft toast instead so they have somewhere
-            // to go.
-            return axum::response::Redirect::to("/?reason=unknown-token").into_response();
-        }
+    let participant = match load_participant(&state, &ulid).await {
+        Ok(participant) => participant,
+        Err(response) => return *response,
     };
 
     // Get exercise progress
@@ -1770,18 +1782,11 @@ async fn participant_exercise_page(
     AxumPath((ulid, slug)): AxumPath<(String, String)>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    // Verify the participant exists; if not, fall back to the public page so
-    // the URL still resolves to something useful.
-    let exists = sqlx::query("SELECT 1 FROM participants WHERE id = ?")
-        .bind(&ulid)
-        .fetch_optional(&state.pool)
-        .await
-        .ok()
-        .flatten()
-        .is_some();
-
-    let ulid = if exists { Some(ulid) } else { None };
-    render_exercise_page(&state, &slug, ulid, false).await
+    match browser_account::participant_exists(&state, &ulid).await {
+        Ok(true) => render_exercise_page(&state, &slug, Some(ulid), false).await,
+        Ok(false) => browser_account::invalid_login(),
+        Err(error) => browser_account::unavailable(&error),
+    }
 }
 
 /// Minimal HTML escape for arbitrary text we splice into a template.
@@ -2818,24 +2823,16 @@ async fn admin_team_unassigned_page(
 
 /// Participant: read-only view of their own team's submissions.
 ///
-/// Returns 404 if the ULID is unknown; redirects to the dashboard with a
-/// one-shot toast if the participant has no `team_token` (no team means there's
-/// nothing meaningful to show on this page).
+/// Returns 404 if the ULID is unknown; redirects to the personal dashboard if
+/// the participant has no team.
 async fn participant_team_page(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let participant: DbParticipant =
-        match sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
-            .bind(&ulid)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(p) => p,
-            Err(_) => {
-                return axum::response::Redirect::to("/?reason=unknown-token").into_response();
-            }
-        };
+    let participant = match load_participant(&state, &ulid).await {
+        Ok(participant) => participant,
+        Err(response) => return *response,
+    };
 
     let Some(token) = participant.parsed_team_token() else {
         // No team to show; bounce back to the personal dashboard.
@@ -2883,23 +2880,15 @@ async fn settings_page() -> impl IntoResponse {
 
 /// Settings page for a known participant: editor preferences plus their team
 /// snapshot (roster + recent submissions). Routed at `/settings/{ulid}`.
-/// Unknown ULIDs redirect to the anonymous dashboard with the standard one-shot
-/// toast.
+/// Unknown ULIDs show an invalid-link page without selecting another account.
 async fn participant_settings_page(
     AxumPath(ulid): AxumPath<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let participant: DbParticipant =
-        match sqlx::query_as("SELECT name, team_token FROM participants WHERE id = ?")
-            .bind(&ulid)
-            .fetch_one(&state.pool)
-            .await
-        {
-            Ok(p) => p,
-            Err(_) => {
-                return axum::response::Redirect::to("/?reason=unknown-token").into_response();
-            }
-        };
+    let participant = match load_participant(&state, &ulid).await {
+        Ok(participant) => participant,
+        Err(response) => return *response,
+    };
 
     let team_token_parsed = participant.parsed_team_token();
     let (members, submissions, submissions_truncated, exercises) = match team_token_parsed {

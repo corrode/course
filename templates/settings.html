@@ -195,8 +195,10 @@
                 <div class="settings-row-text">
                     <h3>Your Login Link</h3>
                     <p>
-                        Bookmark this link to stay signed in. Anyone with the
-                        link can sign in as you, so keep it private.
+                        This browser remembers your account for 180 days. Save
+                        this link to sign in on another device or after clearing
+                        cookies. Anyone with the link can sign in as you, so keep
+                        it private.
                     </p>
                 </div>
                 <div class="settings-row-control settings-save-link">
@@ -214,6 +216,21 @@
                     >
                         Copy
                     </button>
+                </div>
+            </div>
+            <div class="settings-row">
+                <div class="settings-row-text">
+                    <h3>Sign Out on This Device</h3>
+                    <p>
+                        Forget the remembered account in this browser. Your saved
+                        progress, editor drafts, and other devices are unchanged.
+                        Opening a personal link signs you in again.
+                    </p>
+                </div>
+                <div class="settings-row-control">
+                    <form action="/logout" method="post">
+                        <button type="submit" class="btn btn-secondary admin-btn-tiny">Sign out</button>
+                    </form>
                 </div>
             </div>
             {% when None %} {% endmatch %}
