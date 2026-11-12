@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <title>Inline editor browser regression checks</title>
 <link rel="stylesheet" href="/static/css/base.css">
-<style>
+<style id="workflow-styles">
   body { padding: 2rem; }
   main { max-width: 1100px; margin: auto; }
   .toolbar { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; }
@@ -38,6 +38,7 @@
 </main>
 <script type="module">
 import { mountInlineEditor, setVimGlobal } from "/static/dist/inline-editor.js";
+if (!new URLSearchParams(location.search).has("layout")) {
 const checks = document.querySelector("#checks");
 const messages = [];
 const assert = (condition, message) => { if (!condition) throw new Error(message); messages.push(message); };
@@ -200,6 +201,290 @@ try {
   panel.scrollIntoView = originalScroll;
   if (originalScrollPreference === null) localStorage.removeItem(scrollPreference);
   else localStorage.setItem(scrollPreference, originalScrollPreference);
+}
+}
+</script>
+<script type="module">
+import { mountInlineEditor } from "/static/dist/inline-editor.js";
+const params = new URLSearchParams(location.search);
+if (params.has("layout")) {
+  const checks = document.querySelector("#checks");
+  const messages = [];
+  const assert = (condition, message) => {
+    if (!condition) throw new Error(message);
+    messages.push(message);
+  };
+  const tick = () => new Promise(resolve => setTimeout(resolve, 100));
+  const originalFetch = window.fetch;
+  const pending = [];
+  const errors = [];
+  window.addEventListener("error", event => errors.push(event.message));
+  window.addEventListener("unhandledrejection", event => errors.push(String(event.reason)));
+  let section, view, api;
+  try {
+    const kind = params.get("layout");
+    assert(["exercise", "playground", "tour", "index"].includes(kind), "Known production template");
+    const template = await originalFetch(`/templates/${kind}.html`).then(response => response.text());
+    // Use the real template's editor markup and CSS, not a parallel test layout.
+    // Enable the chapter's conditional controls; replace only server-side data.
+    const markup = template.match(/<section\b[\s\S]*?<\/section>/g)
+      .find(html => /class="[^"]*\bexercise-section\b/.test(html))
+      .replace(/{%[\s\S]*?%}|{#[\s\S]*?#}/g, "")
+      .replace(/{{[\s\S]*?}}/g, "Geometry exercise");
+    const parsed = new DOMParser().parseFromString(markup, "text/html");
+    section = parsed.querySelector(".exercise-section");
+    document.querySelector("#workflow-styles").remove();
+    for (const style of template.match(/<style>[\s\S]*?<\/style>/g) || [])
+      document.head.insertAdjacentHTML("beforeend", style);
+    document.body.replaceChildren();
+    const topbar = document.createElement("header");
+    topbar.className = "topbar";
+    const elsewhere = document.createElement("button");
+    elsewhere.textContent = "Course";
+    topbar.append(elsewhere);
+    const main = document.createElement("main");
+    main.className = kind === "index" ? "container book-dashboard" : "container";
+    main.innerHTML = `<h1>${kind === "index" ? "Warm-up" : kind} editor</h1><p>Production template layout regression fixture.</p>`;
+    main.append(section);
+    // The homepage explicitly removes the shared topbar.
+    document.body.append(kind === "index" ? elsewhere : topbar, main, checks);
+    const role = name => section.querySelector(`[data-role="${name}"]`);
+    const source = "fn main() {\n" + Array.from({length: 98}, (_, i) => `    // Source line ${i + 2}`).join("\n") + "\n}";
+    role("editor-fallback").value = source;
+    const next = section.cloneNode(true);
+    next.removeAttribute("id");
+    for (const node of next.querySelectorAll("[id]")) node.removeAttribute("id");
+    main.append(next);
+    window.fetch = (url, options) => new Promise(resolve => pending.push({
+      url, options, resolve: data => resolve({ok: true, json: async () => data}),
+    }));
+    localStorage.removeItem("corrode:editor:scroll-output");
+    localStorage.removeItem("corrode:editor:vim");
+    api = await mountInlineEditor(section, {slug: "geometry", features: {
+      submit: kind === "exercise" ? {ulid: "fixture", exerciseKey: "geometry"} : null,
+      buildExtraExtensions(modules) {
+        return modules.view.ViewPlugin.define(editor => { view = editor; return {}; });
+      },
+    }});
+    await mountInlineEditor(next, {slug: "next-geometry", features: {
+      buildExtraExtensions() { throw new Error("Intentional textarea fallback fixture"); },
+    }});
+    assert(!!view, "CodeMirror mounted from the committed bundle");
+    if (kind === "playground") {
+      // Exercise the actual fullscreen handler, without running the page's mount script.
+      const fullscreen = template.match(/\(function wireFullscreen\(\) \{[\s\S]*?\}\)\(\);/)[0];
+      const script = document.createElement("script");
+      script.textContent = fullscreen;
+      document.body.append(script);
+    }
+    await tick();
+    const toolbar = role("editor-toolbar");
+    const panel = role("output-panel");
+    const rect = element => element.getBoundingClientRect();
+    const visibleControls = label => {
+      const head = rect(toolbar);
+      const bar = rect(topbar);
+      assert(head.top >= bar.bottom - 1 && head.bottom <= innerHeight, `${label}: toolbar fits below navigation`);
+      for (const button of toolbar.querySelectorAll("button, a")) {
+        if (!button.getClientRects().length) continue;
+        const r = rect(button);
+        assert(r.left >= 0 && r.right <= innerWidth + 1 && r.top >= head.top && r.bottom <= innerHeight, `${label}: ${button.dataset.role} fits`);
+        const hit = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2);
+        assert(hit && button.contains(hit), `${label}: ${button.dataset.role} is not obscured`);
+      }
+      assert(document.documentElement.scrollWidth <= innerWidth, `${label}: no horizontal page overflow`);
+    };
+    const showSource = async () => {
+      view.dispatch({selection: {anchor: view.state.doc.line(50).from, head: view.state.doc.line(50).from + 6}, scrollIntoView: true});
+      await tick();
+      visibleControls("Source");
+    };
+    const scrolls = [];
+    const originalScroll = panel.scrollIntoView;
+    panel.scrollIntoView = function(options) { scrolls.push(options); originalScroll.call(this, options); };
+    const failure = {success: false, stderr: "error[E0308]: mismatched types\n --> src/main.rs:80:5\n80 | let broken: u8 = true;", test_results: []};
+    const resultsVisible = label => {
+      visibleControls(label);
+      assert(rect(panel).top >= rect(toolbar).bottom - 1 && rect(panel).top < innerHeight - 30, `${label}: results start below the toolbar, in view`);
+    };
+    const finish = async data => {
+      pending.shift().resolve(data);
+      await tick();
+      if (pending[0]?.url === "/api/submit") { pending.shift().resolve({}); await tick(); }
+      // Allow native smooth scrolling to finish (also used when reduced motion is off).
+      await new Promise(resolve => setTimeout(resolve, matchMedia("(prefers-reduced-motion: reduce)").matches ? 100 : 900));
+    };
+    // The editor can still start inside the viewport while its first line is
+    // covered by the sticky toolbar. CM margins are viewport-relative.
+    const positiveTop = (rect(topbar).height + rect(toolbar).height) / 2;
+    window.scrollTo(0, scrollY + rect(view.scrollDOM).top - positiveTop);
+    await tick();
+    assert(rect(view.scrollDOM).top > 0 && view.coordsAtPos(0).top < rect(toolbar).bottom, "Positive scroller offset starts with the first source line covered");
+    view.dispatch({selection: {anchor: 0}, scrollIntoView: true});
+    await tick();
+    assert(view.coordsAtPos(0).top >= rect(toolbar).bottom - 1, "Cursor reveal clears the toolbar even when the scroller starts inside the viewport");
+    await showSource();
+    assert(view.scrollDOM.scrollHeight <= view.scrollDOM.clientHeight + 1, "Normal editor has no nested vertical scroller");
+    window.scrollBy(0, 150);
+    await tick();
+    visibleControls("Manual page scroll");
+    if (kind === "index") {
+      assert(!document.querySelector(".topbar") && rect(toolbar).top === 0, "Warm-up toolbar sticks to the top without phantom navigation clearance");
+    } else {
+      topbar.style.height = "4rem";
+      await tick();
+      assert(Math.abs(rect(toolbar).top - rect(topbar).bottom) <= 1, "Toolbar follows the measured navigation height");
+      topbar.style.height = "";
+      await tick();
+    }
+    view.focus();
+    const selection = view.state.selection.toJSON();
+    view.contentDOM.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter", keyCode: 13, metaKey: /Mac/.test(navigator.platform), ctrlKey: !/Mac/.test(navigator.platform), bubbles: true, cancelable: true}));
+    await tick();
+    visibleControls("Running");
+    assert(pending.length === 1 && scrolls.length === 0 && panel.style.display === "none", "Keyboard Run does not reveal output before results arrive");
+    await finish(failure);
+    resultsVisible("Compile failure");
+    assert(view.hasFocus && JSON.stringify(view.state.selection.toJSON()) === JSON.stringify(selection), "Keyboard Run preserves focus and selection, without source navigation");
+    assert(scrolls[0].behavior === (matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"), "Native scrolling respects reduced motion");
+
+    const nextRun = next.querySelector('[data-role="run-btn"]');
+    const nextPanel = next.querySelector('[data-role="output-panel"]');
+    const nextResultsVisible = () => {
+      const head = rect(next.querySelector('[data-role="editor-toolbar"]'));
+      assert(head.top >= rect(topbar).bottom - 1 && rect(nextPanel).top >= head.bottom - 1 && rect(nextPanel).top < innerHeight, "The newer editor's results remain in view");
+    };
+    // B is already pending when an aligned rerun of A makes no viewport move.
+    // There is no synthetic scrollend: only the browser's actual scroll events.
+    nextRun.click();
+    const delayedB = pending.shift();
+    await tick();
+    // The first reveal may have changed CM's height estimate. Establish an
+    // aligned viewport explicitly before testing a genuine no-op rerun.
+    originalScroll.call(panel, {behavior: "instant", block: "start", inline: "nearest"});
+    await tick();
+    let viewportScrolls = 0;
+    const countScroll = event => { if (event.target === document) viewportScrolls++; };
+    document.addEventListener("scroll", countScroll);
+    role("run-btn").click();
+    await finish(failure);
+    document.removeEventListener("scroll", countScroll);
+    assert(viewportScrolls === 0, `An already aligned rerun is an actual no-op viewport scroll (${viewportScrolls} events)`);
+    const afterNoOp = scrolls.length;
+    pending.push(delayedB);
+    await finish(failure);
+    assert(scrolls.length === afterNoOp, "A no-op rerun cannot hijack another editor's later scrollend");
+    nextResultsVisible();
+
+    // Start A's output animation, then replace it with B's response.
+    role("run-btn").click();
+    const movingA = pending.shift();
+    nextRun.click();
+    const movingB = pending.shift();
+    movingA.resolve(failure);
+    await tick();
+    const afterAStarted = scrolls.length;
+    pending.push(movingB);
+    await finish(failure);
+    assert(scrolls.length === afterAStarted, "Overlapping output responses supersede older corrections across mounts");
+    nextResultsVisible();
+
+    role("run-btn").focus();
+    role("run-btn").click();
+    elsewhere.focus({preventScroll: true});
+    await finish({...failure, stderr: failure.stderr.repeat(40)});
+    resultsVisible("Tall output");
+    assert(document.activeElement === elsewhere, "A response never steals focus from another control");
+
+    role("run-btn").click();
+    await finish({success: false, stdout: "assertion failed", test_results: [{name: "example", passed: false}]});
+    resultsVisible("Test failure");
+    role("run-btn").click();
+    await finish({success: true, stdout: "ok", test_results: [{name: "example", passed: true}]});
+    resultsVisible("Success / Submitted");
+    if (kind === "exercise") assert(role("submit-btn").textContent.includes("Submitted"), "Saved controls remain available after autosubmit");
+
+    localStorage.setItem("corrode:editor:scroll-output", "0");
+    await showSource();
+    const calls = scrolls.length;
+    role("run-btn").click();
+    await finish(failure);
+    assert(scrolls.length === calls, "Opt-out prevents output scrolling");
+    localStorage.removeItem("corrode:editor:scroll-output");
+    role("run-btn").click();
+    api.setValue(source + "\n// New revision");
+    await finish(failure);
+    assert(scrolls.length === calls, "Stale response cannot scroll");
+
+    view.focus();
+    for (const number of [80, 30, 1]) {
+      view.dispatch({selection: {anchor: view.state.doc.line(number).from}, scrollIntoView: true});
+      await tick();
+      const caret = view.coordsAtPos(view.state.selection.main.head);
+      assert(caret.top >= rect(toolbar).bottom - 1 && caret.bottom <= innerHeight, `Cursor scrolling keeps source line ${number} below toolbar`);
+    }
+    document.documentElement.dataset.editorFontSize = "large";
+    await tick();
+    view.dispatch({selection: {anchor: view.state.doc.line(30).from}, scrollIntoView: true});
+    await tick();
+    view.contentDOM.dispatchEvent(new KeyboardEvent("keydown", {key: "ArrowUp", code: "ArrowUp", keyCode: 38, bubbles: true, cancelable: true}));
+    await tick();
+    const caret = view.coordsAtPos(view.state.selection.main.head);
+    assert(caret.top >= rect(toolbar).bottom - 1 && caret.bottom <= innerHeight, "Arrow navigation with a large editor font keeps the caret clear of the toolbar");
+    delete document.documentElement.dataset.editorFontSize;
+    await tick();
+    window.scrollTo(0, scrollY + rect(next).top - 48);
+    await tick();
+    assert(rect(toolbar).bottom <= rect(next).top + 1, "The first toolbar stays bounded by its own section");
+    const fallback = next.querySelector('[data-role="editor-fallback"]');
+    assert(!next.querySelector(".cm-editor") && fallback.style.display !== "none", "The second production fixture exercises textarea fallback");
+    fallback.focus();
+    fallback.setSelectionRange(3, 12);
+    fallback.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", ctrlKey: true, bubbles: true, cancelable: true}));
+    await finish(failure);
+    assert(document.activeElement === fallback && fallback.selectionStart === 3 && fallback.selectionEnd === 12, "Fallback keyboard Run preserves focus and both selection endpoints");
+    const fallbackHead = rect(next.querySelector('[data-role="editor-toolbar"]'));
+    const fallbackOutput = rect(next.querySelector('[data-role="output-panel"]'));
+    assert(fallbackHead.top >= rect(topbar).bottom - 1 && fallbackOutput.top >= fallbackHead.bottom - 1 && fallbackOutput.top < innerHeight, "Fallback results clear their own toolbar");
+
+    if (kind === "playground") {
+      await showSource();
+      role("fullscreen-btn").click();
+      await tick();
+      assert(section.classList.contains("is-fullscreen"), "Actual fullscreen button enters fullscreen");
+      visibleControls("Fullscreen source");
+      role("run-btn").click();
+      await finish({...failure, stderr: failure.stderr.repeat(40)});
+      visibleControls("Fullscreen output");
+      assert(rect(panel).top >= rect(toolbar).bottom && rect(panel).bottom <= innerHeight + 1, "Fullscreen output fits without covering toolbar");
+      assert(rect(view.scrollDOM).height > 20 && rect(view.scrollDOM).bottom <= rect(panel).top, "Fullscreen code remains usable above output");
+      // Programmatic button activation does not dispatch pointer/keyboard input
+      // that would otherwise mask a dangling fullscreen correction.
+      role("fullscreen-btn").click();
+      await tick();
+      const afterFullscreen = scrolls.length;
+      window.scrollTo(0, document.documentElement.scrollHeight);
+      await tick();
+      assert(scrolls.length === afterFullscreen, "Fullscreen output leaves no correction for an unrelated later viewport scroll");
+      role("fullscreen-btn").click();
+      document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true}));
+      await tick();
+      assert(!section.classList.contains("is-fullscreen"), "Escape exits fullscreen");
+      await showSource();
+      assert(view.scrollDOM.scrollHeight <= view.scrollDOM.clientHeight + 1, "Exiting fullscreen restores normal editor flow");
+    }
+    await showSource();
+    if (params.has("fullscreen")) { role("fullscreen-btn").click(); await tick(); }
+    assert(errors.length === 0, `No browser errors: ${errors.join("; ")}`);
+    checks.dataset.result = "passed";
+    checks.textContent = `${messages.length} ${kind} layout checks passed at ${innerWidth}×${innerHeight}\n` + messages.map(message => `✓ ${message}`).join("\n");
+  } catch (error) {
+    checks.dataset.result = "failed";
+    checks.textContent = messages.join("\n") + "\nFAILED: " + error.stack;
+    if (section) checks.textContent += "\nGeometry: " + JSON.stringify(Object.fromEntries(["editor-toolbar", "run-btn", "output-panel"].map(role => [role, section.querySelector(`[data-role="${role}"]`)?.getBoundingClientRect().toJSON()])));
+  } finally {
+    window.fetch = originalFetch;
+  }
 }
 </script>
 </html>

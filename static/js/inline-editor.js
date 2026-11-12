@@ -14,10 +14,12 @@ import {
 } from "./editor-workflow.js";
 import { createResultRenderer, updateProgress } from "./editor-results.js";
 import { createController } from "./editor-controller.js";
+import { createEditorChrome } from "./editor-chrome.js";
 
 const VIM_PREF_KEY = "corrode:editor:vim";
 const activeMounts = new Set();
 const mounts = new WeakMap();
+const outputScrollOwners = new WeakMap();
 let nextEditorId = 0;
 
 export function vimGlobalEnabled() {
@@ -97,7 +99,31 @@ async function createMount(section, opts) {
     },
   });
   const listen = controller.listen;
+  const chrome = createEditorChrome(section);
+  listen(window, "resize", chrome.measure);
+  let outputScroll = 0;
+  let finishOutputScroll = null;
+  function cancelOutputScroll() {
+    outputScroll++;
+    finishOutputScroll = null;
+    if (outputScrollOwners.get(document) === cancelOutputScroll)
+      outputScrollOwners.delete(document);
+  }
+  // A smooth scroll can outlive CodeMirror's virtualized height estimate.
+  // Recheck once at its end, but never fight a learner's intervening input.
+  for (const event of ["wheel", "touchstart", "pointerdown", "keydown"])
+    listen(document, event, cancelOutputScroll);
+  listen(document, "scrollend", (event) => {
+    if (event.target !== document) return;
+    const finish = finishOutputScroll;
+    finishOutputScroll = null;
+    if (finish) {
+      finish();
+      cancelOutputScroll();
+    }
+  });
   function edited() {
+    cancelOutputScroll();
     workflow?.edit();
     controller.schedule();
     render.invalidate();
@@ -133,6 +159,8 @@ async function createMount(section, opts) {
       value = getValue();
       controller.destroy();
       destroyed = true;
+      cancelOutputScroll();
+      chrome.destroy();
       workflow.destroy();
       render.destroy();
       editor?.destroy();
@@ -323,20 +351,57 @@ async function createMount(section, opts) {
     },
     render(data) {
       render(data);
-      let scrollOutput = true;
-      try {
-        scrollOutput = localStorage.getItem("corrode:editor:scroll-output") !== "0";
-      } catch (_) {}
-      if (scrollOutput) {
-        const reducedMotion = window.matchMedia?.(
-          "(prefers-reduced-motion: reduce)",
-        ).matches;
-        panel?.scrollIntoView?.({
-          behavior: reducedMotion ? "instant" : "smooth",
-          block: "start",
-          inline: "nearest",
-        });
-      }
+      // Only the newest output on this page may finish a viewport scroll.
+      outputScrollOwners.get(document)?.();
+      const scroll = ++outputScroll;
+      outputScrollOwners.set(document, cancelOutputScroll);
+      // Status and Submit labels can wrap the toolbar. Measure after the
+      // workflow finishes updating them, without reviving invalidated results.
+      queueMicrotask(() => {
+        if (destroyed || scroll !== outputScroll) return;
+        chrome.measure();
+        let scrollOutput = true;
+        try {
+          scrollOutput = localStorage.getItem("corrode:editor:scroll-output") !== "0";
+        } catch (_) {}
+        if (scrollOutput) {
+          const reducedMotion = window.matchMedia?.(
+            "(prefers-reduced-motion: reduce)",
+          ).matches;
+          if (!reducedMotion && panel && $("editor-toolbar") &&
+              !section.classList.contains("is-fullscreen")) {
+            const clearance = parseFloat(window.getComputedStyle(panel).scrollMarginTop) || 0;
+            const target = Math.max(0, Math.min(
+              window.scrollY + panel.getBoundingClientRect().top - clearance,
+              document.scrollingElement.scrollHeight - window.innerHeight,
+            ));
+            // Aligned or page-boundary no-ops emit no scrollend. Never leave a
+            // correction waiting for some unrelated future viewport scroll.
+            if (Math.abs(target - window.scrollY) > 1) finishOutputScroll = () => {
+              if (destroyed || scroll !== outputScroll ||
+                  section.classList.contains("is-fullscreen")) return;
+              try {
+                if (localStorage.getItem("corrode:editor:scroll-output") === "0")
+                  return;
+              } catch (_) {}
+              chrome.measure();
+              const clearance = parseFloat(
+                window.getComputedStyle(panel).scrollMarginTop,
+              );
+              if (panel.getBoundingClientRect().top < clearance - 1)
+                panel.scrollIntoView({
+                  behavior: "instant", block: "start", inline: "nearest",
+                });
+            };
+          }
+          panel?.scrollIntoView?.({
+            behavior: reducedMotion ? "instant" : "smooth",
+            block: "start",
+            inline: "nearest",
+          });
+        }
+        if (!finishOutputScroll) cancelOutputScroll();
+      });
     },
     onRunSuccess: (data) => opts.onRunSuccess?.({ section, data }),
     onSubmit({ result, payload }) {
@@ -354,6 +419,7 @@ async function createMount(section, opts) {
   listen(resetBtn, "click", () => {
     if (!window.confirm("Replace your edits with the original starter code?"))
       return;
+    cancelOutputScroll();
     api.setValue(starter);
     render.clear();
     controller.flush();
@@ -475,6 +541,7 @@ async function createMount(section, opts) {
       ]),
       langRust.rust(),
       EditorView.lineWrapping,
+      EditorView.scrollMargins.of(chrome.scrollMargins),
       proseEditorTheme,
       features.urlPlugin !== false
         ? createUrlExtensions({

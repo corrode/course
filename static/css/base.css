@@ -315,9 +315,29 @@ samp,
         animation-duration: 2s;
     }
 }
-/* Leave room for the sticky top bar when a run scrolls to its output. */
+/* The section bounds the sticky toolbar; code and output keep normal page flow. */
+.exercise-section > [data-role="editor-toolbar"] {
+    position: sticky;
+    top: var(--editor-topbar-height, 3rem);
+    z-index: 10;
+    background: var(--editor-toolbar-background, var(--color-background));
+}
+.exercise-section .exercise-actions {
+    flex-wrap: wrap;
+    min-width: 0;
+}
 [data-role="output-panel"] {
-    scroll-margin-top: 4rem;
+    scroll-margin-top: calc(
+        var(--editor-topbar-height, 3rem) + var(--editor-toolbar-height, 0px) + 1rem
+    );
+}
+/* Fullscreen already keeps its controls outside the code/output scrollers. */
+.exercise-section.is-fullscreen > [data-role="editor-toolbar"] {
+    position: static;
+    flex-shrink: 0;
+}
+.exercise-section.is-fullscreen [data-role="output-panel"] {
+    scroll-margin-top: 0;
 }
 .editor-shortcuts {
     display: block;
