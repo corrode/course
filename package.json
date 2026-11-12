@@ -3,6 +3,7 @@
   "scripts": {
     "test": "node --test static/js/*.test.mjs",
     "test:browser": "npm run build:js && python3 scripts/check-editor-browser.py",
+    "test:browser:admin": "node scripts/check-admin-browser.mjs",
     "build:js": "rm -rf static/dist && esbuild static/js/inline-editor.js static/js/readonly-rust-editor.js static/js/rust-highlight.js --bundle --splitting --format=esm --minify --outdir=static/dist --entry-names=[name] --chunk-names=chunks/[name]-[hash] && cp node_modules/htmx.org/dist/htmx.min.js static/js/htmx.min.js"
   },
   "devDependencies": {

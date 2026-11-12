@@ -106,6 +106,58 @@ separately, including chapters that intentionally do not compile.
 with a temporary database and learner crate (requires Python 3, rustfmt, and
 Clippy; the smoke check uses no external network).
 
+## Testing the Editor
+
+With Node 24, Python 3, and Chrome or Chromium installed:
+
+```bash
+npm ci --ignore-scripts
+npm test
+npm run test:browser
+```
+
+The browser suite checks editing workflows and toolbar layouts at narrow,
+short, and desktop viewport sizes. It serves local fixtures and mocks Run
+responses; it does not execute code remotely. CI runs both reduced-motion and
+smooth-scrolling checks. To select a browser or capture layout screenshots:
+
+```bash
+python3 scripts/check-editor-browser.py --chrome="/path/to/chrome" --motion no-preference --screenshot-dir=target/editor-screenshots
+```
+
+## Testing the Admin UI
+
+The admin browser regression test needs Node 24 and Chrome or Chromium. Build
+from the current source before running it:
+
+```bash
+cargo build --locked -p course-server --bin server
+npm run test:browser:admin
+```
+
+The test finds Chrome or Chromium on `PATH`, with a fallback to the standard
+macOS Chrome installation. To use another installation, set `CHROME_BIN` to its
+executable path or pass `--chrome` (which takes precedence):
+
+```bash
+npm run test:browser:admin -- --chrome="/path/to/chrome"
+```
+
+No npm install, asset rebuild, or running server is needed. The test uses the
+committed browser assets and `target/debug/server`. It starts a separate server
+with a temporary SQLite database, three synthetic participants, an empty `.env`,
+and a sanitized environment. It does not use the repository database or `.env`.
+The temporary runtime and Chrome profile are removed on success, failure, or
+SIGINT/SIGTERM; the whole run has a two-minute deadline.
+
+Coverage includes special characters in the admin token, real HTMX filter/sort
+requests and focus preservation, Move submissions and redirects, and admin back
+links. Team-page checks at 320, 390, and 1440px cover overflow, a named and
+focusable roster, keyboard scrolling, and access to row controls. These are
+focused regression checks, not a full accessibility audit. The Rust CI job runs
+the same command after building and testing, using the runner's installed Chrome.
+`npm test` runs the separate JavaScript unit tests.
+
 ## About corrode
 
 [corrode](https://corrode.dev) helps teams adopt Rust in production: training,

@@ -35,7 +35,7 @@ class Element extends EventTarget {
     this.textContent = "";
     this.value = "starter";
     this.disabled = false;
-    this.classList = { toggle() {}, remove() {}, add() {} };
+    this.classList = { toggle() {}, remove() {}, add() {}, contains() { return false; } };
   }
   get textContent() {
     return this.children.length
@@ -84,9 +84,8 @@ class Element extends EventTarget {
     return null;
   }
 }
-function fixture() {
-  const document = new EventTarget();
-  const window = new EventTarget();
+function fixture(document = new EventTarget()) {
+  const window = document.defaultView || new EventTarget();
   document.defaultView = window;
   window.navigator = { clipboard: { writeText: async () => {} } };
   window.confirm = () => true;
@@ -522,6 +521,141 @@ for (const invalidation of ["edit", "reset", "destroy"]) {
     assert.equal(calls.length, 0);
     assert.equal(f.roles["output-panel"].style.display, "none");
     assert.equal(f.roles["output-stderr"].textContent, "");
+  });
+}
+
+function scrollFixture(document) {
+  const f = fixture(document);
+  f.roles["editor-toolbar"] = new Element(f.document);
+  f.roles["editor-toolbar"].getBoundingClientRect = () => ({ height: 80 });
+  f.section.style.setProperty = () => {};
+  f.section.style.removeProperty = () => {};
+  f.window.getComputedStyle = () => ({ scrollMarginTop: "96px" });
+  f.window.scrollY = 500;
+  f.window.innerHeight = 500;
+  f.document.scrollingElement = { scrollHeight: 5000 };
+  f.roles["output-panel"].getBoundingClientRect = () => ({ top: 30 });
+  return f;
+}
+
+for (const interruption of [null, "unobscured", "wheel", "touchstart", "pointerdown", "keydown", "edit", "reset", "destroy", "opt-out"]) {
+  test(`smooth output scroll final clearance: ${interruption || "correct once"}`, async (t) => {
+    t.mock.method(console, "warn", () => {});
+    const storage = mockScrollStorage(t);
+    t.mock.method(globalThis, "fetch", async () => ({
+      ok: true,
+      json: async () => ({ success: false, stderr: "diagnostics" }),
+    }));
+    const f = scrollFixture();
+    f.roles["output-panel"].getBoundingClientRect = () => ({ top: interruption === "unobscured" ? 100 : 30 });
+    const calls = observeScroll(f);
+    const api = await mountInlineEditor(f.section);
+    t.after(() => api.destroy());
+    f.roles["run-btn"].dispatchEvent(new Event("click"));
+    await tick();
+    assert.equal(calls.length, 1);
+    if (interruption === "edit") api.setValue("new source");
+    else if (interruption === "reset") f.roles["reset-btn"].dispatchEvent(new Event("click"));
+    else if (interruption === "destroy") api.destroy();
+    else if (interruption === "opt-out") storage.set(scrollPreference, "0");
+    else if (interruption && interruption !== "unobscured")
+      f.document.dispatchEvent(new Event(interruption));
+    f.document.dispatchEvent(new Event("scrollend"));
+    f.document.dispatchEvent(new Event("scrollend"));
+    assert.equal(calls.length, interruption ? 1 : 2);
+    if (!interruption) assert.deepEqual(calls[1].options, { ...smoothScroll, behavior: "instant" });
+  });
+}
+
+for (const mode of ["aligned", "top boundary", "bottom boundary", "fullscreen"]) {
+  test(`${mode} output leaves no correction for a later scroll`, async (t) => {
+    t.mock.method(console, "warn", () => {});
+    mockScrollStorage(t);
+    t.mock.method(globalThis, "fetch", async () => ({
+      ok: true, json: async () => ({ success: false, stderr: "diagnostics" }),
+    }));
+    const f = scrollFixture();
+    if (mode === "aligned") f.roles["output-panel"].getBoundingClientRect = () => ({ top: 96.4 });
+    if (mode === "top boundary") f.window.scrollY = 0;
+    if (mode === "bottom boundary") {
+      f.window.scrollY = 4500;
+      f.roles["output-panel"].getBoundingClientRect = () => ({ top: 300 });
+    }
+    f.section.classList.contains = () => mode === "fullscreen";
+    const calls = observeScroll(f);
+    const api = await mountInlineEditor(f.section);
+    t.after(() => api.destroy());
+    f.roles["run-btn"].dispatchEvent(new Event("click"));
+    await tick();
+    assert.equal(calls.length, 1);
+    f.section.classList.contains = () => false;
+    f.roles["output-panel"].getBoundingClientRect = () => ({ top: -300 });
+    f.document.dispatchEvent(new Event("scrollend"));
+    assert.equal(calls.length, 1);
+  });
+}
+
+for (const mode of ["smooth", "aligned", "fullscreen", "opt-out", "queued"]) {
+  test(`new ${mode} output supersedes another mount's correction`, async (t) => {
+    t.mock.method(console, "warn", () => {});
+    const storage = mockScrollStorage(t);
+    t.mock.method(globalThis, "fetch", async () => ({
+      ok: true, json: async () => ({ success: false, stderr: "diagnostics" }),
+    }));
+    const first = scrollFixture();
+    const second = scrollFixture(first.document);
+    const queued = [];
+    if (mode === "queued") t.mock.method(globalThis, "queueMicrotask", callback => queued.push(callback));
+    const firstCalls = observeScroll(first);
+    const secondCalls = observeScroll(second);
+    for (const f of [first, second]) {
+      const api = await mountInlineEditor(f.section);
+      t.after(() => api.destroy());
+    }
+    first.roles["run-btn"].dispatchEvent(new Event("click"));
+    await tick();
+    if (mode === "aligned") second.roles["output-panel"].getBoundingClientRect = () => ({ top: 96 });
+    if (mode === "fullscreen") second.section.classList.contains = () => true;
+    if (mode === "opt-out") storage.set(scrollPreference, "0");
+    second.roles["run-btn"].dispatchEvent(new Event("click"));
+    await tick();
+    if (mode === "queued") {
+      assert.equal(queued.length, 2);
+      queued.forEach(callback => callback());
+    }
+    storage.delete(scrollPreference);
+    second.section.classList.contains = () => false;
+    first.document.dispatchEvent(new Event("scrollend"));
+    assert.equal(firstCalls.length, mode === "queued" ? 0 : 1);
+    assert.equal(secondCalls.length, mode === "opt-out" ? 0 : ["smooth", "queued"].includes(mode) ? 2 : 1);
+  });
+}
+
+for (const invalidation of ["edit", "reset", "destroy"]) {
+  test(`${invalidation} cancels a rendered result's queued scroll`, async (t) => {
+    t.mock.method(console, "warn", () => {});
+    mockScrollStorage(t);
+    const queued = [];
+    t.mock.method(globalThis, "queueMicrotask", (callback) => queued.push(callback));
+    t.mock.method(globalThis, "fetch", async () => ({
+      ok: true,
+      json: async () => ({ success: false, stderr: "current diagnostics" }),
+    }));
+    const f = fixture();
+    const calls = observeScroll(f);
+    const api = await mountInlineEditor(f.section);
+    t.after(() => api.destroy());
+    f.roles["run-btn"].dispatchEvent(new Event("click"));
+    await tick();
+    assert.equal(f.roles["output-panel"].style.display, "block");
+    assert.equal(f.roles["action-status"].textContent, "Failed");
+    assert.equal(queued.length, 1);
+    if (invalidation === "destroy") api.destroy();
+    else if (invalidation === "reset")
+      f.roles["reset-btn"].dispatchEvent(new Event("click"));
+    else api.setValue("new revision");
+    queued.shift()();
+    assert.equal(calls.length, 0);
   });
 }
 
