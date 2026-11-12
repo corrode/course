@@ -2478,12 +2478,11 @@ async fn admin_set_team_token(
         }
         Ok(_) => {
             info!("Admin moved a participant to team {new_token:?}");
-            // The admin token is already taken from the request URL, which
-            // means the operator's browser was OK with it as-is; echo it
-            // straight back, the same way the rest of the admin UI does (see
-            // /admin/remove-participant).
-            axum::response::Redirect::to(&format!("/admin?token={}", state.admin_token))
-                .into_response()
+            axum::response::Redirect::to(&format!(
+                "/admin?token={}",
+                encode_query_value(&state.admin_token)
+            ))
+            .into_response()
         }
         Err(err) => {
             error!("Failed to update participant team token: {err}");
@@ -2786,7 +2785,7 @@ async fn admin_team_page(
         return (StatusCode::BAD_REQUEST, "Invalid team slug").into_response();
     };
     let admin_token = state.admin_token.clone();
-    let back_href = format!("/admin?token={admin_token}");
+    let back_href = format!("/admin?token={}", encode_query_value(&admin_token));
     render_team_page(
         &state,
         Some(&token),
@@ -2808,7 +2807,7 @@ async fn admin_team_unassigned_page(
         return (StatusCode::FORBIDDEN, "Invalid admin token").into_response();
     }
     let admin_token = state.admin_token.clone();
-    let back_href = format!("/admin?token={admin_token}");
+    let back_href = format!("/admin?token={}", encode_query_value(&admin_token));
     render_team_page(
         &state,
         None,

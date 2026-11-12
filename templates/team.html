@@ -39,6 +39,7 @@
         {% if members.is_empty() %}
         <p class="team-empty">No one has signed up under this label yet.</p>
         {% else %}
+        <div class="team-roster-scroll" role="region" aria-label="Team roster" tabindex="0">
         <table class="admin-table">
             <thead>
                 <tr>
@@ -89,7 +90,7 @@
                     <td>
                         <form
                             method="post"
-                            action="/admin/participants/{{ member.id }}/team-token?token={% match admin_token %}{% when Some with (t) %}{{ t }}{% when None %}{% endmatch %}"
+                            action="/admin/participants/{{ member.id }}/team-token?token={% match admin_token %}{% when Some with (t) %}{{ crate::encode_query_value(t) }}{% when None %}{% endmatch %}"
                             class="admin-inline-form"
                         >
                             <input
@@ -133,6 +134,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
         {% endif %}
     </section>
 
