@@ -85,3 +85,13 @@ represents either success or failure, rather than a bare `u32`.
 We'll talk about `Result` later. For now, `.unwrap_or(fallback)` extracts a
 successful value or supplies the fallback if parsing failed. Choose that
 fallback to match the behavior your caller needs.
+
+Parsing also fails when the number is too large for the type:
+
+```rust
+assert_eq!("255".parse::<u8>().unwrap_or(0), 255);
+assert_eq!("300".parse::<u8>().unwrap_or(0), 0);
+```
+
+Unlike `saturating_add`, parsing doesn't clamp to 255. It rejects 300, and
+`unwrap_or(0)` supplies the zero. It doesn't wrap around either.

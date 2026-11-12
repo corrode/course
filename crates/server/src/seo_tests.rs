@@ -160,6 +160,84 @@ async fn lesson_navigation_uses_topbar_without_duplicate_breadcrumbs() {
 }
 
 #[tokio::test]
+async fn participant_navigation_keeps_identity_across_course_pages() {
+    let state = state().await;
+    let lesson = state.exercises[0].file_stem.clone();
+    let server = TestServer::start(state).await;
+    for path in [
+        "/dashboard/private-id".to_string(),
+        format!("/exercise/private-id/{lesson}"),
+        "/exercise/private-id/17_iterators".to_string(),
+        "/tour/private-id".to_string(),
+        "/playground/private-id".to_string(),
+        "/cheatsheet/private-id".to_string(),
+        "/settings/private-id".to_string(),
+        "/dashboard/private-id/team".to_string(),
+    ] {
+        let response = server.get(&path).await;
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        assert_no_store(&response);
+        let html = response.text().await.unwrap();
+        for destination in [
+            "/dashboard/private-id",
+            "/playground/private-id",
+            "/cheatsheet/private-id",
+            "/settings/private-id",
+        ] {
+            assert!(
+                html.contains(&format!("href=\"{destination}\"")),
+                "{path}: missing {destination}"
+            );
+        }
+        for anonymous in ["/", "/tour", "/playground", "/cheatsheet", "/settings"] {
+            assert!(
+                !html.contains(&format!("href=\"{anonymous}\"")),
+                "{path}: loses identity at {anonymous}"
+            );
+        }
+        if path.starts_with("/dashboard/") && !path.ends_with("/team")
+            || path.starts_with("/exercise/")
+        {
+            assert!(
+                html.matches("href=\"/tour/private-id\"").count() >= 2,
+                "{path}: tour links"
+            );
+        }
+        if path == "/exercise/private-id/17_iterators" {
+            assert!(
+                html.contains(
+                    "href=\"/cheatsheet/private-id\">iterators entry in the cheatsheet</a>"
+                )
+            );
+        }
+        if path == "/tour/private-id" {
+            for chapter in ["00_numbers_in_rust", "07_enums_and_pattern_matching"] {
+                assert!(html.contains(&format!("href=\"/exercise/private-id/{chapter}\"")));
+                assert!(!html.contains(&format!("href=\"/exercise/{chapter}\"")));
+            }
+        }
+    }
+}
+
+#[tokio::test]
+async fn public_scratchpads_keep_anonymous_navigation() {
+    let server = TestServer::start(state().await).await;
+    for path in ["/tour", "/playground", "/cheatsheet"] {
+        let response = server.get(path).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let html = response.text().await.unwrap();
+        for destination in ["/", "/playground", "/cheatsheet", "/settings", "/signup"] {
+            assert!(
+                html.contains(&format!("href=\"{destination}\"")),
+                "{path}: {destination}"
+            );
+        }
+        assert!(!html.contains("private-id"));
+        assert!(head(&html).contains("rel=\"canonical\""));
+    }
+}
+
+#[tokio::test]
 async fn course_context_banner_is_anonymous_only_for_chapters_and_absent_on_tour() {
     let state = state().await;
     let chapters = state.exercises.clone();
@@ -365,6 +443,10 @@ async fn application_pages_never_publish_personal_metadata_including_invalid_par
         "/dashboard/private-id/team",
         "/tour/private-id",
         "/tour/missing",
+        "/playground/private-id",
+        "/playground/missing",
+        "/cheatsheet/private-id",
+        "/cheatsheet/missing",
         "/admin?token=secret-admin",
         "/admin/team/secret-team?token=secret-admin",
         "/admin/team-unassigned?token=secret-admin",
@@ -377,7 +459,12 @@ async fn application_pages_never_publish_personal_metadata_including_invalid_par
     paths.push(format!("/exercise/missing/{lesson}"));
     for path in paths {
         let response = server.get(&path).await;
-        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        let expected = if path.split('/').any(|segment| segment == "missing") {
+            StatusCode::NOT_FOUND
+        } else {
+            StatusCode::OK
+        };
+        assert_eq!(response.status(), expected, "{path}");
         assert_no_store(&response);
         assert_eq!(
             response.headers()["x-robots-tag"],

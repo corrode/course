@@ -10,6 +10,9 @@ const standardOptions = [
   ...keywords.split(" ").map((label) => ({ label, type: "keyword" })),
   ...types.split(" ").map((label) => ({ label, type: "type" })),
   ...macros.split(" ").map((label) => ({ label, type: "function" })),
+  ...["is_ascii_uppercase", "is_ascii_lowercase", "is_ascii_digit"].map(
+    (label) => ({ label, type: "method" }),
+  ),
   ...["Some", "None", "Ok", "Err"].map((label) => ({ label, type: "enum" })),
 ];
 const standardNames = new Set(standardOptions.map((option) => option.label));

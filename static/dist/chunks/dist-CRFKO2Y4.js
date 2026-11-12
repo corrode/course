@@ -1,0 +1,1 @@
+import{a,b}from"./chunk-JJDI5VJA.js";import"./chunk-NX6COPOW.js";import"./chunk-U7DHMPNZ.js";import"./chunk-ITSZNX5U.js";import"./chunk-VD5LTIAP.js";import"./chunk-3F4RDMZI.js";export{b as rust,a as rustLanguage};

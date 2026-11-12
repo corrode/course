@@ -53,6 +53,36 @@ test("completion collects code identifiers rather than prose and string words", 
   );
 });
 
+test("completion offers ASCII predicates without prior occurrences", () => {
+  const source = "fn main() { c.is_ascii_| }";
+  const result = complete(source);
+  assert.equal(result.from, source.indexOf("is_ascii_"));
+  for (const label of [
+    "is_ascii_uppercase",
+    "is_ascii_lowercase",
+    "is_ascii_digit",
+  ]) {
+    assert.deepEqual(
+      result.options.find((option) => option.label === label),
+      { label, type: "method" },
+    );
+  }
+});
+
+test("completion does not duplicate ASCII predicates already in the document", () => {
+  for (const label of [
+    "is_ascii_uppercase",
+    "is_ascii_lowercase",
+    "is_ascii_digit",
+  ]) {
+    const result = complete(`fn main() { c.${label}(); c.is_ascii_| }`);
+    assert.deepEqual(
+      result.options.filter((option) => option.label === label),
+      [{ label, type: "method" }],
+    );
+  }
+});
+
 test("explicit completion also works at an empty position", () => {
   assert.equal(complete("fn main() { | }"), null);
   assert.ok(complete("fn main() { | }", true).options.length > 0);
