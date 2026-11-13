@@ -521,6 +521,25 @@ struct ParticipantTeam {
 }
 
 impl ParticipantTeam {
+    /// Combined chapter completion, including members who have not started.
+    fn progress_percent(&self) -> i64 {
+        let completed: i64 = self
+            .members
+            .iter()
+            .map(|member| member.completed_count)
+            .sum();
+        let total: i64 = self
+            .members
+            .iter()
+            .map(|member| member.total_exercises)
+            .sum();
+        if total == 0 {
+            0
+        } else {
+            completed * 100 / total
+        }
+    }
+
     /// Value for the `team` query param that identifies this bucket to
     /// `admin_team_members`: the team token, or an empty string for the
     /// synthetic Unassigned bucket.
@@ -4518,6 +4537,74 @@ mod tests {
         assert_eq!(teams[1].members.len(), 1);
         assert_eq!(teams[2].team_token, None);
         assert_eq!(teams[2].members.len(), 2);
+    }
+
+    #[test]
+    fn team_progress_includes_every_member_and_handles_empty_courses() {
+        for (counts, expected) in [
+            (vec![], 0),
+            (vec![(0, 0)], 0),
+            (vec![(0, 15), (0, 15)], 0),
+            (vec![(15, 15), (0, 15)], 50),
+            (vec![(5, 15), (0, 15)], 16),
+            (vec![(15, 15), (15, 15)], 100),
+        ] {
+            let members = counts
+                .into_iter()
+                .map(|(completed_count, total_exercises)| ParticipantSummary {
+                    completed_count,
+                    total_exercises,
+                    ..make_summary("member", Some("alpha"))
+                })
+                .collect();
+            let team = ParticipantTeam {
+                team_token: Some(TeamToken::try_from("alpha").unwrap()),
+                members,
+            };
+            assert_eq!(team.progress_percent(), expected);
+        }
+    }
+
+    #[test]
+    fn admin_dashboard_renders_progress_next_to_the_team_name() {
+        let mut alice = make_summary("alice", Some("alpha"));
+        alice.completed_count = 15;
+        let template = AdminTemplate {
+            seo: PageMetadata::private(),
+            participant_teams: bucket_participants_by_team(vec![
+                alice,
+                make_summary("bob", Some("alpha")),
+            ]),
+            recent_submissions: Vec::new(),
+            stats: AdminStats {
+                participants: 2,
+                submissions: 0,
+                perfected: 0,
+            },
+            exercises: Vec::new(),
+            admin_token: "test-admin".to_string(),
+            sort: "name".to_string(),
+            dir: "asc".to_string(),
+            filter: String::new(),
+        };
+        let html = template.render().unwrap();
+        let summary = html
+            .split("<summary class=\"team-section-head\">")
+            .nth(1)
+            .unwrap()
+            .split("</summary>")
+            .next()
+            .unwrap();
+        assert!(summary.contains("value=\"50\""));
+        assert!(summary.contains("50%"));
+        assert!(
+            summary.find("team-section-name").unwrap()
+                < summary.find("team-section-progress").unwrap()
+        );
+        assert!(
+            summary.find("team-section-progress").unwrap()
+                < summary.find("team-section-meta").unwrap()
+        );
     }
 
     #[test]
