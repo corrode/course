@@ -93,7 +93,15 @@ def browser_check(chrome, url, size, screenshot, motion):
             try:
                 port_file = Path(profile) / "DevToolsActivePort"
                 deadline = time.monotonic() + 30
-                while not port_file.exists():
+                port = None
+                while port is None:
+                    try:
+                        lines = port_file.read_text().splitlines()
+                        port = lines[0] if lines else None
+                    except FileNotFoundError:
+                        pass
+                    if port is not None:
+                        break
                     exit_code = browser.poll()
                     if exit_code is not None or time.monotonic() >= deadline:
                         reason = (f"Chrome exited before opening its debugging port (exit code {exit_code})"
@@ -102,7 +110,6 @@ def browser_check(chrome, url, size, screenshot, motion):
                         stderr.seek(0)
                         raise BrowserStartupError(f"{reason}\nChrome stderr:\n{stderr.read().strip() or '(empty)'}")
                     time.sleep(0.05)
-                port = port_file.read_text().splitlines()[0]
                 while True:
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
