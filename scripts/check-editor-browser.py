@@ -92,13 +92,13 @@ def browser_check(chrome, url, size, screenshot, motion):
                 raise BrowserStartupError(f"Could not start Chrome: {error}") from error
             try:
                 port_file = Path(profile) / "DevToolsActivePort"
-                deadline = time.monotonic() + 10
+                deadline = time.monotonic() + 30
                 while not port_file.exists():
                     exit_code = browser.poll()
                     if exit_code is not None or time.monotonic() >= deadline:
                         reason = (f"Chrome exited before opening its debugging port (exit code {exit_code})"
                                   if exit_code is not None else
-                                  "Chrome did not open its debugging port within 10 seconds (process still running)")
+                                  "Chrome did not open its debugging port within 30 seconds (process still running)")
                         stderr.seek(0)
                         raise BrowserStartupError(f"{reason}\nChrome stderr:\n{stderr.read().strip() or '(empty)'}")
                     time.sleep(0.05)
@@ -108,12 +108,17 @@ def browser_check(chrome, url, size, screenshot, motion):
                     if remaining <= 0:
                         stderr.seek(0)
                         raise BrowserStartupError(
-                            f"Chrome opened its debugging port but no page target became ready within 10 seconds "
+                            f"Chrome opened its debugging port but no page target became ready within 30 seconds "
                             f"(exit code {browser.poll()})\nChrome stderr:\n{stderr.read().strip() or '(empty)'}"
                         )
-                    with urlopen(f"http://127.0.0.1:{port}/json/list", timeout=min(5, remaining)) as response:
-                        target = next((page for page in json.load(response)
-                                       if page["type"] == "page" and page.get("webSocketDebuggerUrl")), None)
+                    try:
+                        with urlopen(f"http://127.0.0.1:{port}/json/list", timeout=min(5, remaining)) as response:
+                            target = next((page for page in json.load(response)
+                                           if page["type"] == "page" and page.get("webSocketDebuggerUrl")), None)
+                    except TimeoutError:
+                        # The port can appear before DevTools serves requests.
+                        # Retry readiness only, within the shared startup budget.
+                        target = None
                     if target is not None:
                         break
                     time.sleep(min(0.05, remaining))
