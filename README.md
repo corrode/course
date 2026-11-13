@@ -153,8 +153,11 @@ SIGINT/SIGTERM; the whole run has a two-minute deadline.
 Coverage includes special characters in the admin token, real HTMX filter/sort
 requests and focus preservation, Move submissions and redirects, and admin back
 links. Team-page checks at 320, 390, and 1440px cover overflow, a named and
-focusable roster, keyboard scrolling, and access to row controls. These are
-focused regression checks, not a full accessibility audit. The Rust CI job runs
+focusable roster, keyboard scrolling, and access to row controls. Participant
+chapter checks cover navigation, keyboard access, the chapter picker, and sticky
+editor controls from 320 to 1440px, including a long chapter title. Add
+`--screenshot-dir=target/navigation-screenshots` to capture those layouts.
+These are focused regression checks, not a full accessibility audit. The Rust CI job runs
 the same command after building and testing, using the runner's installed Chrome.
 `npm test` runs the separate JavaScript unit tests.
 

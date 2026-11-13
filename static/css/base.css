@@ -776,7 +776,7 @@ html[data-theme="dark"] select.admin-input {
     position: sticky;
     top: 0;
     z-index: 900;
-    height: 3rem;
+    min-height: 3rem;
     background: var(--color-background);
     /* The hairline scroll-progress bar (`.topbar-progress-bar`)
        sits at the bottom edge of the topbar and acts as the
@@ -784,16 +784,24 @@ html[data-theme="dark"] select.admin-input {
        itself doesn't draw a border. */
     display: flex;
     align-items: center;
-    padding: 0 1.5rem;
+    padding: 0.25rem 1.5rem;
 }
 .topbar-inner {
     width: 100%;
     max-width: 1100px;
     margin: 0 auto;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.4rem;
     font-size: 0.875rem;
+}
+.topbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 100%;
 }
 .topbar-home {
     color: var(--color-text-muted);
@@ -1250,28 +1258,26 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
     .admin-table {
         font-size: 0.875rem;
     }
-    .topbar {
-        height: auto;
-        min-height: 3rem;
-        padding: 0.5rem 0.75rem;
+    .topbar-link span:not(.sr-only) {
+        /* Drop the labels on phones, keep just the icons. */
+        display: none;
     }
-    .topbar-inner {
-        flex-wrap: wrap;
+}
+
+@media (max-width: 1200px) {
+    .topbar {
+        padding: 0.5rem 0.75rem;
     }
     .chapter-picker {
         flex: 1;
         min-width: 0;
     }
-    /* Keep the full chapter title above the navigation controls on phones. */
+    /* Give the chapter title its own row before labelled links become crowded. */
     .chapter-picker ~ .topbar-spacer {
         flex-basis: 100%;
     }
     .topbar .theme-toggle {
         flex-shrink: 0;
-    }
-    .topbar-link span:not(.sr-only) {
-        /* Drop the labels on phones, keep just the icons. */
-        display: none;
     }
 }
 

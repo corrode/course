@@ -116,6 +116,7 @@
                 <a href="{% block topbar_home_href %}/{% endblock %}" class="topbar-home">Course</a>
                 {% endblock %}
                 <div class="topbar-spacer"></div>
+                <div class="topbar-actions">
                 {% block topbar_progress %}{% endblock %}
                 <a
                     class="topbar-link {% block topbar_active_playground %}{% endblock %}"
@@ -224,6 +225,7 @@
                     <span>Settings</span>
                 </a>
                 {% include "partials/theme_toggle.html" %}
+                </div>
             </div>
             <div class="topbar-progress-bar" aria-hidden="true">
                 <span class="topbar-progress-bar-fill"></span>
