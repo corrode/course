@@ -8,9 +8,13 @@ walked a string character by character.
 - `&str` is a borrowed view into UTF-8 text; `String` is an owned, growable
   buffer; `char` is one Unicode scalar value. Functions that read text can take
   a `&str`, while functions that produce new text return a `String`.
-- `str::len` returns the byte length. Use `s.chars().count()` when you want the
-  number of `char` values.
-- `str::chars()` returns an iterator. You can use it in a loop or with iterator
+- `format!("{value:.2}")` formats a float with two decimal places, rounding the
+  displayed text without changing the stored value.
+- [`str::len`](https://doc.rust-lang.org/std/primitive.str.html#method.len)
+  returns the byte length. Use `s.chars().count()` when you want the number of
+  `char` values.
+- [`str::chars`](https://doc.rust-lang.org/std/primitive.str.html#method.chars)
+  returns an iterator. You can use it in a loop or with iterator
   methods: `for c in s.chars()`, `s.chars().any(...)`, `s.chars().count()`, and
   so on.
 - Case conversion (`to_uppercase`, `to_lowercase`) returns a new `String`. It

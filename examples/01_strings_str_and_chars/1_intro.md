@@ -81,6 +81,23 @@ pulls the variables from the surrounding scope. You can also pass arguments
 explicitly: `format!("{}: {} in stock", item, quantity)`. The exclamation mark
 (`!`) means `format!` is a macro rather than a regular function call.
 
+For a float, add `:.2` to display exactly two digits after the decimal point:
+
+```rust
+let temperature: f64 = 21.375;
+let label = format!("{temperature:.2} °C");
+assert_eq!(label, "21.38 °C");
+assert_eq!(temperature, 21.375);
+```
+
+This rounds the *displayed text*, not the stored number. You can also write
+`format!("{:.2} °C", temperature)`. Use the same precision with `println!` if
+you want to print rather than build a `String`. Trailing zeros are included:
+`format!("{:.2}", 21.0)` produces `"21.00"`.
+
+If you need a rounded number for a calculation instead, `.round()` returns a
+float rounded to the nearest integer. It doesn't set a display precision.
+
 ## Consuming an Iterator
 
 The simplest way to consume an iterator is a `for` loop:
