@@ -110,6 +110,11 @@
                     >no team</span
                 >
                 {% endmatch %}
+                {% let progress = team.progress_percent() %}
+                <span class="team-section-progress" title="Average chapter completion across all members">
+                    <progress max="100" value="{{ progress }}" aria-label="Average chapter completion across all members"></progress>
+                    <span>{{ progress }}%</span>
+                </span>
                 <span class="team-section-meta">
                     · {{ team.members.len() }} participant{% if
                     team.members.len() != 1 %}s{% endif %}
@@ -364,6 +369,20 @@
     .team-section-name-muted {
         font-style: italic;
         color: var(--color-text-muted);
+    }
+    .team-section-progress {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        color: var(--color-text-muted);
+    }
+    .team-section-progress progress {
+        width: 4rem;
+        height: 0.5rem;
+        accent-color: var(--color-success);
     }
     .team-section-meta {
         font-size: 0.85rem;
