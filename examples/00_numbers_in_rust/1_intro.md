@@ -3,6 +3,14 @@
 *The integer told the float, “You’re being irrational.”  
 The float replied, “At least I have a point.”*
 
+> [!TIP]
+>
+> Prefer your own editor? Clone [the course repo](https://github.com/corrode/course)
+> and follow the [local setup instructions](https://github.com/corrode/course#how-it-works).
+> You'll need Rust and Cargo installed to run the exercises locally.
+> Staying in the browser? Vim users can turn on **Vim Keybindings** in Settings
+> in the top bar. Your choice is saved in this browser.
+
 In Rust, numbers don't always get along.
 Numeric types are kept distinct, and Rust won't let you mix them without an
 explicit conversion.
@@ -19,6 +27,36 @@ let price: f64 = 19.99;       // floating point (f32 is the smaller one)
 
 These are the numeric types you'll encounter most often.
 What makes Rust different is how strictly it treats them.
+
+## Calling Functions and Methods
+
+To call a function, put its arguments in parentheses after its name:
+
+```rust
+fn half(number: u32) -> u32 {
+    number / 2
+}
+
+let number = half(84);
+assert_eq!(number, 42);
+
+let text = number.to_string();
+assert_eq!(text, "42");
+```
+
+`fn` defines the function, `number: u32` is its parameter, and `-> u32` is its
+return type. The final expression, without a semicolon, is the returned value.
+`half(84)` calls the function with `84` as its argument.
+
+A *method* is called on a value with a dot: `number.to_string()` turns the number
+into a `String`. The value before the dot is the *receiver*. This method needs
+no extra arguments, but others do: `number.saturating_add(10)` adds `10` without
+overflowing, as we'll see next.
+
+The docs may list the conversion method as `u32::to_string`.
+`number.to_string()` calls it on your value. You can also write
+`u32::to_string(&number)`, but you need the `&`: this method borrows its receiver.
+Dot syntax takes care of that borrow for you. We'll cover borrowing later.
 
 ## Integer Overflow
 
