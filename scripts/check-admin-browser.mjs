@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { constants } from "node:fs";
-import { access, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
@@ -11,7 +11,10 @@ import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
-const { values } = parseArgs({ options: { chrome: { type: "string" } } });
+const { values } = parseArgs({ options: {
+  chrome: { type: "string" },
+  "screenshot-dir": { type: "string" },
+} });
 const root = fileURLToPath(new URL("../", import.meta.url));
 const token = "browser-only&plus+question?hash#percent%";
 const query = new URLSearchParams({ token });
@@ -351,11 +354,87 @@ try {
   assert.equal(await js("document.querySelector('.admin-cell-name').textContent.trim()"), "Alice");
   await follow(".team-back a", "/admin");
   for (const request of requests) assert.equal(new URL(request.url).searchParams.get("token"), token, request.url);
+  console.log("PASS: Move from swapped partial and mobile team page, persisted membership, 303 redirects, and back links");
+
+  // Use server-rendered participant navigation: the offline editor fixture has
+  // only an empty topbar and cannot catch crowded breadcrumbs or missing links.
+  async function chapter(path) {
+    // Picker links use slugs; the server redirects them to numbered file stems.
+    const response = await fetch(base + path, { signal: AbortSignal.timeout(5000) });
+    assert.equal(response.status, 200);
+    path = new URL(response.url).pathname;
+    await response.body.cancel();
+    await js("window.oldDocument = true");
+    await cdp("Page.navigate", { url: base + path });
+    await until(() => js(`!window.oldDocument && document.readyState === 'complete'
+      && location.pathname === ${JSON.stringify(path)} && !!document.querySelector('.chapter-picker')`), `chapter navigation to ${path}`);
+    await js("document.fonts.ready.then(() => true)");
+  }
+  await chapter(`/exercise/${alice}/00_numbers_in_rust`);
+  const longChapter = await js(`[...document.querySelectorAll('.chapter-picker-item')]
+    .sort((a, b) => b.querySelector('.chapter-picker-title').textContent.length - a.querySelector('.chapter-picker-title').textContent.length)[0].pathname`);
+  for (const path of [`/exercise/${alice}/00_numbers_in_rust`, longChapter]) {
+    await chapter(path);
+    const title = await js("document.querySelector('.chapter-picker-label').textContent.trim()");
+    for (const width of [320, 375, 768, 800, 1024, 1200, 1201, 1440]) {
+      await cdp("Emulation.setDeviceMetricsOverride", { width, height: 450, deviceScaleFactor: 1, mobile: false });
+      await js("window.scrollTo(0, 0); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+      const layout = await js(`(() => {
+        const header = document.querySelector('.topbar').getBoundingClientRect();
+        const controls = [...document.querySelectorAll('.topbar-home, .chapter-picker-btn, .topbar-link, .topbar .theme-toggle')];
+        const label = document.querySelector('.chapter-picker-label');
+        const actionCenters = [...document.querySelectorAll('.topbar-link, .topbar .theme-toggle')]
+          .map(el => { const r = el.getBoundingClientRect(); return r.y + r.height / 2; });
+        return {viewport: innerWidth, page: document.documentElement.scrollWidth,
+          actionsTogether: Math.max(...actionCenters) - Math.min(...actionCenters) <= 1,
+          clippedPage: [document.documentElement, document.body].some(el => ['hidden', 'clip'].includes(getComputedStyle(el).overflowX)),
+          progress: document.querySelector('.topbar-progress').getBoundingClientRect().width,
+          titleFits: label.scrollWidth <= label.clientWidth + 1,
+          controls: controls.map(el => {
+            const r = el.getBoundingClientRect();
+            return {name: el.textContent.trim() || el.getAttribute('aria-label'),
+              fits: r.width > 0 && r.left >= 0 && r.right <= innerWidth + 1 && r.top >= header.top && r.bottom <= header.bottom && r.bottom <= innerHeight,
+              hit: el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2))};
+          })};
+      })()`);
+      assert.equal(layout.viewport, width);
+      assert.ok(layout.page <= width + 1 && !layout.clippedPage && layout.titleFits && layout.progress > 0,
+        `${width}px ${title}: ${JSON.stringify(layout)}`);
+      if (width > 768) assert.ok(layout.actionsTogether, `${width}px: keep labelled navigation actions on the same row`);
+      assert.equal(layout.controls.length, 8);
+      for (const control of layout.controls) assert.ok(control.fits && control.hit, `${width}px ${title}: ${JSON.stringify(control)}`);
+      await js("document.querySelector('.topbar-home').focus()");
+      for (let i = 1; i < layout.controls.length; i++) {
+        await key("Tab", 9);
+        assert.equal(await js(`document.activeElement === document.querySelectorAll('.topbar-home, .chapter-picker-btn, .topbar-link, .topbar .theme-toggle')[${i}] && scrollX === 0`), true);
+      }
+      if (values["screenshot-dir"]) {
+        const dir = resolve(values["screenshot-dir"]);
+        await mkdir(dir, { recursive: true });
+        const image = await cdp("Page.captureScreenshot");
+        await writeFile(join(dir, `navigation-${path.split('/').at(-1)}-${width}.png`), Buffer.from(image.data, "base64"));
+      }
+      await click('.chapter-picker-btn');
+      assert.equal(await js("document.querySelector('.chapter-picker-btn').getAttribute('aria-expanded')"), "true");
+      assert.equal(await js(`(() => {
+        const r = document.querySelector('.chapter-picker-menu').getBoundingClientRect();
+        return r.width > 0 && r.left >= 0 && r.right <= innerWidth + 1 && r.top >= 0 && r.bottom <= innerHeight;
+      })()`), true, `${width}px: chapter menu fits`);
+      await key("Escape", 27);
+      assert.equal(await js("document.querySelector('.chapter-picker-menu').hidden"), true);
+      await js(`document.querySelector('.exercise-section').scrollIntoView(); window.scrollBy(0, 200)`);
+      await until(() => js(`(() => {
+        const bar = document.querySelector('.topbar').getBoundingClientRect();
+        const toolbar = document.querySelector('[data-role="editor-toolbar"]').getBoundingClientRect();
+        return Math.abs(toolbar.top - bar.bottom) <= 1 && toolbar.bottom < innerHeight;
+      })()`), `${width}px: editor toolbar clears wrapped navigation`);
+      console.log(`PASS: ${width}px ${title}: navigation fits, keyboard reaches all controls, chapter menu opens, editor toolbar clears header`);
+    }
+  }
   // Chrome requests this optional icon even though the app does not serve one.
   assert.deepEqual(responses.filter((r) => r.status >= 400
     && !(r.status === 404 && new URL(r.url).pathname === "/favicon.ico")).map((r) => [r.status, r.url]), []);
   assert.deepEqual(browserErrors, []);
-  console.log("PASS: Move from swapped partial and mobile team page, persisted membership, 303 redirects, and back links");
 } catch (error) {
   console.error(error);
   if (socket?.readyState === WebSocket.OPEN) {
