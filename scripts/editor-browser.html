@@ -281,10 +281,77 @@ if (params.has("layout")) {
     const toolbar = role("editor-toolbar");
     const panel = role("output-panel");
     const rect = element => element.getBoundingClientRect();
+    const mobile = matchMedia("(max-width: 640px)").matches;
+    const compactActions = kind === "index" ? [] : [
+      ["reset-btn", "Reset"], ["format-btn", "Format"],
+      ...(kind === "exercise" ? [["vscode-btn", "Open in Web Editor"]] : []),
+    ];
+    // Copy is positioned over the code, outside the sticky toolbar. It need not
+    // be in the viewport during output checks, but must still be a touch target.
+    const copy = role("copy-btn");
+    if (kind === "exercise") assert(!!copy, "Exercise has a code copy control");
+    if (copy) {
+      assert(!toolbar.contains(copy), "Code copy control is outside the toolbar");
+      if (mobile) assert(rect(copy).width >= 44 && rect(copy).height >= 44, "Mobile code copy target is at least 44×44");
+    }
     const visibleControls = label => {
       const head = rect(toolbar);
       const bar = rect(topbar);
       assert(head.top >= bar.bottom - 1 && head.bottom <= innerHeight, `${label}: toolbar fits below navigation`);
+      const actions = toolbar.querySelector(".exercise-actions");
+      const buttons = [...toolbar.querySelectorAll(".btn")].filter(button => button.getClientRects().length);
+      if (mobile) {
+        const layout = getComputedStyle(toolbar);
+        const actionLayout = getComputedStyle(actions);
+        const area = rect(actions);
+        assert(layout.display === "flex" && layout.flexDirection === "column", `${label}: mobile toolbar stacks vertically`);
+        assert(actionLayout.display === "flex" && actionLayout.flexWrap === "wrap" && actionLayout.justifyContent === "flex-start", `${label}: mobile actions wrap and align left`);
+        const contentLeft = head.left + parseFloat(layout.borderLeftWidth) + parseFloat(layout.paddingLeft);
+        const contentRight = head.right - parseFloat(layout.borderRightWidth) - parseFloat(layout.paddingRight);
+        assert(Math.abs(area.left - contentLeft) <= 1 && Math.abs(area.right - contentRight) <= 1, `${label}: mobile actions span the toolbar content width`);
+        for (const button of buttons) {
+          const r = rect(button);
+          assert(r.width >= 44 && r.height >= 44, `${label}: ${button.dataset.role} mobile target is at least 44×44`);
+          const firstInRow = !buttons.some(other => Math.abs(rect(other).top - r.top) <= 1 && rect(other).left < r.left);
+          if (firstInRow) assert(Math.abs(r.left - area.left) <= 1, `${label}: mobile button row starts at the left edge`);
+        }
+        const status = role("action-status");
+        const statusLayout = getComputedStyle(status);
+        if (!status.textContent.trim()) {
+          assert(statusLayout.display === "none" && status.getClientRects().length === 0, `${label}: empty mobile status occupies no space`);
+        } else {
+          const r = rect(status);
+          assert(statusLayout.order === "1" && statusLayout.flexBasis === "100%", `${label}: mobile status is ordered as a full row`);
+          assert(r.height > 0 && statusLayout.visibility === "visible" && Number(statusLayout.opacity) > 0, `${label}: nonempty mobile status is visible`);
+          assert(Math.abs(r.left - area.left) <= 1 && Math.abs(r.right - area.right) <= 1 && r.bottom <= head.bottom + 1, `${label}: mobile status spans the action row within the toolbar`);
+          assert(buttons.every(button => r.top >= rect(button).bottom - 1), `${label}: mobile status occupies a separate row after all buttons`);
+        }
+        for (const cluster of actions.querySelectorAll(".actions-cluster-start")) {
+          assert(getComputedStyle(cluster).marginLeft === "0px", `${label}: mobile fullscreen cluster has no leading margin`);
+        }
+      }
+      for (const [name, text] of compactActions) {
+        const button = role(name);
+        const icon = button?.querySelector("svg.editor-action-icon");
+        const caption = button?.querySelector(".editor-action-label");
+        assert(!!icon && !!caption && caption.textContent.trim() === text, `${label}: ${name} retains its SVG and text label`);
+        assert(icon.getAttribute("aria-hidden") === "true", `${label}: ${name} icon is decorative`);
+        const captionStyle = getComputedStyle(caption);
+        const iconStyle = getComputedStyle(icon);
+        assert(!caption.closest('[aria-hidden="true"], [hidden], [inert]') && captionStyle.display !== "none" && captionStyle.visibility === "visible", `${label}: ${name} label remains available to accessibility`);
+        if (mobile) {
+          assert(iconStyle.display !== "none" && rect(icon).width > 1 && rect(icon).height > 1, `${label}: ${name} mobile icon is visible`);
+          assert(captionStyle.position === "absolute" && rect(caption).width <= 1 && rect(caption).height <= 1 && captionStyle.overflow === "hidden" && (captionStyle.clipPath !== "none" || captionStyle.clip !== "auto"), `${label}: ${name} mobile label is visually hidden, not removed`);
+        } else {
+          assert(iconStyle.display === "none" && icon.getClientRects().length === 0, `${label}: ${name} desktop icon is hidden`);
+          assert(rect(caption).width > 1 && rect(caption).height > 1 && captionStyle.clipPath === "none" && captionStyle.clip === "auto" && Number(captionStyle.opacity) > 0, `${label}: ${name} desktop label is presented normally`);
+        }
+      }
+      for (const name of ["run-btn", "submit-btn"]) {
+        const button = role(name);
+        if (!button?.getClientRects().length) continue;
+        assert(/Run|Submit/.test(button.innerText) && !button.querySelector(".editor-action-label"), `${label}: ${name} keeps its visible text label`);
+      }
       for (const button of toolbar.querySelectorAll("button, a")) {
         if (!button.getClientRects().length) continue;
         const r = rect(button);

@@ -50,6 +50,34 @@ try {
     const response = await send('Runtime.evaluate', {expression: '({status: document.querySelector("#checks")?.dataset.result, text: document.querySelector("#checks")?.textContent})', returnByValue: true});
     result = response.result.value;
   } while ((!result?.status || result.status === 'running') && Date.now() < deadline);
+  if (result?.status === 'passed' && new URL(url).searchParams.has('layout')) {
+    // Check computed accessible names, not title attributes or textContent:
+    // display:none labels and accidental aria-label overrides must fail too.
+    const {root} = await send('DOM.getDocument');
+    const kind = new URL(url).searchParams.get('layout');
+    const names = kind === 'index' ? [] : [
+      ['reset-btn', /^Reset$/], ['format-btn', /^Format$/],
+      ...(kind === 'exercise' ? [['vscode-btn', /^Open in Web Editor$/], ['copy-btn', /^Copy code$/]] : []),
+    ];
+    names.push(['run-btn', /\bRun\b/]);
+    if (kind === 'exercise') names.push(['submit-btn', /\bSubmit(?:ted)?\b/]);
+    try {
+      for (const [role, expected] of names) {
+        const {nodeId} = await send('DOM.querySelector', {nodeId: root.nodeId, selector: `.exercise-section [data-role="${role}"]`});
+        if (!nodeId) throw new Error(`Missing accessible control: ${role}`);
+        const {nodes} = await send('Accessibility.getPartialAXTree', {nodeId, fetchRelatives: false});
+        const control = nodes[0];
+        // Submit is intentionally hidden again after a later source revision.
+        if (role === 'submit-btn' && control?.ignored) continue;
+        if (!control || control.ignored || !expected.test(control.name?.value || '')) {
+          throw new Error(`${role}: expected accessible name ${expected}, got ${JSON.stringify(control)}`);
+        }
+      }
+      result.text += '\nProduction toolbar accessible names verified in Chrome accessibility tree.';
+    } catch (error) {
+      result = {status: 'failed', text: result.text + '\nFAILED: ' + error.message};
+    }
+  }
   if (screenshot) {
     const image = await send('Page.captureScreenshot');
     await writeFile(screenshot, Buffer.from(image.data, 'base64'));
@@ -183,7 +211,7 @@ def main():
             cases.append(("workflow", "", (1440, 1400), args.screenshot))
         if args.suite != "workflow":
             for template in [args.template] if args.template else ["exercise", "playground", "tour", "index"]:
-                for width, height in [(375, 500), (800, 450), (1440, 900)]:
+                for width, height in [(320, 500), (375, 500), (800, 450), (1440, 900)]:
                     name = f"{template}-{width}x{height}"
                     screenshot = args.screenshot_dir / f"{name}.png" if args.screenshot_dir else None
                     cases.append((name, f"?layout={template}", (width, height), screenshot))
