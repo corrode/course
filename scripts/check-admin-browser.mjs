@@ -60,8 +60,7 @@ function launch(label, command, args, extraEnv = {}) {
   child.on("exit", (code, signal) => { childFailure = new Error(`${label} exited (${signal ?? code})`); });
   console.log(`Started ${label}: ${child.pid}`);
 }
-async function until(fn, label) {
-  const deadline = Date.now() + 10000;
+async function until(fn, label, deadline = Date.now() + 10000) {
   let last;
   while (Date.now() < deadline) {
     if (childFailure) throw childFailure;
@@ -177,15 +176,22 @@ try {
   const insert = db.prepare("INSERT INTO participants (id, name, team_token) VALUES (?, ?, ?)");
   names.forEach((name, index) => insert.run(index === 0 ? alice : `browser-member-${index}`, name, team));
 
+  const chromeDeadline = Date.now() + 30000;
   launch("Chrome", chrome, ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
     "--disable-background-networking", "--disable-component-update", "--disable-sync", "--disable-dev-shm-usage",
     "--use-mock-keychain", "--password-store=basic", "--no-proxy-server",
     "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1", "--remote-debugging-address=127.0.0.1",
     "--remote-debugging-port=0", `--user-data-dir=${scratch}/chrome`, "about:blank"]);
-  const debugPort = await until(async () => (await readFile(join(scratch, "chrome/DevToolsActivePort"), "utf8")).split("\n")[0], "Chrome debugger");
-  const pages = await (await fetch(`http://127.0.0.1:${debugPort}/json/list`, { signal: AbortSignal.timeout(3000) })).json();
-  socket = new WebSocket(pages.find((page) => page.type === "page").webSocketDebuggerUrl);
-  await until(() => socket.readyState === WebSocket.OPEN, "CDP connection");
+  const debugPort = await until(async () => (await readFile(join(scratch, "chrome/DevToolsActivePort"), "utf8")).split("\n")[0], "Chrome debugger", chromeDeadline);
+  // The debug port may exist before DevTools serves a page. Share one startup
+  // budget across port discovery, page readiness, and the WebSocket connection.
+  const pageSocket = await until(async () => {
+    const timeout = Math.max(1, Math.min(3000, chromeDeadline - Date.now()));
+    const pages = await (await fetch(`http://127.0.0.1:${debugPort}/json/list`, { signal: AbortSignal.timeout(timeout) })).json();
+    return pages.find((page) => page.type === "page")?.webSocketDebuggerUrl;
+  }, "Chrome page target", chromeDeadline);
+  socket = new WebSocket(pageSocket);
+  await until(() => socket.readyState === WebSocket.OPEN, "CDP connection", chromeDeadline);
   socket.addEventListener("message", ({ data }) => {
     const message = JSON.parse(data), p = message.params;
     if (message.method === "Fetch.requestPaused") {
