@@ -1465,12 +1465,27 @@ async fn signup_page_with_team(AxumPath(team_slug): AxumPath<String>) -> impl In
     // Defensive trim. Empty slugs degrade to the public form rather than
     // rendering a banner that says "Signing up with (blank)".
     let trimmed = team_slug.trim();
+    let canonical = canonical_signup_team(trimmed);
+    if canonical != trimmed {
+        return axum::response::Redirect::permanent(&format!("/signup/{canonical}"))
+            .into_response();
+    }
     let team = if trimmed.is_empty() {
         None
     } else {
         Some(trimmed.to_string())
     };
     render_signup(team)
+}
+
+// The old workshop link is still circulating after the Ecosia → Ecosmic merge.
+// Apply this to submitted forms too: a page opened before deployment can post later.
+const fn canonical_signup_team(team: &str) -> &str {
+    if team.eq_ignore_ascii_case("Ecosia") {
+        "Ecosmic"
+    } else {
+        team
+    }
 }
 
 fn render_signup(team_slug: Option<String>) -> axum::response::Response {
@@ -1672,6 +1687,8 @@ async fn web_register(
     let team_token = form
         .team_token
         .as_deref()
+        .map(str::trim)
+        .map(canonical_signup_team)
         .map_or(Ok(None), TeamToken::parse_form_input)
         .map_err(|_| StatusCode::BAD_REQUEST)?;
 

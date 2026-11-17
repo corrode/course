@@ -1023,6 +1023,77 @@ async fn api_submission_requires_explicit_identity_even_with_a_browser_cookie() 
 }
 
 #[tokio::test]
+async fn legacy_team_signup_redirects_to_ecosmic() {
+    let server = TestServer::start(state().await).await;
+    for slug in ["Ecosia", "ecosia", "ECOSIA", "%20Ecosia%20"] {
+        let response = server
+            .get(&format!("/signup/{slug}"), Some(ACCOUNT_A))
+            .await;
+        assert_redirect(
+            &server,
+            &response,
+            StatusCode::PERMANENT_REDIRECT,
+            "/signup/Ecosmic",
+        );
+        assert_no_cookie(&response);
+    }
+    for team in ["Ecosmic", "Other-Team", "Ecosia-workshop"] {
+        let response = server.get(&format!("/signup/{team}"), None).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let html = response.text().await.unwrap();
+        assert!(html.contains(&format!("name=\"team_token\" value=\"{team}\"")));
+    }
+    let response = server.get("/signup", None).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert!(
+        !response
+            .text()
+            .await
+            .unwrap()
+            .contains("name=\"team_token\"")
+    );
+}
+
+#[tokio::test]
+async fn legacy_team_registration_forms_cannot_recreate_ecosia() {
+    let state = state().await;
+    let pool = state.pool.clone();
+    let server = TestServer::start(state).await;
+    for (index, (team, expected)) in [
+        ("Ecosia", Some("Ecosmic")),
+        (" ecosia ", Some("Ecosmic")),
+        ("ECOSIA", Some("Ecosmic")),
+        ("Ecosmic", Some("Ecosmic")),
+        ("Other-Team", Some("Other-Team")),
+        ("Ecosia-workshop", Some("Ecosia-workshop")),
+        (" ", None),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let name = format!("Signup alias {index}");
+        let body = url::form_urlencoded::Serializer::new(String::new())
+            .extend_pairs([("name", name.as_str()), ("team_token", team)])
+            .finish();
+        let response = send(
+            server
+                .request(Method::POST, "/register", None)
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(body),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::SEE_OTHER);
+        let stored: Option<String> =
+            sqlx::query_scalar("SELECT team_token FROM participants WHERE name = ?")
+                .bind(&name)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(stored.as_deref(), expected);
+    }
+}
+
+#[tokio::test]
 async fn web_registration_remembers_only_on_the_dashboard_or_exercise_destination() {
     let state = state().await;
     let pool = state.pool.clone();
